@@ -3,9 +3,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we're on the task breakdown page
     if (!document.querySelector('.task-breakdown-container')) return;
 
-    const mainTaskInput = document.getElementById('main-task-input');
-    const addMainTaskBtn = document.getElementById('add-main-task-btn');
-    const taskBreakdownList = document.getElementById('task-breakdown-list');
+    const mainTaskInput = document.getElementById('project-input');
+    const addMainTaskBtn = document.getElementById('add-project');
+    const taskBreakdownList = document.getElementById('project-list');
+
     
     // Load tasks from localStorage
     let breakdownTasks = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
@@ -169,14 +170,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add new subtask
     function addSubtask(mainIndex, subtaskText) {
         const newSubtask = {
+            id: 'subtask-' + Date.now(),  // ensure unique id
             text: subtaskText,
             completed: false,
             createdAt: new Date().toISOString()
         };
-        
+
         breakdownTasks[mainIndex].subtasks.push(newSubtask);
         saveTasks();
+
+        // Also add this subtask to the global task store for Pomodoro.
+        let globalTasks = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
+        globalTasks.push(newSubtask);
+        localStorage.setItem('adhd-tasks', JSON.stringify(globalTasks));
+
+        // Optionally, if you have a function like updatePomodoroTaskSelect in your cross-tool code:
+        if (typeof updatePomodoroTaskSelect === 'function') {
+            updatePomodoroTaskSelect();
+        }
     }
+
     
     // Toggle main task completion status
     function toggleMainTaskComplete(mainIndex) {
