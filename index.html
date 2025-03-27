@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADHD Tools Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="app.js" defer></script>
+    <script src="pomodoro.js" defer></script>
+    <script src="eisenhower.js" defer></script>
+    <script src="day-planner.js" defer></script>
+    <script src="task-manager.js" defer></script>
+    <script src="task-breakdown.js" defer></script>
+    <script src="habit-tracker.js" defer></script>
+    <script src="focus-mode.js" defer></script>
+    <script src="reward-system.js" defer></script>
+    <script src="cross-tool-interaction.js" defer></script>
+    <script src="data-management.js" defer></script>
+    <script src="script-loader.js" defer></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
+            <p>Interactive tools to help manage ADHD symptoms and improve productivity</p>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#" class="active" data-tool="home"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#" data-tool="pomodoro"><i class="fas fa-clock"></i> Pomodoro Timer</a></li>
+                <li><a href="#" data-tool="eisenhower"><i class="fas fa-th-large"></i> Eisenhower Matrix</a></li>
+                <li><a href="#" data-tool="planner"><i class="fas fa-calendar-alt"></i> Day Planner</a></li>
+                <li><a href="#" data-tool="tasks"><i class="fas fa-tasks"></i> Task Manager</a></li>
+                <li><a href="#" data-tool="breakdown"><i class="fas fa-project-diagram"></i> Task Breakdown</a></li>
+                <li><a href="#" data-tool="habits"><i class="fas fa-check-square"></i> Habit Tracker</a></li>
+                <li><a href="#" data-tool="focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
+                <li><a href="#" data-tool="rewards"><i class="fas fa-trophy"></i> Rewards</a></li>
+                <li><a href="#" data-tool="about"><i class="fas fa-info-circle"></i> About</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <!-- Home Section -->
+            <section id="home" class="tool-section active">
+                <h2>Welcome to ADHD Tools Hub</h2>
+                <p>This website provides a collection of interactive tools designed specifically to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+                
+                <div class="tools-grid">
+                    <div class="tool-card" data-tool="pomodoro">
+                        <div class="tool-icon"><i class="fas fa-clock"></i></div>
+                        <h3>Pomodoro Timer</h3>
+                        <p>Work in focused sprints with timed breaks to maintain productivity.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="eisenhower">
+                        <div class="tool-icon"><i class="fas fa-th-large"></i></div>
+                        <h3>Eisenhower Matrix</h3>
+                        <p>Prioritize tasks based on importance and urgency.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="planner">
+                        <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <h3>Day Planner</h3>
+                        <p>Visualize your day with time blocks for better time management.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="tasks">
+                        <div class="tool-icon"><i class="fas fa-tasks"></i></div>
+                        <h3>Task Manager</h3>
+                        <p>Keep track of your to-do list with priorities and categories.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="breakdown">
+                        <div class="tool-icon"><i class="fas fa-project-diagram"></i></div>
+                        <h3>Task Breakdown</h3>
+                        <p>Break complex tasks into smaller, manageable steps.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="habits">
+                        <div class="tool-icon"><i class="fas fa-check-square"></i></div>
+                        <h3>Habit Tracker</h3>
+                        <p>Build consistency with daily habit tracking and streaks.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="focus">
+                        <div class="tool-icon"><i class="fas fa-eye"></i></div>
+                        <h3>Focus Mode</h3>
+                        <p>Minimize distractions with a clean, focused interface.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                    
+                    <div class="tool-card" data-tool="rewards">
+                        <div class="tool-icon"><i class="fas fa-trophy"></i></div>
+                        <h3>Rewards</h3>
+                        <p>Celebrate your accomplishments with visual rewards.</p>
+                        <button class="btn">Open Tool</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pomodoro Timer Section -->
+            <section id="pomodoro" class="tool-section">
+                <h2>Pomodoro Timer</h2>
+                <p>The Pomodoro Technique helps you work with time, instead of against it. Break your workday into 25-minute chunks separated by five-minute breaks.</p>
+                
+                <div class="pomodoro-container">
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <div class="time">
+                                <span id="minutes">25</span>:<span id="seconds">00</span>
+                            </div>
+                            <div class="timer-label" id="timer-label">FOCUS</div>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-controls">
+                        <button id="start-timer" class="btn btn-primary"><i class="fas fa-play"></i> Start</button>
+                        <button id="pause-timer" class="btn btn-secondary" disabled><i class="fas fa-pause"></i> Pause</button>
+                        <button id="reset-timer" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
+                    </div>
+                    
+                    <div class="session-counter">
+                        <span>Sessions completed: <span id="session-count">0</span></span>
+                    </div>
+                    
+                    <div class="timer-settings">
+                        <h3>Settings</h3>
+                        <div class="setting-group">
+                            <label for="focus-duration">Focus Duration (minutes):</label>
+                            <input type="number" id="focus-duration" min="1" max="60" value="25">
+                        </div>
+                        <div class="setting-group">
+                            <label for="short-break-duration">Short Break Duration (minutes):</label>
+                            <input type="number" id="short-break-duration" min="1" max="30" value="5">
+                        </div>
+                        <div class="setting-group">
+                            <label for="long-break-duration">Long Break Duration (minutes):</label>
+                            <input type="number" id="long-break-duration" min="1" max="60" value="15">
+                        </div>
+                        <div class="setting-group">
+                            <label for="sessions-before-long-break">Sessions Before Long Break:</label>
+                            <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
+                        </div>
+                        <div class="setting-group">
+                            <label for="audio-notification">Audio Notification:</label>
+                            <select id="audio-notification">
+                                <option value="bell">Bell</option>
+                                <option value="chime">Chime</option>
+                                <option value="digital">Digital</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                        <button id="save-settings" class="btn">Save Settings</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Eisenhower Matrix Section -->
+            <section id="eisenhower" class="tool-section">
+                <h2>Eisenhower Matrix</h2>
+                <p>Prioritize your tasks based on their importance and urgency. This helps you focus on what truly matters.</p>
+                
+                <div class="eisenhower-container">
+                    <div class="matrix-controls">
+                        <div class="task-input">
+                            <input type="text" id="task-input" placeholder="Enter a new task...">
+                            <button id="add-task" class="btn">Add Task</button>
+                        </div>
+                    </div>
+                    
+                    <div class="matrix-grid">
+                        <div class="matrix-header-row">
+                            <div class="matrix-header-cell"></div>
+                            <div class="matrix-header-cell">Urgent</div>
+                            <div class="matrix-header-cell">Not Urgent</div>
+                        </div>
+                        <div class="matrix-row">
+                            <div class="matrix-header-cell">Important</div>
+                            <div class="matrix-cell" id="important-urgent">
+                                <h4>Do First</h4>
+                                <div class="task-list" id="q1-tasks"></div>
+                            </div>
+                            <div class="matrix-cell" id="important-not-urgent">
+                                <h4>Schedule</h4>
+                                <div class="task-list" id="q2-tasks"></div>
+                            </div>
+                        </div>
+                        <div class="matrix-row">
+                            <div class="matrix-header-cell">Not Important</div>
+                            <div class="matrix-cell" id="not-important-urgent">
+                                <h4>Delegate</h4>
+                                <div class="task-list" id="q3-tasks"></div>
+                            </div>
+                            <div class="matrix-cell" id="not-important-not-urgent">
+                                <h4>Eliminate</h4>
+                                <div class="task-list" id="q4-tasks"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Day Planner Section -->
+            <section id="planner" class="tool-section">
+                <h2>Day Planner</h2>
+                <p>Visualize your day with time blocks for better time management. Plan your activities hour by hour to stay organized.</p>
+
+                <div class="day-planner-container">
+                    <div class="planner-header">
+                        <h3 id="current-date">Today's Date</h3>
+                        <div class="planner-controls">
+                            <button id="add-event-btn" class="btn"><i class="fas fa-plus"></i> Add Event</button>
+                            <button id="clear-events-btn" class="btn btn-secondary"><i class="fas fa-trash"></i> Clear All</button>
+                        </div>
+                    </div>
+
+                    <div class="time-blocks-container" id="time-blocks">
+                        <!-- Time blocks will be generated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Modal for Adding an Event -->
+                <div id="event-modal" class="modal">
+                  <div class="modal-content">
+                    <span class="close-button">&times;</span>
+                    <h3>Add Event</h3>
+                    <form id="event-form">
+                      <label for="event-title">Title:</label>
+                      <input type="text" id="event-title" required>
+                      <label for="event-time">Time:</label>
+                      <select id="event-time"></select>
+                      <button type="submit" class="btn">Save Event</button>
+                    </form>
+                  </div>
+                </div>
+            </section>
+
+
+            <!-- Task Manager Section -->
+            <section id="tasks" class="tool-section">
+                <h2>Task Manager</h2>
+                <p>Keep track of your to-do list with priorities and categories. Organize your tasks to ensure nothing falls through the cracks.</p>
+                
+                <div class="task-manager-container">
+                    <div class="task-input-container">
+                        <input type="text" id="task-manager-input" placeholder="Add a new task...">
+                        <div class="task-options">
+                            <select id="task-priority">
+                                <option value="low">Low Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="high">High Priority</option>
+                            </select>
+                            <select id="task-category">
+                                <option value="work">Work</option>
+                                <option value="personal">Personal</option>
+                                <option value="health">Health</option>
+                                <option value="education">Education</option>
+                                <option value="other" selected>Other</option>
+                            </select>
+                        </div>
+                        <button id="add-task-btn" class="btn">Add Task</button>
+                    </div>
+                    
+                    <div class="task-filters">
+                        <div class="filter-group">
+                            <label>Filter by Priority:</label>
+                            <select id="priority-filter">
+                                <option value="all" selected>All</option>
+                                <option value="high">High</option>
+                                <option value="medium">Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Filter by Category:</label>
+                            <select id="category-filter">
+                                <option value="all" selected>All</option>
+                                <option value="work">Work</option>
+                                <option value="personal">Personal</option>
+                                <option value="health">Health</option>
+                                <option value="education">Education</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Show Completed:</label>
+                            <input type="checkbox" id="show-completed">
+                        </div>
+                    </div>
+                    
+                    <div class="task-list-container">
+                        <h3>Tasks</h3>
+                        <ul id="task-list" class="task-list">
+                            <!-- Tasks will be added here by JavaScript -->
+                        </ul>
+                    </div>
+                    
+                    <div class="task-stats">
+                        <div class="stat">
+                            <span>Total Tasks:</span>
+                            <span id="total-tasks">0</span>
+                        </div>
+                        <div class="stat">
+                            <span>Completed:</span>
+                            <span id="completed-tasks">0</span>
+                        </div>
+                        <div class="stat">
+                            <span>Remaining:</span>
+                            <span id="remaining-tasks">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Task Breakdown Section -->
+            <section id="breakdown" class="tool-section">
+                <h2>Task Breakdown</h2>
+                <p>Break complex tasks into smaller, manageable steps. This helps reduce overwhelm and makes progress more visible.</p>
+                
+                <div class="task-breakdown-container">
+                    <div class="project-section">
+                        <h3>Projects</h3>
+                        <div class="project-input">
+                            <input type="text" id="project-input" placeholder="New project name...">
+                            <button id="add-project" class="btn">Add Project</button>
+                        </div>
+                        <ul id="project-list" class="project-list">
+                            <!-- Projects will be added here by JavaScript -->
+                        </ul>
+                    </div>
+                    
+                    <div class="subtasks-section">
+                        <h3 id="current-project-title">Select a project</h3>
+                        <div class="subtask-input">
+                            <input type="text" id="subtask-input" placeholder="New step..." disabled>
+                            <button id="add-subtask" class="btn" disabled>Add Step</button>
+                        </div>
+                        <ul id="subtask-list" class="subtask-list">
+                            <!-- Subtasks will be added here by JavaScript -->
+                        </ul>
+                        <div class="progress-container">
+                            <div class="progress-label">Progress:</div>
+                            <div class="progress-bar-container">
+                                <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                            <div id="progress-percentage">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Habit Tracker Section -->
+            <section id="habits" class="tool-section">
+                <h2>Habit Tracker</h2>
+                <p>Build consistency with daily habit tracking and streaks. Visualize your progress and stay motivated.</p>
+                
+                <div class="habit-tracker-container">
+                    <div class="habit-input">
+                        <input type="text" id="habit-input" placeholder="New habit...">
+                        <button id="add-habit" class="btn">Add Habit</button>
+                    </div>
+                    
+                    <div class="habits-calendar">
+                        <div class="calendar-header">
+                            <button id="prev-month" class="btn btn-small"><i class="fas fa-chevron-left"></i></button>
+                            <h3 id="month-year">Month Year</h3>
+                            <button id="next-month" class="btn btn-small"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        
+                        <div class="calendar-grid" id="habit-calendar">
+                            <!-- Calendar will be generated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="habit-stats">
+                        <h3>Statistics</h3>
+                        <div class="stats-container" id="habit-stats">
+                            <!-- Stats will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Focus Mode Section -->
+            <section id="focus" class="tool-section">
+                <h2>Focus Mode</h2>
+                <p>Minimize distractions with a clean, focused interface. Create a distraction-free environment for deep work.</p>
+                
+                <div class="focus-mode-container">
+                    <div class="focus-controls">
+                        <button id="enter-focus-mode" class="btn btn-primary"><i class="fas fa-expand"></i> Enter Focus Mode</button>
+                        <div class="focus-settings">
+                            <div class="setting-group">
+                                <label for="focus-duration-setting">Focus Session Duration (minutes):</label>
+                                <input type="number" id="focus-duration-setting" min="5" max="120" value="25">
+                            </div>
+                            <div class="setting-group">
+                                <label for="focus-background">Background:</label>
+                                <select id="focus-background">
+                                    <option value="solid">Solid Color</option>
+                                    <option value="gradient">Gradient</option>
+                                    <option value="nature">Nature</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label for="focus-sound">Background Sound:</label>
+                                <select id="focus-sound">
+                                    <option value="none">None</option>
+                                    <option value="white-noise">White Noise</option>
+                                    <option value="rain">Rain</option>
+                                    <option value="cafe">Cafe Ambience</option>
+                                    <option value="forest">Forest</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label for="focus-goal">Session Goal (optional):</label>
+                                <input type="text" id="focus-goal" placeholder="What do you want to accomplish?">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="focus-preview">
+                        <h3>Preview</h3>
+                        <div class="preview-container" id="focus-preview">
+                            <div class="preview-content">
+                                <div class="preview-timer">25:00</div>
+                                <div class="preview-goal">Complete project outline</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="fullscreen-focus-mode" class="fullscreen-focus hidden">
+                    <div class="fullscreen-content">
+                        <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
+                        <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
+                        <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus Mode</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rewards Section -->
+            <section id="rewards" class="tool-section">
+                <h2>Rewards</h2>
+                <p>Celebrate your accomplishments with visual rewards. Positive reinforcement helps build motivation and consistency.</p>
+                
+                <div class="rewards-container">
+                    <div class="rewards-setup">
+                        <h3>Set Up Rewards</h3>
+                        <div class="reward-input">
+                            <div class="input-group">
+                                <label for="task-for-reward">Task to Complete:</label>
+                                <input type="text" id="task-for-reward" placeholder="What task will you complete?">
+                            </div>
+                            <div class="input-group">
+                                <label for="reward-type">Reward Type:</label>
+                                <select id="reward-type">
+                                    <option value="confetti">Confetti Celebration</option>
+                                    <option value="achievement">Achievement Badge</option>
+                                    <option value="points">Points System</option>
+                                    <option value="custom">Custom Reward</option>
+                                </select>
+                            </div>
+                            <div class="input-group" id="custom-reward-input" style="display: none;">
+                                <label for="custom-reward">Custom Reward:</label>
+                                <input type="text" id="custom-reward" placeholder="Describe your reward">
+                            </div>
+                            <button id="save-reward" class="btn">Save Reward</button>
+                        </div>
+                    </div>
+                    
+                    <div class="rewards-list">
+                        <h3>Your Rewards</h3>
+                        <ul id="rewards-list" class="rewards-list-items">
+                            <!-- Rewards will be added here by JavaScript -->
+                        </ul>
+                    </div>
+                    
+                    <div class="rewards-achievements">
+                        <h3>Achievements</h3>
+                        <div class="achievements-grid" id="achievements-grid">
+                            <!-- Achievements will be added here by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="celebration-container" id="celebration-container">
+                        <!-- Celebration animations will appear here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- About Section -->
+            <section id="about" class="tool-section">
+                <h2>About ADHD Tools Hub</h2>
+                <p>ADHD Tools Hub is a collection of interactive tools designed to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+                
+                <div class="about-content">
+                    <h3>Why These Tools?</h3>
+                    <p>People with ADHD often struggle with executive functions like time management, organization, prioritization, and maintaining focus. The tools in this hub are specifically designed to address these challenges using evidence-based strategies.</p>
+                    
+                    <h3>Features</h3>
+                    <ul>
+                        <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain productivity.</li>
+                        <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.</li>
+                        <li><strong>Day Planner:</strong> Visualize your day with time blocks for better time management.</li>
+                        <li><strong>Task Manager:</strong> Keep track of your to-do list with priorities and categories.</li>
+                        <li><strong>Task Breakdown:</strong> Break complex tasks into smaller, manageable steps.</li>
+                        <li><strong>Habit Tracker:</strong> Build consistency with daily habit tracking and streaks.</li>
+                        <li><strong>Focus Mode:</strong> Minimize distractions with a clean, focused interface.</li>
+                        <li><strong>Rewards:</strong> Celebrate your accomplishments with visual rewards.</li>
+                    </ul>
+                    
+                    <h3>Privacy</h3>
+                    <p>All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.</p>
+                    
+                    <h3>Feedback</h3>
+                    <p>We're constantly working to improve these tools. If you have suggestions or feedback, please let us know!</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 ADHD Tools Hub. All tools are free to use and data is stored locally in your browser.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script src="pomodoro.js"></script>
+    <script src="eisenhower.js"></script>
+    <script src="day-planner.js"></script>
+    <script src="task-manager.js"></script>
+    <script src="task-breakdown.js"></script>
+    <script src="habit-tracker.js"></script>
+    <script src="focus-mode.js"></script>
+    <script src="reward-system.js"></script>
+</body>
+</html>
