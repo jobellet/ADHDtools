@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load tasks from localStorage
     let tasks = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
     
+    function generateUniqueId() {
+      return 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    }
     // Render all tasks
     function renderTasks() {
         // Clear current list
@@ -38,20 +41,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Create task elements
-        filteredTasks.forEach((task, index) => {
+        filteredTasks.forEach(task => {
             const taskItem = document.createElement('div');
             taskItem.className = `task-item ${task.completed ? 'completed' : ''} priority-${task.priority}`;
-            taskItem.dataset.index = tasks.indexOf(task); // Store original index
-            
-            // Create checkbox
+            taskItem.dataset.id = task.id;  // Use the unique id
+
+            // Create checkbox and add event listener using the task id
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'task-checkbox';
             checkbox.checked = task.completed;
             checkbox.addEventListener('change', function() {
-                toggleTaskComplete(tasks.indexOf(task));
+                toggleTaskComplete(task.id);
             });
-            
+
+            // Create delete button using the task id
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this task?')) {
+                    deleteTask(task.id);
+                }
+            });
             // Create task text
             const taskText = document.createElement('div');
             taskText.className = 'task-text';
@@ -83,6 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
             taskItem.appendChild(deleteBtn);
             
             taskList.appendChild(taskItem);
+            taskItem.appendChild(checkbox);
         });
         
         // Update task counter if it exists
@@ -93,37 +106,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add new task
+    // After loading tasks from localStorage, ensure each task has an id:
+    tasks = tasks.map(task => {
+      if (!task.id) {
+        task.id = generateUniqueId();
+      }
+      return task;
+    });
+
     function addTask() {
         if (!taskInput.value.trim()) return;
-        
+
         const newTask = {
+            id: generateUniqueId(),  // NEW: Unique identifier
             text: taskInput.value.trim(),
             completed: false,
             category: categorySelect ? categorySelect.value : 'general',
             priority: prioritySelect ? prioritySelect.value : 'medium',
             createdAt: new Date().toISOString()
         };
-        
+
         tasks.push(newTask);
         saveTasks();
-        
+
         // Clear input
         taskInput.value = '';
         taskInput.focus();
     }
+
     
     // Toggle task completion status
-    function toggleTaskComplete(index) {
+    function toggleTaskComplete(taskId) {
+    const index = tasks.findIndex(task => task.id === taskId);
+    if (index !== -1) {
         tasks[index].completed = !tasks[index].completed;
         saveTasks();
+        }
     }
+
+    
     
     // Delete task
-    function deleteTask(index) {
-        tasks.splice(index, 1);
-        saveTasks();
+    function deleteTask(taskId) {
+        const index = tasks.findIndex(task => task.id === taskId);
+        if (index !== -1) {
+            tasks.splice(index, 1);
+            saveTasks();
+        }
     }
+
     
     // Save tasks to localStorage
     function saveTasks() {
