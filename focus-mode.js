@@ -1,107 +1,148 @@
-// Focus Mode Refactor: align selectors with HTML, fix start/exit, and persistence
+// Focus Mode Refactor: fixes optional goal, background & sound support, and prevents duplicate init
+if (window.__focusModeLoaded) {
+  console.warn('Focus mode script already loaded');
+} else {
+  window.__focusModeLoaded = true;
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Selectors match index.html IDs
-  const enterBtn = document.getElementById('enter-focus-mode');
-  const exitBtn = document.getElementById('exit-focus-mode');
-  const durationInput = document.getElementById('focus-duration-setting');
-  const goalInput = document.getElementById('focus-goal');
-  const previewTimer = document.querySelector('#focus-preview .preview-timer');
-  const previewGoal = document.querySelector('#focus-preview .preview-goal');
-  const fullscreenContainer = document.getElementById('fullscreen-focus-mode');
-  const fullscreenTimer = document.getElementById('focus-mode-timer');
-  const fullscreenGoal = document.getElementById('focus-mode-goal');
+  document.addEventListener('DOMContentLoaded', () => {
+    const enterBtn = document.getElementById('enter-focus-mode');
+    const exitBtn = document.getElementById('exit-focus-mode');
+    const durationInput = document.getElementById('focus-duration-setting');
+    const backgroundSelect = document.getElementById('focus-background');
+    const soundSelect = document.getElementById('focus-sound');
+    const goalInput = document.getElementById('focus-goal');
+    const previewTimer = document.querySelector('#focus-preview .preview-timer');
+    const previewGoal = document.querySelector('#focus-preview .preview-goal');
+    const fullscreenContainer = document.getElementById('fullscreen-focus-mode');
+    const fullscreenTimer = document.getElementById('focus-mode-timer');
+    const fullscreenGoal = document.getElementById('focus-mode-goal');
 
-  let timerId = null;
-  let remainingSeconds = 0;
+    let timerId = null;
+    let remainingSeconds = 0;
+    let audio = null;
 
-  // Helper: format MM:SS
-  const formatTime = secs => {
-    const m = String(Math.floor(secs / 60)).padStart(2, '0');
-    const s = String(secs % 60).padStart(2, '0');
-    return `${m}:${s}`;
-  };
+    // Format seconds as MM:SS
+    const formatTime = secs => {
+      const m = String(Math.floor(secs / 60)).padStart(2, '0');
+      const s = String(secs % 60).padStart(2, '0');
+      return `${m}:${s}`;
+    };
 
-  // Start focus session
-  function startFocus() {
-    const duration = parseInt(durationInput.value, 10);
-    const goal = goalInput.value.trim();
-    if (isNaN(duration) || duration <= 0) {
-      alert('Please enter a valid duration');
-      return;
-    }
-    if (!goal) {
-      alert('Please enter a focus goal');
-      return;
-    }
-
-    remainingSeconds = duration * 60;
-    previewTimer.textContent = formatTime(remainingSeconds);
-    previewGoal.textContent = goal;
-
-    // Show fullscreen
-    fullscreenGoal.textContent = goal;
-    fullscreenTimer.textContent = formatTime(remainingSeconds);
-    fullscreenContainer.classList.remove('hidden');
-
-    // Enter full screen
-    if (document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(console.error);
+    // Background classes correspond to options: solid, gradient, nature, minimal
+    function applyBackground(type) {
+      document.body.classList.remove('bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal');
+      document.body.classList.add(`bg-${type}`);
     }
 
-    // Persist session
-    const session = { goal, duration, start: Date.now() };
-    localStorage.setItem('focus-session', JSON.stringify(session));
+    // Map sound option to audio file URL
+    const soundUrls = {
+      'white-noise': 'sounds/white-noise.mp3',
+      'pink-noise': 'sounds/pink-noise.mp3',
+      'rain': 'sounds/rain.mp3',
+      'cafe': 'sounds/cafe.mp3',
+      'forest': 'sounds/forest.mp3'
+    };
 
-    // Start countdown
-    timerId = setInterval(() => {
-      remainingSeconds--;
-      fullscreenTimer.textContent = formatTime(remainingSeconds);
-      if (remainingSeconds <= 0) {
-        endFocus(true);
+    function startAudio(type) {
+      if (audio) {
+        audio.pause();
+        audio = null;
       }
-    }, 1000);
-  }
-
-  // End focus session
-  function endFocus(completed = false) {
-    clearInterval(timerId);
-    timerId = null;
-
-    // Exit fullscreen
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(console.error);
+      if (type !== 'none' && soundUrls[type]) {
+        audio = new Audio(soundUrls[type]);
+        audio.loop = true;
+        audio.play().catch(console.error);
+      }
     }
 
-    // Hide fullscreen
-    fullscreenContainer.classList.add('hidden');
+    function startFocus() {
+      const duration = parseInt(durationInput.value, 10);
+      if (isNaN(duration) || duration <= 0) {
+        alert('Please enter a valid duration');
+        return;
+      }
+      remainingSeconds = duration * 60;
+      previewTimer.textContent = formatTime(remainingSeconds);
+      const goal = goalInput.value.trim();
+      previewGoal.textContent = goal || '';
 
-    // Cleanup
-    localStorage.removeItem('focus-session');
-    alert(completed ? 'Focus session complete!' : 'Focus session ended early.');
-  }
+      fullscreenGoal.textContent = goal || '';
+      fullscreenTimer.textContent = formatTime(remainingSeconds);
+      fullscreenContainer.classList.remove('hidden');
 
-  // Resume unfinished session
-  function resumeSession() {
-    const data = localStorage.getItem('focus-session');
-    if (!data) return;
-    const { goal, duration, start } = JSON.parse(data);
-    const elapsed = Math.floor((Date.now() - start) / 1000);
-    const total = duration * 60;
-    if (elapsed >= total) {
+      // Enter fullscreen
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(console.error);
+      }
+
+      // Apply background and start sound
+      applyBackground(backgroundSelect.value);
+      startAudio(soundSelect.value);
+
+      // Persist session data
+      localStorage.setItem('focus-session', JSON.stringify({
+        goal,
+        duration,
+        background: backgroundSelect.value,
+        sound: soundSelect.value,
+        start: Date.now()
+      }));
+
+      // Begin countdown
+      timerId = setInterval(() => {
+        remainingSeconds--;
+        fullscreenTimer.textContent = formatTime(remainingSeconds);
+        if (remainingSeconds <= 0) {
+          endFocus(true);
+        }
+      }, 1000);
+    }
+
+    function endFocus(completed = false) {
+      clearInterval(timerId);
+      timerId = null;
+
+      // Exit fullscreen
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(console.error);
+      }
+
+      // Stop sound and reset background
+      if (audio) {
+        audio.pause();
+        audio = null;
+      }
+      document.body.classList.remove('bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal');
+      fullscreenContainer.classList.add('hidden');
+
+      // Clear persisted session
       localStorage.removeItem('focus-session');
-      return;
+      alert(completed ? 'Focus session completed!' : 'Focus session ended early.');
     }
-    remainingSeconds = total - elapsed;
-    goalInput.value = goal;
-    durationInput.value = duration;
-    startFocus();
-  }
 
-  // Attach events
-  if (enterBtn) enterBtn.addEventListener('click', startFocus);
-  if (exitBtn) exitBtn.addEventListener('click', () => endFocus(false));
+    function resumeSession() {
+      const data = localStorage.getItem('focus-session');
+      if (!data) return;
+      const { goal, duration, background, sound, start } = JSON.parse(data);
+      const elapsed = Math.floor((Date.now() - start) / 1000);
+      const total = duration * 60;
+      if (elapsed >= total) {
+        localStorage.removeItem('focus-session');
+        return;
+      }
 
-  // Attempt to resume on load
-  resumeSession();
-});
+      durationInput.value = duration;
+      backgroundSelect.value = background;
+      soundSelect.value = sound;
+      goalInput.value = goal;
+      startFocus();
+      remainingSeconds = total - elapsed;
+    }
+
+    if (enterBtn) enterBtn.addEventListener('click', startFocus);
+    if (exitBtn) exitBtn.addEventListener('click', () => endFocus(false));
+
+    // Resume any in-progress session
+    resumeSession();
+  });
+}

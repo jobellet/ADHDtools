@@ -537,3 +537,33 @@ footer {
   background-color: var(--primary-color);
   border-radius: 4px;
 }
+/* 1. Solid color background (default) */
+.bg-solid {
+  background-color: var(--background);
+}
+
+/* 2. Gradient background */
+.bg-gradient {
+  /* Progressive transition between two theme colors */
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); /* Use MDN’s linear-gradient syntax */
+  /* Background shorthand covers image, position, and size */
+  /*  [oai_citation:5‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient?utm_source=chatgpt.com) [oai_citation:6‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/background?utm_source=chatgpt.com) */
+}
+
+/* 3. Nature image background */
+.bg-nature {
+  /* Replace with your forest photo URL */
+  background-image: url('images/forest.jpg');
+  background-repeat: no-repeat;
+  background-position: center;           /* Center the image  [oai_citation:7‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position?utm_source=chatgpt.com) */
+  background-size: cover;                /* Scale to fill container  [oai_citation:8‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/background-size?utm_source=chatgpt.com) */
+}
+
+/* 4. Minimal pattern background */
+.bg-minimal {
+  /* Replace with your minimal-pattern graphic URL */
+  background-image: url('images/minimal-pattern.png');
+  background-repeat: repeat;
+  background-position: top left;
+  background-size: auto;
+}
