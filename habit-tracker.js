@@ -4,14 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!document.querySelector('.habit-tracker-container')) return;
 
     const habitInput = document.getElementById('habit-input');
-    const addHabitBtn = document.getElementById('add-habit-btn');
-    const habitList = document.getElementById('habit-list');
+    const addHabitBtn = document.getElementById('add-habit');
+    const habitList = document.getElementById('habit-stats');
     const habitCalendar = document.getElementById('habit-calendar');
     
     // Get current date information
     const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
     
     // Load habits from localStorage
     let habits = JSON.parse(localStorage.getItem('adhd-habits')) || [];
@@ -247,7 +247,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Debounce helper
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+    
     // Toggle habit completion for a specific date
+    const debouncedRender = debounce(() => {
+        renderCalendar();
+        renderHabits(); // Update streak counters
+    }, 100);
+    
     function toggleHabitCompletion(habitId, dateStr) {
         // Initialize habit logs for this habit if not exists
         if (!habitLogs[habitId]) {
@@ -263,8 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         saveHabitLogs();
-        renderCalendar();
-        renderHabits(); // Update streak counters
+        debouncedRender();
     }
     
     // Calculate current streak for a habit

@@ -1,14 +1,16 @@
 // Pomodoro Timer JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     // Request notification permission immediately when page loads
-    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        Notification.requestPermission().then(function(permission) {
-            if (permission === 'granted') {
-                new Notification('Notifications Enabled', { 
-                    body: 'You will be notified when your Pomodoro sessions complete.'
-                });
-            }
-        });
+    if ('Notification' in window) {
+        if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    new Notification('Notifications Enabled', { 
+                        body: 'You will be notified when your Pomodoro sessions complete.'
+                    });
+                }
+            });
+        }
     }
 
     // DOM elements
@@ -29,13 +31,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveSettingsButton = document.getElementById('save-settings');
     
     // Timer variables
-    let timer;
+    let timer = null;
     let minutes;
     let seconds;
     let isRunning = false;
     let isPaused = false;
     let currentMode = 'focus'; // 'focus', 'shortBreak', 'longBreak'
-    let sessionCount = 0;
+    let sessionCount = parseInt(localStorage.getItem('pomodoroSessionsCompleted'), 10) || 0;
     
     // Audio elements
     const bellAudio = new Audio('https://soundbible.com/mp3/service-bell_daniel_simion.mp3');
@@ -61,6 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize timer display
     updateTimerDisplay(settings.focusDuration, 0);
     sessionCountDisplay.textContent = sessionCount;
+    // Persist session count
+    localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
     
     // Event listeners
     startButton.addEventListener('click', startTimer);
@@ -136,6 +140,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (currentMode === 'focus') {
                     sessionCount++;
                     sessionCountDisplay.textContent = sessionCount;
+                    // Save updated count
+                    localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
                     
                     // Check if it's time for a long break
                     if (sessionCount % settings.sessionsBeforeLongBreak === 0) {
@@ -162,13 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 startButton.disabled = false;
                 pauseButton.disabled = true;
                 
-                // Show browser notification if permission is granted
-                if (Notification.permission === 'granted') {
-                    const notificationTitle = currentMode === 'focus' ? 'Break Over!' : 'Focus Session Complete!';
-                    const notificationBody = currentMode === 'focus' ? 'Time to focus!' : 'Take a break!';
-                    new Notification(notificationTitle, { body: notificationBody });
-                }
-                
                 return;
             }
             minutes--;
@@ -186,19 +185,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function playNotification() {
-        switch (settings.audioNotification) {
-            case 'bell':
-                bellAudio.play();
-                break;
-            case 'chime':
-                chimeAudio.play();
-                break;
-            case 'digital':
-                digitalAudio.play();
-                break;
-            case 'none':
-                // No sound
-                break;
+        // Play sound safely
+        try {
+            switch (settings.audioNotification) {
+                case 'bell':
+                    bellAudio.play().catch(() => {});
+                    break;
+                case 'chime':
+                    chimeAudio.play().catch(() => {});
+                    break;
+                case 'digital':
+                    digitalAudio.play().catch(() => {});
+                    break;
+                case 'none':
+                default:
+                    break;
+            }
+        } catch (e) {
+            console.error('Audio play failed:', e);
+        }
+
+        // Show browser notification if supported
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const title = currentMode === 'focus' ? 'Focus Session Complete!' : 'Break Over!';
+            const body = currentMode === 'focus' ? 'Time for a break!' : 'Time to focus!';
+            new Notification(title, { body });
         }
     }
     

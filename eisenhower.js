@@ -28,7 +28,11 @@ document.addEventListener('DOMContentLoaded', function() {
     renderTasks();
     
     // Event listeners
-    addTaskButton.addEventListener('click', addNewTask);
+    addTaskButton.addEventListener('click', function(e) {
+        e.preventDefault();      // Prevent any default action
+        console.log('Eisenhower: Add Task button clicked');
+        addNewTask();            // Invoke the task-adding logic
+    });
     taskInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             addNewTask();

@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Only initialize if we're on the day planner page if (!document.querySelector('.day-planner-container')) return;
+    // Only initialize if we're on the day planner page
+    if (!document.querySelector('.day-planner-container')) return;
     const currentDate = new Date();
     const dateDisplay = document.getElementById('current-date');
     const timeBlocksContainer = document.getElementById('time-blocks');
@@ -55,12 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Load saved content if exists
                 const savedContent = localStorage.getItem(`day-planner-${timeKey}`);
                 if (savedContent) {
-                    eventContent.innerHTML = savedContent;
+                    eventContent.textContent = savedContent;
                 }
 
                 // Save content when edited
                 eventContent.addEventListener('blur', function() {
-                    localStorage.setItem(`day-planner-${timeKey}`, this.innerHTML);
+                    localStorage.setItem(`day-planner-${timeKey}`, this.textContent);
+                    updateSlotStyles(); // Refresh styling immediately
                 });
 
                 timeBlock.appendChild(timeLabel);
@@ -207,9 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSlotStyles();
     setInterval(updateSlotStyles, 30000);
 
-    highlightCurrentTimeSlot();
-    // Update current slot highlight every minute
-    setInterval(highlightCurrentTimeSlot, 60000);
+    // (Removed highlightCurrentTimeSlot calls—using updateSlotStyles interval above)
 
 });
-

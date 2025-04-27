@@ -1,203 +1,163 @@
-// Task Manager Implementation
-document.addEventListener('DOMContentLoaded', function() {
-    // Only initialize if we're on the task manager page
-    if (!document.querySelector('.task-manager-container')) return;
+// task-manager.js
 
-    const taskInput = document.getElementById('task-input');
-    const addTaskBtn = document.getElementById('add-task-btn');
-    const taskList = document.getElementById('task-list');
-    const categorySelect = document.getElementById('category-select');
-    const prioritySelect = document.getElementById('priority-select');
-    const filterSelect = document.getElementById('filter-select');
-    
-    // Load tasks from localStorage
-    let tasks = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
-    
-    function generateUniqueId() {
-      return 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    }
-    // Render all tasks
-    function renderTasks() {
-        // Clear current list
-        taskList.innerHTML = '';
-        
-        // Get filter value
-        const filterValue = filterSelect ? filterSelect.value : 'all';
-        
-        // Filter tasks based on selection
-        let filteredTasks = tasks;
-        if (filterValue !== 'all') {
-            if (filterValue === 'completed') {
-                filteredTasks = tasks.filter(task => task.completed);
-            } else if (filterValue === 'active') {
-                filteredTasks = tasks.filter(task => !task.completed);
-            } else if (filterValue.startsWith('category-')) {
-                const category = filterValue.replace('category-', '');
-                filteredTasks = tasks.filter(task => task.category === category);
-            } else if (filterValue.startsWith('priority-')) {
-                const priority = filterValue.replace('priority-', '');
-                filteredTasks = tasks.filter(task => task.priority === priority);
-            }
-        }
-        
-        // Create task elements
-        filteredTasks.forEach(task => {
-            const taskItem = document.createElement('div');
-            taskItem.className = `task-item ${task.completed ? 'completed' : ''} priority-${task.priority}`;
-            taskItem.dataset.id = task.id;  // Use the unique id
+document.addEventListener('DOMContentLoaded', () => {
+  // Only initialize on Task Manager page
+  const container = document.querySelector('.task-manager-container');
+  if (!container) return;
 
-            // Create checkbox and add event listener using the task id
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'task-checkbox';
-            checkbox.checked = task.completed;
-            checkbox.addEventListener('change', function() {
-                toggleTaskComplete(task.id);
-            });
+  // DOM Elements
+  const inputEl = document.getElementById('task-manager-input');
+  const addBtn = document.getElementById('add-task-btn');
+  const listEl = document.getElementById('task-list');
+  const priorityFilterEl = document.getElementById('priority-filter');
+  const categoryFilterEl = document.getElementById('category-filter');
+  const showCompletedEl = document.getElementById('show-completed');
+  const totalEl = document.getElementById('total-tasks');
+  const completedEl = document.getElementById('completed-tasks');
+  const remainingEl = document.getElementById('remaining-tasks');
+  const prioritySelectEl = document.getElementById('task-priority');
+  const categorySelectEl = document.getElementById('task-category');
 
-            // Create delete button using the task id
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to delete this task?')) {
-                    deleteTask(task.id);
-                }
-            });
-            // Create task text
-            const taskText = document.createElement('div');
-            taskText.className = 'task-text';
-            taskText.textContent = task.text;
-            
-            // Create category badge
-            const categoryBadge = document.createElement('span');
-            categoryBadge.className = 'category-badge';
-            categoryBadge.textContent = task.category;
-            
-            // Create priority indicator
-            const priorityIndicator = document.createElement('span');
-            priorityIndicator.className = 'priority-indicator';
-            priorityIndicator.textContent = getPriorityLabel(task.priority);
-            
-            // Create delete button
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.addEventListener('click', function() {
-                deleteTask(tasks.indexOf(task));
-            });
-            
-            // Assemble task item
-            taskItem.appendChild(checkbox);
-            taskItem.appendChild(taskText);
-            taskItem.appendChild(categoryBadge);
-            taskItem.appendChild(priorityIndicator);
-            taskItem.appendChild(deleteBtn);
-            
-            taskList.appendChild(taskItem);
-            taskItem.appendChild(checkbox);
-        });
-        
-        // Update task counter if it exists
-        const taskCounter = document.getElementById('task-counter');
-        if (taskCounter) {
-            const activeCount = tasks.filter(task => !task.completed).length;
-            taskCounter.textContent = `${activeCount} active task${activeCount !== 1 ? 's' : ''}`;
-        }
-    }
-    
-    // After loading tasks from localStorage, ensure each task has an id:
-    tasks = tasks.map(task => {
-      if (!task.id) {
-        task.id = generateUniqueId();
-      }
-      return task;
+  // Task storage key
+  const STORAGE_KEY = 'adhd-tasks';
+
+  // Generate a UUID for tasks
+  function generateId() {
+    return crypto && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  }
+
+  // Load tasks from localStorage, ensuring each has an id
+  let tasks = [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    tasks = raw ? JSON.parse(raw) : [];
+  } catch {
+    tasks = [];
+  }
+  tasks = tasks.map(task => {
+    if (!task.id) task.id = generateId();
+    return task;
+  });
+
+  // Save tasks to localStorage and re-render
+  function saveTasks() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    renderTasks();
+  }
+
+  // Render task list according to filters
+  function renderTasks() {
+    listEl.innerHTML = '';
+
+    const showCompleted = showCompletedEl.checked;
+    const priorityFilter = priorityFilterEl.value;
+    const categoryFilter = categoryFilterEl.value;
+
+    const filtered = tasks.filter(task => {
+      if (!showCompleted && task.completed) return false;
+      if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
+      if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
+      return true;
     });
 
-    function addTask() {
-        if (!taskInput.value.trim()) return;
+    filtered.forEach(task => {
+      const li = document.createElement('li');
+      li.className = 'task-item' + (task.completed ? ' completed' : '');
+      li.dataset.id = task.id;
 
-        const newTask = {
-            id: generateUniqueId(),  // NEW: Unique identifier
-            text: taskInput.value.trim(),
-            completed: false,
-            category: categorySelect ? categorySelect.value : 'general',
-            priority: prioritySelect ? prioritySelect.value : 'medium',
-            createdAt: new Date().toISOString()
-        };
-
-        tasks.push(newTask);
+      // Checkbox
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'task-checkbox';
+      checkbox.checked = task.completed;
+      checkbox.addEventListener('change', () => {
+        task.completed = checkbox.checked;
         saveTasks();
+      });
 
-        // Clear input
-        taskInput.value = '';
-        taskInput.focus();
-    }
+      // Text
+      const text = document.createElement('span');
+      text.className = 'task-text';
+      text.textContent = task.text;
 
-    
-    // Toggle task completion status
-    function toggleTaskComplete(taskId) {
-    const index = tasks.findIndex(task => task.id === taskId);
-    if (index !== -1) {
-        tasks[index].completed = !tasks[index].completed;
-        saveTasks();
+      // Meta container
+      const meta = document.createElement('div');
+      meta.className = 'task-meta';
+      const prio = document.createElement('span');
+      prio.className = 'task-priority';
+      prio.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+      const cat = document.createElement('span');
+      cat.className = 'task-category';
+      cat.textContent = task.category;
+      meta.append(prio, cat);
+
+      // Actions
+      const actions = document.createElement('div');
+      actions.className = 'task-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.className = 'task-edit';
+      editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+      editBtn.addEventListener('click', () => {
+        const newText = prompt('Edit task:', task.text);
+        if (newText !== null && newText.trim()) {
+          task.text = newText.trim();
+          saveTasks();
         }
-    }
+      });
 
-    
-    
-    // Delete task
-    function deleteTask(taskId) {
-        const index = tasks.findIndex(task => task.id === taskId);
-        if (index !== -1) {
-            tasks.splice(index, 1);
-            saveTasks();
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'task-delete';
+      deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+      deleteBtn.addEventListener('click', () => {
+        if (confirm('Delete this task?')) {
+          tasks = tasks.filter(t => t.id !== task.id);
+          saveTasks();
         }
-    }
+      });
 
-    
-    // Save tasks to localStorage
-    function saveTasks() {
-        localStorage.setItem('adhd-tasks', JSON.stringify(tasks));
-        renderTasks();
-    }
-    
-    // Get priority label
-    function getPriorityLabel(priority) {
-        switch(priority) {
-            case 'high': return 'High';
-            case 'medium': return 'Med';
-            case 'low': return 'Low';
-            default: return 'Med';
-        }
-    }
-    
-    // Event listeners
-    if (addTaskBtn) {
-        addTaskBtn.addEventListener('click', addTask);
-    }
-    
-    if (taskInput) {
-        taskInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addTask();
-            }
-        });
-    }
-    
-    if (filterSelect) {
-        filterSelect.addEventListener('change', renderTasks);
-    }
-    
-    // Clear completed tasks
-    const clearCompletedBtn = document.getElementById('clear-completed-btn');
-    if (clearCompletedBtn) {
-        clearCompletedBtn.addEventListener('click', function() {
-            tasks = tasks.filter(task => !task.completed);
-            saveTasks();
-        });
-    }
-    
-    // Initial render
-    renderTasks();
+      actions.append(editBtn, deleteBtn);
+
+      li.append(checkbox, text, meta, actions);
+      listEl.appendChild(li);
+    });
+
+    // Update counts
+    const total = tasks.length;
+    const completedCount = tasks.filter(t => t.completed).length;
+    const remaining = total - completedCount;
+    if (totalEl) totalEl.textContent = total;
+    if (completedEl) completedEl.textContent = completedCount;
+    if (remainingEl) remainingEl.textContent = remaining;
+  }
+
+  // Add new task
+  function addTask() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    const newTask = {
+      id: generateId(),
+      text,
+      priority: prioritySelectEl.value || 'medium',
+      category: categorySelectEl.value || 'other',
+      completed: false,
+      createdAt: new Date().toISOString()
+    };
+    tasks.push(newTask);
+    inputEl.value = '';
+    saveTasks();
+  }
+
+  // Event listeners
+  addBtn.addEventListener('click', addTask);
+  inputEl.addEventListener('keypress', e => { if (e.key === 'Enter') addTask(); });
+  priorityFilterEl.addEventListener('change', renderTasks);
+  categoryFilterEl.addEventListener('change', renderTasks);
+  showCompletedEl.addEventListener('change', renderTasks);
+
+  // Initial render
+  renderTasks();
 });

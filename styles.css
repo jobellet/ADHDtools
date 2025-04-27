@@ -537,33 +537,28 @@ footer {
   background-color: var(--primary-color);
   border-radius: 4px;
 }
-/* 1. Solid color background (default) */
+/* 1. Solid color (default) */
 .bg-solid {
   background-color: var(--background);
 }
 
-/* 2. Gradient background */
+/* 2. Gradient */
 .bg-gradient {
-  /* Progressive transition between two theme colors */
-  background: linear-gradient(135deg, var(--primary-light), var(--primary-color)); /* Use MDN’s linear-gradient syntax */
-  /* Background shorthand covers image, position, and size */
-  /*  [oai_citation:5‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient?utm_source=chatgpt.com) [oai_citation:6‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/background?utm_source=chatgpt.com) */
+  background: linear-gradient(
+    135deg,
+    var(--primary-light),
+    var(--primary-color)
+  );
 }
 
-/* 3. Nature image background */
+/* 3. Nature image */
 .bg-nature {
-  /* Replace with your forest photo URL */
-  background-image: url('images/forest.jpg');
-  background-repeat: no-repeat;
-  background-position: center;           /* Center the image  [oai_citation:7‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/background-position?utm_source=chatgpt.com) */
-  background-size: cover;                /* Scale to fill container  [oai_citation:8‡MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS/background-size?utm_source=chatgpt.com) */
+  /* put a 1920×1080 forest photo at images/forest.jpg */
+  background: url('images/forest.jpg') center/cover no-repeat;
 }
 
-/* 4. Minimal pattern background */
+/* 4. Minimal pattern */
 .bg-minimal {
-  /* Replace with your minimal-pattern graphic URL */
-  background-image: url('images/minimal-pattern.png');
-  background-repeat: repeat;
-  background-position: top left;
-  background-size: auto;
+  /* put a 1920×1080 pattern at images/minimal-pattern.png */
+  background: url('images/minimal-pattern.png') top left repeat;
 }
