@@ -1,263 +1,140 @@
-// Task Breakdown Implementation
-document.addEventListener('DOMContentLoaded', function() {
-    // Only initialize if we're on the task breakdown page
-    if (!document.querySelector('.task-breakdown-container')) return;
+// task-breakdown.js
 
-    const mainTaskInput = document.getElementById('project-input');
-    const addMainTaskBtn = document.getElementById('add-project');
-    const taskBreakdownList = document.getElementById('project-list');
+document.addEventListener('DOMContentLoaded', () => {
+  // Only initialize if on the task breakdown page
+  const container = document.querySelector('.task-breakdown-container');
+  if (!container) return;
 
-    
-    // Load tasks from localStorage
-    let breakdownTasks = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
-    
-    // Render all tasks
-    function renderBreakdownTasks() {
-        // Clear current list
-        taskBreakdownList.innerHTML = '';
-        
-        // Create task elements
-        breakdownTasks.forEach((mainTask, mainIndex) => {
-            const mainTaskItem = document.createElement('div');
-            mainTaskItem.className = `main-task-item ${mainTask.completed ? 'completed' : ''}`;
-            
-            // Create main task header
-            const mainTaskHeader = document.createElement('div');
-            mainTaskHeader.className = 'main-task-header';
-            
-            // Create checkbox for main task
-            const mainCheckbox = document.createElement('input');
-            mainCheckbox.type = 'checkbox';
-            mainCheckbox.className = 'task-checkbox';
-            mainCheckbox.checked = mainTask.completed;
-            mainCheckbox.addEventListener('change', function() {
-                toggleMainTaskComplete(mainIndex);
-            });
-            
-            // Create main task text
-            const mainTaskText = document.createElement('div');
-            mainTaskText.className = 'main-task-text';
-            mainTaskText.textContent = mainTask.text;
-            
-            // Create progress indicator
-            const progressIndicator = document.createElement('div');
-            progressIndicator.className = 'progress-indicator';
-            const completedSubtasks = mainTask.subtasks.filter(subtask => subtask.completed).length;
-            const totalSubtasks = mainTask.subtasks.length;
-            const progressPercentage = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
-            progressIndicator.textContent = `${progressPercentage}% (${completedSubtasks}/${totalSubtasks})`;
-            
-            // Create delete button for main task
-            const deleteMainBtn = document.createElement('button');
-            deleteMainBtn.className = 'delete-btn';
-            deleteMainBtn.innerHTML = '&times;';
-            deleteMainBtn.addEventListener('click', function() {
-                deleteMainTask(mainIndex);
-            });
-            
-            // Assemble main task header
-            mainTaskHeader.appendChild(mainCheckbox);
-            mainTaskHeader.appendChild(mainTaskText);
-            mainTaskHeader.appendChild(progressIndicator);
-            mainTaskHeader.appendChild(deleteMainBtn);
-            
-            // Create subtasks container
-            const subtasksContainer = document.createElement('div');
-            subtasksContainer.className = 'subtasks-container';
-            
-            // Create subtask list
-            const subtaskList = document.createElement('div');
-            subtaskList.className = 'subtask-list';
-            
-            // Add subtasks
-            mainTask.subtasks.forEach((subtask, subtaskIndex) => {
-                const subtaskItem = document.createElement('div');
-                subtaskItem.className = `subtask-item ${subtask.completed ? 'completed' : ''}`;
-                
-                // Create checkbox for subtask
-                const subtaskCheckbox = document.createElement('input');
-                subtaskCheckbox.type = 'checkbox';
-                subtaskCheckbox.className = 'task-checkbox';
-                subtaskCheckbox.checked = subtask.completed;
-                subtaskCheckbox.addEventListener('change', function() {
-                    toggleSubtaskComplete(mainIndex, subtaskIndex);
-                });
-                
-                // Create subtask text
-                const subtaskText = document.createElement('div');
-                subtaskText.className = 'subtask-text';
-                subtaskText.textContent = subtask.text;
-                
-                // Create delete button for subtask
-                const deleteSubtaskBtn = document.createElement('button');
-                deleteSubtaskBtn.className = 'delete-btn';
-                deleteSubtaskBtn.innerHTML = '&times;';
-                deleteSubtaskBtn.addEventListener('click', function() {
-                    deleteSubtask(mainIndex, subtaskIndex);
-                });
-                
-                // Assemble subtask item
-                subtaskItem.appendChild(subtaskCheckbox);
-                subtaskItem.appendChild(subtaskText);
-                subtaskItem.appendChild(deleteSubtaskBtn);
-                
-                subtaskList.appendChild(subtaskItem);
-            });
-            
-            // Create add subtask form
-            const addSubtaskForm = document.createElement('div');
-            addSubtaskForm.className = 'add-subtask-form';
-            
-            const subtaskInput = document.createElement('input');
-            subtaskInput.type = 'text';
-            subtaskInput.className = 'subtask-input';
-            subtaskInput.placeholder = 'Add a step...';
-            
-            const addSubtaskBtn = document.createElement('button');
-            addSubtaskBtn.className = 'add-subtask-btn';
-            addSubtaskBtn.textContent = 'Add Step';
-            addSubtaskBtn.addEventListener('click', function() {
-                if (subtaskInput.value.trim()) {
-                    addSubtask(mainIndex, subtaskInput.value.trim());
-                    subtaskInput.value = '';
-                    subtaskInput.focus();
-                }
-            });
-            
-            // Handle enter key for subtask input
-            subtaskInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && this.value.trim()) {
-                    addSubtask(mainIndex, this.value.trim());
-                    this.value = '';
-                }
-            });
-            
-            // Assemble add subtask form
-            addSubtaskForm.appendChild(subtaskInput);
-            addSubtaskForm.appendChild(addSubtaskBtn);
-            
-            // Assemble subtasks container
-            subtasksContainer.appendChild(subtaskList);
-            subtasksContainer.appendChild(addSubtaskForm);
-            
-            // Assemble main task item
-            mainTaskItem.appendChild(mainTaskHeader);
-            mainTaskItem.appendChild(subtasksContainer);
-            
-            taskBreakdownList.appendChild(mainTaskItem);
-        });
-    }
-    
-    // Add new main task
-    function addMainTask() {
-        if (!mainTaskInput.value.trim()) return;
-        
-        const newMainTask = {
-            text: mainTaskInput.value.trim(),
-            completed: false,
-            subtasks: [],
-            createdAt: new Date().toISOString()
-        };
-        
-        breakdownTasks.push(newMainTask);
-        saveTasks();
-        
-        // Clear input
-        mainTaskInput.value = '';
-        mainTaskInput.focus();
-    }
-    
-    // Add new subtask
-    function addSubtask(mainIndex, subtaskText) {
-        const newSubtask = {
-            id: 'subtask-' + Date.now(),  // ensure unique id
-            text: subtaskText,
-            completed: false,
-            createdAt: new Date().toISOString()
-        };
+  const mainInput = document.getElementById('project-input');
+  const addMainBtn = document.getElementById('add-project');
+  const listContainer = document.getElementById('project-list');
+  const STORAGE_KEY = 'adhd-breakdown-tasks';
 
-        breakdownTasks[mainIndex].subtasks.push(newSubtask);
-        saveTasks();
+  // Load or initialize tree
+  let tree = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-        // Also add this subtask to the global task store for Pomodoro.
-        let globalTasks = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
-        globalTasks.push(newSubtask);
-        localStorage.setItem('adhd-tasks', JSON.stringify(globalTasks));
+  function saveTree() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tree));
+  }
 
-        // Optionally, if you have a function like updatePomodoroTaskSelect in your cross-tool code:
-        if (typeof updatePomodoroTaskSelect === 'function') {
-            updatePomodoroTaskSelect();
+  // Recursive render function
+  function renderNodes(nodes, parentEl, path = []) {
+    nodes.forEach((node, index) => {
+      const nodePath = path.concat(index);
+
+      // Create item container
+      const item = document.createElement('div');
+      item.className = path.length === 0 ? 'main-task-item' : 'subtask-item';
+      item.style.marginLeft = `${path.length * 20}px`;
+
+      // Checkbox
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = node.completed;
+      cb.addEventListener('change', () => {
+        node.completed = cb.checked;
+        saveTree();
+        renderTree();
+      });
+      item.appendChild(cb);
+
+      // Text
+      const text = document.createElement('span');
+      text.textContent = node.text;
+      // Allow inline editing on click
+      text.style.cursor = 'pointer';
+      text.title = 'Click to edit';
+      text.addEventListener('click', () => {
+        const newText = prompt('Edit this step:', node.text);
+        if (newText !== null && newText.trim()) {
+          node.text = newText.trim();
+          saveTree();
+          renderTree();
         }
-    }
+      });
+      text.style.margin = '0 8px';
+      if (node.completed) text.style.textDecoration = 'line-through';
+      item.appendChild(text);
 
-    
-    // Toggle main task completion status
-    function toggleMainTaskComplete(mainIndex) {
-        const mainTask = breakdownTasks[mainIndex];
-        mainTask.completed = !mainTask.completed;
-        
-        // If main task is completed, complete all subtasks
-        if (mainTask.completed) {
-            mainTask.subtasks.forEach(subtask => {
-                subtask.completed = true;
-            });
-        }
-        
-        saveTasks();
+      // Delete
+      const del = document.createElement('button');
+      del.innerHTML = '&times;';
+      del.title = 'Delete';
+      del.addEventListener('click', () => {
+        deleteNode(nodePath);
+      });
+      item.appendChild(del);
+
+      // Append this item
+      parentEl.appendChild(item);
+
+      // Render children
+      if (node.subtasks && node.subtasks.length) {
+        renderNodes(node.subtasks, parentEl, nodePath);
+      }
+
+      // Add Subtask form for this node
+      const addForm = document.createElement('div');
+      addForm.style.marginLeft = `${(path.length + 1) * 20}px`;
+      const subInput = document.createElement('input');
+      subInput.type = 'text';
+      subInput.placeholder = 'New step...';
+      const subBtn = document.createElement('button');
+      subBtn.textContent = 'Add Step';
+      subBtn.addEventListener('click', () => {
+        const val = subInput.value.trim();
+        if (!val) return;
+        addNode(nodePath, val);
+        subInput.value = '';
+      });
+      addForm.append(subInput, subBtn);
+      parentEl.appendChild(addForm);
+    });
+  }
+
+  function renderTree() {
+    listContainer.innerHTML = '';
+    renderNodes(tree, listContainer, []);
+  }
+
+  function addNode(path, text) {
+    const target = getNodeByPath(path);
+    if (!target.subtasks) target.subtasks = [];
+    target.subtasks.push({ text, completed: false, subtasks: [] });
+    saveTree();
+    renderTree();
+  }
+
+  function deleteNode(path) {
+    if (path.length === 1) {
+      tree.splice(path[0], 1);
+    } else {
+      const parent = getNodeByPath(path.slice(0, -1));
+      parent.subtasks.splice(path[path.length - 1], 1);
     }
-    
-    // Toggle subtask completion status
-    function toggleSubtaskComplete(mainIndex, subtaskIndex) {
-        const subtask = breakdownTasks[mainIndex].subtasks[subtaskIndex];
-        subtask.completed = !subtask.completed;
-        
-        // Check if all subtasks are completed
-        const allSubtasksCompleted = breakdownTasks[mainIndex].subtasks.every(subtask => subtask.completed);
-        
-        // Update main task completion status
-        breakdownTasks[mainIndex].completed = allSubtasksCompleted;
-        
-        saveTasks();
-    }
-    
-    // Delete main task
-    function deleteMainTask(mainIndex) {
-        if (confirm('Are you sure you want to delete this task and all its steps?')) {
-            breakdownTasks.splice(mainIndex, 1);
-            saveTasks();
-        }
-    }
-    
-    // Delete subtask
-    function deleteSubtask(mainIndex, subtaskIndex) {
-        breakdownTasks[mainIndex].subtasks.splice(subtaskIndex, 1);
-        
-        // Update main task completion status
-        const allSubtasksCompleted = breakdownTasks[mainIndex].subtasks.every(subtask => subtask.completed);
-        breakdownTasks[mainIndex].completed = allSubtasksCompleted && breakdownTasks[mainIndex].subtasks.length > 0;
-        
-        saveTasks();
-    }
-    
-    // Save tasks to localStorage
-    function saveTasks() {
-        localStorage.setItem('adhd-breakdown-tasks', JSON.stringify(breakdownTasks));
-        renderBreakdownTasks();
-    }
-    
-    // Event listeners
-    if (addMainTaskBtn) {
-        addMainTaskBtn.addEventListener('click', addMainTask);
-    }
-    
-    if (mainTaskInput) {
-        mainTaskInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addMainTask();
-            }
-        });
-    }
-    
-    // Initial render
-    renderBreakdownTasks();
+    saveTree();
+    renderTree();
+  }
+
+  function getNodeByPath(path) {
+    return path.reduce((nodes, idx, i) => {
+      return i === 0 ? tree[idx] : nodes.subtasks[idx];
+    }, null);
+  }
+
+  function addMain() {
+    const val = mainInput.value.trim();
+    if (!val) return;
+    tree.push({ text: val, completed: false, subtasks: [] });
+    mainInput.value = '';
+    saveTree();
+    renderTree();
+  }
+
+  // Bind main add
+  addMainBtn.addEventListener('click', addMain);
+  mainInput.addEventListener('keypress', e => { if (e.key === 'Enter') addMain(); });
+
+  // Initial render
+  renderTree();
 });

@@ -1,301 +1,225 @@
-// Eisenhower Matrix JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    // DOM elements
-    const taskInput = document.getElementById('task-input');
-    const addTaskButton = document.getElementById('add-task');
-    const q1TasksList = document.getElementById('q1-tasks');
-    const q2TasksList = document.getElementById('q2-tasks');
-    const q3TasksList = document.getElementById('q3-tasks');
-    const q4TasksList = document.getElementById('q4-tasks');
-    
-    // Matrix quadrants
-    const quadrants = {
-        q1: document.getElementById('important-urgent'),
-        q2: document.getElementById('important-not-urgent'),
-        q3: document.getElementById('not-important-urgent'),
-        q4: document.getElementById('not-important-not-urgent')
-    };
-    
-    // Load tasks from localStorage
-    let tasks = JSON.parse(localStorage.getItem('eisenhowerTasks')) || {
-        q1: [], // Important & Urgent
-        q2: [], // Important & Not Urgent
-        q3: [], // Not Important & Urgent
-        q4: []  // Not Important & Not Urgent
-    };
-    
-    // Initialize the matrix with saved tasks
+// eisenhower.js
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Only initialize on the Eisenhower Matrix page
+  const matrixSection = document.getElementById('eisenhower');
+  if (!matrixSection) return;
+
+  // DOM elements
+  const taskInput = document.getElementById('task-input');
+  const addTaskButton = document.getElementById('add-task');
+
+  // Create and insert import dropdown (from Task Manager & Task Breakdown)
+  if (!document.getElementById('import-task-eisenhower')) {
+    const importSelect = document.createElement('select');
+    importSelect.id = 'import-task-eisenhower';
+    importSelect.style.margin = '0 0.5rem';
+    importSelect.innerHTML = `<option value="">--Import Task--</option>`;
+    addTaskButton.parentNode.insertBefore(importSelect, addTaskButton);
+
+    // Populate import options on open
+    function populateImportOptions() {
+      importSelect.innerHTML = `<option value="">--Import Task--</option>`;
+      // Task Manager tasks
+      const manager = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
+      manager.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = `task:${t.id}`;
+        opt.textContent = `[Task] ${t.text}`;
+        importSelect.appendChild(opt);
+      });
+      // Task Breakdown subtasks
+      const projects = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
+      projects.forEach((proj, pIdx) => {
+        proj.subtasks.forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = `subtask:${pIdx}:${sub.id}`;
+          opt.textContent = `[Step] ${sub.text}`;
+          importSelect.appendChild(opt);
+        });
+      });
+    }
+    // Re-populate whenever the user focuses the import select
+    importSelect.addEventListener('focus', populateImportOptions);
+  }
+
+  // Create and insert quadrant selector
+  if (!document.getElementById('quadrant-select')) {
+    const quadrantSelect = document.createElement('select');
+    quadrantSelect.id = 'quadrant-select';
+    quadrantSelect.style.marginRight = '0.5rem';
+    quadrantSelect.innerHTML = `
+      <option value="q1">Do First (Important & Urgent)</option>
+      <option value="q2">Schedule (Important & Not Urgent)</option>
+      <option value="q3">Delegate (Not Important & Urgent)</option>
+      <option value="q4">Eliminate (Not Important & Not Urgent)</option>
+    `;
+    addTaskButton.parentNode.insertBefore(quadrantSelect, addTaskButton);
+  }
+
+  const quadrantSelect = document.getElementById('quadrant-select');
+  const importSelect = document.getElementById('import-task-eisenhower');
+
+  // Quadrant containers
+  const quadrants = {
+    q1: document.getElementById('important-urgent'),
+    q2: document.getElementById('important-not-urgent'),
+    q3: document.getElementById('not-important-urgent'),
+    q4: document.getElementById('not-important-not-urgent')
+  };
+
+  const STORAGE_KEY = 'eisenhowerTasks';
+  let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  if (!tasks || typeof tasks !== 'object') {
+    tasks = { q1: [], q2: [], q3: [], q4: [] };
+  }
+
+  function saveTasks() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function renderTasks() {
+    Object.keys(quadrants).forEach(q => {
+      const container = quadrants[q];
+      container.innerHTML = '';
+      tasks[q].forEach(task => {
+        const div = document.createElement('div');
+        div.className = 'matrix-task';
+        div.draggable = true;
+        div.dataset.id = task.id;
+        div.dataset.quadrant = q;
+
+        const span = document.createElement('span');
+        span.textContent = task.text;
+        if (task.completed) {
+          span.style.textDecoration = 'line-through';
+          span.style.opacity = '0.6';
+        }
+        div.appendChild(span);
+
+        const actions = document.createElement('div');
+        actions.className = 'task-actions';
+        const doneBtn = document.createElement('button');
+        doneBtn.innerHTML = task.completed ? '↺' : '✓';
+        doneBtn.title = task.completed ? 'Mark Incomplete' : 'Mark Complete';
+        doneBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          toggleComplete(task.id, q);
+        });
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '×';
+        delBtn.title = 'Delete';
+        delBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          deleteTask(task.id, q);
+        });
+        actions.append(doneBtn, delBtn);
+        div.appendChild(actions);
+
+        // Drag handlers
+        div.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', JSON.stringify({ id: task.id, from: q }));
+          div.classList.add('dragging');
+        });
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
+
+        container.appendChild(div);
+      });
+    });
+  }
+
+  function resolveImport() {
+    const val = importSelect.value;
+    if (!val) return null;
+    const [type, a, b] = val.split(':');
+    if (type === 'task') {
+      const all = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
+      const found = all.find(t => t.id === a);
+      return found ? found.text : null;
+    } else if (type === 'subtask') {
+      const projs = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
+      const pIdx = parseInt(a, 10);
+      if (projs[pIdx]) {
+        const sub = projs[pIdx].subtasks.find(st => st.id === b);
+        return sub ? sub.text : null;
+      }
+    }
+    return null;
+  }
+
+  function addNewTask() {
+    let text = taskInput.value.trim();
+    const imported = resolveImport();
+    if (imported) {
+      text = imported;
+      taskInput.value = '';
+      importSelect.value = '';
+    }
+    if (!text) return;
+    const quadrant = quadrantSelect.value;
+    const id = window.crypto?.randomUUID?.() || 't-' + Date.now();
+    tasks[quadrant].push({ id, text, completed: false, createdAt: new Date().toISOString() });
+    saveTasks();
     renderTasks();
-    
-    // Event listeners
-    addTaskButton.addEventListener('click', function(e) {
-        e.preventDefault();      // Prevent any default action
-        console.log('Eisenhower: Add Task button clicked');
-        addNewTask();            // Invoke the task-adding logic
+    taskInput.focus();
+    // Notify cross-tool bus
+    window.EventBus?.dispatchEvent(new CustomEvent('eisenhowerTaskAdded', {
+      detail: { id, text, quadrant }
+    }));
+  }
+
+  function toggleComplete(id, q) {
+    const t = tasks[q].find(x => x.id === id);
+    if (t) {
+      t.completed = !t.completed;
+      saveTasks();
+      renderTasks();
+      window.EventBus?.dispatchEvent(new CustomEvent('taskCompleted', { detail: t }));
+    }
+  }
+
+  function deleteTask(id, q) {
+    tasks[q] = tasks[q].filter(x => x.id !== id);
+    saveTasks();
+    renderTasks();
+  }
+
+  // Setup drop zones
+  Object.entries(quadrants).forEach(([q, container]) => {
+    container.addEventListener('dragover', e => {
+      e.preventDefault();
+      container.classList.add('drag-over');
     });
-    taskInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            addNewTask();
-        }
+    container.addEventListener('dragleave', () => {
+      container.classList.remove('drag-over');
     });
-    
-    // Setup drag and drop
-    setupDragAndDrop();
-    
-    // Functions
-    function addNewTask() {
-        const taskText = taskInput.value.trim();
-        if (taskText === '') return;
-        
-        // Create modal for quadrant selection
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <h3>Where does this task belong?</h3>
-                <p>Select the appropriate quadrant for: "${taskText}"</p>
-                <div class="quadrant-buttons">
-                    <button data-quadrant="q1" class="btn">Important & Urgent</button>
-                    <button data-quadrant="q2" class="btn">Important & Not Urgent</button>
-                    <button data-quadrant="q3" class="btn">Not Important & Urgent</button>
-                    <button data-quadrant="q4" class="btn">Not Important & Not Urgent</button>
-                </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Add event listeners to quadrant buttons
-        const buttons = modal.querySelectorAll('button');
-        buttons.forEach(button => {
-            button.addEventListener('click', function() {
-                const quadrant = this.getAttribute('data-quadrant');
-                const newTask = {
-                    id: Date.now(),
-                    text: taskText,
-                    completed: false,
-                    createdAt: new Date().toISOString()
-                };
-                
-                tasks[quadrant].push(newTask);
-                saveTasks();
-                renderTasks();
-                
-                // Remove modal
-                document.body.removeChild(modal);
-                
-                // Clear input
-                taskInput.value = '';
-                taskInput.focus();
-            });
-        });
-        
-        // Add CSS for modal
-        if (!document.getElementById('modal-styles')) {
-            const style = document.createElement('style');
-            style.id = 'modal-styles';
-            style.textContent = `
-                .modal {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0, 0, 0, 0.5);
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    z-index: 1000;
-                }
-                .modal-content {
-                    background-color: white;
-                    padding: 2rem;
-                    border-radius: 8px;
-                    max-width: 500px;
-                    width: 90%;
-                }
-                .quadrant-buttons {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 1rem;
-                    margin-top: 1.5rem;
-                }
-                .quadrant-buttons button:nth-child(1) {
-                    background-color: #ffcdd2;
-                    color: black;
-                }
-                .quadrant-buttons button:nth-child(2) {
-                    background-color: #c8e6c9;
-                    color: black;
-                }
-                .quadrant-buttons button:nth-child(3) {
-                    background-color: #fff9c4;
-                    color: black;
-                }
-                .quadrant-buttons button:nth-child(4) {
-                    background-color: #e1f5fe;
-                    color: black;
-                }
-            `;
-            document.head.appendChild(style);
+    container.addEventListener('drop', e => {
+      e.preventDefault();
+      container.classList.remove('drag-over');
+      try {
+        const { id, from } = JSON.parse(e.dataTransfer.getData('text/plain'));
+        if (from !== q) {
+          const idx = tasks[from].findIndex(x => x.id === id);
+          const [moved] = tasks[from].splice(idx, 1);
+          tasks[q].push(moved);
+          saveTasks();
+          renderTasks();
+          window.EventBus?.dispatchEvent(new CustomEvent('taskMoved', {
+            detail: { id, from, to: q }
+          }));
         }
-    }
-    
-    function renderTasks() {
-        // Clear all task lists
-        q1TasksList.innerHTML = '';
-        q2TasksList.innerHTML = '';
-        q3TasksList.innerHTML = '';
-        q4TasksList.innerHTML = '';
-        
-        // Render tasks for each quadrant
-        renderQuadrantTasks('q1', q1TasksList);
-        renderQuadrantTasks('q2', q2TasksList);
-        renderQuadrantTasks('q3', q3TasksList);
-        renderQuadrantTasks('q4', q4TasksList);
-    }
-    
-    function renderQuadrantTasks(quadrant, listElement) {
-        tasks[quadrant].forEach(task => {
-            const taskItem = document.createElement('div');
-            taskItem.className = 'task-item';
-            taskItem.setAttribute('draggable', 'true');
-            taskItem.setAttribute('data-id', task.id);
-            taskItem.setAttribute('data-quadrant', quadrant);
-            
-            const taskText = document.createElement('div');
-            taskText.className = 'task-text';
-            taskText.textContent = task.text;
-            if (task.completed) {
-                taskText.style.textDecoration = 'line-through';
-                taskText.style.opacity = '0.6';
-            }
-            
-            const taskActions = document.createElement('div');
-            taskActions.className = 'task-actions';
-            
-            const completeButton = document.createElement('button');
-            completeButton.innerHTML = task.completed ? '<i class="fas fa-undo"></i>' : '<i class="fas fa-check"></i>';
-            completeButton.title = task.completed ? 'Mark as incomplete' : 'Mark as complete';
-            completeButton.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleTaskCompletion(quadrant, task.id);
-            });
-            
-            const deleteButton = document.createElement('button');
-            deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
-            deleteButton.title = 'Delete task';
-            deleteButton.addEventListener('click', function(e) {
-                e.stopPropagation();
-                deleteTask(quadrant, task.id);
-            });
-            
-            taskActions.appendChild(completeButton);
-            taskActions.appendChild(deleteButton);
-            
-            taskItem.appendChild(taskText);
-            taskItem.appendChild(taskActions);
-            
-            listElement.appendChild(taskItem);
-        });
-    }
-    
-    function toggleTaskCompletion(quadrant, taskId) {
-        const taskIndex = tasks[quadrant].findIndex(task => task.id === taskId);
-        if (taskIndex !== -1) {
-            tasks[quadrant][taskIndex].completed = !tasks[quadrant][taskIndex].completed;
-            saveTasks();
-            renderTasks();
-        }
-    }
-    
-    function deleteTask(quadrant, taskId) {
-        tasks[quadrant] = tasks[quadrant].filter(task => task.id !== taskId);
-        saveTasks();
-        renderTasks();
-    }
-    
-    function saveTasks() {
-        localStorage.setItem('eisenhowerTasks', JSON.stringify(tasks));
-    }
-    
-    function setupDragAndDrop() {
-        // Add event listeners for drag and drop
-        document.addEventListener('dragstart', function(e) {
-            if (e.target.classList.contains('task-item')) {
-                e.dataTransfer.setData('text/plain', JSON.stringify({
-                    id: e.target.getAttribute('data-id'),
-                    quadrant: e.target.getAttribute('data-quadrant')
-                }));
-                e.target.classList.add('dragging');
-            }
-        });
-        
-        document.addEventListener('dragend', function(e) {
-            if (e.target.classList.contains('task-item')) {
-                e.target.classList.remove('dragging');
-            }
-        });
-        
-        // Add drop zones to each quadrant
-        for (const quadrantId in quadrants) {
-            const quadrant = quadrants[quadrantId];
-            
-            quadrant.addEventListener('dragover', function(e) {
-                e.preventDefault();
-                this.classList.add('drag-over');
-            });
-            
-            quadrant.addEventListener('dragleave', function() {
-                this.classList.remove('drag-over');
-            });
-            
-            quadrant.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('drag-over');
-                
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                const sourceQuadrant = data.quadrant;
-                const taskId = parseInt(data.id);
-                const targetQuadrant = this.id.replace('important-', 'q').replace('not-important-', 'q').replace('urgent', '1').replace('not-urgent', '2');
-                
-                // Only process if dropping into a different quadrant
-                if (sourceQuadrant !== targetQuadrant) {
-                    moveTask(sourceQuadrant, targetQuadrant, taskId);
-                }
-            });
-        }
-        
-        // Add CSS for drag and drop
-        if (!document.getElementById('drag-styles')) {
-            const style = document.createElement('style');
-            style.id = 'drag-styles';
-            style.textContent = `
-                .task-item.dragging {
-                    opacity: 0.5;
-                }
-                .matrix-cell.drag-over {
-                    background-color: rgba(0, 0, 0, 0.1);
-                }
-            `;
-            document.head.appendChild(style);
-        }
-    }
-    
-    function moveTask(sourceQuadrant, targetQuadrant, taskId) {
-        // Find the task in the source quadrant
-        const taskIndex = tasks[sourceQuadrant].findIndex(task => task.id === taskId);
-        if (taskIndex === -1) return;
-        
-        // Get the task and remove it from source
-        const task = tasks[sourceQuadrant][taskIndex];
-        tasks[sourceQuadrant].splice(taskIndex, 1);
-        
-        // Add to target quadrant
-        tasks[targetQuadrant].push(task);
-        
-        // Save and render
-        saveTasks();
-        renderTasks();
-    }
+      } catch (err) {
+        console.error('Drop parsing error', err);
+      }
+    });
+  });
+
+  // Bind add and Enter
+  addTaskButton.addEventListener('click', addNewTask);
+  taskInput.addEventListener('keypress', e => {
+    if (e.key === 'Enter') addNewTask();
+  });
+
+  // Initial render
+  renderTasks();
 });
