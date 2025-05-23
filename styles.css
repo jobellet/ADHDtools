@@ -562,3 +562,285 @@ footer {
   /* put a 1920×1080 pattern at images/minimal-pattern.png */
   background: url('images/minimal-pattern.png') top left repeat;
 }
+
+/* Routine Tool Styles */
+.routine-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.routine-setup, .routine-player {
+    flex: 1;
+    min-width: 300px; /* Ensures they don't get too squished */
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.routine-setup h3, .routine-player h3 {
+    margin-top: 0;
+    color: var(--primary-dark);
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.routine-setup h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.routine-container .input-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.routine-container .input-group label {
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.routine-container .input-group input[type="text"],
+.routine-container .input-group input[type="number"],
+.routine-container .input-group input[type="time"],
+.routine-container .input-group select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+}
+
+.routine-container .input-group button {
+    margin-top: 0.5rem;
+    align-self: flex-start; /* Align button to the left in column flex */
+}
+
+#current-routine-tasks {
+    list-style-type: decimal;
+    padding-left: 20px;
+    margin-bottom: 1rem;
+    max-height: 200px; /* Prevent very long lists from breaking layout */
+    overflow-y: auto; /* Add scroll for long lists */
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    padding: 0.5rem 0.5rem 0.5rem 2rem; /* Added more padding for numbers */
+}
+
+#current-routine-tasks li {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+#current-routine-tasks li:last-child {
+    border-bottom: none;
+}
+
+
+#active-routine-display, #current-task-display {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--surface);
+    border: 1px solid var(--primary-light);
+    border-radius: var(--border-radius);
+}
+
+#active-routine-display h4, #current-task-display h4 {
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+}
+
+
+.routine-controls {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.routine-controls #start-selected-routine-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+.pie-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+    min-height: 210px; /* Canvas size + some padding */
+}
+
+#routine-pie-chart {
+    border-radius: 50%; /* Optional: if you want the canvas element itself to appear circular if it had a border */
+}
+
+.routine-player .instructions {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 1rem;
+}
+
+/* Disabled state for player buttons/selects */
+.routine-player button:disabled,
+.routine-player select:disabled {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+}
+.routine-setup select:disabled,
+.routine-setup button:disabled {
+  background-color: #e0e0e0;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Responsive adjustments for routine tool */
+@media (max-width: 768px) {
+    .routine-setup, .routine-player {
+        min-width: 100%; /* Stack them on smaller screens */
+    }
+}
+
+/* Routine Tool Styles */
+.routine-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+}
+
+.routine-setup, .routine-player {
+    flex: 1;
+    min-width: 300px; /* Ensures they don't get too squished */
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.routine-setup h3, .routine-player h3 {
+    margin-top: 0;
+    color: var(--primary-dark);
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.routine-setup h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.routine-container .input-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.routine-container .input-group label {
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.routine-container .input-group input[type="text"],
+.routine-container .input-group input[type="number"],
+.routine-container .input-group input[type="time"],
+.routine-container .input-group select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+}
+
+.routine-container .input-group button {
+    margin-top: 0.5rem;
+    align-self: flex-start; /* Align button to the left in column flex */
+}
+
+#current-routine-tasks {
+    list-style-type: decimal;
+    padding-left: 20px;
+    margin-bottom: 1rem;
+    max-height: 200px; /* Prevent very long lists from breaking layout */
+    overflow-y: auto; /* Add scroll for long lists */
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    padding: 0.5rem 0.5rem 0.5rem 2rem; /* Added more padding for numbers */
+}
+
+#current-routine-tasks li {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+#current-routine-tasks li:last-child {
+    border-bottom: none;
+}
+
+
+#active-routine-display, #current-task-display {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background-color: var(--surface);
+    border: 1px solid var(--primary-light);
+    border-radius: var(--border-radius);
+}
+
+#active-routine-display h4, #current-task-display h4 {
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+}
+
+
+.routine-controls {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.routine-controls #start-selected-routine-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+.pie-chart-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0;
+    min-height: 210px; /* Canvas size + some padding */
+}
+
+#routine-pie-chart {
+    border-radius: 50%; /* Optional: if you want the canvas element itself to appear circular if it had a border */
+}
+
+.routine-player .instructions {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+    margin-top: 1rem;
+}
+
+/* Disabled state for player buttons/selects */
+.routine-player button:disabled,
+.routine-player select:disabled {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+}
+.routine-setup select:disabled,
+.routine-setup button:disabled {
+  background-color: #e0e0e0;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Responsive adjustments for routine tool */
+@media (max-width: 768px) {
+    .routine-setup, .routine-player {
+        min-width: 100%; /* Stack them on smaller screens */
+    }
+}
