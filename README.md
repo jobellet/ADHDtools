@@ -21,15 +21,11 @@ All data is stored locally in your browser. Nothing is sent to any server, ensur
 
 ## Feedback
 
-We're constantly working to improve these tools. If you have suggestions or feedback, please let us know!
-
-## Usage
-
-To use the website, simply open the `index.html` file in a web browser.
+If you have suggestions or feedback, please let me know!
 
 ## Contributing
 
-We welcome contributions to enhance the ADHD Tools Hub! If you'd like to contribute, please follow these steps:
+If you'd like to contribute, please follow these steps:
 
 1.  **Fork the repository:** Create your own copy of the project.
 2.  **Create a new branch:** Make a new branch for your changes (e.g., `feature/new-tool` or `bugfix/timer-issue`).
@@ -37,8 +33,6 @@ We welcome contributions to enhance the ADHD Tools Hub! If you'd like to contrib
 4.  **Test your changes:** Ensure your changes work as expected and don't break existing functionality.
 5.  **Commit your changes:** Write clear and concise commit messages.
 6.  **Submit a pull request:** Push your changes to your fork and open a pull request to the main repository.
-
-We appreciate your help in making this a valuable resource!
 
 ## License
 
