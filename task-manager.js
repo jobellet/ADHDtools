@@ -101,11 +101,69 @@ document.addEventListener('DOMContentLoaded', () => {
       editBtn.className = 'task-edit';
       editBtn.innerHTML = '<i class="fas fa-edit"></i>';
       editBtn.addEventListener('click', () => {
-        const newText = prompt('Edit task:', task.text);
-        if (newText !== null && newText.trim()) {
-          task.text = newText.trim();
-          saveTasks();
+        // Create editing UI
+        const editContainer = document.createElement('div');
+        editContainer.className = 'edit-task-container';
+
+        const textInput = document.createElement('input');
+        textInput.type = 'text';
+        textInput.value = task.text;
+        textInput.className = 'edit-task-text-input';
+
+        const prioritySelect = document.createElement('select');
+        prioritySelect.className = 'edit-task-priority-select';
+        const priorities = ['low', 'medium', 'high'];
+        priorities.forEach(prio => {
+          const option = document.createElement('option');
+          option.value = prio;
+          option.textContent = prio.charAt(0).toUpperCase() + prio.slice(1);
+          if (prio === task.priority) option.selected = true;
+          prioritySelect.appendChild(option);
+        });
+
+        const categorySelect = document.createElement('select');
+        categorySelect.className = 'edit-task-category-select';
+        const categories = ['work', 'personal', 'study', 'other'];
+        categories.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat;
+          option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+          if (cat === task.category) option.selected = true;
+          categorySelect.appendChild(option);
+        });
+
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.className = 'edit-task-save-btn';
+        saveBtn.addEventListener('click', () => {
+          const newText = textInput.value.trim();
+          if (newText) {
+            task.text = newText;
+            task.priority = prioritySelect.value;
+            task.category = categorySelect.value;
+            saveTasks(); // This will re-render the entire list
+          } else {
+            // Handle empty text - maybe show an error or just re-render original
+            renderTasks(); // Re-render to show original task if text is empty
+          }
+        });
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'edit-task-cancel-btn';
+        cancelBtn.addEventListener('click', () => {
+          renderTasks(); // Re-render to show original task
+        });
+
+        editContainer.append(textInput, prioritySelect, categorySelect, saveBtn, cancelBtn);
+
+        // Replace task item content with editing UI
+        const listItem = editBtn.closest('li');
+        // Temporarily remove all children. We'll restore them on save/cancel by re-rendering.
+        while (listItem.firstChild) {
+          listItem.removeChild(listItem.firstChild);
         }
+        listItem.appendChild(editContainer);
       });
 
       const deleteBtn = document.createElement('button');
@@ -118,7 +176,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      actions.append(editBtn, deleteBtn);
+      // "Send to" buttons
+      const sendToPlannerBtn = document.createElement('button');
+      sendToPlannerBtn.textContent = 'To Planner';
+      sendToPlannerBtn.className = 'send-to-planner-btn task-action-btn';
+      sendToPlannerBtn.addEventListener('click', () => {
+        const standardizedTask = {
+          id: task.id,
+          text: task.text,
+          originalTool: 'TaskManager',
+          priority: task.priority,
+          category: task.category,
+          isCompleted: task.completed,
+          // Optional fields not directly available in TaskManager task object
+          dueDate: null, 
+          duration: null, 
+          notes: null,
+          subTasks: [] 
+        };
+        window.CrossTool.sendTaskToTool(standardizedTask, 'DayPlanner');
+        alert(`Task "${task.text}" sent to Day Planner.`);
+      });
+
+      const sendToBreakdownBtn = document.createElement('button');
+      sendToBreakdownBtn.textContent = 'To Breakdown';
+      sendToBreakdownBtn.className = 'send-to-breakdown-btn task-action-btn';
+      sendToBreakdownBtn.addEventListener('click', () => {
+        const standardizedTask = {
+          id: task.id,
+          text: task.text,
+          originalTool: 'TaskManager',
+          priority: task.priority,
+          category: task.category,
+          isCompleted: task.completed,
+          dueDate: null,
+          duration: null,
+          notes: null,
+          subTasks: []
+        };
+        window.CrossTool.sendTaskToTool(standardizedTask, 'TaskBreakdown');
+        alert(`Task "${task.text}" sent to Task Breakdown.`);
+      });
+
+      const sendToRoutineBtn = document.createElement('button');
+      sendToRoutineBtn.textContent = 'To Routine';
+      sendToRoutineBtn.className = 'send-to-routine-btn task-action-btn';
+      sendToRoutineBtn.addEventListener('click', () => {
+        const standardizedTask = {
+          id: task.id,
+          text: task.text,
+          originalTool: 'TaskManager',
+          priority: task.priority,
+          category: task.category,
+          isCompleted: task.completed,
+          // For routine, duration might be relevant, but TaskManager tasks don't have it.
+          // The routine tool will likely need to prompt for duration if it receives a task without one.
+          duration: null, // TaskManager tasks don't have duration
+          dueDate: null,
+          notes: null,
+          subTasks: []
+        };
+        window.CrossTool.sendTaskToTool(standardizedTask, 'Routine');
+        alert(`Task "${task.text}" sent to Routine.`);
+      });
+
+      actions.append(editBtn, deleteBtn, sendToPlannerBtn, sendToBreakdownBtn, sendToRoutineBtn);
 
       li.append(checkbox, text, meta, actions);
       listEl.appendChild(li);
