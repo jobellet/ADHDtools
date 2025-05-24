@@ -60,6 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load the last active tool from localStorage, or default to home
     const currentTool = localStorage.getItem('currentTool') || 'home';
     showToolSection(currentTool);
+
+    // Hamburger Menu Functionality
+    const hamburgerBtn = document.querySelector('.hamburger-menu');
+    const mainNavLinks = document.getElementById('main-nav-links');
+
+    if (hamburgerBtn && mainNavLinks) {
+        hamburgerBtn.addEventListener('click', function() {
+            const isExpanded = mainNavLinks.classList.toggle('nav-open');
+            this.setAttribute('aria-expanded', isExpanded);
+        });
+    }
     
     // Initialize local storage for all tools if not already set
     if (!localStorage.getItem('pomodoroSettings')) {
