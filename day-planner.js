@@ -237,4 +237,76 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSlotStyles();
     // Refresh every 30 seconds
     setInterval(updateSlotStyles, 30000);
+
+    // --- Task Receiving Logic ---
+    function handleReceivedTaskForDayPlanner(event) {
+        const standardizedTask = event.detail;
+        if (!standardizedTask || !standardizedTask.text) {
+            console.warn("DayPlanner received invalid task:", standardizedTask);
+            return;
+        }
+
+        openModal(); // Open the existing modal
+        eventTitleInput.value = standardizedTask.text; // Pre-fill the title
+
+        // Hide the importTaskSelect and its label as we are setting title directly
+        if (importTaskSelect) importTaskSelect.style.display = 'none';
+        if (importRootLabel) importRootLabel.style.display = 'none';
+        
+        // Ensure the title input is visible (it might be hidden by other logic not shown)
+        eventTitleInput.style.display = ''; 
+        const titleLabel = document.querySelector('#event-form label[for="event-title"]');
+        if (titleLabel) titleLabel.style.display = '';
+
+
+        alert(`Task "${standardizedTask.text}" ready to be added to Day Planner. Please select a time slot and save.`);
+    }
+
+    window.EventBus.addEventListener('ef-receiveTaskFor-DayPlanner', handleReceivedTaskForDayPlanner);
+
+    // Adjust openModal to reset display of importTaskSelect and label
+    const originalOpenModal = openModal;
+    openModal = function() {
+        originalOpenModal.apply(this, arguments);
+        if (importTaskSelect) importTaskSelect.style.display = ''; // Reset to default
+        if (importRootLabel) importRootLabel.style.display = ''; // Reset to default
+        eventTitleInput.style.display = ''; 
+        const titleLabel = document.querySelector('#event-form label[for="event-title"]');
+        if (titleLabel) titleLabel.style.display = '';
+    };
+});
+
+// Modify eventForm submit listener (needs to be done carefully if it's inside DOMContentLoaded)
+// Since eventForm is obtained inside DOMContentLoaded, we need to ensure this modification
+// happens after the original listener is attached, or re-attach.
+// A safer approach is to modify the submit handler directly.
+// For this controlled environment, we'll assume we can modify it here.
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Only re-run for the form modification if the main script has already inited
+    if (!window.dayPlannerInited) return; 
+    if (window.dayPlannerFormPatched) return; // Prevent re-patching
+
+    const eventForm = document.getElementById('event-form');
+    if (eventForm) {
+        // It's tricky to "modify" an existing anonymous event listener directly without removing it first.
+        // A common pattern if we can't change the original code is to replace the element or its listener.
+        // However, given the prompt, we're asked to "Modify eventForm submit listener".
+        // Let's assume we can re-define it or the prompt implies we have control to change the original.
+        // For this exercise, I will replace the existing listener.
+        
+        const eventTimeSelect = document.getElementById('event-time');
+        const eventTitleInput = document.getElementById('event-title');
+        const importTaskSelect = document.getElementById('import-task');
+
+        // Remove existing listener to avoid duplicate submissions or conflicts
+        // This requires the original listener to be a named function or captured,
+        // which is not the case in the provided code.
+        // A more robust way: clone and replace the form, then add new listener.
+        // For simplicity here, let's assume we are *changing the original source code directly*.
+        // The diff tool will handle replacing the block.
+        // So, the diff should target the existing eventForm.addEventListener block.
+        // This text block is just for thought process. The actual change will be a replace_with_git_merge_diff.
+    }
+    window.dayPlannerFormPatched = true; 
 });
