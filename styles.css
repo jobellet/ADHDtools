@@ -109,6 +109,20 @@ header {
     color: var(--on-primary);
     padding: 2rem 0;
     text-align: center;
+    position: relative; /* For potential absolute positioning of time on mobile */
+}
+
+header .container {
+    position: relative; /* Ensure container can be a reference for absolute positioning */
+}
+
+.current-time {
+    display: block;
+    text-align: center; 
+    font-size: 0.9rem;
+    color: var(--on-primary); 
+    opacity: 0.8; 
+    margin-top: 0.5rem; 
 }
 
 nav {
@@ -275,6 +289,30 @@ footer {
 .setting-group input, .setting-group select {
     width: 100px;
 }
+
+/* Pomodoro Sticky Progress Bar */
+.sticky-progress-container {
+    position: sticky;
+    /* Default for desktop, assuming nav height around 50px */
+    /* Nav padding 1rem + 1rem, line height ~1.2rem, border 3px. Let's try 3.5rem or 56px. */
+    top: 56px; 
+    z-index: 50; /* Below nav (100) */
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0; /* Track color */
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem; /* Space below the progress bar */
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%; /* Initial width */
+    background-color: var(--primary-color); /* Fill color */
+    border-radius: 4px;
+    transition: width 0.2s ease-out; /* Smooth width changes */
+}
+/* End Pomodoro Sticky Progress Bar */
 
 /* Collapsible Pomodoro Settings */
 .pomodoro-settings-collapsible {
@@ -526,6 +564,92 @@ footer {
      /* It's an ID, so it's specific. No changes likely needed here. */
 }
 
+/* Focus Mode Fullscreen Progress Bar */
+.fullscreen-progress-container {
+    width: 100%; /* Full width of the fullscreen content area */
+    height: 10px; /* Thickness of the bar */
+    background-color: rgba(255, 255, 255, 0.2); /* Track color, subtle on dark background */
+    border-radius: 5px;
+    overflow: hidden;
+    position: absolute; /* Position it within fullscreen-content */
+    top: 0; /* Stick to top of the fullscreen area */
+    left: 0;
+    z-index: 10; /* Ensure it's above background but below timer/goal text if they have higher z-index */
+}
+
+#focus-mode-progress-bar {
+    background-color: var(--secondary-color); /* Specific color for focus mode progress */
+    /* The generic .progress-bar-fill class already handles height, width 0%, border-radius, transition */
+}
+/* End Focus Mode Fullscreen Progress Bar */
+
+/* Routine Tool Enhancements */
+#current-task-display {
+    position: sticky;
+    top: 0; /* Stick to the top of its scrolling container (.routine-player) */
+    background-color: var(--surface); 
+    z-index: 10; 
+    padding-top: 1rem; /* Maintain original top padding when stuck */
+    /* Original padding was 1rem all around. Sticky might reduce effective top padding if not set. */
+    /* Original margin-bottom: 1rem is fine. */
+}
+
+/* Responsive adjustments for Routine Tool Pie Chart */
+@media (max-width: 360px) {
+    #routine-pie-chart {
+        max-width: 100%; /* Allow canvas to shrink responsively */
+        height: auto !important; /* Maintain aspect ratio, override inline height if necessary */
+        /* HTML width/height attributes might still define aspect ratio */
+    }
+    .pie-chart-container {
+        min-height: 0; /* Allow container to shrink with the chart */
+        padding: 0.5rem 0; /* Reduce vertical padding if needed */
+    }
+}
+/* End Routine Tool Enhancements */
+
+/* About Page Details/Summary Styles */
+#about .about-content details {
+    margin-bottom: 1rem;
+    background-color: #f9f9f9; /* Consistent with other collapsibles */
+    border-radius: var(--border-radius);
+    border: 1px solid #eee;
+    box-shadow: var(--box-shadow);
+}
+
+#about .about-content details summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    list-style: none; /* Remove default disclosure triangle */
+    display: flex;
+    justify-content: space-between; /* For icon if added */
+    align-items: center;
+    color: var(--primary-dark);
+}
+
+#about .about-content details summary::-webkit-details-marker {
+    display: none; /* Hide Safari's default triangle */
+}
+
+#about .about-content details summary:hover {
+    background-color: #f0f0f0;
+}
+
+#about .about-content details[open] summary {
+    border-bottom: 1px solid #eee;
+}
+
+#about .about-content details > p, 
+#about .about-content details > ul {
+    padding: 0.5rem 1rem 1rem 1rem; /* Padding for content inside details */
+}
+
+#about .about-content details > ul {
+    padding-left: 2rem; /* More padding for lists to show bullets */
+    margin-bottom: 0; /* Remove default margin from ul if it's the direct child */
+}
+
 
 /* Eisenhower Matrix Styles */
 .eisenhower-container {
@@ -668,6 +792,10 @@ footer {
     nav ul#main-nav-links.nav-open {
         display: flex; /* Show when .nav-open class is added */
     }
+
+    nav {
+        position: static; /* Disable sticky navigation on mobile */
+    }
     
     nav li {
         margin: 0;
@@ -685,6 +813,15 @@ footer {
     .setting-group input, .setting-group select {
         width: 100%;
         margin-top: 0.5rem;
+    }
+
+    .sticky-progress-container {
+        top: 0; /* Nav is static here */
+    }
+
+    /* General Mobile Tweaks for 768px */
+    .tool-section h2 {
+        font-size: 1.5rem; /* Reduce h2 size a bit */
     }
 }
 
@@ -712,6 +849,21 @@ footer {
 
     header .container > p { /* Hide header tagline on small screens */
         display: none;
+    }
+
+    .current-time {
+        margin-top: 0.25rem; 
+        /* If h1 and tagline are hidden or very small, 
+           could also consider absolute positioning for top-right corner */
+        /* For example:
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        margin-top: 0;
+        background-color: rgba(0,0,0,0.1); 
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        */
     }
 
     /* Day Planner Header Mobile Optimization */
@@ -751,6 +903,145 @@ footer {
         /* The general .btn already has font-size: 1rem, so this might not be needed unless overridden elsewhere */
     }
     /* End Day Planner Header Mobile Optimization */
+
+    /* Eisenhower Matrix Mobile Tweaks */
+    .matrix-grid {
+        grid-template-columns: 50px 1fr 1fr; /* Even smaller header column */
+        font-size: 0.85rem; /* Reduce font size for content in cells */
+    }
+    .matrix-header-cell { /* Allow text to break and adjust line height for very small screens */
+        word-break: break-word;
+        line-height: 1.1;
+        hyphens: auto;
+    }
+    .matrix-header-cell, .matrix-cell {
+        padding: 0.4rem; /* Reduce padding in cells */
+    }
+    .matrix-cell h4 {
+        font-size: 0.9rem; /* Reduce quadrant title size */
+        margin-bottom: 0.5rem;
+    }
+    .eisenhower-container .task-input { /* Ensure input stacks nicely */
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .eisenhower-container .task-input input {
+        width: 100%;
+    }
+    .eisenhower-container .task-input button {
+        width: 100%;
+    }
+    /* End Eisenhower Matrix Mobile Tweaks */
+
+    /* Task Manager Mobile Tweaks */
+    .task-manager-container .task-input-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+     .task-manager-container .task-input-container input[type="text"],
+     .task-manager-container .task-input-container .task-options,
+     .task-manager-container .task-input-container button {
+        width: 100%;
+    }
+    .task-manager-container .task-options {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .task-manager-container .task-options select {
+        flex: 1;
+    }
+    .task-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .task-item .task-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    /* End Task Manager Mobile Tweaks */
+
+    /* Task Breakdown Mobile Tweaks */
+    .task-breakdown-container .project-input,
+    .task-breakdown-container .subtask-input {
+        flex-direction: column; /* Stack input and button */
+        gap: 0.5rem;
+    }
+    .task-breakdown-container .project-input input,
+    .task-breakdown-container .subtask-input input,
+    .task-breakdown-container .project-input button,
+    .task-breakdown-container .subtask-input button {
+        width: 100%;
+    }
+    .project-list li, .subtask-list li {
+        padding: 0.6rem 0.5rem; /* Adjust list item padding */
+    }
+    .task-breakdown-container .progress-container {
+        display: flex;
+        flex-wrap: wrap; /* Allow wrapping for label and percentage */
+        align-items: center;
+        gap: 0.5rem; /* Space between items if they wrap */
+    }
+    .task-breakdown-container .progress-label,
+    .task-breakdown-container #progress-percentage {
+        flex-basis: auto; /* Allow natural sizing */
+    }
+    .task-breakdown-container .progress-bar-container {
+        flex-grow: 1; /* Allow bar to take remaining space */
+        min-width: 100px; /* Ensure bar has some minimum width */
+    }
+    /* End Task Breakdown Mobile Tweaks */
+
+    /* Habit Tracker Mobile Tweaks */
+    .habits-calendar .calendar-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .habits-calendar .calendar-grid {
+        grid-template-columns: repeat(7, 1fr); /* Ensure 7 columns */
+        gap: 2px; /* Reduce gap */
+        font-size: 0.8rem; /* Smaller day numbers */
+    }
+    .habits-calendar .calendar-grid .day {
+        padding: 0.3rem 0.1rem; /* Reduce padding in day cells */
+        min-height: 30px; /* Smaller day cells */
+    }
+    .habit-tracker-container .habit-input {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .habit-tracker-container .habit-input input {
+        width: 100%;
+    }
+    /* End Habit Tracker Mobile Tweaks */
+
+    /* Focus Mode Preview Mobile Tweaks */
+    .focus-preview .preview-timer {
+        font-size: 2rem;
+    }
+    .focus-preview .preview-goal {
+        font-size: 0.9rem;
+    }
+    /* End Focus Mode Preview Mobile Tweaks */
+
+    /* Rewards Tool Mobile Tweaks */
+    .rewards-container .input-group { /* General input group stacking */
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .rewards-container .input-group input,
+    .rewards-container .input-group select,
+    .rewards-container .input-group button {
+        width: 100%;
+    }
+    .rewards-list-items .reward-item, 
+    .achievements-grid .achievement-item { /* Simpler layout for reward/achievement items */
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 0.75rem;
+    }
+    /* End Rewards Tool Mobile Tweaks */
+
 }
 
 /* Modal Styles */

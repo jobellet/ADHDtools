@@ -91,4 +91,23 @@ document.addEventListener('DOMContentLoaded', function() {
             q4: []  // Not Important & Not Urgent
         }));
     }
+
+    // Current Time Display in Header
+    const timeDisplayElement = document.getElementById('current-time-display');
+
+    if (timeDisplayElement) {
+        function formatTwoDigits(num) {
+            return num < 10 ? '0' + num : String(num);
+        }
+
+        function updateCurrentTime() {
+            const now = new Date();
+            const hours = formatTwoDigits(now.getHours());
+            const minutes = formatTwoDigits(now.getMinutes());
+            timeDisplayElement.textContent = `🕒 ${hours}:${minutes}`;
+        }
+
+        updateCurrentTime(); // Initial call
+        setInterval(updateCurrentTime, 60000); // Update every minute
+    }
 });

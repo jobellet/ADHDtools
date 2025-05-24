@@ -16,9 +16,11 @@ if (window.__focusModeLoaded) {
     const fullscreenContainer = document.getElementById('fullscreen-focus-mode');
     const fullscreenTimer = document.getElementById('focus-mode-timer');
     const fullscreenGoal = document.getElementById('focus-mode-goal');
+    const focusProgressBar = document.getElementById('focus-mode-progress-bar'); // Added
 
     let timerId = null;
     let remainingSeconds = 0;
+    let totalFocusSessionSeconds = 0; // Added
     let audio = null;
 
     // Format seconds as MM:SS
@@ -70,6 +72,9 @@ if (window.__focusModeLoaded) {
       fullscreenTimer.textContent = formatTime(remainingSeconds);
       fullscreenContainer.classList.remove('hidden');
 
+      totalFocusSessionSeconds = remainingSeconds; // Store total duration
+      if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
+
       // Enter fullscreen
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(console.error);
@@ -92,6 +97,13 @@ if (window.__focusModeLoaded) {
       timerId = setInterval(() => {
         remainingSeconds--;
         fullscreenTimer.textContent = formatTime(remainingSeconds);
+
+        if (focusProgressBar && totalFocusSessionSeconds > 0) {
+            const elapsedSeconds = totalFocusSessionSeconds - remainingSeconds;
+            const progressPercentage = (elapsedSeconds / totalFocusSessionSeconds) * 100;
+            focusProgressBar.style.width = Math.min(progressPercentage, 100) + '%';
+        }
+
         if (remainingSeconds <= 0) {
           endFocus(true);
         }
@@ -117,6 +129,8 @@ if (window.__focusModeLoaded) {
 
       // Clear persisted session
       localStorage.removeItem('focus-session');
+      if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
+      totalFocusSessionSeconds = 0; // Reset total duration
       alert(completed ? 'Focus session completed!' : 'Focus session ended early.');
     }
 

@@ -25,6 +25,7 @@
         <div class="container">
             <h1><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
             <p>Interactive tools to help manage ADHD symptoms and improve productivity</p>
+            <span id="current-time-display" class="current-time"></span>
         </div>
     </header>
 
@@ -123,6 +124,9 @@
             <!-- Pomodoro Timer Section -->
             <section id="pomodoro" class="tool-section">
                 <h2>Pomodoro Timer</h2>
+                <div id="pomodoro-progress-container" class="sticky-progress-container">
+                    <div id="pomodoro-progress-bar" class="progress-bar-fill"></div>
+                </div>
                 <p>The Pomodoro Technique helps you work with time, instead of against it. Break your workday into 25-minute chunks separated by five-minute breaks.</p>
                 
                 <div class="pomodoro-container">
@@ -474,6 +478,9 @@
                 
                 <div id="fullscreen-focus-mode" class="fullscreen-focus hidden">
                     <div class="fullscreen-content">
+                        <div id="focus-mode-progress-container" class="fullscreen-progress-container">
+                            <div id="focus-mode-progress-bar" class="progress-bar-fill"></div>
+                        </div>
                         <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
                         <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
                         <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus Mode</button>
@@ -540,20 +547,24 @@
                 <p>ADHD Tools Hub is a collection of interactive tools designed to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
                 
                 <div class="about-content">
-                    <h3>Why These Tools?</h3>
-                    <p>People with ADHD often struggle with executive functions like time management, organization, prioritization, and maintaining focus. The tools in this hub are specifically designed to address these challenges using evidence-based strategies.</p>
+                    <details>
+                        <summary>Why These Tools?</summary>
+                        <p>People with ADHD often struggle with executive functions like time management, organization, prioritization, and maintaining focus. The tools in this hub are specifically designed to address these challenges using evidence-based strategies.</p>
+                    </details>
                     
-                    <h3>Features</h3>
-                    <ul>
-                        <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain productivity.</li>
-                        <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.</li>
+                    <details>
+                        <summary>Features</summary>
+                        <ul>
+                            <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain productivity.</li>
+                            <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.</li>
                         <li><strong>Day Planner:</strong> Visualize your day with time blocks for better time management.</li>
                         <li><strong>Task Manager:</strong> Keep track of your to-do list with priorities and categories.</li>
                         <li><strong>Task Breakdown:</strong> Break complex tasks into smaller, manageable steps.</li>
                         <li><strong>Habit Tracker:</strong> Build consistency with daily habit tracking and streaks.</li>
                         <li><strong>Focus Mode:</strong> Minimize distractions with a clean, focused interface.</li>
                         <li><strong>Rewards:</strong> Celebrate your accomplishments with visual rewards.</li>
-                    </ul>
+                        </ul>
+                    </details>
                     
                     <h3>Privacy</h3>
                     <p>All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.</p>
