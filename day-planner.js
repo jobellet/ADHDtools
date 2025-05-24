@@ -67,7 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateTimeBlocks() {
         timeBlocksContainer.innerHTML = '';
         const now = new Date();
-        for (let hour = 6; hour < 22; hour++) {
+        // Changed from 6-21 to 0-23 to show all 24 hours
+        for (let hour = 0; hour < 24; hour++) {
             const hourRow = document.createElement('div');
             hourRow.className = 'hour-row';
 
@@ -104,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 importBtn.addEventListener('click', e => {
                     e.stopPropagation();
                     openModal();
-                    // Pre-select this slot’s time and focus the import dropdown
+                    // Pre-select this slot's time and focus the import dropdown
                     eventTimeSelect.value = timeKey;
                     importTaskSelect.focus();
                 });
@@ -150,7 +151,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate time select
     function populateTimeOptions() {
         eventTimeSelect.innerHTML = '';
-        for (let h = 6; h < 22; h++) {
+        // Changed from 6-21 to 0-23 to match all 24 hours
+        for (let h = 0; h < 24; h++) {
             [0,15,30,45].forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = `${h}-${m}`;
@@ -223,7 +225,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             if (!confirm('Clear all events?')) return;
-            for (let h=6; h<22; h++) for (let m of [0,15,30,45]) {
+            // Changed from 6-21 to 0-23 to match all 24 hours
+            for (let h=0; h<24; h++) for (let m of [0,15,30,45]) {
                 localStorage.removeItem(`day-planner-${h}-${m}`);
             }
             generateTimeBlocks();

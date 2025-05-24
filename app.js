@@ -26,6 +26,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Close mobile menu when a link is clicked
+        const mainNavLinks = document.getElementById('main-nav-links');
+        if (mainNavLinks && mainNavLinks.classList.contains('nav-open')) {
+            mainNavLinks.classList.remove('nav-open');
+            const hamburgerBtn = document.querySelector('.hamburger-menu');
+            if (hamburgerBtn) {
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
+            }
+        }
+        
         // Save the current tool to localStorage
         localStorage.setItem('currentTool', toolId);
     }
@@ -66,9 +76,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainNavLinks = document.getElementById('main-nav-links');
 
     if (hamburgerBtn && mainNavLinks) {
-        hamburgerBtn.addEventListener('click', function() {
-            const isExpanded = mainNavLinks.classList.toggle('nav-open');
-            this.setAttribute('aria-expanded', isExpanded);
+        hamburgerBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default behavior
+            e.stopPropagation(); // Prevent event bubbling
+            
+            mainNavLinks.classList.toggle('nav-open');
+            const isExpanded = mainNavLinks.classList.contains('nav-open');
+            this.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (mainNavLinks.classList.contains('nav-open') && 
+                !mainNavLinks.contains(e.target) && 
+                e.target !== hamburgerBtn) {
+                mainNavLinks.classList.remove('nav-open');
+                hamburgerBtn.setAttribute('aria-expanded', 'false');
+            }
         });
     }
     
