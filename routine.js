@@ -174,8 +174,37 @@ document.addEventListener('DOMContentLoaded', () => {
             currentRoutineTasksList.innerHTML = ''; // Clear previous tasks
             routine.tasks.forEach(task => {
                 const li = document.createElement('li');
-                li.textContent = `${task.name} (${task.duration} min)`;
-                li.dataset.taskId = task.id; // Store task ID for potential future use
+                li.dataset.taskId = task.id; // Store task ID
+
+                const taskText = document.createElement('span');
+                taskText.textContent = `${task.name} (${task.duration} min)`;
+                li.appendChild(taskText);
+
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'edit-routine-task-btn';
+                editBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // UI for editing will be handled here (Step 3)
+                    showEditTaskUI(li, task);
+                });
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-routine-task-btn';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (confirm(`Are you sure you want to delete task: "${task.name}"?`)) {
+                        deleteTaskFromRoutine(task.id);
+                    }
+                });
+                
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'routine-task-actions';
+                actionsDiv.appendChild(editBtn);
+                actionsDiv.appendChild(deleteBtn);
+                li.appendChild(actionsDiv);
+
                 currentRoutineTasksList.appendChild(li);
             });
             expectedFinishTimeDisplay.textContent = `Total duration: ${routine.totalDuration || 0} min`;
@@ -256,6 +285,117 @@ document.addEventListener('DOMContentLoaded', () => {
         taskDurationInput.value = '';
     }
 
+
+    // --- CORE DATA FUNCTIONS (Continued) ---
+    function deleteTaskFromRoutine(taskId) {
+        if (!selectedRoutineId) {
+            console.error("No routine selected to delete task from.");
+            return;
+        }
+        const routine = getRoutineById(selectedRoutineId);
+        if (!routine) {
+            console.error("Routine not found for task deletion.");
+            return;
+        }
+
+        const taskIndex = routine.tasks.findIndex(task => task.id === taskId);
+        if (taskIndex === -1) {
+            console.error("Task not found for deletion:", taskId);
+            return;
+        }
+
+        routine.tasks.splice(taskIndex, 1); // Remove the task
+
+        // Recalculate totalDuration
+        routine.totalDuration = routine.tasks.reduce((sum, task) => sum + (parseInt(task.duration, 10) || 0), 0);
+
+        saveRoutines();
+        displaySelectedRoutineDetails(); // Refresh display
+    }
+
+    // --- CORE DATA FUNCTIONS (Continued) ---
+    function editTaskInRoutine(taskId, newName, newDuration) {
+        if (!selectedRoutineId) {
+            console.error("No routine selected to edit task in.");
+            alert("Error: No routine selected.");
+            return;
+        }
+        const routine = getRoutineById(selectedRoutineId);
+        if (!routine) {
+            console.error("Routine not found for task edit.");
+            alert("Error: Selected routine not found.");
+            return;
+        }
+
+        const task = routine.tasks.find(t => t.id === taskId);
+        if (!task) {
+            console.error("Task not found for edit:", taskId);
+            alert("Error: Task to edit not found.");
+            return;
+        }
+
+        const trimmedName = newName.trim();
+        if (!trimmedName) {
+            alert("Task name cannot be empty.");
+            return; 
+        }
+
+        const duration = parseInt(newDuration, 10);
+        if (isNaN(duration) || duration <= 0) {
+            alert("Please enter a valid positive number for task duration.");
+            return;
+        }
+
+        task.name = trimmedName;
+        task.duration = duration;
+
+        // Recalculate totalDuration
+        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
+
+        saveRoutines();
+        displaySelectedRoutineDetails(); // Refresh display
+    }
+
+    // --- UI FOR EDITING TASK ---
+    function showEditTaskUI(listItem, task) {
+        // Clear current content
+        listItem.innerHTML = ''; 
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = task.name;
+        nameInput.className = 'edit-routine-task-name-input';
+
+        const durationInput = document.createElement('input');
+        durationInput.type = 'number';
+        durationInput.value = task.duration;
+        durationInput.min = '1';
+        durationInput.className = 'edit-routine-task-duration-input';
+
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save';
+        saveBtn.className = 'save-routine-task-btn';
+        saveBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const newName = nameInput.value.trim();
+            const newDuration = parseInt(durationInput.value, 10);
+            editTaskInRoutine(task.id, newName, newDuration);
+            // displaySelectedRoutineDetails() called by editTaskInRoutine will restore view
+        });
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.className = 'cancel-edit-routine-task-btn';
+        cancelBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            displaySelectedRoutineDetails(); // Restore original display
+        });
+
+        listItem.appendChild(nameInput);
+        listItem.appendChild(durationInput);
+        listItem.appendChild(saveBtn);
+        listItem.appendChild(cancelBtn);
+    }
 
     // --- INITIALIZATION ---
     function initializeRoutines() {
@@ -517,8 +657,131 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         console.log("Routine Tool Initialized with task timer, spacebar control, and input focus check.");
+
+        // --- Task Receiving Logic ---
+        window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);
+    }
+
+    function handleReceivedTaskForRoutine(event) {
+        const standardizedTask = event.detail;
+        if (!standardizedTask || !standardizedTask.text) {
+            console.warn("Routine tool received invalid task:", standardizedTask);
+            return;
+        }
+
+        let targetRoutineId = selectedRoutineId;
+
+        if (!targetRoutineId && routines.length > 0) {
+            const routineIdPrompt = prompt(`Enter ID of routine to add task to (or leave blank for current/first, or type 'NEW' to create one):\nAvailable IDs: ${routines.map(r => `${r.id} (${r.name})`).join(', ')}`, routines[0]?.id || '');
+            if (routineIdPrompt === null) { // User cancelled
+                alert("Task addition cancelled.");
+                return;
+            }
+            if (routineIdPrompt.toUpperCase() === 'NEW') {
+                 const newRoutineName = prompt("Enter name for the new routine:");
+                 if (newRoutineName) {
+                    createRoutineHandler(newRoutineName); // Assuming createRoutineHandler can take a name and sets selectedRoutineId
+                    targetRoutineId = selectedRoutineId; // createRoutineHandler should set this
+                 } else {
+                    alert("New routine creation cancelled. Task not added.");
+                    return;
+                 }
+            } else if (routineIdPrompt.trim() !== '') {
+                targetRoutineId = routineIdPrompt.trim();
+            } else if (routines.length > 0) {
+                targetRoutineId = selectedRoutineId || routines[0].id; // Default to current or first if blank
+            }
+        } else if (routines.length === 0) {
+            const newRoutineName = prompt("No routines available. Enter name to create a new routine for this task, or cancel:");
+            if (newRoutineName) {
+                createRoutineHandler(newRoutineName);
+                targetRoutineId = selectedRoutineId;
+            } else {
+                alert("No routines available and new routine not created. Please create a routine first. Task not added.");
+                return;
+            }
+        }
+        
+        if (!targetRoutineId) {
+             alert("No target routine selected or created. Task not added.");
+             return;
+        }
+
+        const targetRoutine = getRoutineById(targetRoutineId);
+        if (!targetRoutine) {
+            alert(`Routine with ID '${targetRoutineId}' not found. Task not added.`);
+            return;
+        }
+        
+        // If a different routine was selected via prompt, update the main selection
+        if (selectedRoutineId !== targetRoutineId) {
+            selectedRoutineId = targetRoutineId;
+            routineSelect.value = targetRoutineId; 
+            // Update start time input if the new routine has one
+            if (targetRoutine.startTime) {
+                routineStartTimeInput.value = targetRoutine.startTime;
+            } else {
+                routineStartTimeInput.value = '';
+            }
+        }
+
+
+        const durationString = prompt(`Enter duration (in minutes) for task '${standardizedTask.text}' in routine '${targetRoutine.name}':`, standardizedTask.duration || '10');
+        if (durationString === null) { // User cancelled prompt
+            alert("Duration entry cancelled. Task not added.");
+            return;
+        }
+        const duration = parseInt(durationString, 10);
+
+        if (isNaN(duration) || duration <= 0) {
+            alert("Invalid duration. Task not added.");
+            return;
+        }
+
+        const newRoutineTask = {
+            id: window.CrossTool.generateId(), // Use CrossTool's generator
+            name: standardizedTask.text,
+            duration: duration
+        };
+
+        targetRoutine.tasks.push(newRoutineTask);
+        targetRoutine.totalDuration = targetRoutine.tasks.reduce((sum, task) => sum + (parseInt(task.duration, 10) || 0), 0);
+
+        saveRoutines();
+        displaySelectedRoutineDetails(); // Refresh display
+        alert(`Task '${standardizedTask.text}' added to routine '${targetRoutine.name}'.`);
     }
     
+    // Modify createRoutineHandler to optionally take a name and not clear input if name is passed
+    // This is an adjustment to make the 'NEW' routine flow smoother
+    const originalCreateRoutineHandler = createRoutineHandler;
+    createRoutineHandler = function(nameFromPrompt) {
+        const routineName = typeof nameFromPrompt === 'string' ? nameFromPrompt : routineNameInput.value.trim();
+        if (!routineName) {
+            alert("Please enter a routine name.");
+            return;
+        }
+
+        const newRoutine = {
+            id: generateId(), // Use local generateId or CrossTool.generateId
+            name: routineName,
+            tasks: [],
+            startTime: null,
+            totalDuration: 0
+        };
+
+        routines.push(newRoutine);
+        saveRoutines();
+
+        selectedRoutineId = newRoutine.id; 
+        updateRoutineSelectDropdown(); 
+        displaySelectedRoutineDetails(); 
+
+        if (typeof nameFromPrompt !== 'string') { // Only clear if not programmatically called
+            routineNameInput.value = ''; 
+        }
+    };
+
     // Call initialization
     initializeRoutines();
 
