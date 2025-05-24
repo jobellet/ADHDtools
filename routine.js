@@ -30,6 +30,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
     let pieChart; // To be initialized later with Chart.js or a custom implementation
 
+    // View Switching Elements
+    const routineShowPlayerBtn = document.getElementById('routine-show-player-btn');
+    const routineShowSetupBtn = document.getElementById('routine-show-setup-btn');
+    const routinePlayerSection = document.querySelector('.routine-player'); // Assuming this is the correct selector
+    const routineSetupSection = document.querySelector('.routine-setup'); // Assuming this is the correct selector
+
     // Data Storage
     const ROUTINE_STORAGE_KEY = 'adhd-tool-routines';
     let routines = []; // Array to hold routine objects
@@ -781,6 +787,49 @@ document.addEventListener('DOMContentLoaded', () => {
             routineNameInput.value = ''; 
         }
     };
+
+    // --- VIEW SWITCHING LOGIC ---
+    function updateRoutineView(showPlayer) {
+        if (!routinePlayerSection || !routineSetupSection || !routineShowPlayerBtn || !routineShowSetupBtn) {
+            console.warn("Routine view switching elements not found.");
+            return;
+        }
+
+        if (showPlayer) {
+            routinePlayerSection.classList.remove('routine-section-hidden');
+            routineSetupSection.classList.add('routine-section-hidden');
+
+            routineShowPlayerBtn.classList.add('active', 'btn-primary');
+            routineShowPlayerBtn.classList.remove('btn-secondary');
+            routineShowPlayerBtn.setAttribute('aria-pressed', 'true');
+
+            routineShowSetupBtn.classList.remove('active', 'btn-primary');
+            routineShowSetupBtn.classList.add('btn-secondary');
+            routineShowSetupBtn.setAttribute('aria-pressed', 'false');
+        } else { // Show Setup
+            routineSetupSection.classList.remove('routine-section-hidden');
+            routinePlayerSection.classList.add('routine-section-hidden');
+
+            routineShowSetupBtn.classList.add('active', 'btn-primary');
+            routineShowSetupBtn.classList.remove('btn-secondary');
+            routineShowSetupBtn.setAttribute('aria-pressed', 'true');
+
+            routineShowPlayerBtn.classList.remove('active', 'btn-primary');
+            routineShowPlayerBtn.classList.add('btn-secondary');
+            routineShowPlayerBtn.setAttribute('aria-pressed', 'false');
+        }
+    }
+    
+    if (routineShowPlayerBtn && routineShowSetupBtn) {
+        routineShowPlayerBtn.addEventListener('click', () => updateRoutineView(true));
+        routineShowSetupBtn.addEventListener('click', () => updateRoutineView(false));
+    } else {
+        console.warn("Routine view toggle buttons not found, view switching may not work.");
+    }
+
+    // Initial view setup (ensure player is visible by default if no other logic dictates it)
+    // This is mostly redundant if HTML is set up correctly with routine-section-hidden on setup.
+    // updateRoutineView(true); // Could call this, but HTML default should be fine.
 
     // Call initialization
     initializeRoutines();

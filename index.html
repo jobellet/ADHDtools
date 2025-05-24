@@ -25,12 +25,14 @@
         <div class="container">
             <h1><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
             <p>Interactive tools to help manage ADHD symptoms and improve productivity</p>
+            <span id="current-time-display" class="current-time"></span>
         </div>
     </header>
 
     <nav>
         <div class="container">
-            <ul>
+            <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
+            <ul id="main-nav-links">
                 <li><a href="#" class="active" data-tool="home"><i class="fas fa-home"></i> Home</a></li>
                 <li><a href="#" data-tool="pomodoro"><i class="fas fa-clock"></i> Pomodoro Timer</a></li>
                 <li><a href="#" data-tool="eisenhower"><i class="fas fa-th-large"></i> Eisenhower Matrix</a></li>
@@ -122,6 +124,9 @@
             <!-- Pomodoro Timer Section -->
             <section id="pomodoro" class="tool-section">
                 <h2>Pomodoro Timer</h2>
+                <div id="pomodoro-progress-container" class="sticky-progress-container">
+                    <div id="pomodoro-progress-bar" class="progress-bar-fill"></div>
+                </div>
                 <p>The Pomodoro Technique helps you work with time, instead of against it. Break your workday into 25-minute chunks separated by five-minute breaks.</p>
                 
                 <div class="pomodoro-container">
@@ -144,10 +149,12 @@
                         <span>Sessions completed: <span id="session-count">0</span></span>
                     </div>
                     
-                    <div class="timer-settings">
-                        <h3>Settings</h3>
-                        <div class="setting-group">
-                            <label for="focus-duration">Focus Duration (minutes):</label>
+                    <details class="pomodoro-settings-collapsible">
+                        <summary>Settings <i class="fas fa-cog"></i></summary>
+                        <div class="timer-settings">
+                            <h3>Settings</h3>
+                            <div class="setting-group">
+                                <label for="focus-duration">Focus Duration (minutes):</label>
                             <input type="number" id="focus-duration" min="1" max="60" value="25">
                         </div>
                         <div class="setting-group">
@@ -172,7 +179,8 @@
                             </select>
                         </div>
                         <button id="save-settings" class="btn">Save Settings</button>
-                    </div>
+                        </div>
+                    </details>
                 </div>
             </section>
 
@@ -230,8 +238,12 @@
                     <div class="planner-header">
                         <h3 id="current-date">Today's Date</h3>
                         <div class="planner-controls">
-                            <button id="add-event-btn" class="btn"><i class="fas fa-plus"></i> Add Event</button>
-                            <button id="clear-events-btn" class="btn btn-secondary"><i class="fas fa-trash"></i> Clear All</button>
+                            <button id="add-event-btn" class="btn">
+                                <i class="fas fa-plus"></i> <span class="btn-text">Add Event</span>
+                            </button>
+                            <button id="clear-events-btn" class="btn btn-secondary">
+                                <i class="fas fa-trash"></i> <span class="btn-text">Clear All</span>
+                            </button>
                         </div>
                     </div>
 
@@ -282,9 +294,11 @@
                         <button id="add-task-btn" class="btn">Add Task</button>
                     </div>
                     
-                    <div class="task-filters">
-                        <div class="filter-group">
-                            <label>Filter by Priority:</label>
+                    <details class="task-filters-collapsible">
+                        <summary><i class="fas fa-filter"></i> Filter Tasks</summary>
+                        <div class="task-filters">
+                            <div class="filter-group">
+                                <label>Filter by Priority:</label>
                             <select id="priority-filter">
                                 <option value="all" selected>All</option>
                                 <option value="high">High</option>
@@ -307,7 +321,8 @@
                             <label>Show Completed:</label>
                             <input type="checkbox" id="show-completed">
                         </div>
-                    </div>
+                        </div>
+                    </details>
                     
                     <div class="task-list-container">
                         <h3>Tasks</h3>
@@ -393,12 +408,15 @@
                         </div>
                     </div>
                     
-                    <div class="habit-stats">
-                        <h3>Statistics</h3>
-                        <div class="stats-container" id="habit-stats">
+                    <details class="habit-stats-collapsible">
+                        <summary><i class="fas fa-chart-bar"></i> View Statistics</summary>
+                        <div class="habit-stats">
+                            <h3>Statistics</h3>
+                            <div class="stats-container" id="habit-stats">
                             <!-- Stats will be generated by JavaScript -->
                         </div>
-                    </div>
+                        </div>
+                    </details>
                 </div>
             </section>
 
@@ -416,28 +434,34 @@
                                 <input type="number" id="focus-duration-setting" min="5" max="120" value="25">
                             </div>
                             <div class="setting-group">
-                                <label for="focus-background">Background:</label>
-                                <select id="focus-background">
-                                    <option value="solid">Solid Color</option>
-                                    <option value="gradient">Gradient</option>
-                                    <option value="nature">Nature</option>
-                                    <option value="minimal">Minimal</option>
-                                </select>
-                            </div>
-                            <div class="setting-group">
-                                <label for="focus-sound">Background Sound:</label>
-                                <select id="focus-sound">
-                                    <option value="none">None</option>
-                                    <option value="white-noise">White Noise</option>
-                                    <option value="rain">Rain</option>
-                                    <option value="cafe">Cafe Ambience</option>
-                                    <option value="forest">Forest</option>
-                                </select>
-                            </div>
-                            <div class="setting-group">
                                 <label for="focus-goal">Session Goal (optional):</label>
                                 <input type="text" id="focus-goal" placeholder="What do you want to accomplish?">
                             </div>
+
+                            <details class="focus-advanced-settings">
+                                <summary>Advanced Options <i class="fas fa-cog"></i></summary>
+                                <div class="advanced-options-content" style="padding-top: 1rem;">
+                                    <div class="setting-group">
+                                        <label for="focus-background">Background:</label>
+                                        <select id="focus-background">
+                                            <option value="solid">Solid Color</option>
+                                            <option value="gradient">Gradient</option>
+                                            <option value="nature">Nature</option>
+                                            <option value="minimal">Minimal</option>
+                                        </select>
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="focus-sound">Background Sound:</label>
+                                        <select id="focus-sound">
+                                            <option value="none">None</option>
+                                            <option value="white-noise">White Noise</option>
+                                            <option value="rain">Rain</option>
+                                            <option value="cafe">Cafe Ambience</option>
+                                            <option value="forest">Forest</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     </div>
                     
@@ -454,6 +478,9 @@
                 
                 <div id="fullscreen-focus-mode" class="fullscreen-focus hidden">
                     <div class="fullscreen-content">
+                        <div id="focus-mode-progress-container" class="fullscreen-progress-container">
+                            <div id="focus-mode-progress-bar" class="progress-bar-fill"></div>
+                        </div>
                         <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
                         <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
                         <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus Mode</button>
@@ -467,7 +494,10 @@
                 <p>Celebrate your accomplishments with visual rewards. Positive reinforcement helps build motivation and consistency.</p>
                 
                 <div class="rewards-container">
-                    <div class="rewards-setup">
+                    <button id="toggle-rewards-setup-btn" class="btn btn-primary" aria-expanded="false" aria-controls="rewards-setup-panel">
+                        <i class="fas fa-plus"></i> Add New Reward
+                    </button>
+                    <div class="rewards-setup hidden" id="rewards-setup-panel">
                         <h3>Set Up Rewards</h3>
                         <div class="reward-input">
                             <div class="input-group">
@@ -517,20 +547,24 @@
                 <p>ADHD Tools Hub is a collection of interactive tools designed to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
                 
                 <div class="about-content">
-                    <h3>Why These Tools?</h3>
-                    <p>People with ADHD often struggle with executive functions like time management, organization, prioritization, and maintaining focus. The tools in this hub are specifically designed to address these challenges using evidence-based strategies.</p>
+                    <details>
+                        <summary>Why These Tools?</summary>
+                        <p>People with ADHD often struggle with executive functions like time management, organization, prioritization, and maintaining focus. The tools in this hub are specifically designed to address these challenges using evidence-based strategies.</p>
+                    </details>
                     
-                    <h3>Features</h3>
-                    <ul>
-                        <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain productivity.</li>
-                        <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.</li>
+                    <details>
+                        <summary>Features</summary>
+                        <ul>
+                            <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain productivity.</li>
+                            <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.</li>
                         <li><strong>Day Planner:</strong> Visualize your day with time blocks for better time management.</li>
                         <li><strong>Task Manager:</strong> Keep track of your to-do list with priorities and categories.</li>
                         <li><strong>Task Breakdown:</strong> Break complex tasks into smaller, manageable steps.</li>
                         <li><strong>Habit Tracker:</strong> Build consistency with daily habit tracking and streaks.</li>
                         <li><strong>Focus Mode:</strong> Minimize distractions with a clean, focused interface.</li>
                         <li><strong>Rewards:</strong> Celebrate your accomplishments with visual rewards.</li>
-                    </ul>
+                        </ul>
+                    </details>
                     
                     <h3>Privacy</h3>
                     <p>All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.</p>
@@ -545,8 +579,13 @@
                 <h2>Routine Tool</h2>
                 <p>Create, manage, and run daily routines with timed tasks.</p>
 
+                <div class="routine-view-controls" style="margin-bottom: 1rem; text-align: center;">
+                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true">Run Routine</button>
+                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false">Manage Routines</button>
+                </div>
+
                 <div class="routine-container">
-                    <div class="routine-setup">
+                    <div class="routine-setup routine-section-hidden">
                         <h3>Create & Manage Routines</h3>
                         <div class="input-group">
                             <label for="routine-name">Routine Name:</label>

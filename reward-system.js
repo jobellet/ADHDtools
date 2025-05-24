@@ -3,6 +3,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Only initialize if we're on the rewards page
     if (!document.querySelector('.rewards-container')) return;
 
+    // Toggle for "Add New Reward" form
+    const toggleRewardsSetupBtn = document.getElementById('toggle-rewards-setup-btn');
+    const rewardsSetupPanel = document.getElementById('rewards-setup-panel');
+
+    if (toggleRewardsSetupBtn && rewardsSetupPanel) {
+        toggleRewardsSetupBtn.addEventListener('click', function() {
+            const isHidden = rewardsSetupPanel.classList.toggle('hidden');
+            toggleRewardsSetupBtn.setAttribute('aria-expanded', String(!isHidden));
+            // Optionally, change button text/icon if desired
+            // e.g., this.innerHTML = isHidden ? '<i class="fas fa-plus"></i> Add New Reward' : '<i class="fas fa-times"></i> Cancel';
+        });
+    }
+
     const rewardsList = document.getElementById('rewards-list');
     const achievementsList = document.getElementById('achievements-list');
     const pointsDisplay = document.getElementById('points-display');

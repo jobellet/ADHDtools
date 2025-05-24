@@ -60,6 +60,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load the last active tool from localStorage, or default to home
     const currentTool = localStorage.getItem('currentTool') || 'home';
     showToolSection(currentTool);
+
+    // Hamburger Menu Functionality
+    const hamburgerBtn = document.querySelector('.hamburger-menu');
+    const mainNavLinks = document.getElementById('main-nav-links');
+
+    if (hamburgerBtn && mainNavLinks) {
+        hamburgerBtn.addEventListener('click', function() {
+            const isExpanded = mainNavLinks.classList.toggle('nav-open');
+            this.setAttribute('aria-expanded', isExpanded);
+        });
+    }
     
     // Initialize local storage for all tools if not already set
     if (!localStorage.getItem('pomodoroSettings')) {
@@ -79,5 +90,24 @@ document.addEventListener('DOMContentLoaded', function() {
             q3: [], // Not Important & Urgent
             q4: []  // Not Important & Not Urgent
         }));
+    }
+
+    // Current Time Display in Header
+    const timeDisplayElement = document.getElementById('current-time-display');
+
+    if (timeDisplayElement) {
+        function formatTwoDigits(num) {
+            return num < 10 ? '0' + num : String(num);
+        }
+
+        function updateCurrentTime() {
+            const now = new Date();
+            const hours = formatTwoDigits(now.getHours());
+            const minutes = formatTwoDigits(now.getMinutes());
+            timeDisplayElement.textContent = `🕒 ${hours}:${minutes}`;
+        }
+
+        updateCurrentTime(); // Initial call
+        setInterval(updateCurrentTime, 60000); // Update every minute
     }
 });
