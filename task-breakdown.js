@@ -137,4 +137,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial render
   renderTree();
+
+  // --- Task Receiving Logic ---
+  function handleReceivedTaskForTaskBreakdown(event) {
+    const standardizedTask = event.detail;
+    if (!standardizedTask || !standardizedTask.text) {
+        console.warn("TaskBreakdown received invalid task:", standardizedTask);
+        return;
+    }
+
+    const newTaskNode = {
+        text: standardizedTask.text,
+        completed: standardizedTask.isCompleted || false,
+        subtasks: [] // Transferred task added as a main task without subtasks initially
+    };
+
+    tree.push(newTaskNode); // Add to the root of the tree
+    saveTree();
+    renderTree();
+    alert(`Task '${standardizedTask.text}' added to Task Breakdown as a new main project/task.`);
+  }
+
+  window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
+
 });
