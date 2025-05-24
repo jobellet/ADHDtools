@@ -103,26 +103,25 @@ input, select {
     font-size: 1rem;
 }
 
-/* Layout Styles */
+/* Header & Nav */
 header {
     background-color: var(--primary-color);
     color: var(--on-primary);
     padding: 2rem 0;
     text-align: center;
-    position: relative; /* For potential absolute positioning of time on mobile */
+    position: relative;
 }
 
 header .container {
-    position: relative; /* Ensure container can be a reference for absolute positioning */
+    position: relative;
 }
 
 .current-time {
     display: block;
-    text-align: center; 
     font-size: 0.9rem;
-    color: var(--on-primary); 
-    opacity: 0.8; 
-    margin-top: 0.5rem; 
+    color: var(--on-primary);
+    opacity: 0.8;
+    margin-top: 0.5rem;
 }
 
 nav {
@@ -155,10 +154,20 @@ nav a:hover, nav a.active {
     border-bottom: 3px solid var(--primary-color);
 }
 
-nav a i {
-    margin-right: 0.5rem;
+/* Hamburger Menu */
+.hamburger-menu {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
+/* Main content */
 main {
     padding: 2rem 0;
 }
@@ -223,17 +232,9 @@ footer {
     font-size: 0.9rem;
 }
 
-/* Pomodoro Timer Styles */
-.pomodoro-container {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.timer-display {
-    text-align: center;
-    margin: 2rem 0;
-}
-
+/* Pomodoro Timer */
+.pomodoro-container { max-width: 600px; margin: 0 auto; }
+.timer-display { text-align: center; margin: 2rem 0; }
 .timer-circle {
     width: 250px;
     height: 250px;
@@ -246,1256 +247,194 @@ footer {
     margin: 0 auto;
     box-shadow: var(--box-shadow);
 }
-
-.time {
-    font-size: 3rem;
-    font-weight: bold;
-    color: var(--on-primary);
-}
-
-.timer-label {
-    font-size: 1.2rem;
-    color: var(--on-primary);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.timer-controls {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.session-counter {
-    text-align: center;
-    margin-bottom: 2rem;
-    font-size: 1.2rem;
-}
-
-.timer-settings {
-    background-color: #f0f0f0;
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-}
-
-.setting-group {
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.setting-group input, .setting-group select {
-    width: 100px;
-}
-
-/* Pomodoro Sticky Progress Bar */
-.sticky-progress-container {
-    position: sticky;
-    /* Default for desktop, assuming nav height around 50px */
-    /* Nav padding 1rem + 1rem, line height ~1.2rem, border 3px. Let's try 3.5rem or 56px. */
-    top: 56px; 
-    z-index: 50; /* Below nav (100) */
-    width: 100%;
-    height: 8px;
-    background-color: #e0e0e0; /* Track color */
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 1rem; /* Space below the progress bar */
-}
-
-.progress-bar-fill {
-    height: 100%;
-    width: 0%; /* Initial width */
-    background-color: var(--primary-color); /* Fill color */
-    border-radius: 4px;
-    transition: width 0.2s ease-out; /* Smooth width changes */
-}
-/* End Pomodoro Sticky Progress Bar */
+.time { font-size: 3rem; font-weight: bold; color: var(--on-primary); }
+.timer-label { font-size: 1.2rem; color: var(--on-primary); text-transform: uppercase; letter-spacing: 2px; }
+.timer-controls { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+.session-counter { text-align: center; margin-bottom: 2rem; font-size: 1.2rem; }
 
 /* Collapsible Pomodoro Settings */
 .pomodoro-settings-collapsible {
-    margin-top: 2rem; /* Add some space above the settings toggle */
-    background-color: var(--surface); /* Use surface color for consistency */
-    border-radius: var(--border-radius);
-    border: 1px solid #eee;
-    box-shadow: var(--box-shadow); /* Add a subtle shadow */
-}
-
-.pomodoro-settings-collapsible summary {
-    padding: 0.75rem 1.5rem; /* Increased padding for a better look */
-    cursor: pointer;
-    font-weight: bold;
-    list-style: none; /* Remove default disclosure triangle */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: var(--primary-dark);
-    border-bottom: 1px solid transparent; /* Prepare for border when open */
-}
-
-.pomodoro-settings-collapsible summary::-webkit-details-marker {
-    display: none; /* Hide Safari's default triangle */
-}
-
-.pomodoro-settings-collapsible summary:hover {
-    background-color: #f0f0f0;
-}
-
-.pomodoro-settings-collapsible summary i {
-    margin-left: 0.5rem;
-    transition: transform 0.2s ease-in-out; /* Add transition for icon rotation */
-}
-
-.pomodoro-settings-collapsible[open] summary {
-    border-bottom: 1px solid #ddd; /* Add border when open */
-}
-
-.pomodoro-settings-collapsible[open] summary i {
-    transform: rotate(90deg); /* Rotate icon when open */
-}
-
-/* Adjustments for the original .timer-settings div */
-.pomodoro-settings-collapsible .timer-settings {
-    /* padding: 1.5rem; /* This was the original padding */
-    /* background-color: #f0f0f0; /* This was the original background */
-    /* The div itself doesn't need a separate background or top border if details block handles it */
-    /* The .timer-settings class in HTML was kept for its children like .setting-group */
-    /* but the visual container is now the <details> element */
-    border-top: none; /* Remove original border if any, as summary border handles separation */
-}
-
-/* Focus Mode Advanced Settings */
-.focus-advanced-settings {
-    margin-top: 1.5rem; /* Space above the advanced toggle */
-    background-color: #f9f9f9; /* Slightly different background for differentiation if needed */
+    margin-top: 2rem;
+    background-color: var(--surface);
     border-radius: var(--border-radius);
     border: 1px solid #eee;
     box-shadow: var(--box-shadow);
 }
-
-.focus-advanced-settings summary {
-    padding: 0.75rem 1rem;
+.pomodoro-settings-collapsible summary {
+    padding: 0.75rem 1.5rem;
     cursor: pointer;
     font-weight: bold;
-    list-style: none; /* Remove default disclosure triangle */
+    list-style: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
     color: var(--primary-dark);
 }
+.pomodoro-settings-collapsible summary::-webkit-details-marker { display: none; }
+.pomodoro-settings-collapsible summary:hover { background-color: #f0f0f0; }
+.pomodoro-settings-collapsible summary i { margin-left: 0.5rem; transition: transform 0.2s ease-in-out; }
+.pomodoro-settings-collapsible[open] summary { border-bottom: 1px solid #ddd; }
+.pomodoro-settings-collapsible[open] summary i { transform: rotate(90deg); }
+.pomodoro-settings-collapsible .timer-settings { border-top: none; }
 
-.focus-advanced-settings summary::-webkit-details-marker {
-    display: none; /* Hide Safari's default triangle */
+/* Pomodoro Sticky Progress Bar */
+.sticky-progress-container {
+    position: sticky;
+    top: 56px;
+    z-index: 50;
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1rem;
 }
-
-.focus-advanced-settings summary:hover {
-    background-color: #f0f0f0;
-}
-
-.focus-advanced-settings summary i {
-    margin-left: 0.5rem;
-    transition: transform 0.2s ease-in-out;
-}
-
-.focus-advanced-settings[open] summary {
-    border-bottom: 1px solid #ddd; /* Add border when open */
-}
-
-.focus-advanced-settings[open] summary i {
-    transform: rotate(90deg); /* Rotate icon when open, assuming chevron-down */
-}
-
-.focus-advanced-settings .advanced-options-content {
-    padding: 1rem; /* Add padding around the content within details */
-    /* border-top: 1px solid #ddd; /* Optional: if summary has different bg */
-}
-
-.focus-advanced-settings .setting-group {
-    /* Existing styles for .setting-group should largely apply */
-    /* margin-bottom: 1rem; /* This is an existing style */
-}
-
-.focus-advanced-settings .setting-group:last-child {
-    margin-bottom: 0; /* Remove margin from last item in details */
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+    transition: width 0.2s ease-out;
 }
 
 /* Task Manager Collapsible Filters */
 .task-filters-collapsible {
-    margin-top: 1.5rem; /* Space it from the task input */
-    margin-bottom: 1.5rem; /* Space it from the task list */
+    margin: 1.5rem 0;
     background-color: #f9f9f9;
     border-radius: var(--border-radius);
     border: 1px solid #eee;
     box-shadow: var(--box-shadow);
 }
-
 .task-filters-collapsible summary {
     padding: 0.75rem 1rem;
     cursor: pointer;
     font-weight: bold;
-    list-style: none; /* Remove default disclosure triangle */
+    list-style: none;
     display: flex;
     align-items: center;
     color: var(--primary-dark);
 }
+.task-filters-collapsible summary::-webkit-details-marker { display: none; }
+.task-filters-collapsible summary:hover { background-color: #f0f0f0; }
+.task-filters-collapsible summary i { margin-right: 0.5rem; }
+.task-filters-collapsible[open] summary { border-bottom: 1px solid #eee; }
+.task-filters-collapsible .task-filters { padding: 1rem; margin-bottom: 0; }
 
-.task-filters-collapsible summary::-webkit-details-marker {
-    display: none; /* Hide Safari's default triangle */
+/* Focus Mode Advanced Settings */
+.focus-advanced-settings {
+    margin-top: 1.5rem;
+    background-color: #f9f9f9;
+    border-radius: var(--border-radius);
+    border: 1px solid #eee;
+    box-shadow: var(--box-shadow);
 }
-
-.task-filters-collapsible summary:hover {
-    background-color: #f0f0f0;
+.focus-advanced-settings summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--primary-dark);
 }
+.focus-advanced-settings summary::-webkit-details-marker { display: none; }
+.focus-advanced-settings summary:hover { background-color: #f0f0f0; }
+.focus-advanced-settings summary i { margin-left: 0.5rem; transition: transform 0.2s ease-in-out; }
+.focus-advanced-settings[open] summary { border-bottom: 1px solid #ddd; }
+.focus-advanced-settings[open] summary i { transform: rotate(90deg); }
+.focus-advanced-settings .advanced-options-content { padding: 1rem; }
 
-.task-filters-collapsible summary i {
-    margin-right: 0.5rem; /* Space between icon and text */
-    /* Optional: Add transition for icon if it's supposed to rotate, though not specified for this one */
-}
-
-.task-filters-collapsible[open] summary {
-    border-bottom: 1px solid #eee; /* Separator when open */
-}
-
-/* Styles for the .task-filters div when inside the details element */
-.task-filters-collapsible .task-filters {
-    padding: 1rem; /* Add padding to the content area */
-    /* Original styles for .task-filters (e.g., display:flex, flex-wrap, etc.) should be in a general rule for .task-filters */
-    /* This ensures they apply whether it's inside <details> or not, if it's used elsewhere. */
-    /* If .task-filters is ONLY used here, these styles could be merged or specific: */
-    /* Example: display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; */
-    /* For now, assuming .task-filters already has its necessary display properties. */
-    /* If the original .task-filters had margin-bottom, it might need adjustment here: */
-    margin-bottom: 0; /* Remove bottom margin if it was on .task-filters, as <details> now handles spacing */
-}
-
-/* Ensure .filter-group items are spaced correctly */
-.task-filters-collapsible .task-filters .filter-group {
-    /* Default .filter-group styles (flex, align-items, margin-right, margin-bottom) should still apply. */
-    /* If flex-direction of .task-filters is column, then margin-right might not be needed. */
-    /* Check if any adjustments are needed for responsive behavior. */
-}
-
-.task-filters-collapsible .task-filters .filter-group:last-child {
-    margin-bottom: 0; /* Remove margin from the last filter group if it's too much */
-}
-
-/* General Utility Styles */
-.hidden {
-    display: none !important;
-}
-
-/* Rewards Tool Styles */
+/* Rewards Tool Toggle */
 #toggle-rewards-setup-btn {
-    margin-bottom: 1.5rem; /* Space between button and other content like rewards list */
-    display: flex; /* Align icon and text */
+    margin-bottom: 1.5rem;
+    display: flex;
     align-items: center;
 }
-
-#toggle-rewards-setup-btn i {
-    margin-right: 0.5rem; /* Space between icon and text */
-}
-
+#toggle-rewards-setup-btn i { margin-right: 0.5rem; }
 .rewards-setup {
-    /* Styles for the setup panel itself, like padding, border, etc. */
-    /* These might already exist or can be added/adjusted here. */
-    /* For example, if it needs a border when visible: */
+    display: none;
     padding: 1.5rem;
     border: 1px solid #ddd;
     border-radius: var(--border-radius);
-    background-color: var(--surface); /* Or #f9f9f9 for consistency with other panels */
-    margin-top: 1rem; /* If the button is not full width, this ensures space below */
+    background-color: var(--surface);
+    margin-top: 1rem;
 }
 
-/* Habit Tracker Collapsible Statistics */
+/* Habit Tracker Collapsible Stats */
 .habit-stats-collapsible {
     margin-top: 1.5rem;
     background-color: #f9f9f9;
     border-radius: var(--border-radius);
     border: 1px solid #eee;
-    box-shadow: var(--box-shadow); /* Added for consistency with other collapsibles */
+    box-shadow: var(--box-shadow);
 }
-
 .habit-stats-collapsible summary {
     padding: 0.75rem 1rem;
     cursor: pointer;
     font-weight: bold;
-    list-style: none; 
+    list-style: none;
     display: flex;
     align-items: center;
     color: var(--primary-dark);
 }
-
-.habit-stats-collapsible summary::-webkit-details-marker {
-    display: none; /* Hide Safari's default triangle */
-}
-
-.habit-stats-collapsible summary:hover {
-    background-color: #f0f0f0;
-}
-
-.habit-stats-collapsible summary i {
-    margin-right: 0.5rem;
-    transition: transform 0.2s ease-in-out; /* Added for consistency */
-}
-
-.habit-stats-collapsible[open] summary {
-    border-bottom: 1px solid #eee;
-}
-
-.habit-stats-collapsible[open] summary i {
-    transform: rotate(90deg); /* Assuming a chevron-right or similar icon might be used, or for future consistency */
-                               /* The current icon fa-chart-bar doesn't rotate, but this is harmless */
-}
-
-.habit-stats-collapsible .habit-stats {
-    padding: 1rem; 
-    /* Original .habit-stats had no specific background or top border, this is fine. */
-}
-
-.habit-stats-collapsible .habit-stats h3 {
-    /* Default h3 styling should apply. If it had a top margin that's now too much, it could be adjusted: */
-    /* margin-top: 0; */ /* Example if needed */
-}
-
-.habit-stats-collapsible .stats-container {
-     /* Existing styles for .stats-container#habit-stats should apply. */
-     /* It's an ID, so it's specific. No changes likely needed here. */
-}
-
-/* Focus Mode Fullscreen Progress Bar */
-.fullscreen-progress-container {
-    width: 100%; /* Full width of the fullscreen content area */
-    height: 10px; /* Thickness of the bar */
-    background-color: rgba(255, 255, 255, 0.2); /* Track color, subtle on dark background */
-    border-radius: 5px;
-    overflow: hidden;
-    position: absolute; /* Position it within fullscreen-content */
-    top: 0; /* Stick to top of the fullscreen area */
-    left: 0;
-    z-index: 10; /* Ensure it's above background but below timer/goal text if they have higher z-index */
-}
-
-#focus-mode-progress-bar {
-    background-color: var(--secondary-color); /* Specific color for focus mode progress */
-    /* The generic .progress-bar-fill class already handles height, width 0%, border-radius, transition */
-}
-/* End Focus Mode Fullscreen Progress Bar */
+.habit-stats-collapsible summary::-webkit-details-marker { display: none; }
+.habit-stats-collapsible summary:hover { background-color: #f0f0f0; }
+.habit-stats-collapsible summary i { margin-right: 0.5rem; transition: transform 0.2s ease-in-out; }
+.habit-stats-collapsible[open] summary { border-bottom: 1px solid #eee; }
+.habit-stats-collapsible[open] summary i { transform: rotate(90deg); }
+.habit-stats-collapsible .habit-stats { padding: 1rem; }
 
 /* Routine Tool Enhancements */
 #current-task-display {
     position: sticky;
-    top: 0; /* Stick to the top of its scrolling container (.routine-player) */
-    background-color: var(--surface); 
-    z-index: 10; 
-    padding-top: 1rem; /* Maintain original top padding when stuck */
-    /* Original padding was 1rem all around. Sticky might reduce effective top padding if not set. */
-    /* Original margin-bottom: 1rem is fine. */
+    top: 0;
+    background-color: var(--surface);
+    z-index: 10;
+    padding-top: 1rem;
 }
 
-/* Responsive adjustments for Routine Tool Pie Chart */
-@media (max-width: 360px) {
-    #routine-pie-chart {
-        max-width: 100%; /* Allow canvas to shrink responsively */
-        height: auto !important; /* Maintain aspect ratio, override inline height if necessary */
-        /* HTML width/height attributes might still define aspect ratio */
-    }
-    .pie-chart-container {
-        min-height: 0; /* Allow container to shrink with the chart */
-        padding: 0.5rem 0; /* Reduce vertical padding if needed */
-    }
-}
-/* End Routine Tool Enhancements */
-
-/* About Page Details/Summary Styles */
-#about .about-content details {
-    margin-bottom: 1rem;
-    background-color: #f9f9f9; /* Consistent with other collapsibles */
-    border-radius: var(--border-radius);
-    border: 1px solid #eee;
-    box-shadow: var(--box-shadow);
-}
-
-#about .about-content details summary {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    font-weight: bold;
-    list-style: none; /* Remove default disclosure triangle */
-    display: flex;
-    justify-content: space-between; /* For icon if added */
-    align-items: center;
-    color: var(--primary-dark);
-}
-
-#about .about-content details summary::-webkit-details-marker {
-    display: none; /* Hide Safari's default triangle */
-}
-
-#about .about-content details summary:hover {
-    background-color: #f0f0f0;
-}
-
-#about .about-content details[open] summary {
-    border-bottom: 1px solid #eee;
-}
-
-#about .about-content details > p, 
-#about .about-content details > ul {
-    padding: 0.5rem 1rem 1rem 1rem; /* Padding for content inside details */
-}
-
-#about .about-content details > ul {
-    padding-left: 2rem; /* More padding for lists to show bullets */
-    margin-bottom: 0; /* Remove default margin from ul if it's the direct child */
-}
-
-
-/* Eisenhower Matrix Styles */
-.eisenhower-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.matrix-controls {
-    margin-bottom: 2rem;
-}
-
-.task-input {
-    display: flex;
-    gap: 1rem;
-}
-
-.task-input input {
-    flex: 1;
-}
-
+/* Eisenhower Matrix */
+.eisenhower-container { max-width: 800px; margin: 0 auto; }
+.matrix-controls { margin-bottom: 2rem; }
+.task-input { display: flex; gap: 1rem; }
 .matrix-grid {
     display: grid;
     grid-template-columns: 120px 1fr 1fr;
-    grid-template-rows: auto 1fr 1fr;
     gap: 1px;
-    background-color: #ddd;
-    border: 1px solid #ddd;
+    background: #ddd;
     border-radius: var(--border-radius);
     overflow: hidden;
 }
-
-.matrix-header-row, .matrix-row {
-    display: contents;
-}
-
-.matrix-header-cell, .matrix-cell {
+.matrix-cell, .matrix-header-cell {
     background-color: var(--surface);
     padding: 1rem;
 }
+.matrix-header-cell { font-weight: bold; text-align: center; }
+.matrix-cell h4 { text-align: center; margin-bottom: 1rem; }
 
-.matrix-header-cell {
-    font-weight: bold;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.matrix-cell {
-    min-height: 200px;
-}
-
-#important-urgent {
-    background-color: #ffcdd2; /* Light red */
-}
-
-#important-not-urgent {
-    background-color: #c8e6c9; /* Light green */
-}
-
-#not-important-urgent {
-    background-color: #fff9c4; /* Light yellow */
-}
-
-#not-important-not-urgent {
-    background-color: #e1f5fe; /* Light blue */
-}
-
-.matrix-cell h4 {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.task-list {
-    min-height: 150px;
-}
-
-.task-item {
-    background-color: white;
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.task-item .task-text {
-    flex: 1;
-}
-
-.task-item .task-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.task-item .task-actions button {
-    padding: 0.25rem;
-    font-size: 0.8rem;
-}
-
-/* Hamburger Menu Styles */
-.hamburger-menu {
-    display: none; /* Hidden by default */
-    background: none;
-    border: none;
-    color: var(--on-surface);
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    position: absolute; /* Added for positioning */
-    right: 20px;     /* Added for positioning */
-    top: 50%;        /* Added for positioning */
-    transform: translateY(-50%); /* Added for positioning */
-}
-
-/* Responsive Styles */
+/* Responsive Overrides */
 @media (max-width: 768px) {
-    .hamburger-menu {
-        display: block; /* Show on mobile */
-    }
-
-    nav .container { /* Ensure container allows relative positioning of hamburger */
-        position: relative;
-    }
-
-    nav ul#main-nav-links {
-        display: none; /* Hide nav links by default on mobile */
-        flex-direction: column;
-        position: absolute;
-        top: 100%; /* Position below the nav bar */
-        left: 0;
-        right: 0;
-        background-color: var(--surface);
-        box-shadow: var(--box-shadow);
-        z-index: 99; /* Ensure it's above other content but below sticky nav if issues arise */
-    }
-
-    nav ul#main-nav-links.nav-open {
-        display: flex; /* Show when .nav-open class is added */
-    }
-
-    nav {
-        position: static; /* Disable sticky navigation on mobile */
-    }
-    
-    nav li {
-        margin: 0;
-    }
-    
-    .matrix-grid {
-        grid-template-columns: 80px 1fr 1fr;
-    }
-    
-    .setting-group {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .setting-group input, .setting-group select {
-        width: 100%;
-        margin-top: 0.5rem;
-    }
-
-    .sticky-progress-container {
-        top: 0; /* Nav is static here */
-    }
-
-    /* General Mobile Tweaks for 768px */
-    .tool-section h2 {
-        font-size: 1.5rem; /* Reduce h2 size a bit */
-    }
+    .hamburger-menu { display: block; }
+    nav ul#main-nav-links { display: none; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); box-shadow: var(--box-shadow); }
+    nav ul#main-nav-links.nav-open { display: flex; }
+    nav { position: static; }
+    .matrix-grid { grid-template-columns: 80px 1fr 1fr; }
+    .setting-group { flex-direction: column; align-items: flex-start; }
+    .setting-group input, .setting-group select { width: 100%; margin-top: 0.5rem; }
+    .sticky-progress-container { top: 0; }
+    .tool-section h2 { font-size: 1.5rem; }
 }
-
 @media (max-width: 480px) {
-    .timer-circle {
-        width: 200px;
-        height: 200px;
-    }
-    
-    .time {
-        font-size: 2.5rem;
-    }
-    
-    .timer-controls {
-        flex-direction: column;
-    }
-    
-    .matrix-grid {
-        grid-template-columns: 60px 1fr 1fr;
-    }
-    
-    .matrix-header-cell, .matrix-cell {
-        padding: 0.5rem;
-    }
-
-    header .container > p { /* Hide header tagline on small screens */
-        display: none;
-    }
-
-    .current-time {
-        margin-top: 0.25rem; 
-        /* If h1 and tagline are hidden or very small, 
-           could also consider absolute positioning for top-right corner */
-        /* For example:
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        margin-top: 0;
-        background-color: rgba(0,0,0,0.1); 
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
-        */
-    }
-
-    /* Day Planner Header Mobile Optimization */
-    .planner-header {
-        padding: 0.75rem 1rem;
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping */
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .planner-header h3#current-date {
-        font-size: 1.1rem; /* Slightly reduced font size */
-        margin-bottom: 0.5rem; /* Space if buttons wrap below */
-        flex-basis: 100%; /* Make title take full width initially to force buttons below if needed */
-        text-align: center; /* Center title if it's alone on a line */
-    }
-
-    .planner-header .planner-controls {
-        display: flex;
-        gap: 0.5rem; /* Space between buttons */
-        flex-basis: 100%; /* Allow controls to take full width and center */
-        justify-content: center; /* Center buttons if they are on their own line */
-    }
-
-    .planner-controls .btn .btn-text {
-        display: none;
-    }
-
-    .planner-controls .btn i {
-        margin-right: 0; /* Remove margin originally for text */
-    }
-
-    .planner-controls .btn {
-        padding: 0.6rem 0.8rem; /* Make buttons smaller for icon-only */
-        /* font-size: 1rem; /* Ensure icon size is not affected if button font-size was used for text */
-        /* The general .btn already has font-size: 1rem, so this might not be needed unless overridden elsewhere */
-    }
-    /* End Day Planner Header Mobile Optimization */
-
-    /* Eisenhower Matrix Mobile Tweaks */
-    .matrix-grid {
-        grid-template-columns: 50px 1fr 1fr; /* Even smaller header column */
-        font-size: 0.85rem; /* Reduce font size for content in cells */
-    }
-    .matrix-header-cell { /* Allow text to break and adjust line height for very small screens */
-        word-break: break-word;
-        line-height: 1.1;
-        hyphens: auto;
-    }
-    .matrix-header-cell, .matrix-cell {
-        padding: 0.4rem; /* Reduce padding in cells */
-    }
-    .matrix-cell h4 {
-        font-size: 0.9rem; /* Reduce quadrant title size */
-        margin-bottom: 0.5rem;
-    }
-    .eisenhower-container .task-input { /* Ensure input stacks nicely */
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .eisenhower-container .task-input input {
-        width: 100%;
-    }
-    .eisenhower-container .task-input button {
-        width: 100%;
-    }
-    /* End Eisenhower Matrix Mobile Tweaks */
-
-    /* Task Manager Mobile Tweaks */
-    .task-manager-container .task-input-container {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-     .task-manager-container .task-input-container input[type="text"],
-     .task-manager-container .task-input-container .task-options,
-     .task-manager-container .task-input-container button {
-        width: 100%;
-    }
-    .task-manager-container .task-options {
-        display: flex;
-        gap: 0.5rem;
-    }
-    .task-manager-container .task-options select {
-        flex: 1;
-    }
-    .task-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-    .task-item .task-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-    /* End Task Manager Mobile Tweaks */
-
-    /* Task Breakdown Mobile Tweaks */
-    .task-breakdown-container .project-input,
-    .task-breakdown-container .subtask-input {
-        flex-direction: column; /* Stack input and button */
-        gap: 0.5rem;
-    }
-    .task-breakdown-container .project-input input,
-    .task-breakdown-container .subtask-input input,
-    .task-breakdown-container .project-input button,
-    .task-breakdown-container .subtask-input button {
-        width: 100%;
-    }
-    .project-list li, .subtask-list li {
-        padding: 0.6rem 0.5rem; /* Adjust list item padding */
-    }
-    .task-breakdown-container .progress-container {
-        display: flex;
-        flex-wrap: wrap; /* Allow wrapping for label and percentage */
-        align-items: center;
-        gap: 0.5rem; /* Space between items if they wrap */
-    }
-    .task-breakdown-container .progress-label,
-    .task-breakdown-container #progress-percentage {
-        flex-basis: auto; /* Allow natural sizing */
-    }
-    .task-breakdown-container .progress-bar-container {
-        flex-grow: 1; /* Allow bar to take remaining space */
-        min-width: 100px; /* Ensure bar has some minimum width */
-    }
-    /* End Task Breakdown Mobile Tweaks */
-
-    /* Habit Tracker Mobile Tweaks */
-    .habits-calendar .calendar-header {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .habits-calendar .calendar-grid {
-        grid-template-columns: repeat(7, 1fr); /* Ensure 7 columns */
-        gap: 2px; /* Reduce gap */
-        font-size: 0.8rem; /* Smaller day numbers */
-    }
-    .habits-calendar .calendar-grid .day {
-        padding: 0.3rem 0.1rem; /* Reduce padding in day cells */
-        min-height: 30px; /* Smaller day cells */
-    }
-    .habit-tracker-container .habit-input {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .habit-tracker-container .habit-input input {
-        width: 100%;
-    }
-    /* End Habit Tracker Mobile Tweaks */
-
-    /* Focus Mode Preview Mobile Tweaks */
-    .focus-preview .preview-timer {
-        font-size: 2rem;
-    }
-    .focus-preview .preview-goal {
-        font-size: 0.9rem;
-    }
-    /* End Focus Mode Preview Mobile Tweaks */
-
-    /* Rewards Tool Mobile Tweaks */
-    .rewards-container .input-group { /* General input group stacking */
-        flex-direction: column;
-        align-items: stretch;
-    }
-    .rewards-container .input-group input,
-    .rewards-container .input-group select,
-    .rewards-container .input-group button {
-        width: 100%;
-    }
-    .rewards-list-items .reward-item, 
-    .achievements-grid .achievement-item { /* Simpler layout for reward/achievement items */
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0.75rem;
-    }
-    /* End Rewards Tool Mobile Tweaks */
-
-}
-
-/* Modal Styles */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.modal.active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.modal-content {
-  background: var(--surface);
-  padding: 20px;
-  border-radius: var(--border-radius);
-  width: 90%;
-  max-width: 400px;
-  position: relative;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  cursor: pointer;
-  font-size: 1.5rem;
-}
-
-/* Day Planner Responsive Adjustments */
-.day-planner-container {
-  padding: 1rem;
-  overflow-x: auto;
-}
-
-.time-block {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem;
-  border-bottom: 1px solid #ddd;
-  transition: background-color 0.3s ease;
-}
-
-.time-block:hover {
-  background-color: #f0f0f0;
-}
-
-.time-label {
-  width: 80px;
-  flex-shrink: 0;
-  font-weight: bold;
-}
-
-.event-content {
-  flex-grow: 1;
-  min-height: 40px;
-  padding: 0.5rem;
-  border: 1px solid #eee;
-  border-radius: var(--border-radius);
-  margin-left: 0.5rem;
-}
-
-/* Day Planner Custom Layout for Hour Rows */ .hour-row { display: flex; align-items: center; border-bottom: 1px solid #ddd; padding: 0.5rem 0; }
-
-.hour-label { width: 80px; /* Fixed width for the hour label */ text-align: right; margin-right: 1rem; font-weight: bold; }
-
-.time-blocks-row { display: flex; flex-grow: 1; gap: 1rem; /* Space between the 15-min columns */ }
-
-.time-block { flex: 1; border: 1px solid #eee; border-radius: var(--border-radius); padding: 0.5rem; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; background-color: var(--surface); }
-
-.time-block .time-label { font-size: 0.8rem; margin-bottom: 0.25rem; font-weight: bold; }
-
-.event-content { width: 100%; min-height: 40px; border: none; outline: none; }
-
-/* Style for slots that have already elapsed */
-.event-content.past-slot {
-  color: #999;                /* Lighter text */
-  background-color: #f0f0f0;    /* Light gray background */
-  font-weight: normal;
-}
-
-/* Style for the current (active) slot */
-.event-content.current-slot {
-  border: 2px solid var(--primary-color);
-  background-color: #fff;     /* White background for clarity */
-}
-
-/* Progress bar container within the current slot */
-.progress-bar-container {
-  width: 100%;
-  height: 5px;
-  background-color: #ddd;
-  border-radius: 4px;
-  margin-top: 4px;
-}
-
-/* Progress bar element showing elapsed time */
-.progress-bar {
-  height: 100%;
-  background-color: var(--primary-color);
-  border-radius: 4px;
-}
-/* 1. Solid color (default) */
-.bg-solid {
-  background-color: var(--background);
-}
-
-/* 2. Gradient */
-.bg-gradient {
-  background: linear-gradient(
-    135deg,
-    var(--primary-light),
-    var(--primary-color)
-  );
-}
-
-/* 3. Nature image */
-.bg-nature {
-  /* put a 1920×1080 forest photo at images/forest.jpg */
-  background: url('images/forest.jpg') center/cover no-repeat;
-}
-
-/* 4. Minimal pattern */
-.bg-minimal {
-  /* put a 1920×1080 pattern at images/minimal-pattern.png */
-  background: url('images/minimal-pattern.png') top left repeat;
-}
-
-/* Routine Tool Styles */
-.routine-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-}
-
-.routine-setup, .routine-player {
-    flex: 1;
-    min-width: 300px; /* Ensures they don't get too squished */
-    background-color: #f9f9f9;
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.routine-setup h3, .routine-player h3 {
-    margin-top: 0;
-    color: var(--primary-dark);
-    border-bottom: 2px solid var(--primary-light);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.routine-setup h4 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: var(--primary-color);
-}
-
-.routine-container .input-group {
-    margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.routine-container .input-group label {
-    margin-bottom: 0.25rem;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
-
-.routine-container .input-group input[type="text"],
-.routine-container .input-group input[type="number"],
-.routine-container .input-group input[type="time"],
-.routine-container .input-group select {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: var(--border-radius);
-}
-
-.routine-container .input-group button {
-    margin-top: 0.5rem;
-    align-self: flex-start; /* Align button to the left in column flex */
-}
-
-#current-routine-tasks {
-    list-style-type: decimal;
-    padding-left: 20px;
-    margin-bottom: 1rem;
-    max-height: 200px; /* Prevent very long lists from breaking layout */
-    overflow-y: auto; /* Add scroll for long lists */
-    background-color: #fff;
-    border: 1px solid #eee;
-    border-radius: var(--border-radius);
-    padding: 0.5rem 0.5rem 0.5rem 2rem; /* Added more padding for numbers */
-}
-
-#current-routine-tasks li {
-    padding: 0.25rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-#current-routine-tasks li:last-child {
-    border-bottom: none;
-}
-
-
-#active-routine-display, #current-task-display {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background-color: var(--surface);
-    border: 1px solid var(--primary-light);
-    border-radius: var(--border-radius);
-}
-
-#active-routine-display h4, #current-task-display h4 {
-    color: var(--primary-dark);
-    margin-bottom: 0.5rem;
-}
-
-
-.routine-controls {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.routine-controls #start-selected-routine-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-}
-
-.pie-chart-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 1rem 0;
-    min-height: 210px; /* Canvas size + some padding */
-}
-
-#routine-pie-chart {
-    border-radius: 50%; /* Optional: if you want the canvas element itself to appear circular if it had a border */
-}
-
-.routine-player .instructions {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #666;
-    margin-top: 1rem;
-}
-
-/* Disabled state for player buttons/selects */
-.routine-player button:disabled,
-.routine-player select:disabled {
-    background-color: #e0e0e0;
-    cursor: not-allowed;
-}
-.routine-setup select:disabled,
-.routine-setup button:disabled {
-  background-color: #e0e0e0;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-/* Responsive adjustments for routine tool */
-@media (max-width: 768px) {
-    .routine-setup, .routine-player {
-        min-width: 100%; /* Stack them on smaller screens */
-    }
-}
-
-/* Routine Tool Styles */
-.routine-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-}
-
-.routine-setup, .routine-player {
-    flex: 1;
-    min-width: 300px; /* Ensures they don't get too squished */
-    background-color: #f9f9f9;
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.routine-setup h3, .routine-player h3 {
-    margin-top: 0;
-    color: var(--primary-dark);
-    border-bottom: 2px solid var(--primary-light);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.routine-setup h4 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    color: var(--primary-color);
-}
-
-.routine-container .input-group {
-    margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.routine-container .input-group label {
-    margin-bottom: 0.25rem;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
-
-.routine-container .input-group input[type="text"],
-.routine-container .input-group input[type="number"],
-.routine-container .input-group input[type="time"],
-.routine-container .input-group select {
-    width: 100%;
-    padding: 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: var(--border-radius);
-}
-
-.routine-container .input-group button {
-    margin-top: 0.5rem;
-    align-self: flex-start; /* Align button to the left in column flex */
-}
-
-#current-routine-tasks {
-    list-style-type: decimal;
-    padding-left: 20px;
-    margin-bottom: 1rem;
-    max-height: 200px; /* Prevent very long lists from breaking layout */
-    overflow-y: auto; /* Add scroll for long lists */
-    background-color: #fff;
-    border: 1px solid #eee;
-    border-radius: var(--border-radius);
-    padding: 0.5rem 0.5rem 0.5rem 2rem; /* Added more padding for numbers */
-}
-
-#current-routine-tasks li {
-    padding: 0.25rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-#current-routine-tasks li:last-child {
-    border-bottom: none;
-}
-
-
-#active-routine-display, #current-task-display {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background-color: var(--surface);
-    border: 1px solid var(--primary-light);
-    border-radius: var(--border-radius);
-}
-
-#active-routine-display h4, #current-task-display h4 {
-    color: var(--primary-dark);
-    margin-bottom: 0.5rem;
-}
-
-
-.routine-controls {
-    text-align: center;
-    margin-bottom: 1rem;
-}
-
-.routine-controls #start-selected-routine-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-}
-
-.pie-chart-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 1rem 0;
-    min-height: 210px; /* Canvas size + some padding */
-}
-
-#routine-pie-chart {
-    border-radius: 50%; /* Optional: if you want the canvas element itself to appear circular if it had a border */
-}
-
-.routine-player .instructions {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #666;
-    margin-top: 1rem;
-}
-
-/* Disabled state for player buttons/selects */
-.routine-player button:disabled,
-.routine-player select:disabled {
-    background-color: #e0e0e0;
-    cursor: not-allowed;
-}
-.routine-setup select:disabled,
-.routine-setup button:disabled {
-  background-color: #e0e0e0;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-/* Routine Tool View Controls */
-.routine-view-controls { /* This class was added with inline styles in HTML, let's define it here */
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-.routine-view-controls .btn {
-    margin: 0 0.5rem;
-}
-
-.routine-view-controls .btn:not(.active) {
-    background-color: var(--surface); /* Or a lighter shade */
-    color: var(--primary-color);
-    border: 1px solid var(--primary-color);
-}
-
-.routine-section-hidden {
-    display: none !important;
-}
-
-/* Responsive adjustments for routine tool */
-@media (max-width: 768px) {
-    .routine-setup, .routine-player {
-        min-width: 100%; /* Stack them on smaller screens */
-        flex-basis: 100%; /* Ensure they take full width when visible */
-    }
-
-    .routine-container { /* Ensure container allows children to stack */
-        flex-direction: column;
-    }
-
-    .routine-view-controls {
-        display: flex; /* Make buttons stack nicely on mobile */
-        flex-direction: column;
-        gap: 0.5rem; /* Add some space between stacked buttons */
-    }
-
-    .routine-view-controls .btn {
-        width: 100%; /* Make buttons take full width on mobile */
-        margin: 0; /* Remove horizontal margins */
-    }
+    .timer-circle { width: 200px; height: 200px; }
+    .time { font-size: 2.5rem; }
+    .timer-controls { flex-direction: column; }
+    header .container > p { display: none; }
+    .current-time { margin-top: 0.25rem; }
+    /* Eisenhower small tweaks */
+    .matrix-grid { grid-template-columns: 60px 1fr 1fr; font-size: 0.85rem; }
+    .matrix-header-cell, .matrix-cell { padding: 0.5rem; }
+    .matrix-cell h4 { font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .eisenhower-container .task-input { flex-direction: column; gap: 0.5rem; }
+    .eisenhower-container .task-input input, .eisenhower-container .task-input button { width: 100%; }
 }
