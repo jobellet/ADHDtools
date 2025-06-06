@@ -374,23 +374,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Check for completed pomodoro sessions
-        const pomodoroSessions = JSON.parse(localStorage.getItem('pomodoro-sessions')) || [];
-        
-        pomodoroSessions.forEach(session => {
-            if (session.completed && new Date(session.endTime) > new Date(lastPointsCheck)) {
-                // Award 2 points per completed focus session
-                newPoints += 2;
-                
-                // Add achievement
+        // Check for completed pomodoro sessions based on session count
+        const pomodoroCount = parseInt(localStorage.getItem('pomodoroSessionsCompleted'), 10) || 0;
+        const lastPomodoroCount = parseInt(localStorage.getItem('last-pomodoro-count') || '0', 10);
+        const newPomodoros = Math.max(0, pomodoroCount - lastPomodoroCount);
+
+        if (newPomodoros > 0) {
+            newPoints += newPomodoros * 2; // 2 points per focus session
+            for (let i = 0; i < newPomodoros; i++) {
                 newAchievements.push({
                     name: 'Completed a focus session',
-                    date: session.endTime,
+                    date: new Date().toISOString(),
                     type: 'pomodoro',
                     points: 2
                 });
             }
-        });
+            localStorage.setItem('last-pomodoro-count', pomodoroCount);
+        }
         
         // Update points and achievements if any were earned
         if (newPoints > 0) {
