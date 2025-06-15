@@ -427,7 +427,8 @@ footer {
     }
     
     nav {
-        position: relative; /* Change from static to relative */
+        position: sticky; /* Keep navigation accessible while scrolling */
+        top: 0;
         z-index: 100;
     }
     
