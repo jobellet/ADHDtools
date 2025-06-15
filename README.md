@@ -17,7 +17,7 @@ Interactive tools to help manage ADHD symptoms and improve productivity.
 
 ## Privacy
 
-All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.
+All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private. An optional Chrome extension is available in `chrome-extension/` if you want to sync your data across devices using Chrome's built‑in sync storage.
 
 ## Feedback
 
@@ -33,6 +33,16 @@ If you'd like to contribute, please follow these steps:
 4.  **Test your changes:** Ensure your changes work as expected and don't break existing functionality.
 5.  **Commit your changes:** Write clear and concise commit messages.
 6.  **Submit a pull request:** Push your changes to your fork and open a pull request to the main repository.
+
+## Chrome Sync Extension
+
+The `chrome-extension/` folder contains a minimal extension that syncs your ADHD Tools data using Chrome's cloud storage. It includes small SVG icons (feel free to replace them with your own). To use it:
+
+1. Open Chrome and navigate to `chrome://extensions`.
+2. Enable **Developer mode** and choose **Load unpacked**.
+3. Select the `chrome-extension` folder.
+4. Visit the ADHD Tools website (the extension only runs on `jobellet.github.io/ADHDtools/`) and click the extension icon.
+5. Click **Sync Now** to upload your current data. The extension will automatically keep it synced while you use the site. Use the popup buttons to clear local or synced data at any time.
 
 ## License
 
