@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const dropdownMenu = document.getElementById("title-dropdown");
     dropdownTrigger.addEventListener("click", () => {
         dropdownMenu.classList.toggle("show");
+        switchTool("home");
     });
 
     // Toggle hamburger menu
@@ -58,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
         hamburger.setAttribute("aria-expanded", !expanded);
         mainNavLinks.classList.toggle("show");
+        switchTool("home");
     });
 
     // Update time display every second
