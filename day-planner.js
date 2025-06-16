@@ -127,6 +127,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem(`day-planner-${timeKey}`, eventContent.innerHTML);
                     updateSlotStyles();
                 });
+
+                // Long-press on smartphones to import a breakdown step
+                let pressTimer;
+                const longPressDuration = 600; // ms
+                const startPress = () => {
+                    if (window.innerWidth <= 480) {
+                        pressTimer = setTimeout(() => {
+                            openModal();
+                            eventTimeSelect.value = timeKey;
+                            importTaskSelect.focus();
+                        }, longPressDuration);
+                    }
+                };
+                const cancelPress = () => clearTimeout(pressTimer);
+                eventContent.addEventListener('touchstart', startPress);
+                eventContent.addEventListener('touchend', cancelPress);
+                eventContent.addEventListener('touchmove', cancelPress);
+                eventContent.addEventListener('touchcancel', cancelPress);
                 timeBlock.appendChild(eventContent);
 
                 rowContainer.appendChild(timeBlock);

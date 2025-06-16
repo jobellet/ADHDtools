@@ -725,4 +725,9 @@ footer {
         min-height: 40px;
         font-size: 0.8rem;
     }
+
+    /* Hide breakdown icon on small screens */
+    .breakdown-import-btn {
+        display: none;
+    }
 }
