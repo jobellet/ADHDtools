@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const startSelectedRoutineBtn = document.getElementById('start-selected-routine-btn');
     const currentTaskNameDisplay = document.getElementById('current-task-name');
     const currentTaskTimeLeftDisplay = document.getElementById('current-task-time-left');
+    const currentTaskDisplay = document.getElementById('current-task-display');
     
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
     let pieChart; // To be initialized later with Chart.js or a custom implementation
@@ -650,19 +651,30 @@ document.addEventListener('DOMContentLoaded', () => {
         addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler);
         setStartTimeBtn.addEventListener('click', setRoutineStartTimeHandler);
         startSelectedRoutineBtn.addEventListener('click', startSelectedRoutineHandler);
-        
+
         document.addEventListener('keydown', (event) => {
             // Check if focus is on an input field, if so, don't trigger spacebar advance
             if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT' || document.activeElement.tagName === 'TEXTAREA')) {
                 return;
             }
             if (event.code === 'Space' && activeRoutine) { // Allow advance even if timer isn't "running" (e.g. task finished, waiting)
-                event.preventDefault(); 
+                event.preventDefault();
                 manualAdvanceTask();
             }
         });
+
+        if (currentTaskDisplay) {
+            const tapHandler = (e) => {
+                if (activeRoutine) {
+                    e.preventDefault();
+                    manualAdvanceTask();
+                }
+            };
+            currentTaskDisplay.addEventListener('click', tapHandler);
+            currentTaskDisplay.addEventListener('touchstart', tapHandler);
+        }
         
-        console.log("Routine Tool Initialized with task timer, spacebar control, and input focus check.");
+        console.log("Routine Tool Initialized with task timer, spacebar/tap control, and input focus check.");
 
         // --- Task Receiving Logic ---
         window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);

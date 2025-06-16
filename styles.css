@@ -395,6 +395,7 @@ footer {
     background-color: var(--surface);
     z-index: 10;
     padding-top: 1rem;
+    cursor: pointer;
 }
 
 /* Eisenhower Matrix */

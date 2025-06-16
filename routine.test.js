@@ -234,6 +234,38 @@ function runRoutineTests() {
         console.error("Test 6 Failed: Delete Task - ", e);
     }
 
+    // Test 7: Tap to advance task
+    try {
+        console.log("--- Running Test 7: Tap Advance ---");
+        localStorage.clear();
+        initializeRoutines();
+
+        const routineNameInput = document.getElementById('routine-name');
+        routineNameInput.value = "Tap Routine";
+        createRoutineHandler();
+
+        const taskNameInput = document.getElementById('task-name');
+        const taskDurationInput = document.getElementById('task-duration');
+        taskNameInput.value = "Task One";
+        taskDurationInput.value = "5";
+        addTaskToRoutineHandler();
+        taskNameInput.value = "Task Two";
+        taskDurationInput.value = "5";
+        addTaskToRoutineHandler();
+
+        const routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
+        activateRoutine(routines[0].id);
+
+        const display = document.getElementById('current-task-display');
+        display.dispatchEvent(new Event('click'));
+
+        const curName = document.getElementById('current-task-name').textContent;
+        assert(curName === "Task Two", "Tap event advances to next task.");
+        console.log("Test 7 Passed: Tap Advance");
+    } catch (e) {
+        console.error("Test 7 Failed: Tap Advance - ", e);
+    }
+
 
     console.log("--- Routine Tool Unit Tests Finished ---");
 }
