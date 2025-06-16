@@ -52,7 +52,12 @@ chrome.storage.sync.get(['syncEnabled', 'adhdToolsData'], res => {
   if (res.adhdToolsData) {
     applyData(res.adhdToolsData);
   }
-  if (res.syncEnabled) {
+  if (typeof res.syncEnabled === 'undefined') {
+    chrome.storage.sync.set({ syncEnabled: true }, () => {
+      doSync();
+      syncInterval = setInterval(doSync, 10000);
+    });
+  } else if (res.syncEnabled) {
     syncInterval = setInterval(doSync, 10000);
   }
 });
