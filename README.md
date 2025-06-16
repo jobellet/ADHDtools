@@ -12,6 +12,7 @@ Interactive tools to help manage ADHD symptoms and improve productivity.
 *   **Task Manager:** Keep track of your to-do list with priorities and categories.
 *   **Task Breakdown:** Break complex tasks into smaller, manageable steps.
 *   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
+*   **Routine Tool:** Create and run daily routines with timed tasks.
 *   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
 
