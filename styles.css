@@ -133,13 +133,15 @@ nav {
 }
 
 nav ul {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
     justify-content: center;
+    padding: 0;
 }
 
 nav li {
-    margin: 0 0.5rem;
+    margin: 0;
 }
 
 nav a {
@@ -147,6 +149,7 @@ nav a {
     padding: 1rem;
     color: var(--on-surface);
     border-bottom: 3px solid transparent;
+    text-align: center;
 }
 
 nav a:hover, nav a.active {
@@ -437,33 +440,34 @@ footer {
         position: relative; /* Ensure container is positioned */
     }
     
-    nav ul#main-nav-links { 
-        display: none; 
-        flex-direction: column; 
-        position: absolute; 
-        top: 100%; 
-        left: 0; 
-        right: 0; 
-        background: var(--surface); 
+    nav ul#main-nav-links {
+        display: none;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 0.5rem;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--surface);
         box-shadow: var(--box-shadow);
         padding: 10px 0;
         z-index: 99;
     }
-    
-    nav ul#main-nav-links.nav-open { 
-        display: flex; 
+
+    nav ul#main-nav-links.nav-open {
+        display: grid;
     }
-    
+
     nav ul#main-nav-links li {
-        width: 100%;
         margin: 0;
     }
-    
+
     nav ul#main-nav-links li a {
         padding: 12px 20px;
         width: 100%;
         border-bottom: none;
         border-left: 3px solid transparent;
+        text-align: center;
     }
     
     nav ul#main-nav-links li a:hover,
