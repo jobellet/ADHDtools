@@ -42,8 +42,9 @@ The `chrome-extension/` folder contains a minimal extension that syncs your ADHD
 1. Open Chrome and navigate to `chrome://extensions`.
 2. Enable **Developer mode** and choose **Load unpacked**.
 3. Select the `chrome-extension` folder.
-4. Visit the ADHD Tools website (the extension only runs on `jobellet.github.io/ADHDtools/`) and click the extension icon.
-5. Click **Sync Now** to upload your current data. The extension will automatically keep it synced while you use the site. Use the popup buttons to clear local or synced data at any time.
+4. Make sure you are signed into Chrome with the same Google account on each device you want to keep in sync.
+5. Visit the ADHD Tools website (the extension only runs on `jobellet.github.io/ADHDtools/`) and click the extension icon.
+6. Sync starts automatically after the extension is installed. Use **Sync Now** to force a manual sync if needed. The popup also lets you clear local or synced data at any time.
 
 ## License
 
