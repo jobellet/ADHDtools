@@ -395,6 +395,7 @@ footer {
     background-color: var(--surface);
     z-index: 10;
     padding-top: 1rem;
+    cursor: pointer;
 }
 
 /* Eisenhower Matrix */
@@ -628,6 +629,57 @@ footer {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+/* Routine Tool Layout */
+.routine-view-controls {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.routine-layout {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.routine-setup,
+.routine-player {
+    background-color: var(--surface);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+@media (min-width: 768px) {
+    .routine-layout {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+    }
+}
+
+.routine-task-list {
+    list-style: none;
+    padding: 0;
+}
+
+.routine-task-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.routine-task-list li:last-child {
+    border-bottom: none;
+}
+
+.routine-task-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.routine-section-hidden {
+    display: none;
 }
 
 /* Responsive adjustments for day planner */

@@ -594,12 +594,12 @@
                 <h2>Routine Tool</h2>
                 <p>Create, manage, and run daily routines with timed tasks.</p>
 
-                <div class="routine-view-controls" style="margin-bottom: 1rem; text-align: center;">
+                <div class="routine-view-controls" >
                     <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true">Run Routine</button>
                     <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false">Manage Routines</button>
                 </div>
 
-                <div class="routine-container">
+                <div class="routine-container routine-layout">
                     <div class="routine-setup routine-section-hidden">
                         <h3>Create & Manage Routines</h3>
                         <div class="input-group">
@@ -635,7 +635,7 @@
                         <h3>Active Routine</h3>
                         <div id="active-routine-display">
                             <h4 id="current-routine-name">No routine selected/active</h4>
-                            <ul id="current-routine-tasks">
+                            <ul id="current-routine-tasks" class="routine-task-list">
                                 <!-- Tasks will be listed here -->
                             </ul>
                             <p>Expected Finish Time: <span id="expected-finish-time">-</span></p>
@@ -653,7 +653,7 @@
                         <div class="pie-chart-container">
                             <canvas id="routine-pie-chart" width="200" height="200"></canvas>
                         </div>
-                        <p class="instructions">Press SPACEBAR to mark current task as done.</p>
+                        <p class="instructions">Tap the screen or press SPACEBAR to mark the current task as done.</p>
                     </div>
                 </div>
             </section>
