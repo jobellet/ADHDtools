@@ -37,7 +37,19 @@ If you'd like to contribute, please follow these steps:
 
 ## Chrome Sync Extension
 
-The `chrome-extension/` folder contains a minimal extension that syncs your ADHD Tools data using Chrome's cloud storage. It includes small SVG icons (feel free to replace them with your own). To use it:
+The `chrome-extension/` folder contains a minimal extension that syncs your ADHD Tools data using Chrome's cloud storage. It includes small SVG icons (feel free to replace them with your own).
+
+### Downloading the Extension
+
+If you're not familiar with Git, you can download the folder directly from GitHub:
+
+1. Visit [`jobellet/ADHDtools`](https://github.com/jobellet/ADHDtools).
+2. Click the **Code** button and choose **Download ZIP**.
+3. Extract the archive and locate the `chrome-extension` folder inside.
+
+### Installing on Desktop
+
+To load the extension in Chrome:
 
 1. Open Chrome and navigate to `chrome://extensions`.
 2. Enable **Developer mode** and choose **Load unpacked**.
@@ -45,6 +57,16 @@ The `chrome-extension/` folder contains a minimal extension that syncs your ADHD
 4. Make sure you are signed into Chrome with the same Google account on each device you want to keep in sync.
 5. Visit the ADHD Tools website (the extension only runs on `jobellet.github.io/ADHDtools/`) and click the extension icon.
 6. Sync starts automatically after the extension is installed. Use **Sync Now** to force a manual sync if needed. The popup also lets you clear local or synced data at any time.
+
+### Installing on a Smartphone (Android)
+
+Chrome for mobile doesn't allow extensions, but the free [Kiwi Browser](https://kiwibrowser.com/) does. To make transferring the extension easier, run:
+
+```bash
+npm run share-extension
+```
+
+This command zips the `chrome-extension` folder and starts a small web server with a QR code. Scan the code with your phone to download the ZIP file, extract it on your device, then open `chrome://extensions` in Kiwi Browser and use **Load unpacked** to select the extracted folder.
 
 ## License
 
