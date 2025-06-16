@@ -4,6 +4,18 @@
 
 Interactive tools to help manage ADHD symptoms and improve productivity.
 
+## Quick Links
+
+[![Pomodoro](icons/pomodoro.svg)](https://jobellet.github.io/ADHDtools/#pomodoro)
+[![Eisenhower Matrix](icons/eisenhower.svg)](https://jobellet.github.io/ADHDtools/#eisenhower)
+[![Day Planner](icons/planner.svg)](https://jobellet.github.io/ADHDtools/#planner)
+[![Task Manager](icons/task-manager.svg)](https://jobellet.github.io/ADHDtools/#tasks)
+[![Task Breakdown](icons/task-breakdown.svg)](https://jobellet.github.io/ADHDtools/#breakdown)
+[![Habit Tracker](icons/habit-tracker.svg)](https://jobellet.github.io/ADHDtools/#habits)
+[![Routine Tool](icons/routine.svg)](https://jobellet.github.io/ADHDtools/#routine)
+[![Focus Mode](icons/focus-mode.svg)](https://jobellet.github.io/ADHDtools/#focus)
+[![Rewards](icons/rewards.svg)](https://jobellet.github.io/ADHDtools/#rewards)
+
 ## Features
 
 *   **Pomodoro Timer:** Work in focused sprints with timed breaks to maintain productivity.
@@ -12,6 +24,7 @@ Interactive tools to help manage ADHD symptoms and improve productivity.
 *   **Task Manager:** Keep track of your to-do list with priorities and categories.
 *   **Task Breakdown:** Break complex tasks into smaller, manageable steps.
 *   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
+*   **Routine Tool:** Create and run daily routines with timed tasks.
 *   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
 
