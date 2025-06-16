@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolCards = document.querySelectorAll(".tool-card");
     const toolSections = document.querySelectorAll(".tool-section");
     const navLinks = document.querySelectorAll("nav a[data-tool]");
-    const dropdownLinks = document.querySelectorAll("#title-dropdown a[data-tool]");
     const currentTimeDisplay = document.getElementById("current-time-display");
 
     function switchTool(toolName) {
@@ -35,21 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    dropdownLinks.forEach(link => {
-        link.addEventListener("click", (e) => {
-            e.preventDefault();
-            const toolName = link.dataset.tool;
-            switchTool(toolName);
-        });
-    });
-
-    // Show dropdown on title click
-    const dropdownTrigger = document.querySelector(".dropdown-trigger");
-    const dropdownMenu = document.getElementById("title-dropdown");
-    dropdownTrigger.addEventListener("click", () => {
-        dropdownMenu.classList.toggle("show");
-        switchTool("home");
-    });
 
     // Toggle hamburger menu
     const hamburger = document.querySelector(".hamburger-menu");
