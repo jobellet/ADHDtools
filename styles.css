@@ -485,6 +485,10 @@ footer {
     .timer-controls { flex-direction: column; }
     header .container > p { display: none; }
     .current-time { margin-top: 0.25rem; }
+    .tools-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .tool-card { padding: 0.75rem; }
+    .tool-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .tool-card h3 { font-size: 0.9rem; margin-bottom: 0.25rem; }
     /* Eisenhower small tweaks */
     .matrix-grid { grid-template-columns: 60px 1fr 1fr; font-size: 0.85rem; }
     .matrix-header-cell, .matrix-cell { padding: 0.5rem; }
