@@ -15,6 +15,7 @@ Interactive tools to help manage ADHD symptoms and improve productivity.
 *   **Routine Tool:** Create and run daily routines with timed tasks.
 *   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
+*   **Calendar Tool:** Import events from ICS files and integrate them with other tools.
 
 ## Privacy
 
@@ -67,6 +68,18 @@ npm run share-extension
 ```
 
 This command zips the `chrome-extension` folder and starts a small web server with a QR code. Scan the code with your phone to download the ZIP file, extract it on your device, then open `chrome://extensions` in Kiwi Browser and use **Load unpacked** to select the extracted folder.
+
+## Importing ICS Files
+
+The Calendar tool can load `.ics` files exported from other apps like Google Calendar or Outlook.
+
+1. Export your calendar as an `.ics` file.
+   - In **Google Calendar** open **Settings → Import & export** and choose **Export** to download a ZIP containing your calendars. Extract the `.ics` file from it.
+2. Open the **Calendar** tool and click **Import ICS**.
+3. Select the `.ics` file and the events will appear in the list and be stored locally.
+
+Only simple events are supported and nothing is uploaded anywhere.
+
 
 ## License
 
