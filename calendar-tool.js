@@ -67,7 +67,8 @@
 
   function loadEvents() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      return removeDuplicateEvents(stored);
     } catch {
       return [];
     }
@@ -75,6 +76,16 @@
 
   function saveEvents(events) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+  }
+
+  function removeDuplicateEvents(evts) {
+    const seen = new Set();
+    return evts.filter(ev => {
+      const key = ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function render(events) {
@@ -94,24 +105,19 @@
     }
   }
 
-  function createTaskButton(ev) {
-    if (!(window.CrossTool && window.CrossTool.sendTaskToTool)) return null;
-    const btn = document.createElement('button');
-    btn.textContent = 'Send to Task Manager';
-    btn.addEventListener('click', () => {
-      const duration = ev.start && ev.end ? Math.round((new Date(ev.end) - new Date(ev.start))/60000) : 0;
-      const task = {
-        id: window.CrossTool.generateId(),
-        text: ev.title,
-        originalTool: 'Calendar',
-        dueDate: ev.start ? ev.start.split('T')[0] : '',
-        duration,
-        notes: ev.description || ''
-      };
-      window.CrossTool.sendTaskToTool(task, 'TaskManager');
-    });
-    return btn;
+  function shiftReferenceDate(direction) {
+    switch (currentView) {
+      case 'week':
+        referenceDate.setDate(referenceDate.getDate() + direction * 7);
+        break;
+      case 'month':
+        referenceDate.setMonth(referenceDate.getMonth() + direction);
+        break;
+      default:
+        referenceDate.setDate(referenceDate.getDate() + direction);
+    }
   }
+
 
   function renderDay(events, container) {
     const dayStr = referenceDate.toISOString().split('T')[0];
@@ -123,11 +129,15 @@
     dayEvents.forEach(ev => {
       const tr = document.createElement('tr');
       const timeCell = document.createElement('td');
-      timeCell.textContent = ev.start ? new Date(ev.start).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+      if (ev.start) {
+        const startT = new Date(ev.start).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+        const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+        timeCell.textContent = endT ? `${startT} - ${endT}` : startT;
+      } else {
+        timeCell.textContent = '';
+      }
       const titleCell = document.createElement('td');
       titleCell.textContent = ev.title;
-      const btn = createTaskButton(ev);
-      if (btn) titleCell.appendChild(btn);
       tr.appendChild(timeCell);
       tr.appendChild(titleCell);
       tbody.appendChild(tr);
@@ -163,10 +173,13 @@
       const list = document.createElement('ul');
       events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
         const li = document.createElement('li');
-        const time = ev.start ? new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' ' : '';
+        let time = '';
+        if (ev.start) {
+          const startT = new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+          const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+          time = endT ? `${startT} - ${endT} ` : startT + ' ';
+        }
         li.textContent = time + ev.title;
-        const btn = createTaskButton(ev);
-        if (btn) li.appendChild(btn);
         list.appendChild(li);
       });
       cell.appendChild(list);
@@ -212,9 +225,13 @@
           const list = document.createElement('ul');
           events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
             const li = document.createElement('li');
-            li.textContent = ev.title;
-            const btn = createTaskButton(ev);
-            if (btn) li.appendChild(btn);
+            let time = '';
+            if (ev.start) {
+              const startT = new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+              const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+              time = endT ? `${startT} - ${endT} ` : startT + ' ';
+            }
+            li.textContent = time + ev.title;
             list.appendChild(li);
           });
           cell.appendChild(list);
@@ -236,7 +253,7 @@
       try {
         const parsed = parseICS(e.target.result);
         parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
-        events = events.concat(parsed);
+        events = removeDuplicateEvents(events.concat(parsed));
         saveEvents(events);
         render(events);
         alert(`Imported ${parsed.length} events.`);
@@ -266,6 +283,11 @@
         render(events);
       });
     });
+
+    const prevBtn = document.getElementById('calendar-prev-btn');
+    const nextBtn = document.getElementById('calendar-next-btn');
+    if (prevBtn) prevBtn.addEventListener('click', () => { shiftReferenceDate(-1); render(events); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { shiftReferenceDate(1); render(events); });
 
     const fileInput = document.getElementById('ics-file-input');
     const importBtn = document.getElementById('import-ics-btn');
