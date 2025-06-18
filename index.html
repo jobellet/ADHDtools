@@ -16,6 +16,7 @@
     <script src="focus-mode.js" defer></script>
     <script src="reward-system.js" defer></script>
     <script src="cross-tool-interaction.js" defer></script>
+    <script src="calendar-tool.js" defer></script>
     <script src="data-management.js" defer></script>
     <script src="routine.js" defer></script>
     <script src="script-loader.js" defer></script>
@@ -37,6 +38,7 @@
                 <li><a href="#" data-tool="pomodoro"><i class="fas fa-clock"></i> Pomodoro Timer</a></li>
                 <li><a href="#" data-tool="eisenhower"><i class="fas fa-th-large"></i> Eisenhower Matrix</a></li>
                 <li><a href="#" data-tool="planner"><i class="fas fa-calendar-alt"></i> Day Planner</a></li>
+                <li><a href="#" data-tool="calendar"><i class="fas fa-calendar"></i> Calendar</a></li>
                 <li><a href="#" data-tool="tasks"><i class="fas fa-tasks"></i> Task Manager</a></li>
                 <li><a href="#" data-tool="breakdown"><i class="fas fa-project-diagram"></i> Task Breakdown</a></li>
                 <li><a href="#" data-tool="habits"><i class="fas fa-check-square"></i> Habit Tracker</a></li>
@@ -70,7 +72,12 @@
                         <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
                         <h3>Day Planner</h3>
                     </div>
-                    
+
+                    <div class="tool-card" data-tool="calendar">
+                        <div class="tool-icon"><i class="fas fa-calendar"></i></div>
+                        <h3>Calendar</h3>
+                    </div>
+
                     <div class="tool-card" data-tool="tasks">
                         <div class="tool-icon"><i class="fas fa-tasks"></i></div>
                         <h3>Task Manager</h3>
@@ -250,6 +257,17 @@
                 </div>
             </section>
 
+            <!-- Calendar Section -->
+            <section id="calendar" class="tool-section">
+                <h2>Calendar</h2>
+                <p>Import calendar events from ICS files and manage them with other tools.</p>
+
+                <div class="calendar-container">
+                    <button id="import-ics-btn" class="btn">Import ICS</button>
+                    <input type="file" id="ics-file-input" accept=".ics" style="display:none">
+                    <div id="calendar-events" class="calendar-events-list"></div>
+                </div>
+            </section>
 
             <!-- Task Manager Section -->
             <section id="tasks" class="tool-section">
