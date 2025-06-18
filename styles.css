@@ -901,4 +901,29 @@ footer {
 .calendar-event button {
     margin-left: 0.5rem;
 }
+
+/* New calendar views */
+.calendar-controls {
+    margin-bottom: 0.5rem;
+}
+.calendar-view-btn {
+    margin-right: 0.25rem;
+}
+.calendar-view-btn.active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+.calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.calendar-table th,
+.calendar-table td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    vertical-align: top;
+}
+.calendar-table td.today {
+    background-color: #f0f8ff;
+}
 }

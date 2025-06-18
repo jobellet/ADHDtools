@@ -263,9 +263,14 @@
                 <p>Import calendar events from ICS files and manage them with other tools.</p>
 
                 <div class="calendar-container">
+                    <div class="calendar-controls">
+                        <button data-view="day" class="calendar-view-btn btn">Day</button>
+                        <button data-view="week" class="calendar-view-btn btn">Week</button>
+                        <button data-view="month" class="calendar-view-btn btn">Month</button>
+                    </div>
                     <button id="import-ics-btn" class="btn">Import ICS</button>
                     <input type="file" id="ics-file-input" accept=".ics" style="display:none">
-                    <div id="calendar-events" class="calendar-events-list"></div>
+                    <div id="calendar-view" class="calendar-events-list"></div>
                 </div>
             </section>
 
