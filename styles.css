@@ -899,9 +899,6 @@ footer {
     justify-content: space-between;
     align-items: center;
 }
-.calendar-event button {
-    margin-left: 0.5rem;
-}
 
 /* New calendar views */
 .calendar-controls {
