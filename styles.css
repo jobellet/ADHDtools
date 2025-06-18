@@ -882,7 +882,23 @@ footer {
     }
 
     /* Hide breakdown icon on small screens */
-    .breakdown-import-btn {
-        display: none;
-    }
+.breakdown-import-btn {
+    display: none;
+}
+
+/* Calendar tool */
+.calendar-events-list {
+    margin-top: 1rem;
+}
+
+.calendar-event {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.calendar-event button {
+    margin-left: 0.5rem;
+}
 }
