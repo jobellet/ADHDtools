@@ -95,6 +95,25 @@
     getStore: () => JSON.parse(JSON.stringify(store)),
 
     /**
+     * Programmatically switch the interface to a given tool.
+     * Mirrors the switchTool logic in app.js so other modules can
+     * change the active section when passing data around.
+     * @param {string} toolName - id of the tool section to activate
+     */
+    openTool: function(toolName) {
+      if (!toolName) return;
+      const sections = document.querySelectorAll('.tool-section');
+      const navLinks = document.querySelectorAll('nav a[data-tool]');
+      sections.forEach(sec => sec.classList.remove('active'));
+      const target = document.getElementById(toolName);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      navLinks.forEach(link => link.classList.toggle('active', link.dataset.tool === toolName));
+    },
+
+    /**
      * Standardized Task Object Structure:
      * {
      *   id: string, // Unique identifier (generate if needed)
@@ -138,6 +157,20 @@
       const eventName = `ef-receiveTaskFor-${targetTool}`;
       console.log(`CrossTool: Dispatching event '${eventName}' with task:`, taskObject);
       this.bus.dispatchEvent(new CustomEvent(eventName, { detail: taskObject }));
+      this.openTool(targetTool);
+    },
+
+    /**
+     * Send multiple tasks at once to a tool.
+     * @param {Array<object>} tasks - array of task objects
+     * @param {string} targetTool - identifier of the target tool
+     */
+    sendTasksToTool: function(tasks, targetTool) {
+      if (!Array.isArray(tasks)) {
+        console.error('CrossTool.sendTasksToTool: tasks must be an array');
+        return;
+      }
+      tasks.forEach(task => this.sendTaskToTool(task, targetTool));
     }
   };
 })();
