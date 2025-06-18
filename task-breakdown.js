@@ -1,4 +1,5 @@
 // task-breakdown.js
+window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
 
 document.addEventListener('DOMContentLoaded', () => {
   // Only initialize if on the task breakdown page
@@ -157,7 +158,5 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTree();
     alert(`Task '${standardizedTask.text}' added to Task Breakdown as a new main project/task.`);
   }
-
-  window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
 
 });
