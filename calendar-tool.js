@@ -5,6 +5,7 @@
   const STORAGE_KEY = 'adhd-calendar-events';
   let currentView = 'day';
   let referenceDate = new Date();
+  let events = [];
 
   // Parse dates from ICS format (very simplified)
   function parseICSTime(value) {
@@ -228,7 +229,7 @@
     container.appendChild(table);
   }
 
-  function handleICSFile(file, events) {
+  function handleICSFile(file) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
@@ -251,7 +252,7 @@
     const container = document.querySelector('.calendar-container');
     if (!container) return;
 
-    let events = loadEvents();
+    events = loadEvents();
     render(events);
 
     const defaultBtn = container.querySelector('.calendar-view-btn[data-view="' + currentView + '"]');
@@ -271,7 +272,7 @@
 
     if (importBtn && fileInput) {
       importBtn.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', e => handleICSFile(e.target.files[0], events));
+      fileInput.addEventListener('change', e => handleICSFile(e.target.files[0]));
     }
   });
 })();
