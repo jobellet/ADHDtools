@@ -17,6 +17,8 @@ if (window.__focusModeLoaded) {
     const fullscreenTimer = document.getElementById('focus-mode-timer');
     const fullscreenGoal = document.getElementById('focus-mode-goal');
     const focusProgressBar = document.getElementById('focus-mode-progress-bar'); // Added
+    const textArea = document.getElementById('focus-text');
+    const downloadBtn = document.getElementById('download-focus-text');
 
     let timerId = null;
     let remainingSeconds = 0;
@@ -58,6 +60,10 @@ if (window.__focusModeLoaded) {
     }
 
     function startFocus() {
+      if (timerId) {
+        // End any existing session without alerts
+        endFocus(false);
+      }
       const duration = parseInt(durationInput.value, 10);
       if (isNaN(duration) || duration <= 0) {
         alert('Please enter a valid duration');
@@ -71,6 +77,7 @@ if (window.__focusModeLoaded) {
       fullscreenGoal.textContent = goal || '';
       fullscreenTimer.textContent = formatTime(remainingSeconds);
       fullscreenContainer.classList.remove('hidden');
+      if (textArea) textArea.value = '';
 
       totalFocusSessionSeconds = remainingSeconds; // Store total duration
       if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
@@ -131,7 +138,7 @@ if (window.__focusModeLoaded) {
       localStorage.removeItem('focus-session');
       if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
       totalFocusSessionSeconds = 0; // Reset total duration
-      alert(completed ? 'Focus session completed!' : 'Focus session ended early.');
+      // No popup at the end of the session
     }
 
     function resumeSession() {
@@ -155,6 +162,29 @@ if (window.__focusModeLoaded) {
 
     if (enterBtn) enterBtn.addEventListener('click', startFocus);
     if (exitBtn) exitBtn.addEventListener('click', () => endFocus(false));
+    if (soundSelect) soundSelect.addEventListener('change', () => {
+      if (timerId) {
+        startAudio(soundSelect.value);
+      }
+    });
+    if (backgroundSelect) backgroundSelect.addEventListener('change', () => {
+      if (timerId) {
+        applyBackground(backgroundSelect.value);
+      }
+    });
+    if (downloadBtn && textArea) {
+      downloadBtn.addEventListener('click', () => {
+        const blob = new Blob([textArea.value], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'focus-notes.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
 
     // Resume any in-progress session
     resumeSession();
