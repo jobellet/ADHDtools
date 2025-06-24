@@ -924,3 +924,20 @@ footer {
 .calendar-table td.today {
     background-color: #f0f8ff;
 }
+
+/* Focus Mode Text Editor */
+#focus-text {
+    width: 100%;
+    min-height: 200px;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+}
+
+.focus-text-actions {
+    text-align: right;
+    margin-bottom: 1rem;
+}
