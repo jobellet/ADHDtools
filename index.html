@@ -435,7 +435,7 @@
                                 <input type="text" id="focus-goal" placeholder="What do you want to accomplish?">
                             </div>
 
-                            <details class="focus-advanced-settings">
+                            <details class="focus-advanced-settings" open>
                                 <summary>Advanced Options <i class="fas fa-cog"></i></summary>
                                 <div class="advanced-options-content" style="padding-top: 1rem;">
                                     <div class="setting-group">
@@ -480,6 +480,27 @@
                         </div>
                         <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
                         <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
+                        <div class="fullscreen-settings">
+                            <div class="setting-group">
+                                <label for="focus-background-fullscreen">Background:</label>
+                                <select id="focus-background-fullscreen">
+                                    <option value="solid">Solid Color</option>
+                                    <option value="gradient">Gradient</option>
+                                    <option value="nature">Nature</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label for="focus-sound-fullscreen">Background Sound:</label>
+                                <select id="focus-sound-fullscreen">
+                                    <option value="none">None</option>
+                                    <option value="white-noise">White Noise</option>
+                                    <option value="rain">Rain</option>
+                                    <option value="cafe">Cafe Ambience</option>
+                                    <option value="forest">Forest</option>
+                                </select>
+                            </div>
+                        </div>
                         <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>
                         <div class="focus-text-actions">
                             <button id="download-focus-text" class="btn btn-secondary">Download Notes</button>

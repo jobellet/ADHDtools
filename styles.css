@@ -96,6 +96,17 @@ button:disabled, .btn:disabled {
     background-color: var(--secondary-dark);
 }
 
+.btn-outline {
+    background-color: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline:hover {
+    background-color: var(--primary-color);
+    color: var(--on-primary);
+}
+
 input, select {
     padding: 0.5rem;
     border: 1px solid #ddd;
@@ -928,7 +939,7 @@ footer {
 /* Focus Mode Text Editor */
 #focus-text {
     width: 100%;
-    min-height: 200px;
+    min-height: 300px;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
     padding: 0.5rem;
@@ -940,4 +951,60 @@ footer {
 .focus-text-actions {
     text-align: right;
     margin-bottom: 1rem;
+}
+
+/* Focus Mode Fullscreen */
+.fullscreen-focus {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--surface);
+    z-index: 1000;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.fullscreen-focus.hidden {
+    display: none;
+}
+
+.fullscreen-content {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fullscreen-timer {
+    font-size: 3rem;
+    color: var(--primary-dark);
+    margin-top: 1rem;
+}
+
+.fullscreen-goal {
+    font-size: 1.5rem;
+    margin-top: 0.5rem;
+}
+
+#exit-focus-mode {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.1rem;
+}
+
+.fullscreen-settings {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.preview-timer {
+    font-size: 2rem;
+    color: var(--primary-dark);
 }
