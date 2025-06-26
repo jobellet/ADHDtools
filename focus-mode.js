@@ -10,6 +10,8 @@ if (window.__focusModeLoaded) {
     const durationInput = document.getElementById('focus-duration-setting');
     const backgroundSelect = document.getElementById('focus-background');
     const soundSelect = document.getElementById('focus-sound');
+    const fullscreenBackgroundSelect = document.getElementById('focus-background-fullscreen');
+    const fullscreenSoundSelect = document.getElementById('focus-sound-fullscreen');
     const goalInput = document.getElementById('focus-goal');
     const previewTimer = document.querySelector('#focus-preview .preview-timer');
     const previewGoal = document.querySelector('#focus-preview .preview-goal');
@@ -90,6 +92,8 @@ if (window.__focusModeLoaded) {
       // Apply background and start sound
       applyBackground(backgroundSelect.value);
       startAudio(soundSelect.value);
+      if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = backgroundSelect.value;
+      if (fullscreenSoundSelect) fullscreenSoundSelect.value = soundSelect.value;
 
       // Persist session data
       localStorage.setItem('focus-session', JSON.stringify({
@@ -155,6 +159,8 @@ if (window.__focusModeLoaded) {
       durationInput.value = duration;
       backgroundSelect.value = background;
       soundSelect.value = sound;
+      if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = background;
+      if (fullscreenSoundSelect) fullscreenSoundSelect.value = sound;
       goalInput.value = goal;
       startFocus();
       remainingSeconds = total - elapsed;
@@ -163,13 +169,27 @@ if (window.__focusModeLoaded) {
     if (enterBtn) enterBtn.addEventListener('click', startFocus);
     if (exitBtn) exitBtn.addEventListener('click', () => endFocus(false));
     if (soundSelect) soundSelect.addEventListener('change', () => {
+      if (fullscreenSoundSelect) fullscreenSoundSelect.value = soundSelect.value;
       if (timerId) {
         startAudio(soundSelect.value);
       }
     });
     if (backgroundSelect) backgroundSelect.addEventListener('change', () => {
+      if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = backgroundSelect.value;
       if (timerId) {
         applyBackground(backgroundSelect.value);
+      }
+    });
+    if (fullscreenSoundSelect) fullscreenSoundSelect.addEventListener('change', () => {
+      soundSelect.value = fullscreenSoundSelect.value;
+      if (timerId) {
+        startAudio(fullscreenSoundSelect.value);
+      }
+    });
+    if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.addEventListener('change', () => {
+      backgroundSelect.value = fullscreenBackgroundSelect.value;
+      if (timerId) {
+        applyBackground(fullscreenBackgroundSelect.value);
       }
     });
     if (downloadBtn && textArea) {
