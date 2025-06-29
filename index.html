@@ -283,6 +283,10 @@
                         <input type="url" id="ics-url" placeholder="https://...ics">
                         <button id="load-ics-url-btn" class="btn">Load ICS URL</button>
                     </div>
+                    <div class="voice-options">
+                        <label><input type="checkbox" id="calendar-voice-enable"> <span data-i18n="calendar-voice-label">Voice alerts</span></label>
+                        <label><span data-i18n="calendar-voice-early-label">Minutes early:</span> <input type="number" id="calendar-voice-early" value="0" min="0" style="width:4rem"></label>
+                    </div>
                     <div id="calendar-view" class="calendar-events-list"></div>
                 </div>
             </section>

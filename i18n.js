@@ -34,6 +34,10 @@ const translations = {
     'planner-text': 'Visualize your day with time blocks for better time management. Plan your activities hour by hour to stay organized.',
     'calendar-heading': 'Calendar',
     'calendar-text': 'Import calendar events from ICS files and manage them with other tools.',
+    'calendar-voice-label': 'Voice alerts',
+    'calendar-voice-early-label': 'Minutes early:',
+    'calendar-announcement-now': 'Event "{title}" is starting now.',
+    'calendar-announcement-soon': 'Event "{title}" starts in {minutes} minutes.',
     'tasks-heading': 'Task Manager',
     'tasks-text': 'Keep track of your to-do list with priorities and categories. Organize your tasks to ensure nothing falls through the cracks.',
     'breakdown-heading': 'Task Breakdown',
@@ -108,6 +112,10 @@ const translations = {
     'planner-text': "Visualisez votre journée avec des blocs de temps pour mieux la gérer. Planifiez vos activités heure par heure pour rester organisé.",
     'calendar-heading': 'Calendrier',
     'calendar-text': 'Importez des événements au format ICS et gérez-les avec les autres outils.',
+    'calendar-voice-label': 'Alertes vocales',
+    'calendar-voice-early-label': 'Minutes avant :',
+    'calendar-announcement-now': "L'événement \"{title}\" commence maintenant.",
+    'calendar-announcement-soon': "L'événement \"{title}\" commence dans {minutes} minutes.",
     'tasks-heading': 'Gestionnaire de tâches',
     'tasks-text': "Suivez vos tâches avec des priorités et des catégories. Organisez-les pour n'en oublier aucune.",
     'breakdown-heading': 'Décomposition des tâches',
@@ -182,6 +190,10 @@ const translations = {
     'planner-text': 'Visualisiere deinen Tag in Zeitblöcken für ein besseres Zeitmanagement.',
     'calendar-heading': 'Kalender',
     'calendar-text': 'Importiere Termine aus ICS-Dateien und verwalte sie mit anderen Werkzeugen.',
+    'calendar-voice-label': 'Sprachbenachrichtigungen',
+    'calendar-voice-early-label': 'Minuten vorher:',
+    'calendar-announcement-now': 'Termin "{title}" beginnt jetzt.',
+    'calendar-announcement-soon': 'Termin "{title}" beginnt in {minutes} Minuten.',
     'tasks-heading': 'Aufgabenmanager',
     'tasks-text': 'Behalte deine Aufgaben mit Prioritäten und Kategorien im Blick, damit nichts untergeht.',
     'breakdown-heading': 'Aufgaben zerlegen',
@@ -256,6 +268,10 @@ const translations = {
     'planner-text': 'Visualiza tu día con bloques de tiempo para gestionarlo mejor.',
     'calendar-heading': 'Calendario',
     'calendar-text': 'Importa eventos en formato ICS y gestiónalos con otras herramientas.',
+    'calendar-voice-label': 'Alertas de voz',
+    'calendar-voice-early-label': 'Minutos antes:',
+    'calendar-announcement-now': 'El evento "{title}" comienza ahora.',
+    'calendar-announcement-soon': 'El evento "{title}" comienza en {minutes} minutos.',
     'tasks-heading': 'Gestor de tareas',
     'tasks-text': 'Lleva un seguimiento de tus tareas con prioridades y categorías para que nada se pierda.',
     'breakdown-heading': 'Desglose de tareas',
@@ -296,6 +312,11 @@ const translations = {
     'footer-text': '&copy; 2025 Herramientas TDAH. Todas las herramientas son gratuitas y los datos se almacenan en tu navegador.'
   }
 };
+
+// expose translations for other modules
+if (typeof window !== 'undefined') {
+  window.translations = translations;
+}
 
 function applyTranslations(lang) {
   const dict = translations[lang] || translations.en;
