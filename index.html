@@ -20,12 +20,13 @@
     <script src="data-management.js" defer></script>
     <script src="routine.js" defer></script>
     <script src="script-loader.js" defer></script>
+    <script src="i18n.js" defer></script>
 </head>
 <body>
     <header>
         <div class="container">
-            <h1 id="site-title"><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
-            <p>Interactive tools to help manage ADHD symptoms and improve productivity</p>
+            <h1 id="site-title" data-i18n="site-title"><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
+            <p data-i18n="tagline">Interactive tools to help manage ADHD symptoms and improve productivity</p>
             <span id="current-time-display" class="current-time"></span>
         </div>
     </header>
@@ -33,19 +34,25 @@
     <nav>
         <div class="container">
             <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
+            <select id="language-select" aria-label="Select language">
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+            </select>
             <ul id="main-nav-links">
-                <li><a href="#" class="active" data-tool="home"><i class="fas fa-home"></i> Home</a></li>
-                <li><a href="#" data-tool="pomodoro"><i class="fas fa-clock"></i> Pomodoro Timer</a></li>
-                <li><a href="#" data-tool="eisenhower"><i class="fas fa-th-large"></i> Eisenhower Matrix</a></li>
-                <li><a href="#" data-tool="planner"><i class="fas fa-calendar-alt"></i> Day Planner</a></li>
-                <li><a href="#" data-tool="calendar"><i class="fas fa-calendar"></i> Calendar</a></li>
-                <li><a href="#" data-tool="tasks"><i class="fas fa-tasks"></i> Task Manager</a></li>
-                <li><a href="#" data-tool="breakdown"><i class="fas fa-project-diagram"></i> Task Breakdown</a></li>
-                <li><a href="#" data-tool="habits"><i class="fas fa-check-square"></i> Habit Tracker</a></li>
-                <li><a href="#" data-tool="routine"><i class="fas fa-tasks-alt"></i> Routine Tool</a></li>
-                <li><a href="#" data-tool="focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
-                <li><a href="#" data-tool="rewards"><i class="fas fa-trophy"></i> Rewards</a></li>
-                <li><a href="#" data-tool="about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="#" class="active" data-tool="home" data-i18n="nav-home"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#" data-tool="pomodoro" data-i18n="nav-pomodoro"><i class="fas fa-clock"></i> Pomodoro Timer</a></li>
+                <li><a href="#" data-tool="eisenhower" data-i18n="nav-eisenhower"><i class="fas fa-th-large"></i> Eisenhower Matrix</a></li>
+                <li><a href="#" data-tool="planner" data-i18n="nav-planner"><i class="fas fa-calendar-alt"></i> Day Planner</a></li>
+                <li><a href="#" data-tool="calendar" data-i18n="nav-calendar"><i class="fas fa-calendar"></i> Calendar</a></li>
+                <li><a href="#" data-tool="tasks" data-i18n="nav-tasks"><i class="fas fa-tasks"></i> Task Manager</a></li>
+                <li><a href="#" data-tool="breakdown" data-i18n="nav-breakdown"><i class="fas fa-project-diagram"></i> Task Breakdown</a></li>
+                <li><a href="#" data-tool="habits" data-i18n="nav-habits"><i class="fas fa-check-square"></i> Habit Tracker</a></li>
+                <li><a href="#" data-tool="routine" data-i18n="nav-routine"><i class="fas fa-tasks-alt"></i> Routine Tool</a></li>
+                <li><a href="#" data-tool="focus" data-i18n="nav-focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
+                <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a></li>
+                <li><a href="#" data-tool="about" data-i18n="nav-about"><i class="fas fa-info-circle"></i> About</a></li>
             </ul>
         </div>
     </nav>
@@ -54,69 +61,69 @@
         <div class="container">
             <!-- Home Section -->
             <section id="home" class="tool-section active">
-                <h2>Welcome to ADHD Tools Hub</h2>
-                <p>This website provides a collection of interactive tools designed specifically to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+                <h2 data-i18n="home-heading">Welcome to ADHD Tools Hub</h2>
+                <p data-i18n="home-text">This website provides a collection of interactive tools designed specifically to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
                 
                 <div class="tools-grid">
                     <div class="tool-card" data-tool="pomodoro">
                         <div class="tool-icon"><i class="fas fa-clock"></i></div>
-                        <h3>Pomodoro Timer</h3>
+                        <h3 data-i18n="card-pomodoro">Pomodoro Timer</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="eisenhower">
                         <div class="tool-icon"><i class="fas fa-th-large"></i></div>
-                        <h3>Eisenhower Matrix</h3>
+                        <h3 data-i18n="card-eisenhower">Eisenhower Matrix</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="planner">
                         <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
-                        <h3>Day Planner</h3>
+                        <h3 data-i18n="card-planner">Day Planner</h3>
                     </div>
 
                     <div class="tool-card" data-tool="calendar">
                         <div class="tool-icon"><i class="fas fa-calendar"></i></div>
-                        <h3>Calendar</h3>
+                        <h3 data-i18n="card-calendar">Calendar</h3>
                     </div>
 
                     <div class="tool-card" data-tool="tasks">
                         <div class="tool-icon"><i class="fas fa-tasks"></i></div>
-                        <h3>Task Manager</h3>
+                        <h3 data-i18n="card-tasks">Task Manager</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="breakdown">
                         <div class="tool-icon"><i class="fas fa-project-diagram"></i></div>
-                        <h3>Task Breakdown</h3>
+                        <h3 data-i18n="card-breakdown">Task Breakdown</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="habits">
                         <div class="tool-icon"><i class="fas fa-check-square"></i></div>
-                        <h3>Habit Tracker</h3>
+                        <h3 data-i18n="card-habits">Habit Tracker</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="routine">
                         <div class="tool-icon"><i class="fas fa-tasks-alt"></i></div>
-                        <h3>Routine Tool</h3>
+                        <h3 data-i18n="card-routine">Routine Tool</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="focus">
                         <div class="tool-icon"><i class="fas fa-eye"></i></div>
-                        <h3>Focus Mode</h3>
+                        <h3 data-i18n="card-focus">Focus Mode</h3>
                     </div>
                     
                     <div class="tool-card" data-tool="rewards">
                         <div class="tool-icon"><i class="fas fa-trophy"></i></div>
-                        <h3>Rewards</h3>
+                        <h3 data-i18n="card-rewards">Rewards</h3>
                     </div>
                 </div>
             </section>
 
             <!-- Pomodoro Timer Section -->
             <section id="pomodoro" class="tool-section">
-                <h2>Pomodoro Timer</h2>
+                <h2 data-i18n="pomodoro-heading">Pomodoro Timer</h2>
                 <div id="pomodoro-progress-container" class="sticky-progress-container">
                     <div id="pomodoro-progress-bar" class="progress-bar-fill"></div>
                 </div>
-                <p>The Pomodoro Technique helps you work with time, instead of against it. Break your workday into 25-minute chunks separated by five-minute breaks.</p>
+                <p data-i18n="pomodoro-text">The Pomodoro Technique helps you work with time, instead of against it. Break your workday into 25-minute chunks separated by five-minute breaks.</p>
                 
                 <div class="pomodoro-container">
                     <div class="timer-display">
@@ -175,8 +182,8 @@
 
             <!-- Eisenhower Matrix Section -->
             <section id="eisenhower" class="tool-section">
-                <h2>Eisenhower Matrix</h2>
-                <p>Prioritize your tasks based on their importance and urgency. This helps you focus on what truly matters.</p>
+                <h2 data-i18n="eisenhower-heading">Eisenhower Matrix</h2>
+                <p data-i18n="eisenhower-text">Prioritize your tasks based on their importance and urgency. This helps you focus on what truly matters.</p>
                 
                 <div class="eisenhower-container">
                     <div class="matrix-controls">
@@ -220,8 +227,8 @@
 
             <!-- Day Planner Section -->
             <section id="planner" class="tool-section">
-                <h2>Day Planner</h2>
-                <p>Visualize your day with time blocks for better time management. Plan your activities hour by hour to stay organized.</p>
+                <h2 data-i18n="planner-heading">Day Planner</h2>
+                <p data-i18n="planner-text">Visualize your day with time blocks for better time management. Plan your activities hour by hour to stay organized.</p>
 
                 <div class="day-planner-container">
                     <div class="planner-header">
@@ -259,8 +266,8 @@
 
             <!-- Calendar Section -->
             <section id="calendar" class="tool-section">
-                <h2>Calendar</h2>
-                <p>Import calendar events from ICS files and manage them with other tools.</p>
+                <h2 data-i18n="calendar-heading">Calendar</h2>
+                <p data-i18n="calendar-text">Import calendar events from ICS files and manage them with other tools.</p>
 
                 <div class="calendar-container">
                     <div class="calendar-controls">
@@ -282,8 +289,8 @@
 
             <!-- Task Manager Section -->
             <section id="tasks" class="tool-section">
-                <h2>Task Manager</h2>
-                <p>Keep track of your to-do list with priorities and categories. Organize your tasks to ensure nothing falls through the cracks.</p>
+                <h2 data-i18n="tasks-heading">Task Manager</h2>
+                <p data-i18n="tasks-text">Keep track of your to-do list with priorities and categories. Organize your tasks to ensure nothing falls through the cracks.</p>
                 
                 <div class="task-manager-container">
                     <div class="task-input-container">
@@ -361,8 +368,8 @@
 
             <!-- Task Breakdown Section -->
             <section id="breakdown" class="tool-section">
-                <h2>Task Breakdown</h2>
-                <p>Break complex tasks into smaller, manageable steps. This helps reduce overwhelm and makes progress more visible.</p>
+                <h2 data-i18n="breakdown-heading">Task Breakdown</h2>
+                <p data-i18n="breakdown-text">Break complex tasks into smaller, manageable steps. This helps reduce overwhelm and makes progress more visible.</p>
                 
                 <div class="task-breakdown-container">
                     <div class="project-section">
@@ -398,8 +405,8 @@
 
             <!-- Habit Tracker Section -->
             <section id="habits" class="tool-section">
-                <h2>Habit Tracker</h2>
-                <p>Build consistency with daily habit tracking and streaks. Visualize your progress and stay motivated.</p>
+                <h2 data-i18n="habits-heading">Habit Tracker</h2>
+                <p data-i18n="habits-text">Build consistency with daily habit tracking and streaks. Visualize your progress and stay motivated.</p>
                 
                 <div class="habit-tracker-container new-layout">
                     <div class="habit-list-panel">
@@ -423,8 +430,8 @@
 
             <!-- Focus Mode Section -->
             <section id="focus" class="tool-section">
-                <h2>Focus Mode</h2>
-                <p>Minimize distractions with a clean, focused interface. Create a distraction-free environment for deep work.</p>
+                <h2 data-i18n="focus-heading">Focus Mode</h2>
+                <p data-i18n="focus-text">Minimize distractions with a clean, focused interface. Create a distraction-free environment for deep work.</p>
                 
                 <div class="focus-mode-container">
                     <div class="focus-controls">
@@ -516,8 +523,8 @@
 
             <!-- Rewards Section -->
             <section id="rewards" class="tool-section">
-                <h2>Rewards</h2>
-                <p>Celebrate your accomplishments with visual rewards. Positive reinforcement helps build motivation and consistency.</p>
+                <h2 data-i18n="rewards-heading">Rewards</h2>
+                <p data-i18n="rewards-text">Celebrate your accomplishments with visual rewards. Positive reinforcement helps build motivation and consistency.</p>
                 
                 <div class="rewards-container">
                     <button id="toggle-rewards-setup-btn" class="btn btn-primary" aria-expanded="false" aria-controls="rewards-setup-panel">
@@ -569,8 +576,8 @@
 
             <!-- About Section -->
             <section id="about" class="tool-section">
-                <h2>About ADHD Tools Hub</h2>
-                <p>ADHD Tools Hub is a collection of interactive tools designed to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+                <h2 data-i18n="about-heading">About ADHD Tools Hub</h2>
+                <p data-i18n="about-text">ADHD Tools Hub is a collection of interactive tools designed to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
                 
                 <div class="about-content">
                     <details>
@@ -592,79 +599,79 @@
                         </ul>
                     </details>
                     
-                    <h3>Privacy</h3>
-                    <p>All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.</p>
-                    
-                    <h3>Feedback</h3>
-                    <p>We're constantly working to improve these tools. If you have suggestions or feedback, please let us know!</p>
+                    <h3 data-i18n="about-privacy-heading">Privacy</h3>
+                    <p data-i18n="about-privacy-text">All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.</p>
+
+                    <h3 data-i18n="about-feedback-heading">Feedback</h3>
+                    <p data-i18n="about-feedback-text">We're constantly working to improve these tools. If you have suggestions or feedback, please let us know!</p>
                 </div>
             </section>
 
             <!-- Routine Tool Section -->
             <section id="routine" class="tool-section">
-                <h2>Routine Tool</h2>
-                <p>Create, manage, and run daily routines with timed tasks.</p>
+                <h2 data-i18n="routine-heading">Routine Tool</h2>
+                <p data-i18n="routine-text">Create, manage, and run daily routines with timed tasks.</p>
 
                 <div class="routine-view-controls" >
-                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true">Run Routine</button>
-                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false">Manage Routines</button>
+                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true" data-i18n="routine-run-btn">Run Routine</button>
+                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false" data-i18n="routine-manage-btn">Manage Routines</button>
                 </div>
 
                 <div class="routine-container routine-layout">
                     <div class="routine-setup routine-section-hidden">
-                        <h3>Create & Manage Routines</h3>
+                        <h3 data-i18n="routine-manage-heading">Create & Manage Routines</h3>
                         <div class="input-group">
-                            <label for="routine-name">Routine Name:</label>
+                            <label for="routine-name" data-i18n="routine-name-label">Routine Name:</label>
                             <input type="text" id="routine-name" placeholder="e.g., Morning Prep">
-                            <button id="create-routine-btn" class="btn">Create Routine</button>
+                            <button id="create-routine-btn" class="btn" data-i18n="routine-create-btn">Create Routine</button>
                         </div>
 
                         <div class="input-group">
-                            <label for="routine-select">Select Routine:</label>
+                            <label for="routine-select" data-i18n="routine-select-label">Select Routine:</label>
                             <select id="routine-select"></select>
                         </div>
                         
-                        <h4>Add Tasks to Selected Routine</h4>
+                        <h4 data-i18n="routine-add-tasks-heading">Add Tasks to Selected Routine</h4>
                         <div class="input-group">
-                            <label for="task-name">Task Name:</label>
+                            <label for="task-name" data-i18n="routine-task-name-label">Task Name:</label>
                             <input type="text" id="task-name" placeholder="e.g., Make Bed">
                         </div>
                         <div class="input-group">
-                            <label for="task-duration">Task Duration (minutes):</label>
+                            <label for="task-duration" data-i18n="routine-task-duration-label">Task Duration (minutes):</label>
                             <input type="number" id="task-duration" min="1" placeholder="e.g., 5">
-                            <button id="add-task-to-routine-btn" class="btn">Add Task</button>
+                            <button id="add-task-to-routine-btn" class="btn" data-i18n="routine-add-task-btn">Add Task</button>
                         </div>
 
                         <div class="input-group">
-                            <label for="routine-start-time">Set Auto Start Time (optional):</label>
+                            <label for="routine-start-time" data-i18n="routine-start-time-label">Set Auto Start Time (optional):</label>
                             <input type="time" id="routine-start-time">
-                            <button id="set-start-time-btn" class="btn">Set Time</button>
+                            <button id="set-start-time-btn" class="btn" data-i18n="routine-set-time-btn">Set Time</button>
                         </div>
                     </div>
 
                     <div class="routine-player">
-                        <h3>Active Routine</h3>
+                        <h3 data-i18n="routine-active-heading">Active Routine</h3>
                         <div id="active-routine-display">
-                            <h4 id="current-routine-name">No routine selected/active</h4>
+                            <h4 id="current-routine-name" data-i18n="routine-none-active">No routine selected/active</h4>
                             <ul id="current-routine-tasks" class="routine-task-list">
                                 <!-- Tasks will be listed here -->
                             </ul>
-                            <p>Expected Finish Time: <span id="expected-finish-time">-</span></p>
+                            <p data-i18n="routine-finish-time">Expected Finish Time: <span id="expected-finish-time">-</span></p>
                         </div>
 
                         <div class="routine-controls">
-                            <button id="start-selected-routine-btn" class="btn btn-primary">Start Selected Routine</button>
+                            <button id="start-selected-routine-btn" class="btn btn-primary" data-i18n="routine-start-btn">Start Selected Routine</button>
                         </div>
 
                         <div id="current-task-display">
-                            <h4>Current Task: <span id="current-task-name">-</span></h4>
-                            <p>Time Remaining: <span id="current-task-time-left">-</span></p>
+                            <h4 data-i18n="routine-current-task">Current Task: <span id="current-task-name">-</span></h4>
+                            <p data-i18n="routine-time-left">Time Remaining: <span id="current-task-time-left">-</span></p>
                         </div>
                         
                         <div class="pie-chart-container">
                             <canvas id="routine-pie-chart" width="200" height="200"></canvas>
                         </div>
-                        <p class="instructions">Tap the screen or press SPACEBAR to mark the current task as done.</p>
+                        <p class="instructions" data-i18n="routine-instruction">Tap the screen or press SPACEBAR to mark the current task as done.</p>
                     </div>
                 </div>
             </section>
@@ -673,7 +680,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 ADHD Tools Hub. All tools are free to use and data is stored locally in your browser.</p>
+            <p data-i18n="footer-text">&copy; 2025 ADHD Tools Hub. All tools are free to use and data is stored locally in your browser.</p>
         </div>
     </footer>
 
