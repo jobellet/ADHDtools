@@ -3,9 +3,11 @@
 
 (function() {
   const STORAGE_KEY = 'adhd-calendar-events';
+  const ICS_URL_KEY = 'adhd-calendar-ics-url';
   let currentView = 'day';
   let referenceDate = new Date();
   let events = [];
+  let icsUrl = '';
 
   // Parse dates from ICS format (very simplified)
   function parseICSTime(value) {
@@ -72,6 +74,18 @@
     } catch {
       return [];
     }
+  }
+
+  function loadIcsUrl() {
+    try {
+      return localStorage.getItem(ICS_URL_KEY) || '';
+    } catch {
+      return '';
+    }
+  }
+
+  function saveIcsUrl(url) {
+    localStorage.setItem(ICS_URL_KEY, url);
   }
 
   function saveEvents(events) {
@@ -265,11 +279,27 @@
     reader.readAsText(file);
   }
 
+  async function handleICSUrl(url) {
+    if (!url) return;
+    try {
+      const resp = await fetch(url);
+      const text = await resp.text();
+      const parsed = parseICS(text);
+      parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
+      events = removeDuplicateEvents(events.concat(parsed));
+      saveEvents(events);
+      render(events);
+    } catch (err) {
+      console.error('ICS fetch failed', err);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.calendar-container');
     if (!container) return;
 
     events = loadEvents();
+    icsUrl = loadIcsUrl();
     render(events);
 
     const defaultBtn = container.querySelector('.calendar-view-btn[data-view="' + currentView + '"]');
@@ -291,10 +321,29 @@
 
     const fileInput = document.getElementById('ics-file-input');
     const importBtn = document.getElementById('import-ics-btn');
+    const urlInput = document.getElementById('ics-url');
+    const loadUrlBtn = document.getElementById('load-ics-url-btn');
+
+    if (urlInput) urlInput.value = icsUrl;
+
+    if (loadUrlBtn && urlInput) {
+      loadUrlBtn.addEventListener('click', () => {
+        icsUrl = urlInput.value.trim();
+        saveIcsUrl(icsUrl);
+        handleICSUrl(icsUrl);
+      });
+    }
 
     if (importBtn && fileInput) {
       importBtn.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', e => handleICSFile(e.target.files[0]));
+    }
+
+    if (icsUrl) {
+      handleICSUrl(icsUrl);
+      setInterval(() => {
+        handleICSUrl(icsUrl);
+      }, 30000);
     }
   });
 })();
