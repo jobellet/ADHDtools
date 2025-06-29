@@ -4,10 +4,16 @@
 (function() {
   const STORAGE_KEY = 'adhd-calendar-events';
   const ICS_URL_KEY = 'adhd-calendar-ics-url';
+  const VOICE_ENABLED_KEY = 'adhd-calendar-voice-enabled';
+  const VOICE_EARLY_KEY = 'adhd-calendar-voice-early';
   let currentView = 'day';
   let referenceDate = new Date();
   let events = [];
   let icsUrl = '';
+  let voiceEnabled = false;
+  let voiceEarly = 0; // minutes before event
+  const announcedEarly = new Set();
+  const announcedStart = new Set();
 
   // Parse dates from ICS format (very simplified)
   function parseICSTime(value) {
@@ -84,6 +90,22 @@
     }
   }
 
+  function loadVoiceSettings() {
+    try {
+      voiceEnabled = localStorage.getItem(VOICE_ENABLED_KEY) === 'true';
+      voiceEarly = parseInt(localStorage.getItem(VOICE_EARLY_KEY) || '0', 10);
+      if (isNaN(voiceEarly)) voiceEarly = 0;
+    } catch {
+      voiceEnabled = false;
+      voiceEarly = 0;
+    }
+  }
+
+  function saveVoiceSettings() {
+    localStorage.setItem(VOICE_ENABLED_KEY, voiceEnabled);
+    localStorage.setItem(VOICE_EARLY_KEY, voiceEarly);
+  }
+
   function saveIcsUrl(url) {
     localStorage.setItem(ICS_URL_KEY, url);
   }
@@ -100,6 +122,43 @@
       seen.add(key);
       return true;
     });
+  }
+
+  function speak(text) {
+    if (!voiceEnabled || !('speechSynthesis' in window)) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = document.documentElement.lang || 'en';
+    window.speechSynthesis.speak(utter);
+  }
+
+  function checkVoiceAnnouncements() {
+    if (!voiceEnabled) return;
+    const now = new Date();
+    events.forEach(ev => {
+      if (!ev.start) return;
+      const start = new Date(ev.start);
+      if (isNaN(start)) return;
+      const diffMin = (start - now) / 60000;
+      if (diffMin <= voiceEarly && diffMin > voiceEarly - 1 && !announcedEarly.has(ev.id + '-' + voiceEarly)) {
+        const msg = getAnnouncement('soon', ev.title, Math.round(diffMin));
+        speak(msg);
+        announcedEarly.add(ev.id + '-' + voiceEarly);
+      }
+      if (diffMin <= 0 && diffMin > -1 && !announcedStart.has(ev.id)) {
+        const msg = getAnnouncement('now', ev.title, 0);
+        speak(msg);
+        announcedStart.add(ev.id);
+      }
+    });
+  }
+
+  function getAnnouncement(type, title, minutes) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = (window.translations && window.translations[lang]) || {};
+    let template = '';
+    if (type === 'soon') template = dict['calendar-announcement-soon'] || 'Event "{title}" starts in {minutes} minutes.';
+    else template = dict['calendar-announcement-now'] || 'Event "{title}" is starting now.';
+    return template.replace('{title}', title).replace('{minutes}', minutes);
   }
 
   function render(events) {
@@ -300,6 +359,7 @@
 
     events = loadEvents();
     icsUrl = loadIcsUrl();
+    loadVoiceSettings();
     render(events);
 
     const defaultBtn = container.querySelector('.calendar-view-btn[data-view="' + currentView + '"]');
@@ -334,6 +394,24 @@
       });
     }
 
+    const voiceCheckbox = document.getElementById('calendar-voice-enable');
+    const voiceEarlyInput = document.getElementById('calendar-voice-early');
+    if (voiceCheckbox) {
+      voiceCheckbox.checked = voiceEnabled;
+      voiceCheckbox.addEventListener('change', () => {
+        voiceEnabled = voiceCheckbox.checked;
+        saveVoiceSettings();
+      });
+    }
+    if (voiceEarlyInput) {
+      voiceEarlyInput.value = voiceEarly;
+      voiceEarlyInput.addEventListener('change', () => {
+        const val = parseInt(voiceEarlyInput.value, 10);
+        voiceEarly = isNaN(val) ? 0 : val;
+        saveVoiceSettings();
+      });
+    }
+
     if (importBtn && fileInput) {
       importBtn.addEventListener('click', () => fileInput.click());
       fileInput.addEventListener('change', e => handleICSFile(e.target.files[0]));
@@ -345,5 +423,7 @@
         handleICSUrl(icsUrl);
       }, 30000);
     }
+
+    setInterval(checkVoiceAnnouncements, 60000);
   });
 })();
