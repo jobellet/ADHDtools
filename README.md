@@ -80,6 +80,17 @@ The Calendar tool can load `.ics` files exported from other apps like Google Cal
 
 Only simple events are supported and nothing is uploaded anywhere.
 
+### Loading a Public Google Calendar
+
+Instead of manually exporting files, you can fetch events directly from a public link:
+
+1. In **Google Calendar** open **Settings** and choose your calendar under **Settings for my calendars**.
+2. Under **Access permissions for events** check **Make available to public** (Google warns that everything will be visible to anyone with the link).
+3. Go to **Integrate calendar** and copy the **Public address in iCal format**.
+4. In the Calendar tool paste this link into the **Load ICS URL** field and click **Load ICS URL**. Events will refresh automatically every 30 seconds.
+
+**Privacy Risks:** anyone who has this link can view your calendar details. Share it carefully. To change the link later, disable public sharing (uncheck **Make available to public**) and enable it again to generate a new address or use **Reset private URLs** under **Integrate calendar**.
+
 
 ## License
 
