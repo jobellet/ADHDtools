@@ -26,6 +26,7 @@ if (window.__focusModeLoaded) {
     let remainingSeconds = 0;
     let totalFocusSessionSeconds = 0; // Added
     let audio = null;
+    let endTime = null; // Timestamp when the focus session should end
 
     // Format seconds as MM:SS
     const formatTime = secs => {
@@ -84,6 +85,8 @@ if (window.__focusModeLoaded) {
       totalFocusSessionSeconds = remainingSeconds; // Store total duration
       if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
 
+      endTime = Date.now() + remainingSeconds * 1000; // Calculate end time
+
       // Enter fullscreen
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(console.error);
@@ -101,12 +104,14 @@ if (window.__focusModeLoaded) {
         duration,
         background: backgroundSelect.value,
         sound: soundSelect.value,
-        start: Date.now()
+        start: Date.now(),
+        endTime
       }));
 
       // Begin countdown
       timerId = setInterval(() => {
-        remainingSeconds--;
+        const now = Date.now();
+        remainingSeconds = Math.max(0, Math.ceil((endTime - now) / 1000));
         fullscreenTimer.textContent = formatTime(remainingSeconds);
 
         if (focusProgressBar && totalFocusSessionSeconds > 0) {
@@ -124,6 +129,7 @@ if (window.__focusModeLoaded) {
     function endFocus(completed = false) {
       clearInterval(timerId);
       timerId = null;
+      endTime = null;
 
       // Exit fullscreen
       if (document.fullscreenElement) {
@@ -148,7 +154,7 @@ if (window.__focusModeLoaded) {
     function resumeSession() {
       const data = localStorage.getItem('focus-session');
       if (!data) return;
-      const { goal, duration, background, sound, start } = JSON.parse(data);
+      const { goal, duration, background, sound, start, endTime: savedEnd } = JSON.parse(data);
       const elapsed = Math.floor((Date.now() - start) / 1000);
       const total = duration * 60;
       if (elapsed >= total) {
@@ -164,6 +170,7 @@ if (window.__focusModeLoaded) {
       goalInput.value = goal;
       startFocus();
       remainingSeconds = total - elapsed;
+      endTime = Date.now() + remainingSeconds * 1000;
     }
 
     if (enterBtn) enterBtn.addEventListener('click', startFocus);
