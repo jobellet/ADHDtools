@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let timer = null;
     let minutes;
     let seconds;
+    let endTime = null; // Timestamp when current session should end
     let isRunning = false;
     let isPaused = false;
     let currentMode = 'focus'; // 'focus', 'shortBreak', 'longBreak'
@@ -77,15 +78,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Functions
     function startTimer() {
         if (isRunning && !isPaused) return;
-        
+
         if (!isRunning || isPaused) {
+            const wasPaused = isPaused;
             isRunning = true;
             isPaused = false;
             startButton.disabled = true;
             pauseButton.disabled = false;
-            
+
             // If timer was not paused, initialize the time based on current mode
-            if (!isPaused) { // This means it's a new session or reset
+            if (!wasPaused) { // This means it's a new session or reset
                 if (currentMode === 'focus') {
                     minutes = settings.focusDuration;
                     currentSessionTotalSeconds = settings.focusDuration * 60;
@@ -105,10 +107,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 seconds = 0;
                 if (pomodoroProgressBar) pomodoroProgressBar.style.width = '0%'; // Reset progress bar for new session
                 updateTimerDisplay(minutes, seconds);
-            } else { // Resuming from pause
+            } else {
                 // currentSessionTotalSeconds should already be set from when session started
             }
-            
+
+            // Calculate end time based on current minutes/seconds
+            const remaining = minutes * 60 + seconds;
+            endTime = Date.now() + remaining * 1000;
+
             timer = setInterval(updateTimer, 1000);
         }
     }
@@ -116,6 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function pauseTimer() {
         if (isRunning && !isPaused) {
             clearInterval(timer);
+            // Recalculate remaining time based on endTime
+            const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+            minutes = Math.floor(remaining / 60);
+            seconds = remaining % 60;
+            updateTimerDisplay(minutes, seconds);
             isPaused = true;
             startButton.disabled = false;
             pauseButton.disabled = true;
@@ -126,6 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
         clearInterval(timer);
         isRunning = false;
         isPaused = false;
+        endTime = null;
         currentMode = 'focus';
         minutes = settings.focusDuration;
         seconds = 0;
@@ -139,57 +151,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateTimer() {
-        if (seconds === 0) {
-            if (minutes === 0) {
-                // Timer completed
-                clearInterval(timer);
-                isRunning = false;
-                playNotification();
-                
-                // Switch modes
-                if (currentMode === 'focus') {
-                    sessionCount++;
-                    sessionCountDisplay.textContent = sessionCount;
-                    // Save updated count
-                    localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
-                    
-                    // Check if it's time for a long break
-                    if (sessionCount % settings.sessionsBeforeLongBreak === 0) {
-                        currentMode = 'longBreak';
-                        minutes = settings.longBreakDuration;
-                        currentSessionTotalSeconds = settings.longBreakDuration * 60;
-                        timerLabel.textContent = 'LONG BREAK';
-                        document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-dark)';
-                    } else {
-                        currentMode = 'shortBreak';
-                        minutes = settings.shortBreakDuration;
-                        currentSessionTotalSeconds = settings.shortBreakDuration * 60;
-                        timerLabel.textContent = 'SHORT BREAK';
-                        document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-color)';
-                    }
+        const remainingTotal = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+        minutes = Math.floor(remainingTotal / 60);
+        seconds = remainingTotal % 60;
+
+        if (remainingTotal <= 0) {
+            // Timer completed
+            clearInterval(timer);
+            isRunning = false;
+            endTime = null;
+            playNotification();
+
+            // Switch modes
+            if (currentMode === 'focus') {
+                sessionCount++;
+                sessionCountDisplay.textContent = sessionCount;
+                // Save updated count
+                localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
+
+                // Check if it's time for a long break
+                if (sessionCount % settings.sessionsBeforeLongBreak === 0) {
+                    currentMode = 'longBreak';
+                    minutes = settings.longBreakDuration;
+                    currentSessionTotalSeconds = settings.longBreakDuration * 60;
+                    timerLabel.textContent = 'LONG BREAK';
+                    document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-dark)';
                 } else {
-                    // After any break, go back to focus mode
-                    currentMode = 'focus';
-                    minutes = settings.focusDuration;
-                    currentSessionTotalSeconds = settings.focusDuration * 60;
-                    timerLabel.textContent = 'FOCUS';
-                    document.querySelector('.timer-circle').style.backgroundColor = 'var(--primary-light)';
+                    currentMode = 'shortBreak';
+                    minutes = settings.shortBreakDuration;
+                    currentSessionTotalSeconds = settings.shortBreakDuration * 60;
+                    timerLabel.textContent = 'SHORT BREAK';
+                    document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-color)';
                 }
-                
-                seconds = 0;
-                if (pomodoroProgressBar) pomodoroProgressBar.style.width = '0%'; // Reset for new session segment
-                updateTimerDisplay(minutes, seconds);
-                startButton.disabled = false;
-                pauseButton.disabled = true;
-                
-                return;
+            } else {
+                // After any break, go back to focus mode
+                currentMode = 'focus';
+                minutes = settings.focusDuration;
+                currentSessionTotalSeconds = settings.focusDuration * 60;
+                timerLabel.textContent = 'FOCUS';
+                document.querySelector('.timer-circle').style.backgroundColor = 'var(--primary-light)';
             }
-            minutes--;
-            seconds = 59;
-        } else {
-            seconds--;
+
+            seconds = 0;
+            if (pomodoroProgressBar) pomodoroProgressBar.style.width = '0%'; // Reset for new session segment
+            updateTimerDisplay(minutes, seconds);
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            return;
         }
-        
+
         updateTimerDisplay(minutes, seconds);
     }
     
