@@ -4,6 +4,10 @@
 
 Interactive tools to help manage ADHD symptoms and improve productivity.
 
+## Cloud Notebook
+
+Prefer running in the cloud? Open the [Colab Notebook](https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/ADHDTools_colab.ipynb) and click **Copy to Drive**. Run the first cell to mount your Google Drive and a folder named `ADHDtools` will be created in *My Drive*. All notebook tools read and write data from that folder so your progress stays in sync across devices.
+
 ## Features
 
 *   **Pomodoro Timer:** Work in focused sprints with timed breaks to maintain productivity.
