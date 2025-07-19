@@ -17,7 +17,7 @@ Prefer running in the cloud? Open the [Colab Notebook](https://colab.research.go
 *   **Task Breakdown:** Break complex tasks into smaller, manageable steps.
 *   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
 *   **Routine Tool:** Create and run daily routines with timed tasks.
-*   **Focus Mode:** Minimize distractions with a clean, focused interface.
+*   **Focus Mode:** Minimize distractions with a clean, focused interface. *(not included in the Colab notebook)*
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
 *   **Calendar Tool:** Import events from ICS files and integrate them with other tools.
 
