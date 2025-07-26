@@ -46,6 +46,14 @@ document.addEventListener("DOMContentLoaded", () => {
         switchTool("home");
     });
 
+    const backendBtn = document.getElementById("open-colab-backend");
+    if (backendBtn) {
+        backendBtn.addEventListener("click", () => {
+            const url = "https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/website_backend.ipynb?filename=webdata.json&action=read";
+            window.open(url, "_blank");
+        });
+    }
+
     // Update time display every second
     function updateTime() {
         const now = new Date();
