@@ -8,6 +8,16 @@ Interactive tools to help manage ADHD symptoms and improve productivity.
 
 Prefer running in the cloud? Open the [Colab Notebook](https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/ADHDTools_colab.ipynb) and click **Copy to Drive**. Run the first cell to mount your Google Drive and a folder named `ADHDtools` will be created in *My Drive*. All notebook tools read and write data from that folder so your progress stays in sync across devices.
 
+## Colab Notebook with Parameters
+
+The website can launch a helper notebook in Colab and pass values through the URL. Replace `jobellet` with your GitHub username if you fork the repo.
+
+```
+https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/website_backend.ipynb?filename=demo.json&action=read
+```
+
+Inside the notebook any key/value pairs included after the `?` are parsed into a `params` dictionary. The notebook mounts your Google Drive and reads or writes the specified file based on these parameters.
+
 ## Features
 
 *   **Pomodoro Timer:** Work in focused sprints with timed breaks to maintain productivity.
