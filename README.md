@@ -4,10 +4,6 @@
 
 Interactive tools to help manage ADHD symptoms and improve productivity.
 
-## Cloud Notebook
-
-Prefer running in the cloud? Open the [Colab Notebook](https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/ADHDTools_colab.ipynb) and click **Copy to Drive**. Run the first cell to mount your Google Drive and a folder named `ADHDtools` will be created in *My Drive*. All notebook tools read and write data from that folder so your progress stays in sync across devices.
-
 ## Colab Notebook with Parameters
 
 The website can launch a helper notebook in Colab and pass values through the URL. Replace `jobellet` with your GitHub username if you fork the repo.
@@ -27,7 +23,7 @@ Inside the notebook any key/value pairs included after the `?` are parsed into a
 *   **Task Breakdown:** Break complex tasks into smaller, manageable steps.
 *   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
 *   **Routine Tool:** Create and run daily routines with timed tasks.
-*   **Focus Mode:** Minimize distractions with a clean, focused interface. *(not included in the Colab notebook)*
+*   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
 *   **Calendar Tool:** Import events from ICS files and integrate them with other tools.
 
