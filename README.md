@@ -14,6 +14,8 @@ https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/website_ba
 
 Inside the notebook any key/value pairs included after the `?` are parsed into a `params` dictionary. The notebook mounts your Google Drive and reads or writes the specified file based on these parameters.
 
+Clicking **Open Colab Backend** on the site now sends your current `localStorage` data to the notebook. Run the notebook to automatically merge this data into `webdata.json` in your Google Drive.
+
 ## Features
 
 *   **Pomodoro Timer:** Work in focused sprints with timed breaks to maintain productivity.
