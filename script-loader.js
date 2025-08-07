@@ -1,18 +1,18 @@
 // Update index.html to include the new JavaScript files
 document.addEventListener('DOMContentLoaded', function() {
-    // Add script tags for calendar integration and cross-tool interaction
+    // Add script tags for calendar integration and data management
     const calendarScript = document.createElement('script');
     calendarScript.src = 'calendar-integration.js';
     document.body.appendChild(calendarScript);
     
-    // Avoid loading cross-tool-interaction.js twice. If it's already
+    // Avoid loading data-manager.js twice. If it's already
     // present in the document (e.g., included in the page head), don't
     // inject it again as re-running the script would recreate the
     // EventBus and break existing listeners.
-    if (!document.querySelector('script[src="cross-tool-interaction.js"]')) {
-        const crossToolScript = document.createElement('script');
-        crossToolScript.src = 'cross-tool-interaction.js';
-        document.body.appendChild(crossToolScript);
+    if (!document.querySelector('script[src="data-manager.js"]')) {
+        const dataManagerScript = document.createElement('script');
+        dataManagerScript.src = 'data-manager.js';
+        document.body.appendChild(dataManagerScript);
     }
     
     // Add celebration container for rewards
