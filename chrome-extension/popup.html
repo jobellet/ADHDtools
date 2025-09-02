@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ADHD Tools Sync</title>
+  <style>
+    body { font-family: Arial, sans-serif; width: 260px; margin: 10px; }
+    button { display: block; margin: 8px 0; width: 100%; }
+    #status { margin-top: 10px; color: green; }
+  </style>
+</head>
+<body>
+  <h3>ADHD Tools Sync</h3>
+  <p>This extension syncs your ADHD Tools data across Chrome browsers using your Google account. Ensure you are signed into the same Chrome account on each device. Sync starts automatically when the extension is installed. Use the button below to force a manual sync.</p>
+  <button id="sync-btn">Sync Now</button>
+  <button id="clear-local-btn">Clear Local Data</button>
+  <button id="clear-sync-btn">Clear Synced Data</button>
+  <div id="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
