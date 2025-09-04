@@ -43,7 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
             streakCounter.className = 'streak-counter';
             const streak = calculateStreak(habit.id);
             streakCounter.textContent = `${streak} day${streak !== 1 ? 's' : ''} streak`;
-            
+
+            // Create edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
+            editBtn.innerHTML = '&#9998;';
+            editBtn.addEventListener('click', function() {
+                editHabit(index);
+            });
+
             // Create delete button
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn';
@@ -51,10 +59,11 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteBtn.addEventListener('click', function() {
                 deleteHabit(index);
             });
-            
+
             // Assemble habit header
             habitHeader.appendChild(habitName);
             habitHeader.appendChild(streakCounter);
+            habitHeader.appendChild(editBtn);
             habitHeader.appendChild(deleteBtn);
             
             // Create habit progress
@@ -158,19 +167,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 habits.forEach(habit => {
                     const dateStr = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                     const isCompleted = habitLogs[habit.id] && habitLogs[habit.id][dateStr];
-                    
+
                     const habitCheck = document.createElement('div');
                     habitCheck.className = `habit-check ${isCompleted ? 'completed' : ''}`;
                     habitCheck.title = habit.name;
-                    
+                    habitCheck.dataset.habitId = habit.id;
+
                     // Only allow toggling for dates up to today
                     const checkDate = new Date(currentYear, currentMonth, day);
                     if (checkDate <= currentDate) {
                         habitCheck.addEventListener('click', function() {
-                            toggleHabitCompletion(habit.id, dateStr);
+                            toggleHabitCompletion(this.dataset.habitId, dateStr);
                         });
                     }
-                    
+
                     habitChecks.appendChild(habitCheck);
                 });
                 
@@ -220,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!habitInput.value.trim()) return;
         
         const newHabit = {
-            id: Date.now().toString(),
+            id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(),
             name: habitInput.value.trim(),
             createdAt: new Date().toISOString()
         };
@@ -238,12 +248,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm('Are you sure you want to delete this habit and all its tracking data?')) {
             const habitId = habits[index].id;
             habits.splice(index, 1);
-            
+
             // Remove habit logs
             delete habitLogs[habitId];
-            
+
             saveHabits();
             saveHabitLogs();
+        }
+    }
+
+    // Edit habit name
+    function editHabit(index) {
+        const newName = prompt('Edit habit name:', habits[index].name);
+        if (newName && newName.trim()) {
+            habits[index].name = newName.trim();
+            saveHabits();
         }
     }
     
