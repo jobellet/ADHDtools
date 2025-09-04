@@ -257,16 +257,22 @@
                     </div>
                 </div>
 
-                <!-- Modal for Adding an Event -->
+                <!-- Modal for Adding/Editing an Event -->
                 <div id="event-modal" class="modal">
                   <div class="modal-content">
                     <span class="close-button">&times;</span>
-                    <h3>Add Event</h3>
+                    <h3 id="event-modal-title">Add Event</h3>
                     <form id="event-form">
+                      <label for="event-task">Import Task:</label>
+                      <select id="event-task">
+                        <option value="">-- New Event --</option>
+                      </select>
                       <label for="event-title">Title:</label>
                       <input type="text" id="event-title" required>
-                      <label for="event-time">Time:</label>
+                      <label for="event-time">Start Time:</label>
                       <select id="event-time"></select>
+                      <label for="event-duration">Duration (minutes):</label>
+                      <input type="number" id="event-duration" min="15" step="15" value="60" required>
                       <button type="submit" class="btn">Save Event</button>
                     </form>
                   </div>

@@ -684,6 +684,7 @@ footer {
     border: 1px solid #ddd;
     border-radius: var(--border-radius);
     overflow-y: auto;
+    height: calc(4 * 60 * var(--minute-height));
     max-height: 80vh;
 }
 
@@ -714,15 +715,20 @@ footer {
     width: calc(100% - 80px);
 }
 
+
+:root {
+    --minute-height: 2px;
+}
+
 .time-block {
     padding: 0.5rem;
-    min-height: 80px;
-    border-right: 1px solid #eee;
+    height: calc(60 * var(--minute-height));
+    border-bottom: 1px solid #eee;
     position: relative;
 }
 
 .time-block:last-child {
-    border-right: none;
+    border-bottom: none;
 }
 
 .time-label {
@@ -732,7 +738,8 @@ footer {
 }
 
 .event-content {
-    min-height: 50px;
+    position: relative;
+    height: calc(60 * var(--minute-height));
     font-size: 0.9rem;
 }
 
@@ -751,8 +758,29 @@ footer {
     color: var(--on-primary);
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
-    margin-bottom: 0.25rem;
     font-size: 0.85rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+}
+
+.event .delete-event {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.event .resize-handle {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    cursor: s-resize;
+    background-color: rgba(0,0,0,0.2);
 }
 
 /* Modal styles */
