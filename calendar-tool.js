@@ -15,6 +15,59 @@
   const announcedEarly = new Set();
   const announcedStart = new Set();
 
+  function createEventAt(date) {
+    const title = prompt('Event title?');
+    if (!title) return;
+    const startTime = prompt('Start time (HH:MM)', '09:00') || '09:00';
+    const endTime = prompt('End time (HH:MM)', startTime) || startTime;
+
+    const [sh, sm] = startTime.split(':').map(Number);
+    const start = new Date(date);
+    start.setHours(sh || 0, sm || 0, 0, 0);
+
+    const [eh, em] = endTime.split(':').map(Number);
+    const end = new Date(date);
+    end.setHours(eh || sh || 0, em || sm || 0, 0, 0);
+
+    const ev = {
+      id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
+      title,
+      start: start.toISOString().slice(0,16),
+      end: end.toISOString().slice(0,16)
+    };
+    events.push(ev);
+    saveEvents(events);
+    render(events);
+  }
+
+  function updateEventDate(ev, newDate) {
+    if (ev.start) {
+      const start = new Date(ev.start);
+      start.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+      ev.start = start.toISOString().slice(0,16);
+    }
+    if (ev.end) {
+      const end = new Date(ev.end);
+      end.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
+      ev.end = end.toISOString().slice(0,16);
+    }
+  }
+
+  function handleDragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.id);
+  }
+
+  function handleDrop(e, date) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData('text/plain');
+    const ev = events.find(ev => ev.id === id);
+    if (ev) {
+      updateEventDate(ev, date);
+      saveEvents(events);
+      render(events);
+    }
+  }
+
   // Parse dates from ICS format (very simplified)
   function parseICSTime(value) {
     if (!value) return '';
@@ -216,6 +269,7 @@
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
+    table.addEventListener('dblclick', () => createEventAt(new Date(referenceDate)));
     container.appendChild(table);
   }
 
@@ -242,10 +296,14 @@
       cellDate.setDate(start.getDate()+i);
       const cell = document.createElement('td');
       const dayStr = cellDate.toISOString().split('T')[0];
+      cell.dataset.date = dayStr;
       if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
       const list = document.createElement('ul');
       events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
         const li = document.createElement('li');
+        li.draggable = true;
+        li.dataset.id = ev.id;
+        li.addEventListener('dragstart', handleDragStart);
         let time = '';
         if (ev.start) {
           const startT = new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -256,6 +314,9 @@
         list.appendChild(li);
       });
       cell.appendChild(list);
+      cell.addEventListener('dblclick', () => createEventAt(cellDate));
+      cell.addEventListener('dragover', e => e.preventDefault());
+      cell.addEventListener('drop', e => handleDrop(e, cellDate));
       row.appendChild(cell);
     }
     tbody.appendChild(row);
@@ -292,12 +353,16 @@
         const cell = document.createElement('td');
         if (current >= 1 && current <= daysInMonth) {
           const dayStr = cellDate.toISOString().split('T')[0];
+          cell.dataset.date = dayStr;
           const num = document.createElement('div');
           num.textContent = cellDate.getDate();
           cell.appendChild(num);
           const list = document.createElement('ul');
           events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
             const li = document.createElement('li');
+            li.draggable = true;
+            li.dataset.id = ev.id;
+            li.addEventListener('dragstart', handleDragStart);
             let time = '';
             if (ev.start) {
               const startT = new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -308,6 +373,9 @@
             list.appendChild(li);
           });
           cell.appendChild(list);
+          cell.addEventListener('dblclick', () => createEventAt(cellDate));
+          cell.addEventListener('dragover', e => e.preventDefault());
+          cell.addEventListener('drop', e => handleDrop(e, cellDate));
           if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
         }
         tr.appendChild(cell);
