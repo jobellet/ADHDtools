@@ -260,6 +260,36 @@ document.addEventListener('DOMContentLoaded', function() {
         scrollToCurrent();
     });
 
+    // Handle tasks sent from other tools
+    window.EventBus.addEventListener('ef-receiveTaskFor-DayPlanner', handleReceivedTaskForDayPlanner);
+
+    function handleReceivedTaskForDayPlanner(event) {
+        const task = event.detail;
+        if (!task || !task.text) {
+            console.warn('Day Planner received invalid task:', task);
+            return;
+        }
+
+        // Ask user for time and duration to schedule the task
+        const time = prompt(`Enter time (HH:MM) for '${task.text}' in the Day Planner:`, '09:00');
+        if (time === null) return; // user cancelled
+        const durationStr = prompt(`Enter duration in minutes:`, task.duration || '60');
+        if (durationStr === null) return;
+        const duration = parseInt(durationStr, 10) || 60;
+
+        const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${time}`;
+        window.DataManager.addTask({
+            text: task.text,
+            originalTool: task.originalTool || 'TaskManager',
+            priority: task.priority || 'medium',
+            category: task.category || 'other',
+            plannerDate: plannerDateTime,
+            duration
+        });
+        renderDayPlanner();
+        alert(`Task '${task.text}' added to Day Planner.`);
+    }
+
     renderDayPlanner();
     scrollToCurrent();
 });
