@@ -37,6 +37,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePlayerSection = document.querySelector('.routine-player'); // Assuming this is the correct selector
     const routineSetupSection = document.querySelector('.routine-setup'); // Assuming this is the correct selector
 
+    const essential = [
+        routineNameInput,
+        createRoutineBtn,
+        routineSelect,
+        taskNameInput,
+        taskDurationInput,
+        addTaskToRoutineBtn,
+        routineStartTimeInput,
+        setStartTimeBtn,
+        startSelectedRoutineBtn
+    ];
+    if (essential.some(el => !el)) {
+        console.warn('Routine tool elements missing; skipping initialization');
+        return;
+    }
+
     // Data Storage
     const ROUTINE_STORAGE_KEY = 'adhd-tool-routines';
     let routines = []; // Array to hold routine objects

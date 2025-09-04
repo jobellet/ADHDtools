@@ -46,26 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
         switchTool("home");
     });
 
-    const backendBtn = document.getElementById("open-colab-backend");
-    if (backendBtn) {
-        backendBtn.addEventListener("click", () => {
-            const data = {};
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                try {
-                    data[key] = JSON.parse(localStorage.getItem(key));
-                } catch {
-                    data[key] = localStorage.getItem(key);
-                }
-            }
-            const encoded = encodeURIComponent(JSON.stringify(data));
-            const url =
-                "https://colab.research.google.com/github/jobellet/ADHDtools/blob/main/website_backend.ipynb" +
-                `?filename=webdata.json&action=write&data=${encoded}`;
-            window.open(url, "_blank");
-        });
-    }
-
     // Update time display every second
     function updateTime() {
         const now = new Date();
