@@ -49,6 +49,10 @@ That's it! The Gemini-powered features in ADHD Tools should now be enabled.
 
 If you want to connect the Calendar tool to Google Calendar, store your API credentials in `localStorage` using the keys `gcalClientId` and `gcalApiKey`. When these values are present, the integration script loads automatically; otherwise it is skipped to avoid console errors.
 
+## Deprecated Backend Notebook
+
+Earlier iterations of this project included a `website_backend.ipynb` Colab notebook used for experimentation. The live site now stores all data locally and does not rely on this backend, so the notebook has been removed.
+
 ## Contributing
 
 If you'd like to contribute, please follow these steps:
