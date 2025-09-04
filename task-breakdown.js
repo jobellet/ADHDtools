@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const mainInput = document.getElementById('project-input');
   const addMainBtn = document.getElementById('add-project');
+  const aiBtn = document.getElementById('ai-breakdown');
   const listContainer = document.getElementById('project-list');
   const STORAGE_KEY = 'adhd-breakdown-tasks';
 
@@ -134,6 +135,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind main add
   addMainBtn.addEventListener('click', addMain);
   mainInput.addEventListener('keypress', e => { if (e.key === 'Enter') addMain(); });
+
+  // AI breakdown generation
+  aiBtn.addEventListener('click', async () => {
+    const task = mainInput.value.trim();
+    if (!task) return;
+    aiBtn.disabled = true;
+    const originalText = aiBtn.textContent;
+    aiBtn.textContent = 'Generating...';
+    try {
+      const prompt = `Break down the task '${task}' into a list of simple sub-tasks. Put each sub-task on a new line.`;
+      const aiText = await callGemini(prompt);
+      if (!aiText) throw new Error('No response');
+      const steps = aiText.split('\n').map(t => t.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
+      const newNode = { text: task, completed: false, subtasks: steps.map(s => ({ text: s, completed: false, subtasks: [] })) };
+      tree.push(newNode);
+      saveTree();
+      renderTree();
+      mainInput.value = '';
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      aiBtn.disabled = false;
+      aiBtn.textContent = originalText;
+    }
+  });
 
   // Initial render
   renderTree();

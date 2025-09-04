@@ -37,6 +37,22 @@ All data is stored locally in your browser. Nothing is sent to any server, ensur
 
 If you have suggestions or feedback, please let me know!
 
+## Gemini API Setup
+
+Some tools can use Google Gemini to suggest tasks or categorize items. To enable these features you need a personal API key.
+
+1. **Visit [Google AI Studio](https://aistudio.google.com/)** and sign in with your Google account.
+2. **Create a project** if prompted. A name like `ADHD-Tools-Project` works well.
+3. **Generate an API key** and copy the long string shown.
+4. **Store it securely** – treat this key like a password and never commit it to Git.
+5. **Add the key to your browser** by running the following in the developer console:
+
+   ```js
+   localStorage.setItem('geminiApiKey', 'PASTE_YOUR_KEY_HERE');
+   ```
+
+   The key is saved only in your browser.
+
 ## Contributing
 
 If you'd like to contribute, please follow these steps:
