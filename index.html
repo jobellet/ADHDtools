@@ -634,8 +634,8 @@
                 <p data-i18n="routine-text">Create, manage, and run daily routines with timed tasks.</p>
 
                 <div class="routine-view-controls" >
-                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true" data-i18n="routine-run-btn">Run Routine</button>
-                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false" data-i18n="routine-manage-btn">Manage Routines</button>
+                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true" title="Run your routine" data-i18n="routine-run-btn">Run Routine</button>
+                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false" title="Manage your routines" data-i18n="routine-manage-btn">Manage Routines</button>
                 </div>
 
                 <div class="routine-container routine-layout">
@@ -644,14 +644,15 @@
                         <div class="input-group">
                             <label for="routine-name" data-i18n="routine-name-label">Routine Name:</label>
                             <input type="text" id="routine-name" placeholder="e.g., Morning Prep">
-                            <button id="create-routine-btn" class="btn" data-i18n="routine-create-btn">Create Routine</button>
+                            <button id="create-routine-btn" class="btn" title="Create a new routine" data-i18n="routine-create-btn">Create Routine</button>
                         </div>
 
                         <div class="input-group">
                             <label for="routine-select" data-i18n="routine-select-label">Select Routine:</label>
                             <select id="routine-select"></select>
                         </div>
-                        
+
+                        <h4 id="current-routine-name" data-i18n="routine-none-active">No routine selected</h4>
                         <h4 data-i18n="routine-add-tasks-heading">Add Tasks to Selected Routine</h4>
                         <div class="input-group">
                             <label for="task-name" data-i18n="routine-task-name-label">Task Name:</label>
@@ -664,35 +665,39 @@
                         <div class="input-group">
                             <label for="task-break-duration">Break After Task (minutes, optional):</label>
                             <input type="number" id="task-break-duration" min="0" placeholder="e.g., 2">
-                            <button id="add-task-to-routine-btn" class="btn" data-i18n="routine-add-task-btn">Add Task</button>
+                            <button id="add-task-to-routine-btn" class="btn" title="Add task to routine" data-i18n="routine-add-task-btn">Add Task</button>
                         </div>
 
                         <div class="input-group">
                             <label for="routine-start-time" data-i18n="routine-start-time-label">Set Auto Start Time (optional):</label>
                             <input type="time" id="routine-start-time">
-                            <button id="set-start-time-btn" class="btn" data-i18n="routine-set-time-btn">Set Time</button>
+                            <button id="set-start-time-btn" class="btn" title="Set automatic start time" data-i18n="routine-set-time-btn">Set Time</button>
                         </div>
+
+                        <h4 data-i18n="routine-task-list-heading">Routine Tasks</h4>
+                        <ul id="current-routine-tasks" class="routine-task-list"></ul>
+                        <p>Total Duration: <span id="manage-total-duration">0</span> min</p>
                     </div>
 
                     <div class="routine-player">
                         <h3 data-i18n="routine-active-heading">Active Routine</h3>
                         <div id="active-routine-display">
-                            <h4 id="current-routine-name" data-i18n="routine-none-active">No routine selected/active</h4>
-                            <ul id="current-routine-tasks" class="routine-task-list">
+                            <h4 id="player-current-routine-name" data-i18n="routine-none-active">No routine selected/active</h4>
+                            <ul id="player-routine-tasks" class="routine-task-list">
                                 <!-- Tasks will be listed here -->
                             </ul>
                             <p data-i18n="routine-finish-time">Expected Finish Time: <span id="expected-finish-time">-</span></p>
                         </div>
 
                         <div class="routine-controls">
-                            <button id="start-selected-routine-btn" class="btn btn-primary" data-i18n="routine-start-btn">Start Selected Routine</button>
+                            <button id="start-selected-routine-btn" class="btn btn-primary" title="Start the selected routine" data-i18n="routine-start-btn">Start Selected Routine</button>
                         </div>
 
                         <div id="current-task-display">
                             <h4 data-i18n="routine-current-task">Current Task: <span id="current-task-name">-</span></h4>
                             <p data-i18n="routine-time-left">Time Remaining: <span id="current-task-time-left">-</span></p>
                         </div>
-                        
+
                         <div class="pie-chart-container">
                             <canvas id="routine-pie-chart" width="200" height="200"></canvas>
                         </div>

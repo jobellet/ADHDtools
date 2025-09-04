@@ -22,12 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const currentRoutineNameDisplay = document.getElementById('current-routine-name');
     const currentRoutineTasksList = document.getElementById('current-routine-tasks');
+    const manageTotalDurationDisplay = document.getElementById('manage-total-duration');
+
+    const playerRoutineNameDisplay = document.getElementById('player-current-routine-name');
+    const playerRoutineTasksList = document.getElementById('player-routine-tasks');
     const expectedFinishTimeDisplay = document.getElementById('expected-finish-time');
 
     const startSelectedRoutineBtn = document.getElementById('start-selected-routine-btn');
     const currentTaskNameDisplay = document.getElementById('current-task-name');
     const currentTaskTimeLeftDisplay = document.getElementById('current-task-time-left');
 
+    const activeRoutineDisplay = document.getElementById('active-routine-display');
+    const routineControls = document.querySelector('.routine-controls');
     const currentTaskDisplay = document.getElementById('current-task-display');
     const pieChartContainer = document.querySelector('.pie-chart-container');
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
@@ -260,63 +266,129 @@ document.addEventListener('DOMContentLoaded', () => {
     function displaySelectedRoutineDetails() {
         const routine = getRoutineById(selectedRoutineId);
         if (routine) {
-            currentRoutineNameDisplay.textContent = routine.name;
-            currentRoutineTasksList.innerHTML = ''; // Clear previous tasks
-            routine.tasks.forEach((task, index) => {
-                const li = document.createElement('li');
-                li.dataset.taskId = task.id;
-                li.draggable = true;
-                li.addEventListener('dragstart', e => {
-                    e.dataTransfer.setData('text/plain', index);
-                });
-                li.addEventListener('dragover', e => e.preventDefault());
-                li.addEventListener('drop', e => {
-                    e.preventDefault();
-                    const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                    const to = index;
-                    if (isNaN(from) || from === to) return;
-                    const moved = routine.tasks.splice(from, 1)[0];
-                    routine.tasks.splice(to, 0, moved);
-                    saveRoutines();
-                    displaySelectedRoutineDetails();
-                });
+            if (currentRoutineNameDisplay) currentRoutineNameDisplay.textContent = routine.name;
+            if (currentRoutineTasksList) {
+                currentRoutineTasksList.innerHTML = '';
+                routine.tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.dataset.taskId = task.id;
+                    li.draggable = true;
+                    li.tabIndex = 0;
+                    li.addEventListener('dragstart', e => {
+                        e.dataTransfer.setData('text/plain', index);
+                    });
+                    li.addEventListener('dragover', e => e.preventDefault());
+                    li.addEventListener('drop', e => {
+                        e.preventDefault();
+                        const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                        const to = index;
+                        if (isNaN(from) || from === to) return;
+                        const moved = routine.tasks.splice(from, 1)[0];
+                        routine.tasks.splice(to, 0, moved);
+                        saveRoutines();
+                        displaySelectedRoutineDetails();
+                        setTimeout(() => {
+                            if (currentRoutineTasksList.children[to]) {
+                                currentRoutineTasksList.children[to].focus();
+                            }
+                        }, 0);
+                    });
+                    li.addEventListener('keydown', e => {
+                        if (e.key === 'ArrowUp' && index > 0) {
+                            const moved = routine.tasks.splice(index, 1)[0];
+                            routine.tasks.splice(index - 1, 0, moved);
+                            saveRoutines();
+                            displaySelectedRoutineDetails();
+                        } else if (e.key === 'ArrowDown' && index < routine.tasks.length - 1) {
+                            const moved = routine.tasks.splice(index, 1)[0];
+                            routine.tasks.splice(index + 1, 0, moved);
+                            saveRoutines();
+                            displaySelectedRoutineDetails();
+                        }
+                    });
 
-                const taskText = document.createElement('span');
-                taskText.textContent = `${task.name} (${task.duration} min)`;
-                li.appendChild(taskText);
+                    const taskText = document.createElement('span');
+                    taskText.textContent = `${task.name} (${task.duration} min)`;
+                    li.appendChild(taskText);
 
-                const editBtn = document.createElement('button');
-                editBtn.textContent = 'Edit';
-                editBtn.className = 'edit-routine-task-btn';
-                editBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    // UI for editing will be handled here (Step 3)
-                    showEditTaskUI(li, task);
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.className = 'routine-task-actions';
+
+                    const upBtn = document.createElement('button');
+                    upBtn.textContent = '↑';
+                    upBtn.title = 'Move task up';
+                    upBtn.addEventListener('click', () => {
+                        if (index > 0) {
+                            const moved = routine.tasks.splice(index, 1)[0];
+                            routine.tasks.splice(index - 1, 0, moved);
+                            saveRoutines();
+                            displaySelectedRoutineDetails();
+                        }
+                    });
+
+                    const downBtn = document.createElement('button');
+                    downBtn.textContent = '↓';
+                    downBtn.title = 'Move task down';
+                    downBtn.addEventListener('click', () => {
+                        if (index < routine.tasks.length - 1) {
+                            const moved = routine.tasks.splice(index, 1)[0];
+                            routine.tasks.splice(index + 1, 0, moved);
+                            saveRoutines();
+                            displaySelectedRoutineDetails();
+                        }
+                    });
+
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.title = 'Edit task';
+                    editBtn.className = 'edit-routine-task-btn';
+                    editBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showEditTaskUI(li, task);
+                    });
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.title = 'Delete task';
+                    deleteBtn.className = 'delete-routine-task-btn';
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (confirm(`Are you sure you want to delete task: "${task.name}"?`)) {
+                            deleteTaskFromRoutine(task.id);
+                        }
+                    });
+
+                    actionsDiv.appendChild(upBtn);
+                    actionsDiv.appendChild(downBtn);
+                    actionsDiv.appendChild(editBtn);
+                    actionsDiv.appendChild(deleteBtn);
+                    li.appendChild(actionsDiv);
+
+                    currentRoutineTasksList.appendChild(li);
                 });
+            }
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.className = 'delete-routine-task-btn';
-                deleteBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (confirm(`Are you sure you want to delete task: "${task.name}"?`)) {
-                        deleteTaskFromRoutine(task.id);
-                    }
+            if (manageTotalDurationDisplay) {
+                manageTotalDurationDisplay.textContent = routine.totalDuration || 0;
+            }
+
+            if (playerRoutineNameDisplay) playerRoutineNameDisplay.textContent = routine.name;
+            if (playerRoutineTasksList) {
+                playerRoutineTasksList.innerHTML = '';
+                routine.tasks.forEach(task => {
+                    const li = document.createElement('li');
+                    li.textContent = `${task.name} (${task.duration} min)`;
+                    playerRoutineTasksList.appendChild(li);
                 });
-                
-                const actionsDiv = document.createElement('div');
-                actionsDiv.className = 'routine-task-actions';
-                actionsDiv.appendChild(editBtn);
-                actionsDiv.appendChild(deleteBtn);
-                li.appendChild(actionsDiv);
-
-                currentRoutineTasksList.appendChild(li);
-            });
-            expectedFinishTimeDisplay.textContent = `Total duration: ${routine.totalDuration || 0} min`;
+            }
+            if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
         } else {
-            currentRoutineNameDisplay.textContent = 'No routine selected';
-            currentRoutineTasksList.innerHTML = '';
-            expectedFinishTimeDisplay.textContent = 'Total duration: -';
+            if (currentRoutineNameDisplay) currentRoutineNameDisplay.textContent = 'No routine selected';
+            if (currentRoutineTasksList) currentRoutineTasksList.innerHTML = '';
+            if (manageTotalDurationDisplay) manageTotalDurationDisplay.textContent = '0';
+            if (playerRoutineNameDisplay) playerRoutineNameDisplay.textContent = 'No routine selected/active';
+            if (playerRoutineTasksList) playerRoutineTasksList.innerHTML = '';
+            if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
         }
     }
 
@@ -653,7 +725,9 @@ document.addEventListener('DOMContentLoaded', () => {
         startSelectedRoutineBtn.textContent = "Routine Active";
         startSelectedRoutineBtn.disabled = true;
         startSelectedRoutineBtn.blur();
-        
+        if (activeRoutineDisplay) activeRoutineDisplay.style.display = 'none';
+        if (routineControls) routineControls.style.display = 'none';
+
         currentRoutineNameDisplay.textContent = `Active: ${activeRoutine.name}`;
 
         const now = new Date();
@@ -683,7 +757,9 @@ document.addEventListener('DOMContentLoaded', () => {
             setStartTimeBtn.disabled = false;
             startSelectedRoutineBtn.textContent = "Start Selected Routine";
             startSelectedRoutineBtn.disabled = false;
-            
+
+            if (activeRoutineDisplay) activeRoutineDisplay.style.display = '';
+            if (routineControls) routineControls.style.display = '';
             displaySelectedRoutineDetails();
             activeRoutine = null;
             currentTaskTimer = null;
