@@ -15,10 +15,12 @@ if (window.__focusModeLoaded) {
     const goalInput = document.getElementById('focus-goal');
     const previewTimer = document.querySelector('#focus-preview .preview-timer');
     const previewGoal = document.querySelector('#focus-preview .preview-goal');
+    const previewContainer = document.getElementById('focus-preview');
     const fullscreenContainer = document.getElementById('fullscreen-focus-mode');
     const fullscreenTimer = document.getElementById('focus-mode-timer');
     const fullscreenGoal = document.getElementById('focus-mode-goal');
     const focusProgressBar = document.getElementById('focus-mode-progress-bar'); // Added
+    const pauseBtn = document.getElementById('pause-focus-mode');
     const textArea = document.getElementById('focus-text');
     const downloadBtn = document.getElementById('download-focus-text');
 
@@ -43,8 +45,20 @@ if (window.__focusModeLoaded) {
 
     // Background classes correspond to options: solid, gradient, nature, minimal
     function applyBackground(type) {
-      document.body.classList.remove('bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal');
-      document.body.classList.add(`bg-${type}`);
+      const classes = ['bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal'];
+      [previewContainer, fullscreenContainer].forEach(el => {
+        if (el) {
+          el.classList.remove(...classes);
+          el.classList.add(`bg-${type}`);
+        }
+      });
+    }
+
+    function updatePreview() {
+      const duration = parseInt(durationInput.value, 10);
+      previewTimer.textContent = isNaN(duration) ? '00:00' : formatTime(duration * 60);
+      previewGoal.textContent = goalInput.value.trim();
+      applyBackground(backgroundSelect.value);
     }
 
     // Map sound option to audio file URL
@@ -79,9 +93,8 @@ if (window.__focusModeLoaded) {
         return;
       }
       remainingSeconds = duration * 60;
-      previewTimer.textContent = formatTime(remainingSeconds);
+      updatePreview();
       const goal = goalInput.value.trim();
-      previewGoal.textContent = goal || '';
 
       fullscreenGoal.textContent = goal || '';
       fullscreenTimer.textContent = formatTime(remainingSeconds);
@@ -103,6 +116,7 @@ if (window.__focusModeLoaded) {
       startAudio(soundSelect.value);
       if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = backgroundSelect.value;
       if (fullscreenSoundSelect) fullscreenSoundSelect.value = soundSelect.value;
+      if (pauseBtn) pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
 
       // Persist session data
       localStorage.setItem('focus-session', JSON.stringify({
@@ -114,22 +128,40 @@ if (window.__focusModeLoaded) {
         endTime
       }));
 
-      // Begin countdown
+      startCountdown();
+    }
+
+    function startCountdown() {
       timerId = setInterval(() => {
         const now = Date.now();
         remainingSeconds = Math.max(0, Math.ceil((endTime - now) / 1000));
         fullscreenTimer.textContent = formatTime(remainingSeconds);
 
         if (focusProgressBar && totalFocusSessionSeconds > 0) {
-            const elapsedSeconds = totalFocusSessionSeconds - remainingSeconds;
-            const progressPercentage = (elapsedSeconds / totalFocusSessionSeconds) * 100;
-            focusProgressBar.style.width = Math.min(progressPercentage, 100) + '%';
+          const elapsedSeconds = totalFocusSessionSeconds - remainingSeconds;
+          const progressPercentage = (elapsedSeconds / totalFocusSessionSeconds) * 100;
+          focusProgressBar.style.width = Math.min(progressPercentage, 100) + '%';
         }
 
         if (remainingSeconds <= 0) {
           endFocus(true);
         }
       }, 1000);
+    }
+
+    function pauseFocus() {
+      if (!timerId) return;
+      clearInterval(timerId);
+      timerId = null;
+      remainingSeconds = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+      pauseBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
+    }
+
+    function resumeFocusTimer() {
+      if (timerId) return;
+      endTime = Date.now() + remainingSeconds * 1000;
+      startCountdown();
+      pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
     }
 
     function endFocus(completed = false) {
@@ -147,7 +179,8 @@ if (window.__focusModeLoaded) {
         audio.pause();
         audio = null;
       }
-      document.body.classList.remove('bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal');
+      if (previewContainer) previewContainer.classList.remove('bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal');
+      if (fullscreenContainer) fullscreenContainer.classList.remove('bg-solid', 'bg-gradient', 'bg-nature', 'bg-minimal');
       fullscreenContainer.classList.add('hidden');
 
       // Clear persisted session
@@ -155,6 +188,7 @@ if (window.__focusModeLoaded) {
       if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
       totalFocusSessionSeconds = 0; // Reset total duration
       // No popup at the end of the session
+      if (pauseBtn) pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
     }
 
     function resumeSession() {
@@ -181,6 +215,13 @@ if (window.__focusModeLoaded) {
 
     if (enterBtn) enterBtn.addEventListener('click', startFocus);
     if (exitBtn) exitBtn.addEventListener('click', () => endFocus(false));
+    if (pauseBtn) pauseBtn.addEventListener('click', () => {
+      if (timerId) {
+        pauseFocus();
+      } else {
+        resumeFocusTimer();
+      }
+    });
     if (soundSelect) soundSelect.addEventListener('change', () => {
       if (fullscreenSoundSelect) fullscreenSoundSelect.value = soundSelect.value;
       if (timerId) {
@@ -189,9 +230,7 @@ if (window.__focusModeLoaded) {
     });
     if (backgroundSelect) backgroundSelect.addEventListener('change', () => {
       if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = backgroundSelect.value;
-      if (timerId) {
-        applyBackground(backgroundSelect.value);
-      }
+      updatePreview();
     });
     if (fullscreenSoundSelect) fullscreenSoundSelect.addEventListener('change', () => {
       soundSelect.value = fullscreenSoundSelect.value;
@@ -201,10 +240,10 @@ if (window.__focusModeLoaded) {
     });
     if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.addEventListener('change', () => {
       backgroundSelect.value = fullscreenBackgroundSelect.value;
-      if (timerId) {
-        applyBackground(fullscreenBackgroundSelect.value);
-      }
+      updatePreview();
     });
+    if (durationInput) durationInput.addEventListener('input', updatePreview);
+    if (goalInput) goalInput.addEventListener('input', updatePreview);
     if (downloadBtn && textArea) {
       downloadBtn.addEventListener('click', () => {
         const blob = new Blob([textArea.value], { type: 'text/plain' });
@@ -220,6 +259,7 @@ if (window.__focusModeLoaded) {
     }
 
     // Resume any in-progress session
+    updatePreview();
     resumeSession();
   });
 }
