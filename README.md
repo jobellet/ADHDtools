@@ -38,20 +38,60 @@ All data is stored locally in your browser. Nothing is sent to any server, ensur
 If you have suggestions or feedback, please let me know!
 
 ## Gemini API Setup
+Some tools in this application can use the Google Gemini API to provide intelligent suggestions, such as breaking down tasks or categorizing items. To enable these features, you will need to provide your own personal Google Gemini API key.
 
-Some tools can use Google Gemini to suggest tasks or categorize items. To enable these features you need a personal API key.
+### 1. Obtain Your API Key from Google AI Studio
+First, you need to get a free API key from Google AI Studio.
 
-1. **Visit [Google AI Studio](https://aistudio.google.com/)** and sign in with your Google account.
-2. **Create a project** if prompted. A name like `ADHD-Tools-Project` works well.
-3. **Generate an API key** and copy the long string shown.
-4. **Store it securely** – treat this key like a password and never commit it to Git.
-5. **Add the key to your browser** by running the following in the developer console:
+**Go to Google AI Studio:** Open your web browser and navigate to [aistudio.google.com](https://aistudio.google.com). You'll need to sign in with your Google account.
 
-   ```js
-   localStorage.setItem('geminiApiKey', 'PASTE_YOUR_KEY_HERE');
-   ```
+**Create a New Project:** If you don't already have a project, you may be prompted to create one. A name like `ADHD-Tools-Project` is a good choice.
 
-   The key is saved only in your browser.
+**Generate Your API Key:**
+
+Once in the dashboard, look for a button or link that says "Get API key" or something similar. This is often in the top-left corner of the page.
+
+Click on "Create API key in new project" or select an existing project if you have one.
+
+A new API key will be generated for you. It will be a long string of letters and numbers.
+
+**Copy Your API Key:** Copy this key to your clipboard. Treat this key like a password and never share it publicly or commit it to a Git repository.
+
+### 2. Add the API Key to Your Browser
+To make the API key available to the ADHD Tools website, you need to save it in your browser's local storage.
+
+**Open Developer Tools:** On the ADHD Tools website, open your browser's developer tools. You can usually do this by:
+
+* Pressing `F12` on your keyboard.
+* Right-clicking on the page and selecting **Inspect**.
+
+**Go to the Console:** In the developer tools panel, find and click on the **Console** tab.
+
+**Save the API Key:** In the console, you will run a command to save your key. Copy the following line of code, paste it into the console, and replace `PASTE_YOUR_KEY_HERE` with the API key you copied from Google AI Studio:
+
+```javascript
+localStorage.setItem('geminiApiKey', 'PASTE_YOUR_KEY_HERE');
+```
+
+After pasting your key, press Enter.
+
+### 3. Verify the API Key is Saved
+You can quickly check if the key was saved correctly.
+
+In the same developer console, type the following command and press Enter:
+
+```javascript
+localStorage.getItem('geminiApiKey');
+```
+
+The console should display your API key. If it shows `null` or is blank, please repeat the steps above.
+
+That's it! The Gemini-powered features in the ADHD Tools should now be enabled.
+
+### Troubleshooting
+**"Gemini API key not found" Error:** This error means the key is not saved in your browser's `localStorage`. Make sure you have completed all the steps correctly. If you clear your browser's cache or use a different browser, you will need to add the key again.
+
+**API Errors:** If you get other errors, ensure that your API key is correct and has not been revoked. You can manage your API keys in the Google AI Studio dashboard.
 
 ## Contributing
 
