@@ -95,6 +95,29 @@ document.addEventListener('DOMContentLoaded', () => {
           span.style.textDecoration = 'line-through';
           span.style.opacity = '0.6';
         }
+        span.addEventListener('click', e => {
+          e.stopPropagation();
+          div.draggable = false;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = task.text;
+          div.replaceChild(input, span);
+          input.focus();
+          function finish(save) {
+            const newText = input.value.trim();
+            if (save && newText) {
+              task.text = newText;
+              saveTasks();
+            }
+            div.draggable = true;
+            renderTasks();
+          }
+          input.addEventListener('blur', () => finish(true));
+          input.addEventListener('keydown', e2 => {
+            if (e2.key === 'Enter') finish(true);
+            else if (e2.key === 'Escape') finish(false);
+          });
+        });
         div.appendChild(span);
 
         const actions = document.createElement('div');
@@ -152,8 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const imported = resolveImport();
     if (imported) {
       text = imported;
-      taskInput.value = '';
-      importSelect.value = '';
     }
     if (!text) return;
     const quadrant = quadrantSelect.value;
@@ -161,6 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tasks[quadrant].push({ id, text, completed: false, createdAt: new Date().toISOString() });
     saveTasks();
     renderTasks();
+    taskInput.value = '';
+    importSelect.value = '';
     taskInput.focus();
     // Notify cross-tool bus
     window.EventBus?.dispatchEvent(new CustomEvent('eisenhowerTaskAdded', {
@@ -218,6 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
   addTaskButton.addEventListener('click', addNewTask);
   taskInput.addEventListener('keypress', e => {
     if (e.key === 'Enter') addNewTask();
+  });
+  importSelect.addEventListener('change', () => {
+    if (importSelect.value) addNewTask();
   });
 
   // Initial render
