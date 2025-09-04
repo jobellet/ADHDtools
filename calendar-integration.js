@@ -1,8 +1,12 @@
 // Google Calendar Integration
 document.addEventListener('DOMContentLoaded', function() {
-    // Google API Client ID - would need to be replaced with a real one in production
-    const CLIENT_ID = 'your-google-client-id.apps.googleusercontent.com';
-    const API_KEY = 'your-api-key';
+    // Retrieve credentials from localStorage; skip if not provided
+    const CLIENT_ID = localStorage.getItem('gcalClientId');
+    const API_KEY = localStorage.getItem('gcalApiKey');
+    if (!CLIENT_ID || !API_KEY) {
+        console.warn('Google Calendar integration skipped: missing credentials');
+        return;
+    }
     
     // Authorization scopes required by the API
     const SCOPES = 'https://www.googleapis.com/auth/calendar';

@@ -22,6 +22,12 @@ if (window.__focusModeLoaded) {
     const textArea = document.getElementById('focus-text');
     const downloadBtn = document.getElementById('download-focus-text');
 
+    const required = [enterBtn, exitBtn, durationInput, backgroundSelect, soundSelect, fullscreenContainer, fullscreenTimer];
+    if (required.some(el => !el)) {
+      console.warn('Focus mode elements missing; skipping initialization');
+      return;
+    }
+
     let timerId = null;
     let remainingSeconds = 0;
     let totalFocusSessionSeconds = 0; // Added
