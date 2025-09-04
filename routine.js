@@ -28,7 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTaskNameDisplay = document.getElementById('current-task-name');
     const currentTaskTimeLeftDisplay = document.getElementById('current-task-time-left');
 
+    const currentTaskDisplay = document.getElementById('current-task-display');
+    const pieChartContainer = document.querySelector('.pie-chart-container');
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
+    if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
+    if (pieChartContainer) pieChartContainer.style.display = 'none';
     let pieChart; // To be initialized later with Chart.js or a custom implementation
 
     // View Switching Elements
@@ -651,12 +655,13 @@ document.addEventListener('DOMContentLoaded', () => {
         startSelectedRoutineBtn.blur();
         
         currentRoutineNameDisplay.textContent = `Active: ${activeRoutine.name}`;
-        
+
         const now = new Date();
         const finishTime = new Date(now.getTime() + activeRoutine.totalDuration * 60000);
         expectedFinishTimeDisplay.textContent = finishTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        drawPieChart(1, false); 
+        if (currentTaskDisplay) currentTaskDisplay.style.display = '';
+        if (pieChartContainer) pieChartContainer.style.display = '';
+        drawPieChart(1, false);
         startNextTask();
     }
 
@@ -683,6 +688,8 @@ document.addEventListener('DOMContentLoaded', () => {
             activeRoutine = null;
             currentTaskTimer = null;
             drawPieChart(0, false);
+            if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
+            if (pieChartContainer) pieChartContainer.style.display = 'none';
             notify("Routine finished!");
             return;
         }

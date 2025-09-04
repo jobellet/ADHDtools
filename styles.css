@@ -1070,3 +1070,25 @@ footer {
     background-color: #ffffff;
     color: #333;
 }
+
+/* Accessibility improvements */
+input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+button {
+    min-height: 2.5rem;
+}
+
+.calendar-event {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.calendar-event button {
+    min-width: 1.5rem;
+    font-size: 0.8rem;
+    line-height: 1;
+}

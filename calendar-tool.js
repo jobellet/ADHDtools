@@ -68,6 +68,56 @@
     }
   }
 
+  function editEvent(id) {
+    const ev = events.find(ev => ev.id === id);
+    if (!ev) return;
+    const newTitle = prompt('Event title:', ev.title) || ev.title;
+    const newStart = prompt('Start (YYYY-MM-DDTHH:MM):', ev.start.slice(0,16)) || ev.start.slice(0,16);
+    const newEnd = prompt('End (YYYY-MM-DDTHH:MM):', ev.end ? ev.end.slice(0,16) : '') || (ev.end ? ev.end.slice(0,16) : '');
+    ev.title = newTitle;
+    ev.start = newStart;
+    ev.end = newEnd;
+    saveEvents(events);
+    render(events);
+  }
+
+  function deleteEvent(id) {
+    if (!confirm('Delete this event?')) return;
+    events = events.filter(ev => ev.id !== id);
+    saveEvents(events);
+    render(events);
+  }
+
+  function createEventElement(ev, tag = 'div', includeTime = false) {
+    const el = document.createElement(tag);
+    el.className = 'calendar-event';
+    el.draggable = true;
+    el.dataset.id = ev.id;
+    el.addEventListener('dragstart', handleDragStart);
+    let time = '';
+    if (includeTime && ev.start) {
+      const startT = new Date(ev.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      time = endT ? `${startT} - ${endT} ` : `${startT} `;
+    }
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = time + (ev.title || '');
+    el.appendChild(titleSpan);
+    const editBtn = document.createElement('button');
+    editBtn.className = 'event-edit-btn';
+    editBtn.title = 'Edit event';
+    editBtn.textContent = '✎';
+    editBtn.addEventListener('click', e => { e.stopPropagation(); editEvent(ev.id); });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'event-delete-btn';
+    delBtn.title = 'Delete event';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', e => { e.stopPropagation(); deleteEvent(ev.id); });
+    el.appendChild(editBtn);
+    el.appendChild(delBtn);
+    return el;
+  }
+
   // Parse dates from ICS format (very simplified)
   function parseICSTime(value) {
     if (!value) return '';
@@ -263,7 +313,7 @@
         timeCell.textContent = '';
       }
       const titleCell = document.createElement('td');
-      titleCell.textContent = ev.title;
+      titleCell.appendChild(createEventElement(ev));
       tr.appendChild(timeCell);
       tr.appendChild(titleCell);
       tbody.appendChild(tr);
@@ -300,17 +350,7 @@
       if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
       const list = document.createElement('ul');
       events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
-        const li = document.createElement('li');
-        li.draggable = true;
-        li.dataset.id = ev.id;
-        li.addEventListener('dragstart', handleDragStart);
-        let time = '';
-        if (ev.start) {
-          const startT = new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-          const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-          time = endT ? `${startT} - ${endT} ` : startT + ' ';
-        }
-        li.textContent = time + ev.title;
+        const li = createEventElement(ev, 'li', true);
         list.appendChild(li);
       });
       cell.appendChild(list);
@@ -359,17 +399,7 @@
           cell.appendChild(num);
           const list = document.createElement('ul');
           events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
-            const li = document.createElement('li');
-            li.draggable = true;
-            li.dataset.id = ev.id;
-            li.addEventListener('dragstart', handleDragStart);
-            let time = '';
-            if (ev.start) {
-              const startT = new Date(ev.start).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-              const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-              time = endT ? `${startT} - ${endT} ` : startT + ' ';
-            }
-            li.textContent = time + ev.title;
+            const li = createEventElement(ev, 'li', true);
             list.appendChild(li);
           });
           cell.appendChild(list);
