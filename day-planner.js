@@ -135,6 +135,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function closeModal() {
         eventModal.style.display = 'none';
+        // Reset form fields so values don't persist between event creations
+        if (eventForm) eventForm.reset();
+        editingTaskId = null;
+        eventTitleInput.disabled = false;
+        if (eventTaskSelect) eventTaskSelect.disabled = false;
     }
 
     addEventBtn.addEventListener('click', () => openModal());
