@@ -268,6 +268,7 @@ footer {
 .timer-label { font-size: 1.2rem; color: var(--on-primary); text-transform: uppercase; letter-spacing: 2px; }
 .timer-controls { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
 .session-counter { text-align: center; margin-bottom: 2rem; font-size: 1.2rem; }
+.mode-change-message { text-align: center; font-size: 1.1rem; margin-bottom: 1rem; }
 
 /* Collapsible Pomodoro Settings */
 .pomodoro-settings-collapsible {
