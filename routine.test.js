@@ -2,10 +2,57 @@
 
 // --- Mockups & Helpers ---
 const { JSDOM } = require('jsdom');
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+const dom = new JSDOM(`<!DOCTYPE html><html><body>
+    <div id="routine">
+        <select id="routine-select"></select>
+        <div id="current-routine-name"></div>
+        <ul id="current-routine-tasks"></ul>
+        <span id="manage-total-duration"></span>
+        <div id="player-current-routine-name"></div>
+        <ul id="player-routine-tasks"></ul>
+        <div id="expected-finish-time"></div>
+        <input id="routine-name" type="text" />
+        <input id="task-name" type="text" />
+        <input id="task-duration" type="number" />
+        <input id="task-break-duration" type="number" />
+        <input id="routine-start-time" type="time" />
+        <button id="create-routine-btn"></button>
+        <button id="add-task-to-routine-btn"></button>
+        <button id="set-start-time-btn"></button>
+        <button id="start-selected-routine-btn"></button>
+        <div class="routine-controls"></div>
+        <div id="active-routine-display"></div>
+        <div id="current-task-name"></div>
+        <div id="current-task-time-left"></div>
+        <div id="current-task-display"></div>
+        <canvas id="routine-pie-chart"></canvas>
+    </div>
+</body></html>`);
 global.window = dom.window;
 global.document = dom.window.document;
 global.window.EventBus = { addEventListener: () => {} };
+
+// Mock localStorage and canvas context before loading script
+const mockLocalStorage = (() => {
+    let store = {};
+    return {
+        getItem: key => store[key] || null,
+        setItem: (key, value) => store[key] = value.toString(),
+        clear: () => store = {},
+        removeItem: key => delete store[key]
+    };
+})();
+global.localStorage = mockLocalStorage;
+dom.window.HTMLCanvasElement.prototype.getContext = () => ({
+    clearRect: () => {},
+    beginPath: () => {},
+    arc: () => {},
+    fill: () => {},
+    stroke: () => {},
+    lineWidth: 0,
+    strokeStyle: '',
+    fillStyle: ''
+});
 
 require('./routine.js');
 document.dispatchEvent(new dom.window.Event('DOMContentLoaded'));
@@ -18,17 +65,6 @@ Object.assign(global, {
     editTaskInRoutine: window.editTaskInRoutine,
     deleteTaskFromRoutine: window.deleteTaskFromRoutine,
 });
-const mockLocalStorage = (() => {
-    let store = {};
-    return {
-        getItem: key => store[key] || null,
-        setItem: (key, value) => store[key] = value.toString(),
-        clear: () => store = {},
-        removeItem: key => delete store[key]
-    };
-})();
-global.localStorage = mockLocalStorage; // Use 'global' for a Node-like environment if tests were run there, or 'window' for browser.
-                                        // Assuming a context where 'global' or 'window' can be assigned.
 
 // Mock necessary DOM elements if functions directly manipulate them outside of event handlers
 // For now, we'll focus on functions that can be tested with less direct DOM manipulation
@@ -48,20 +84,6 @@ function runRoutineTests() {
 
     // Mock DOM elements that are directly accessed by functions being tested
     // (even if event handlers are not directly triggered)
-    document.body.innerHTML = `
-        <select id="routine-select"></select>
-        <div id="current-routine-name"></div>
-        <ul id="current-routine-tasks"></ul>
-        <div id="expected-finish-time"></div>
-        <input id="routine-name" type="text" /> 
-        <input id="task-name" type="text" />
-        <input id="task-duration" type="number" />
-        <input id="task-break-duration" type="number" />
-        <div id="current-task-name"></div>
-        <div id="current-task-time-left"></div>
-        <canvas id="routine-pie-chart"></canvas>
-    `;
-
     window.__SKIP_DEFAULT_ROUTINES__ = true;
     
     // Re-initialize parts of routine.js or expose functions for testing
