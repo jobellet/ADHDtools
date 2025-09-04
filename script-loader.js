@@ -3,20 +3,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load Google Calendar integration only if credentials are provided
     const clientId = localStorage.getItem('gcalClientId');
     const apiKey = localStorage.getItem('gcalApiKey');
-    if (clientId && apiKey) {
+    if (clientId && apiKey && !document.querySelector('script[src="calendar-integration.js"]')) {
         const calendarScript = document.createElement('script');
         calendarScript.src = 'calendar-integration.js';
         document.body.appendChild(calendarScript);
-    }
-
-    // Avoid loading data-manager.js twice. If it's already
-    // present in the document (e.g., included in the page head), don't
-    // inject it again as re-running the script would recreate the
-    // EventBus and break existing listeners.
-    if (!document.querySelector('script[src="data-manager.js"]')) {
-        const dataManagerScript = document.createElement('script');
-        dataManagerScript.src = 'data-manager.js';
-        document.body.appendChild(dataManagerScript);
     }
 
     // Add celebration container for rewards
