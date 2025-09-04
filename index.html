@@ -149,7 +149,9 @@
                     
                     <div class="session-counter">
                         <span>Sessions completed: <span id="session-count">0</span></span>
+                        <span> (Long break in <span id="sessions-until-long">0</span>)</span>
                     </div>
+                    <div id="mode-change-message" class="mode-change-message"></div>
                     
                     <details class="pomodoro-settings-collapsible">
                         <summary>Settings <i class="fas fa-cog"></i></summary>
@@ -179,6 +181,7 @@
                                 <option value="digital">Digital</option>
                                 <option value="none">None</option>
                             </select>
+                            <button id="preview-sound" class="btn btn-secondary" type="button">Preview</button>
                         </div>
                         <button id="save-settings" class="btn">Save Settings</button>
                         </div>

@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const pauseButton = document.getElementById('pause-timer');
     const resetButton = document.getElementById('reset-timer');
     const sessionCountDisplay = document.getElementById('session-count');
+    const sessionsUntilLongDisplay = document.getElementById('sessions-until-long');
+    const modeChangeMessage = document.getElementById('mode-change-message');
     const pomodoroProgressBar = document.getElementById('pomodoro-progress-bar');
     
     // Settings elements
@@ -30,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sessionsBeforeLongBreakInput = document.getElementById('sessions-before-long-break');
     const audioNotificationSelect = document.getElementById('audio-notification');
     const saveSettingsButton = document.getElementById('save-settings');
+    const previewSoundButton = document.getElementById('preview-sound');
     
     // Timer variables
     let timer = null;
@@ -66,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize timer display
     updateTimerDisplay(settings.focusDuration, 0);
     sessionCountDisplay.textContent = sessionCount;
+    updateLongBreakInfo();
     // Persist session count
     localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
     
@@ -74,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     pauseButton.addEventListener('click', pauseTimer);
     resetButton.addEventListener('click', resetTimer);
     saveSettingsButton.addEventListener('click', saveSettings);
+    if (previewSoundButton) previewSoundButton.addEventListener('click', previewSelectedSound);
     
     // Functions
     function startTimer() {
@@ -148,6 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.timer-circle').style.backgroundColor = 'var(--primary-light)';
         startButton.disabled = false;
         pauseButton.disabled = true;
+        if (modeChangeMessage) modeChangeMessage.textContent = '';
+        updateLongBreakInfo();
     }
     
     function updateTimer() {
@@ -166,31 +173,42 @@ document.addEventListener('DOMContentLoaded', function() {
             if (currentMode === 'focus') {
                 sessionCount++;
                 sessionCountDisplay.textContent = sessionCount;
-                // Save updated count
                 localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
 
-                // Check if it's time for a long break
-                if (sessionCount % settings.sessionsBeforeLongBreak === 0) {
+                const isLongBreak = sessionCount % settings.sessionsBeforeLongBreak === 0;
+                if (isLongBreak) {
                     currentMode = 'longBreak';
                     minutes = settings.longBreakDuration;
                     currentSessionTotalSeconds = settings.longBreakDuration * 60;
                     timerLabel.textContent = 'LONG BREAK';
                     document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-dark)';
+                    if (modeChangeMessage) {
+                        modeChangeMessage.textContent = 'Long break! Take a rest.';
+                        modeChangeMessage.style.color = 'var(--secondary-dark)';
+                    }
                 } else {
                     currentMode = 'shortBreak';
                     minutes = settings.shortBreakDuration;
                     currentSessionTotalSeconds = settings.shortBreakDuration * 60;
                     timerLabel.textContent = 'SHORT BREAK';
                     document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-color)';
+                    if (modeChangeMessage) {
+                        modeChangeMessage.textContent = 'Short break! Stretch or relax.';
+                        modeChangeMessage.style.color = 'var(--secondary-color)';
+                    }
                 }
             } else {
-                // After any break, go back to focus mode
                 currentMode = 'focus';
                 minutes = settings.focusDuration;
                 currentSessionTotalSeconds = settings.focusDuration * 60;
                 timerLabel.textContent = 'FOCUS';
                 document.querySelector('.timer-circle').style.backgroundColor = 'var(--primary-light)';
+                if (modeChangeMessage) {
+                    modeChangeMessage.textContent = 'Back to focus!';
+                    modeChangeMessage.style.color = 'var(--primary-color)';
+                }
             }
+            updateLongBreakInfo();
 
             seconds = 0;
             if (pomodoroProgressBar) pomodoroProgressBar.style.width = '0%'; // Reset for new session segment
@@ -278,8 +296,37 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Reset timer with new settings
         resetTimer();
-        
+        startButton.disabled = false;
+        pauseButton.disabled = true;
+        updateLongBreakInfo();
+
         // Show confirmation
         alert('Settings saved successfully!');
+    }
+
+    function previewSelectedSound() {
+        const selection = audioNotificationSelect.value;
+        let audio;
+        switch (selection) {
+            case 'bell':
+                audio = bellAudio;
+                break;
+            case 'chime':
+                audio = chimeAudio;
+                break;
+            case 'digital':
+                audio = digitalAudio;
+                break;
+            default:
+                return;
+        }
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+    }
+
+    function updateLongBreakInfo() {
+        if (!sessionsUntilLongDisplay) return;
+        const sessionsUntilLongBreak = settings.sessionsBeforeLongBreak - (sessionCount % settings.sessionsBeforeLongBreak);
+        sessionsUntilLongDisplay.textContent = sessionsUntilLongBreak;
     }
 });
