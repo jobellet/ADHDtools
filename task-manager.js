@@ -90,8 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
       prio.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
       const cat = document.createElement('span');
       cat.className = 'task-category';
-      cat.textContent = task.category;
-      meta.append(prio, cat);
+      cat.textContent = task.category.charAt(0).toUpperCase() + task.category.slice(1);
+      // Add a separator so the priority and category don't run together
+      meta.append(prio, document.createTextNode(' | '), cat);
 
       // Actions
       const actions = document.createElement('div');
@@ -269,7 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
       createdAt: new Date().toISOString()
     };
     tasks.push(newTask);
+    // Clear inputs so values don't concatenate on subsequent entries
     inputEl.value = '';
+    prioritySelectEl.selectedIndex = 1; // Medium
+    categorySelectEl.selectedIndex = Array.from(categorySelectEl.options).findIndex(opt => opt.value === 'other');
     saveTasks();
   }
 
