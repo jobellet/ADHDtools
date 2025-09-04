@@ -62,6 +62,53 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTaskTimer = null; // Stores the setInterval ID for the current task
     let activeTaskTimeLeftSeconds = 0; // Stores the actual time left for the currently running task for manualAdvance logic
     let autoStartCheckTimer = null; // Stores the setInterval ID for checking auto-start times
+    const autoStartedToday = {}; // Tracks routines that have auto-started today
+
+    // --- NOTIFICATION & AUTO-START HELPERS ---
+    function requestNotificationPermission() {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }
+
+    function notify(message) {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            try {
+                new Notification(message);
+                return;
+            } catch (err) {
+                console.warn('Notification error:', err);
+            }
+        }
+        if (typeof alert === 'function') {
+            alert(message);
+        } else {
+            console.log(message);
+        }
+    }
+
+    function scheduleAutoStartCheck() {
+        if (autoStartCheckTimer) {
+            clearInterval(autoStartCheckTimer);
+        }
+        autoStartCheckTimer = setInterval(() => {
+            const now = new Date();
+            const hhmm = now.toTimeString().slice(0, 5);
+            const today = now.toISOString().split('T')[0];
+
+            routines.forEach(routine => {
+                if (
+                    routine.startTime === hhmm &&
+                    autoStartedToday[routine.id] !== today &&
+                    !activeRoutine
+                ) {
+                    autoStartedToday[routine.id] = today;
+                    notify(`Starting routine: ${routine.name}`);
+                    activateRoutine(routine.id);
+                }
+            });
+        }, 1000);
+    }
 
     // --- PIE CHART FUNCTION ---
     function drawPieChart(percentage, isLate) {
@@ -507,7 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`Auto-start time cleared for routine "${routine.name}".`);
         }
         saveRoutines();
-        // No direct display update needed here other than the alert, 
+        // Re-schedule auto start checks whenever the time is updated
+        scheduleAutoStartCheck();
+        // No direct display update needed here other than the alert,
         // but if we had a dedicated place for start time display, it would be updated.
     }
 
@@ -630,10 +679,11 @@ document.addEventListener('DOMContentLoaded', () => {
             startSelectedRoutineBtn.textContent = "Start Selected Routine";
             startSelectedRoutineBtn.disabled = false;
             
-            displaySelectedRoutineDetails(); 
-            activeRoutine = null; 
-            currentTaskTimer = null; 
-            drawPieChart(0, false); 
+            displaySelectedRoutineDetails();
+            activeRoutine = null;
+            currentTaskTimer = null;
+            drawPieChart(0, false);
+            notify("Routine finished!");
             return;
         }
 
@@ -668,11 +718,12 @@ document.addEventListener('DOMContentLoaded', () => {
                  return; 
             }
 
-            if (activeTaskTimeLeftSeconds <= 0 && !isTaskLate) { 
+            if (activeTaskTimeLeftSeconds <= 0 && !isTaskLate) {
                 clearInterval(currentTaskTimer);
                 currentTaskTimer = null;
+                notify(`Task "${currentTask.name}" finished`);
                 currentTaskIndex++;
-                startNextTask(); 
+                startNextTask();
             }
         }, 1000);
     }
@@ -688,11 +739,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log("Manually advancing task.");
+        const finishedTask = activeRoutine.tasks[currentTaskIndex];
         if (currentTaskTimer) {
             clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
         currentTaskIndex++;
+        notify(`Task "${finishedTask.name}" finished`);
         startNextTask();
     }
     
@@ -742,6 +795,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- Task Receiving Logic ---
         window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);
+
+        requestNotificationPermission();
+        scheduleAutoStartCheck();
     }
 
     function handleReceivedTaskForRoutine(event) {
