@@ -1,8 +1,8 @@
 // cross-tool-interaction.js
 
 (() => {
-  // EventBus for cross-tool communication
-  const bus = new EventTarget();
+  // EventBus for cross-tool communication. Re-use existing bus if available
+  const bus = window.EventBus || new EventTarget();
   window.EventBus = bus;
 
   // LocalStorage keys

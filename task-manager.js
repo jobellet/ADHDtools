@@ -17,38 +17,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const remainingEl = document.getElementById('remaining-tasks');
   const prioritySelectEl = document.getElementById('task-priority');
   const categorySelectEl = document.getElementById('task-category');
+  const importSelect = document.getElementById('task-import-select');
 
-  // Task storage key
-  const STORAGE_KEY = 'adhd-tasks';
+  const DataManager = window.DataManager;
 
-  // Generate a UUID for tasks
-  function generateId() {
-    return crypto && crypto.randomUUID
-      ? crypto.randomUUID()
-      : 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-  }
+  // Local cache of tasks from DataManager
+  let tasks = DataManager ? DataManager.getTasks() : [];
 
-  // Load tasks from localStorage, ensuring each has an id
-  let tasks = [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    tasks = raw ? JSON.parse(raw) : [];
-  } catch {
-    tasks = [];
-  }
-  tasks = tasks.map(task => {
-    if (!task.id) task.id = generateId();
-    return task;
-  });
-
-  // Save tasks to localStorage and re-render
-  function saveTasks() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    renderTasks();
+  function refreshTasks() {
+    tasks = DataManager.getTasks();
   }
 
   // Render task list according to filters
   function renderTasks() {
+    refreshTasks();
     listEl.innerHTML = '';
 
     const showCompleted = showCompletedEl.checked;
@@ -56,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryFilter = categoryFilterEl.value;
 
     const filtered = tasks.filter(task => {
-      if (!showCompleted && task.completed) return false;
+      if (!showCompleted && task.isCompleted) return false;
       if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
       if (categoryFilter !== 'all' && task.category !== categoryFilter) return false;
       return true;
@@ -64,17 +46,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filtered.forEach(task => {
       const li = document.createElement('li');
-      li.className = 'task-item' + (task.completed ? ' completed' : '');
+      li.className = 'task-item' + (task.isCompleted ? ' completed' : '');
       li.dataset.id = task.id;
 
       // Checkbox
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.className = 'task-checkbox';
-      checkbox.checked = task.completed;
+      checkbox.checked = task.isCompleted;
       checkbox.addEventListener('change', () => {
-        task.completed = checkbox.checked;
-        saveTasks();
+        DataManager.updateTask(task.id, { isCompleted: checkbox.checked });
+        window.EventBus.dispatchEvent(new CustomEvent('taskCompleted', { detail: { id: task.id, isCompleted: checkbox.checked } }));
+        renderTasks();
       });
 
       // Text
@@ -142,7 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
             task.text = newText;
             task.priority = prioritySelect.value;
             task.category = categorySelect.value;
-            saveTasks(); // This will re-render the entire list
+            DataManager.updateTask(task.id, {
+              text: newText,
+              priority: prioritySelect.value,
+              category: categorySelect.value
+            });
+            renderTasks(); // This will re-render the entire list
           } else {
             // Handle empty text - maybe show an error or just re-render original
             renderTasks(); // Re-render to show original task if text is empty
@@ -172,8 +160,8 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
       deleteBtn.addEventListener('click', () => {
         if (confirm('Delete this task?')) {
-          tasks = tasks.filter(t => t.id !== task.id);
-          saveTasks();
+          DataManager.deleteTask(task.id);
+          renderTasks();
         }
       });
 
@@ -188,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
           originalTool: 'TaskManager',
           priority: task.priority,
           category: task.category,
-          isCompleted: task.completed,
+          isCompleted: task.isCompleted,
           // Optional fields not directly available in TaskManager task object
           dueDate: null, 
           duration: null, 
@@ -209,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
           originalTool: 'TaskManager',
           priority: task.priority,
           category: task.category,
-          isCompleted: task.completed,
+          isCompleted: task.isCompleted,
           dueDate: null,
           duration: null,
           notes: null,
@@ -229,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
           originalTool: 'TaskManager',
           priority: task.priority,
           category: task.category,
-          isCompleted: task.completed,
+          isCompleted: task.isCompleted,
           // For routine, duration might be relevant, but TaskManager tasks don't have it.
           // The routine tool will likely need to prompt for duration if it receives a task without one.
           duration: null, // TaskManager tasks don't have duration
@@ -249,32 +237,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update counts
     const total = tasks.length;
-    const completedCount = tasks.filter(t => t.completed).length;
+    const completedCount = tasks.filter(t => t.isCompleted).length;
     const remaining = total - completedCount;
     if (totalEl) totalEl.textContent = total;
     if (completedEl) completedEl.textContent = completedCount;
     if (remainingEl) remainingEl.textContent = remaining;
   }
 
+  function populateImportOptions() {
+    if (!importSelect) return;
+    importSelect.innerHTML = `<option value="">--Import Task--</option>`;
+    const breakdown = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
+    breakdown.forEach((proj, idx) => {
+      const opt = document.createElement('option');
+      opt.value = `breakdown:${idx}`;
+      opt.textContent = `[Breakdown] ${proj.text}`;
+      importSelect.appendChild(opt);
+    });
+    const eisenhower = JSON.parse(localStorage.getItem('eisenhowerTasks')) || {};
+    Object.keys(eisenhower).forEach(q => {
+      (eisenhower[q] || []).forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = `eisenhower:${q}:${t.id}`;
+        opt.textContent = `[Matrix] ${t.text}`;
+        importSelect.appendChild(opt);
+      });
+    });
+  }
+
+  function handleImportSelection() {
+    if (!importSelect) return;
+    const val = importSelect.value;
+    if (!val) return;
+    let text = '';
+    const [type, a, b] = val.split(':');
+    if (type === 'breakdown') {
+      const breakdown = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
+      const proj = breakdown[parseInt(a, 10)];
+      if (proj) text = proj.text;
+    } else if (type === 'eisenhower') {
+      const eis = JSON.parse(localStorage.getItem('eisenhowerTasks')) || {};
+      const arr = eis[a] || [];
+      const found = arr.find(t => t.id === b);
+      if (found) text = found.text;
+    }
+    if (text) {
+      const newTask = DataManager.addTask({ text, originalTool: type === 'breakdown' ? 'TaskBreakdown' : 'EisenhowerMatrix' });
+      window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: newTask }));
+      renderTasks();
+      alert(`Imported task "${text}"`);
+    }
+    importSelect.value = '';
+  }
+
+  if (importSelect) {
+    importSelect.addEventListener('focus', populateImportOptions);
+    importSelect.addEventListener('change', handleImportSelection);
+  }
+
+  // Receive tasks from other tools
+  window.EventBus.addEventListener('ef-receiveTaskFor-TaskManager', event => {
+    const t = event.detail;
+    if (!t || !t.text) {
+      console.warn('Task Manager received invalid task:', t);
+      return;
+    }
+    const newTask = DataManager.addTask({
+      text: t.text,
+      originalTool: t.originalTool || 'unknown',
+      priority: t.priority || 'medium',
+      category: t.category || 'other',
+      dueDate: t.dueDate || null,
+      duration: t.duration || null,
+      notes: t.notes || '',
+      subTasks: t.subTasks || []
+    });
+    window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: newTask }));
+    renderTasks();
+    alert(`Task '${t.text}' added to Task Manager.`);
+  });
+
   // Add new task
   function addTask() {
     const text = inputEl.value.trim();
     if (!text) return;
 
-    const newTask = {
-      id: generateId(),
+    const newTask = DataManager.addTask({
       text,
+      originalTool: 'TaskManager',
       priority: prioritySelectEl.value || 'medium',
-      category: categorySelectEl.value || 'other',
-      completed: false,
-      createdAt: new Date().toISOString()
-    };
-    tasks.push(newTask);
-    // Clear inputs so values don't concatenate on subsequent entries
+      category: categorySelectEl.value || 'other'
+    });
+    window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: newTask }));
     inputEl.value = '';
-    prioritySelectEl.selectedIndex = 1; // Medium
-    categorySelectEl.selectedIndex = Array.from(categorySelectEl.options).findIndex(opt => opt.value === 'other');
-    saveTasks();
+    prioritySelectEl.value = 'medium';
+    categorySelectEl.value = 'other';
+    renderTasks();
   }
 
   // Event listeners

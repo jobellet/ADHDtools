@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="app.js" defer></script>
     <script src="data-manager.js" defer></script>
+    <script src="cross-tool-interaction.js" defer></script>
     <script src="gemini.js" defer></script>
     <script src="api-settings.js" defer></script>
     <script src="pomodoro.js" defer></script>
@@ -329,6 +330,9 @@
                             </select>
                         </div>
                         <button id="add-task-btn" class="btn">Add Task</button>
+                        <select id="task-import-select">
+                            <option value="">--Import Task--</option>
+                        </select>
                     </div>
                     
                     <details class="task-filters-collapsible">
