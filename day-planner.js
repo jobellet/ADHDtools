@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const timeBlocksContainer = document.getElementById('time-blocks');
     const addEventBtn = document.getElementById('add-event-btn');
     const clearBtn = document.getElementById('clear-events-btn');
+    const aiPlanBtn = document.getElementById('ai-plan-day-btn');
     const eventModal = document.getElementById('event-modal');
     const closeButton = eventModal.querySelector('.close-button');
     const eventForm = document.getElementById('event-form');
@@ -259,6 +260,125 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.DataManager.updateTask(task.id, { plannerDate: null });
             });
         });
+    }
+
+    if (aiPlanBtn) {
+        aiPlanBtn.addEventListener('click', autoPlanDay);
+    }
+
+    async function autoPlanDay() {
+        try {
+            aiPlanBtn.disabled = true;
+            const breakdownTasks = getBreakdownTasks();
+            const eisenhowerTasks = getEisenhowerTasks();
+            const tasks = [...breakdownTasks, ...eisenhowerTasks];
+            if (tasks.length === 0) {
+                alert('No tasks found in Breakdown or Eisenhower tools.');
+                return;
+            }
+            const events = getCalendarEvents();
+            // ensure calendar events appear in the planner
+            events.forEach(ev => {
+                const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${ev.start}`;
+                const existing = window.DataManager.getTasks().find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
+                if (!existing) {
+                    const startMins = parseInt(ev.start.slice(0,2)) * 60 + parseInt(ev.start.slice(3,5));
+                    const endMins = ev.end ? parseInt(ev.end.slice(0,2)) * 60 + parseInt(ev.end.slice(3,5)) : startMins + 60;
+                    window.DataManager.addTask({
+                        text: ev.title,
+                        plannerDate: plannerDateTime,
+                        duration: Math.max(5, endMins - startMins),
+                        originalTool: 'Calendar'
+                    });
+                }
+            });
+            let prompt = `Today is ${currentDate.toDateString()}.`;
+            if (events.length) {
+                prompt += `\nExisting events:`;
+                events.forEach(ev => {
+                    prompt += `\n- ${ev.start}${ev.end ? '-' + ev.end : ''} ${ev.title}`;
+                });
+            } else {
+                prompt += `\nNo existing events.`;
+            }
+            prompt += `\nTasks to schedule:`;
+            tasks.forEach(t => { prompt += `\n- ${t}`; });
+            prompt += `\nReturn a JSON array of objects with time (HH:MM 24h), text, and duration in minutes.`;
+
+            const aiText = await window.callGemini(prompt);
+            if (!aiText) {
+                alert('Gemini did not return a plan.');
+                return;
+            }
+            let jsonText = aiText;
+            const match = aiText.match(/```(?:json)?([\s\S]*?)```/);
+            if (match) jsonText = match[1];
+            let plan;
+            try {
+                plan = JSON.parse(jsonText);
+            } catch (err) {
+                alert('Failed to parse Gemini response.');
+                return;
+            }
+            if (!Array.isArray(plan)) {
+                alert('Gemini response was not an array.');
+                return;
+            }
+            plan.forEach(item => {
+                if (!item.time || !item.text) return;
+                const duration = parseInt(item.duration, 10) || 60;
+                const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${item.time}`;
+                window.DataManager.addTask({
+                    text: item.text,
+                    plannerDate: plannerDateTime,
+                    duration,
+                    originalTool: 'Gemini'
+                });
+            });
+            alert('Day planned with Gemini.');
+        } finally {
+            aiPlanBtn.disabled = false;
+        }
+    }
+
+    function getBreakdownTasks() {
+        const tree = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
+        const tasks = [];
+        function traverse(nodes) {
+            nodes.forEach(n => {
+                if (n.completed) return;
+                if (n.subtasks && n.subtasks.length) {
+                    traverse(n.subtasks);
+                } else if (n.text) {
+                    tasks.push(n.text);
+                }
+            });
+        }
+        traverse(tree);
+        return tasks;
+    }
+
+    function getEisenhowerTasks() {
+        const data = JSON.parse(localStorage.getItem('eisenhowerTasks')) || { q1: [], q2: [], q3: [], q4: [] };
+        const tasks = [];
+        ['q1', 'q2'].forEach(q => {
+            (data[q] || []).forEach(t => {
+                if (!t.completed && t.text) tasks.push(t.text);
+            });
+        });
+        return tasks;
+    }
+
+    function getCalendarEvents() {
+        const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
+        const dayStr = currentDate.toISOString().slice(0,10);
+        return events
+            .filter(ev => ev.start && ev.start.startsWith(dayStr))
+            .map(ev => ({
+                title: ev.title || '',
+                start: ev.start.slice(11,16),
+                end: ev.end ? ev.end.slice(11,16) : null
+            }));
     }
 
     function startResize(e, task, eventDiv) {
