@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const scrollSlider = document.getElementById('time-scroll-slider');
 
     let editingTaskId = null;
+    let pendingExternalTask = null;
 
     let currentDate = new Date();
 
@@ -148,10 +149,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function openModal(task, presetTime) {
+    function getDefaultTime() {
+        const now = new Date();
+        const minutes = now.getHours() * 60 + now.getMinutes();
+        const rounded = Math.ceil(minutes / 30) * 30;
+        const h = Math.floor(rounded / 60) % 24;
+        const m = rounded % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    function openModal(task, presetTime, externalTask) {
         eventModal.style.display = 'block';
         populateTimeOptions();
         populateTaskOptions();
+        pendingExternalTask = null;
         if (task) {
             editingTaskId = task.id;
             eventModalTitle.textContent = 'Edit Event';
@@ -161,11 +172,21 @@ document.addEventListener('DOMContentLoaded', function() {
             eventTitleInput.disabled = false;
             eventTaskSelect.value = '';
             eventTaskSelect.disabled = true;
+        } else if (externalTask) {
+            editingTaskId = null;
+            pendingExternalTask = externalTask;
+            eventModalTitle.textContent = 'Schedule Task';
+            eventTitleInput.value = externalTask.text || '';
+            eventTimeSelect.value = presetTime || getDefaultTime();
+            eventDurationInput.value = externalTask.duration || 60;
+            eventTitleInput.disabled = true;
+            eventTaskSelect.value = '';
+            eventTaskSelect.disabled = true;
         } else {
             editingTaskId = null;
             eventModalTitle.textContent = 'Add Event';
             eventTitleInput.value = '';
-            eventTimeSelect.value = presetTime || '00:00';
+            eventTimeSelect.value = presetTime || getDefaultTime();
             eventDurationInput.value = 60;
             eventTitleInput.disabled = false;
             eventTaskSelect.value = '';
@@ -178,11 +199,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset form fields so values don't persist between event creations
         if (eventForm) eventForm.reset();
         editingTaskId = null;
+        pendingExternalTask = null;
         eventTitleInput.disabled = false;
         if (eventTaskSelect) eventTaskSelect.disabled = false;
     }
 
-    addEventBtn.addEventListener('click', () => openModal());
+    addEventBtn.addEventListener('click', () => openModal(null, getDefaultTime()));
     closeButton.addEventListener('click', closeModal);
     window.addEventListener('click', e => { if (e.target === eventModal) closeModal(); });
 
@@ -232,6 +254,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
             window.DataManager.updateTask(editingTaskId, { text: title, plannerDate: plannerDateTime, duration });
+        } else if (pendingExternalTask) {
+            const title = eventTitleInput.value.trim() || pendingExternalTask.text;
+            window.DataManager.addTask({
+                text: title,
+                originalTool: pendingExternalTask.originalTool || 'TaskManager',
+                priority: pendingExternalTask.priority || 'medium',
+                category: pendingExternalTask.category || 'other',
+                plannerDate: plannerDateTime,
+                duration,
+            });
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
@@ -469,24 +501,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.warn('Day Planner received invalid task:', task);
             return;
         }
-
-        // Ask user for time and duration to schedule the task
-        const time = prompt(`Enter time (HH:MM) for '${task.text}' in the Day Planner:`, '09:00');
-        if (time === null) return; // user cancelled
-        const durationStr = prompt(`Enter duration in minutes:`, task.duration || '60');
-        if (durationStr === null) return;
-        const duration = parseInt(durationStr, 10) || 60;
-
-        const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${time}`;
-        window.DataManager.addTask({
-            text: task.text,
-            originalTool: task.originalTool || 'TaskManager',
-            priority: task.priority || 'medium',
-            category: task.category || 'other',
-            plannerDate: plannerDateTime,
-            duration
-        });
-        alert(`Task '${task.text}' added to Day Planner.`);
+        const timeStr = getDefaultTime();
+        openModal(null, timeStr, task);
     }
 
     renderDayPlanner();
