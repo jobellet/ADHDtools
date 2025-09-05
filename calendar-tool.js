@@ -15,6 +15,52 @@
   const announcedEarly = new Set();
   const announcedStart = new Set();
 
+  function getPlannerEvents() {
+    if (!window.DataManager) return [];
+    return window.DataManager
+      .getTasks()
+      .filter(t => t.plannerDate)
+      .map(t => {
+        const start = t.plannerDate;
+        let end = start;
+        if (t.duration) {
+          const s = new Date(start);
+          const e = new Date(s.getTime() + t.duration * 60000);
+          end = e.toISOString().slice(0,16);
+        }
+        return {
+          id: t.id,
+          title: t.text,
+          start,
+          end
+        };
+      });
+  }
+
+  function updateHeader() {
+    const header = document.getElementById('calendar-header');
+    if (!header) return;
+    let text = '';
+    switch (currentView) {
+      case 'week': {
+        const start = new Date(referenceDate);
+        const day = (start.getDay() + 6) % 7;
+        start.setDate(start.getDate() - day);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        const opts = { month: 'short', day: 'numeric' };
+        text = `${start.toLocaleDateString(undefined, opts)} - ${end.toLocaleDateString(undefined, { ...opts, year: 'numeric' })}`;
+        break;
+      }
+      case 'month':
+        text = referenceDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+        break;
+      default:
+        text = referenceDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    header.textContent = text;
+  }
+
   function createEventAt(date) {
     const title = prompt('Event title?');
     if (!title) return;
@@ -37,7 +83,7 @@
     };
     events.push(ev);
     saveEvents(events);
-    render(events);
+    render();
   }
 
   function updateEventDate(ev, newDate) {
@@ -64,7 +110,7 @@
     if (ev) {
       updateEventDate(ev, date);
       saveEvents(events);
-      render(events);
+      render();
     }
   }
 
@@ -78,14 +124,14 @@
     ev.start = newStart;
     ev.end = newEnd;
     saveEvents(events);
-    render(events);
+    render();
   }
 
   function deleteEvent(id) {
     if (!confirm('Delete this event?')) return;
     events = events.filter(ev => ev.id !== id);
     saveEvents(events);
-    render(events);
+    render();
   }
 
   function createEventElement(ev, tag = 'div', includeTime = false) {
@@ -264,20 +310,22 @@
     return template.replace('{title}', title).replace('{minutes}', minutes);
   }
 
-  function render(events) {
+  function render() {
     const container = document.getElementById('calendar-view');
     if (!container) return;
     container.innerHTML = '';
-    events.sort((a,b) => new Date(a.start) - new Date(b.start));
+    const allEvents = removeDuplicateEvents(events.concat(getPlannerEvents()));
+    allEvents.sort((a,b) => new Date(a.start) - new Date(b.start));
+    updateHeader();
     switch (currentView) {
       case 'week':
-        renderWeek(events, container);
+        renderWeek(allEvents, container);
         break;
       case 'month':
-        renderMonth(events, container);
+        renderMonth(allEvents, container);
         break;
       default:
-        renderDay(events, container);
+        renderDay(allEvents, container);
     }
   }
 
@@ -426,7 +474,7 @@
         parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
         events = removeDuplicateEvents(events.concat(parsed));
         saveEvents(events);
-        render(events);
+        render();
         alert(`Imported ${parsed.length} events.`);
       } catch (err) {
         console.error('ICS import failed', err);
@@ -445,7 +493,7 @@
       parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
       events = removeDuplicateEvents(events.concat(parsed));
       saveEvents(events);
-      render(events);
+      render();
     } catch (err) {
       console.error('ICS fetch failed', err);
     }
@@ -458,7 +506,10 @@
     events = loadEvents();
     icsUrl = loadIcsUrl();
     loadVoiceSettings();
-    render(events);
+    render();
+    if (window.DataManager && window.DataManager.EventBus) {
+      window.DataManager.EventBus.addEventListener('dataChanged', render);
+    }
 
     const defaultBtn = container.querySelector('.calendar-view-btn[data-view="' + currentView + '"]');
     if (defaultBtn) defaultBtn.classList.add('active');
@@ -468,14 +519,14 @@
         currentView = btn.dataset.view;
         container.querySelectorAll('.calendar-view-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        render(events);
+        render();
       });
     });
 
     const prevBtn = document.getElementById('calendar-prev-btn');
     const nextBtn = document.getElementById('calendar-next-btn');
-    if (prevBtn) prevBtn.addEventListener('click', () => { shiftReferenceDate(-1); render(events); });
-    if (nextBtn) nextBtn.addEventListener('click', () => { shiftReferenceDate(1); render(events); });
+    if (prevBtn) prevBtn.addEventListener('click', () => { shiftReferenceDate(-1); render(); });
+    if (nextBtn) nextBtn.addEventListener('click', () => { shiftReferenceDate(1); render(); });
 
     const fileInput = document.getElementById('ics-file-input');
     const importBtn = document.getElementById('import-ics-btn');

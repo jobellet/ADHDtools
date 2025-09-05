@@ -986,6 +986,11 @@ footer {
     background-color: var(--primary-color);
     color: #fff;
 }
+.calendar-header {
+    text-align: center;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
 .calendar-table {
     width: 100%;
     border-collapse: collapse;
