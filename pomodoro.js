@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sessionsBeforeLongBreakInput = document.getElementById('sessions-before-long-break');
     const audioNotificationSelect = document.getElementById('audio-notification');
     const saveSettingsButton = document.getElementById('save-settings');
-    const previewSoundButton = document.getElementById('preview-sound');
+    const testSoundButton = document.getElementById('test-sound');
     
     // Timer variables
     let timer = null;
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     pauseButton.addEventListener('click', pauseTimer);
     resetButton.addEventListener('click', resetTimer);
     saveSettingsButton.addEventListener('click', saveSettings);
-    if (previewSoundButton) previewSoundButton.addEventListener('click', previewSelectedSound);
+    if (testSoundButton) testSoundButton.addEventListener('click', testSelectedSound);
     
     // Functions
     function startTimer() {
@@ -281,6 +281,11 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('All values must be at least 1.');
             return;
         }
+
+        if (focusDuration > 60 || shortBreakDuration > 30 || longBreakDuration > 60 || sessionsBeforeLongBreak > 10) {
+            alert('Please keep durations within the allowed limits.');
+            return;
+        }
         
         // Update settings
         settings = {
@@ -294,17 +299,47 @@ document.addEventListener('DOMContentLoaded', function() {
         // Save to localStorage
         localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
         
+        // Remember current state to resume automatically
+        const previousMode = currentMode;
+        const wasRunning = isRunning;
+        const wasPaused = isPaused;
+
         // Reset timer with new settings
         resetTimer();
-        startButton.disabled = false;
-        pauseButton.disabled = true;
+        currentMode = previousMode;
+
+        if (wasRunning || wasPaused) {
+            startTimer();
+            if (wasPaused) pauseTimer();
+        } else {
+            if (currentMode === 'shortBreak') {
+                minutes = settings.shortBreakDuration;
+                currentSessionTotalSeconds = settings.shortBreakDuration * 60;
+                timerLabel.textContent = 'SHORT BREAK';
+                document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-color)';
+            } else if (currentMode === 'longBreak') {
+                minutes = settings.longBreakDuration;
+                currentSessionTotalSeconds = settings.longBreakDuration * 60;
+                timerLabel.textContent = 'LONG BREAK';
+                document.querySelector('.timer-circle').style.backgroundColor = 'var(--secondary-dark)';
+            } else {
+                minutes = settings.focusDuration;
+                currentSessionTotalSeconds = settings.focusDuration * 60;
+                timerLabel.textContent = 'FOCUS';
+                document.querySelector('.timer-circle').style.backgroundColor = 'var(--primary-light)';
+            }
+            seconds = 0;
+            if (pomodoroProgressBar) pomodoroProgressBar.style.width = '0%';
+            updateTimerDisplay(minutes, seconds);
+        }
+
         updateLongBreakInfo();
 
         // Show confirmation
         alert('Settings saved successfully!');
     }
 
-    function previewSelectedSound() {
+    function testSelectedSound() {
         const selection = audioNotificationSelect.value;
         let audio;
         switch (selection) {
