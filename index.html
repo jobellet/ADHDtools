@@ -465,7 +465,7 @@
                         <div class="focus-settings">
                             <div class="setting-group">
                                 <label for="focus-duration-setting">Focus Session Duration (minutes):</label>
-                                <input type="number" id="focus-duration-setting" min="5" max="120" value="25">
+                                <input type="number" id="focus-duration-setting" min="5" max="240" value="25">
                             </div>
                             <div class="setting-group">
                                 <label for="focus-goal">Session Goal (optional):</label>
@@ -478,10 +478,10 @@
                                     <div class="setting-group">
                                         <label for="focus-background">Background:</label>
                                         <select id="focus-background">
-                                            <option value="solid">Solid Color</option>
-                                            <option value="gradient">Gradient</option>
-                                            <option value="nature">Nature</option>
-                                            <option value="minimal">Minimal</option>
+                                            <option value="solid" title="Simple solid color background">Solid Color</option>
+                                            <option value="gradient" title="Soft gradient background">Gradient</option>
+                                            <option value="nature" title="Calming nature scene">Nature</option>
+                                            <option value="minimal" title="Low‑distraction minimal theme">Minimal</option>
                                         </select>
                                     </div>
                                     <div class="setting-group">
@@ -493,6 +493,7 @@
                                             <option value="cafe">Cafe Ambience</option>
                                             <option value="forest">Forest</option>
                                         </select>
+                                        <button id="focus-sound-preview" class="btn btn-secondary" type="button">Preview Sound</button>
                                     </div>
                                 </div>
                             </details>
@@ -522,10 +523,10 @@
                             <div class="setting-group">
                                 <label for="focus-background-fullscreen">Background:</label>
                                 <select id="focus-background-fullscreen">
-                                    <option value="solid">Solid Color</option>
-                                    <option value="gradient">Gradient</option>
-                                    <option value="nature">Nature</option>
-                                    <option value="minimal">Minimal</option>
+                                    <option value="solid" title="Simple solid color background">Solid Color</option>
+                                    <option value="gradient" title="Soft gradient background">Gradient</option>
+                                    <option value="nature" title="Calming nature scene">Nature</option>
+                                    <option value="minimal" title="Low‑distraction minimal theme">Minimal</option>
                                 </select>
                             </div>
                             <div class="setting-group">
@@ -537,6 +538,7 @@
                                     <option value="cafe">Cafe Ambience</option>
                                     <option value="forest">Forest</option>
                                 </select>
+                                <button id="focus-sound-preview-fullscreen" class="btn btn-secondary" type="button">Preview Sound</button>
                             </div>
                         </div>
                         <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>

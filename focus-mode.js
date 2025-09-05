@@ -23,6 +23,8 @@ if (window.__focusModeLoaded) {
     const pauseBtn = document.getElementById('pause-focus-mode');
     const textArea = document.getElementById('focus-text');
     const downloadBtn = document.getElementById('download-focus-text');
+    const previewSoundBtn = document.getElementById('focus-sound-preview');
+    const fullscreenPreviewSoundBtn = document.getElementById('focus-sound-preview-fullscreen');
 
     const required = [enterBtn, exitBtn, durationInput, backgroundSelect, soundSelect, fullscreenContainer, fullscreenTimer];
     if (required.some(el => !el)) {
@@ -30,10 +32,19 @@ if (window.__focusModeLoaded) {
       return;
     }
 
+    if (textArea) {
+      const savedNotes = localStorage.getItem('focus-notes');
+      if (savedNotes) textArea.value = savedNotes;
+      textArea.addEventListener('input', () => {
+        localStorage.setItem('focus-notes', textArea.value);
+      });
+    }
+
     let timerId = null;
     let remainingSeconds = 0;
     let totalFocusSessionSeconds = 0; // Added
     let audio = null;
+    let previewAudio = null;
     let endTime = null; // Timestamp when the focus session should end
 
     // Format seconds as MM:SS
@@ -55,7 +66,11 @@ if (window.__focusModeLoaded) {
     }
 
     function updatePreview() {
-      const duration = parseInt(durationInput.value, 10);
+      let duration = parseInt(durationInput.value, 10);
+      if (!isNaN(duration) && duration > 240) {
+        duration = 240;
+        durationInput.value = 240;
+      }
       previewTimer.textContent = isNaN(duration) ? '00:00' : formatTime(duration * 60);
       previewGoal.textContent = goalInput.value.trim();
       applyBackground(backgroundSelect.value);
@@ -82,14 +97,31 @@ if (window.__focusModeLoaded) {
       }
     }
 
-    function startFocus() {
+    function previewAudioClip(type) {
+      if (previewAudio) {
+        previewAudio.pause();
+        previewAudio = null;
+      }
+      if (type !== 'none' && soundUrls[type]) {
+        previewAudio = new Audio(soundUrls[type]);
+        previewAudio.play().catch(console.error);
+        setTimeout(() => {
+          if (previewAudio) {
+            previewAudio.pause();
+            previewAudio = null;
+          }
+        }, 3000);
+      }
+    }
+
+    function startFocus(preserveNotes = false) {
       if (timerId) {
         // End any existing session without alerts
         endFocus(false);
       }
       const duration = parseInt(durationInput.value, 10);
-      if (isNaN(duration) || duration <= 0) {
-        alert('Please enter a valid duration');
+      if (isNaN(duration) || duration <= 0 || duration > 240) {
+        alert('Please enter a valid duration (1-240 minutes)');
         return;
       }
       remainingSeconds = duration * 60;
@@ -99,7 +131,19 @@ if (window.__focusModeLoaded) {
       fullscreenGoal.textContent = goal || '';
       fullscreenTimer.textContent = formatTime(remainingSeconds);
       fullscreenContainer.classList.remove('hidden');
-      if (textArea) textArea.value = '';
+      if (previewAudio) {
+        previewAudio.pause();
+        previewAudio = null;
+      }
+      if (textArea) {
+        if (preserveNotes) {
+          const savedNotes = localStorage.getItem('focus-notes');
+          textArea.value = savedNotes || '';
+        } else {
+          textArea.value = '';
+          localStorage.removeItem('focus-notes');
+        }
+      }
 
       totalFocusSessionSeconds = remainingSeconds; // Store total duration
       if (focusProgressBar) focusProgressBar.style.width = '0%'; // Reset progress bar
@@ -208,7 +252,7 @@ if (window.__focusModeLoaded) {
       if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = background;
       if (fullscreenSoundSelect) fullscreenSoundSelect.value = sound;
       goalInput.value = goal;
-      startFocus();
+      startFocus(true);
       remainingSeconds = total - elapsed;
       endTime = Date.now() + remainingSeconds * 1000;
     }
@@ -257,6 +301,21 @@ if (window.__focusModeLoaded) {
         URL.revokeObjectURL(url);
       });
     }
+
+    if (previewSoundBtn) previewSoundBtn.addEventListener('click', () => {
+      if (timerId) {
+        startAudio(soundSelect.value);
+      } else {
+        previewAudioClip(soundSelect.value);
+      }
+    });
+    if (fullscreenPreviewSoundBtn) fullscreenPreviewSoundBtn.addEventListener('click', () => {
+      if (timerId) {
+        startAudio(fullscreenSoundSelect.value);
+      } else {
+        previewAudioClip(fullscreenSoundSelect.value);
+      }
+    });
 
     // Resume any in-progress session
     updatePreview();
