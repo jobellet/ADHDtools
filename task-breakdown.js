@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const addMainBtn = document.getElementById('add-project');
   const aiBtn = document.getElementById('ai-breakdown');
   const listContainer = document.getElementById('project-list');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-percentage');
   const STORAGE_KEY = 'adhd-breakdown-tasks';
 
   // Load or initialize tree
@@ -16,6 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveTree() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tree));
+  }
+
+  function countCompletion(nodes) {
+    let total = 0;
+    let completed = 0;
+    nodes.forEach(node => {
+      total++;
+      if (node.completed) completed++;
+      if (node.subtasks && node.subtasks.length) {
+        const child = countCompletion(node.subtasks);
+        total += child.total;
+        completed += child.completed;
+      }
+    });
+    return { total, completed };
+  }
+
+  function updateProgressBar() {
+    if (!progressBar || !progressText) return;
+    const { total, completed } = countCompletion(tree);
+    const percent = total ? Math.round((completed / total) * 100) : 0;
+    progressBar.style.width = `${percent}%`;
+    progressText.textContent = `${percent}%`;
   }
 
   // Recursive render function
@@ -96,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderTree() {
     listContainer.innerHTML = '';
     renderNodes(tree, listContainer, []);
+    updateProgressBar();
   }
 
   function addNode(path, text) {
@@ -165,23 +191,42 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTree();
 
   // --- Task Receiving Logic ---
-  function handleReceivedTaskForTaskBreakdown(event) {
+  async function handleReceivedTaskForTaskBreakdown(event) {
     const standardizedTask = event.detail;
     if (!standardizedTask || !standardizedTask.text) {
-        console.warn("TaskBreakdown received invalid task:", standardizedTask);
-        return;
+      console.warn('TaskBreakdown received invalid task:', standardizedTask);
+      return;
+    }
+
+    let subtasks = [];
+    try {
+      const prompt = `Break down the task '${standardizedTask.text}' into a list of simple sub-tasks. Put each sub-task on a new line.`;
+      const aiText = await callGemini(prompt);
+      if (aiText) {
+        subtasks = aiText
+          .split('\n')
+          .map(t => t.replace(/^[*-]\s*/, '').trim())
+          .filter(Boolean)
+          .map(s => ({ text: s, completed: false, subtasks: [] }));
+      }
+    } catch (err) {
+      console.warn('Auto breakdown failed:', err);
     }
 
     const newTaskNode = {
-        text: standardizedTask.text,
-        completed: standardizedTask.isCompleted || false,
-        subtasks: [] // Transferred task added as a main task without subtasks initially
+      text: standardizedTask.text,
+      completed: standardizedTask.isCompleted || false,
+      subtasks
     };
 
-    tree.push(newTaskNode); // Add to the root of the tree
+    tree.push(newTaskNode);
     saveTree();
     renderTree();
-    alert(`Task '${standardizedTask.text}' added to Task Breakdown as a new main project/task.`);
+
+    const msg = subtasks.length
+      ? `Task '${standardizedTask.text}' added and broken into steps.`
+      : `Task '${standardizedTask.text}' added to Task Breakdown.`;
+    alert(msg);
   }
 
   window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
