@@ -38,6 +38,10 @@ body {
     padding: 0 20px;
 }
 
+.hidden {
+    display: none;
+}
+
 h1, h2, h3, h4, h5, h6 {
     margin-bottom: 1rem;
     line-height: 1.2;
@@ -377,7 +381,6 @@ footer {
 }
 #toggle-rewards-setup-btn i { margin-right: 0.5rem; }
 .rewards-setup {
-    display: none;
     padding: 1.5rem;
     border: 1px solid #ddd;
     border-radius: var(--border-radius);

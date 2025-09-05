@@ -557,44 +557,46 @@
                     <button id="toggle-rewards-setup-btn" class="btn btn-primary" aria-expanded="false" aria-controls="rewards-setup-panel">
                         <i class="fas fa-plus"></i> Add New Reward
                     </button>
+
                     <div class="rewards-setup hidden" id="rewards-setup-panel">
-                        <h3>Set Up Rewards</h3>
+                        <h3>New Reward</h3>
                         <div class="reward-input">
                             <div class="input-group">
-                                <label for="task-for-reward">Task to Complete:</label>
-                                <input type="text" id="task-for-reward" placeholder="What task will you complete?">
+                                <label for="reward-name">Title:</label>
+                                <input type="text" id="reward-name" placeholder="Reward title">
                             </div>
                             <div class="input-group">
-                                <label for="reward-type">Reward Type:</label>
-                                <select id="reward-type">
-                                    <option value="confetti">Confetti Celebration</option>
-                                    <option value="achievement">Achievement Badge</option>
-                                    <option value="points">Points System</option>
-                                    <option value="custom">Custom Reward</option>
-                                </select>
+                                <label for="reward-description">Description:</label>
+                                <textarea id="reward-description" placeholder="What is this reward for?"></textarea>
                             </div>
-                            <div class="input-group" id="custom-reward-input" style="display: none;">
-                                <label for="custom-reward">Custom Reward:</label>
-                                <input type="text" id="custom-reward" placeholder="Describe your reward">
+                            <div class="input-group">
+                                <label for="reward-points">Points Required:</label>
+                                <input type="number" id="reward-points" min="1" placeholder="e.g., 10">
                             </div>
-                            <button id="save-reward" class="btn">Save Reward</button>
+                            <div class="input-group">
+                                <label for="reward-icon">Icon:</label>
+                                <input type="text" id="reward-icon" placeholder="e.g., 🎉">
+                            </div>
+                            <button id="add-reward-btn" class="btn">Add Reward</button>
                         </div>
                     </div>
-                    
+
+                    <div class="points-display">Points: <span id="points-display">0</span></div>
+
                     <div class="rewards-list">
                         <h3>Your Rewards</h3>
                         <ul id="rewards-list" class="rewards-list-items">
                             <!-- Rewards will be added here by JavaScript -->
                         </ul>
                     </div>
-                    
+
                     <div class="rewards-achievements">
                         <h3>Achievements</h3>
-                        <div class="achievements-grid" id="achievements-grid">
+                        <div class="achievements-grid" id="achievements-list">
                             <!-- Achievements will be added here by JavaScript -->
                         </div>
                     </div>
-                    
+
                     <div class="celebration-container" id="celebration-container">
                         <!-- Celebration animations will appear here -->
                     </div>

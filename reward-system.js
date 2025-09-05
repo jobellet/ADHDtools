@@ -20,7 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const achievementsList = document.getElementById('achievements-list');
     const pointsDisplay = document.getElementById('points-display');
     const rewardNameInput = document.getElementById('reward-name');
+    const rewardDescriptionInput = document.getElementById('reward-description');
     const rewardPointsInput = document.getElementById('reward-points');
+    const rewardIconInput = document.getElementById('reward-icon');
     const addRewardBtn = document.getElementById('add-reward-btn');
     const claimRewardBtn = document.getElementById('claim-reward-btn');
     const confettiCanvas = document.getElementById('confetti-canvas');
@@ -131,18 +133,32 @@ document.addEventListener('DOMContentLoaded', function() {
         rewards.forEach((reward, index) => {
             const rewardItem = document.createElement('div');
             rewardItem.className = 'reward-item';
-            
-            // Create reward name
+
+            const rewardIcon = document.createElement('div');
+            rewardIcon.className = 'reward-icon';
+            rewardIcon.textContent = reward.icon || '🎁';
+
+            // Create reward info container
+            const info = document.createElement('div');
+            info.className = 'reward-info';
+
             const rewardName = document.createElement('div');
             rewardName.className = 'reward-name';
             rewardName.textContent = reward.name;
-            
-            // Create reward points
+
+            const rewardDesc = document.createElement('div');
+            rewardDesc.className = 'reward-description';
+            rewardDesc.textContent = reward.description || '';
+
+            info.appendChild(rewardName);
+            if (reward.description) {
+                info.appendChild(rewardDesc);
+            }
+
             const rewardPoints = document.createElement('div');
             rewardPoints.className = 'reward-points';
             rewardPoints.textContent = `${reward.points} points`;
-            
-            // Create claim button
+
             const claimBtn = document.createElement('button');
             claimBtn.className = 'claim-btn';
             claimBtn.textContent = 'Claim';
@@ -150,21 +166,20 @@ document.addEventListener('DOMContentLoaded', function() {
             claimBtn.addEventListener('click', function() {
                 claimReward(index);
             });
-            
-            // Create delete button
+
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-btn';
             deleteBtn.innerHTML = '&times;';
             deleteBtn.addEventListener('click', function() {
                 deleteReward(index);
             });
-            
-            // Assemble reward item
-            rewardItem.appendChild(rewardName);
+
+            rewardItem.appendChild(rewardIcon);
+            rewardItem.appendChild(info);
             rewardItem.appendChild(rewardPoints);
             rewardItem.appendChild(claimBtn);
             rewardItem.appendChild(deleteBtn);
-            
+
             rewardsList.appendChild(rewardItem);
         });
     }
@@ -220,7 +235,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add new reward
     function addReward() {
         const name = rewardNameInput.value.trim();
+        const description = rewardDescriptionInput.value.trim();
         const pointsValue = parseInt(rewardPointsInput.value);
+        const icon = rewardIconInput.value.trim();
         
         if (!name) {
             alert('Please enter a reward name');
@@ -234,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const newReward = {
             name,
+            description,
+            icon,
             points: pointsValue,
             createdAt: new Date().toISOString()
         };
@@ -243,7 +262,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Clear inputs
         rewardNameInput.value = '';
+        rewardDescriptionInput.value = '';
         rewardPointsInput.value = '';
+        rewardIconInput.value = '';
     }
     
     // Delete reward
@@ -391,6 +412,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         });
+
+        // Check habit streaks
+        const habitLogs = JSON.parse(localStorage.getItem('adhd-habit-logs')) || {};
+        const habits = JSON.parse(localStorage.getItem('adhd-habits')) || [];
+        let streakAwards = JSON.parse(localStorage.getItem('adhd-habit-streak-awards')) || {};
+
+        function calculateStreak(logs) {
+            if (!logs) return 0;
+            let streak = 0;
+            let checkDate = new Date();
+            const todayStr = checkDate.toISOString().split('T')[0];
+            if (!logs[todayStr]) {
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            while (true) {
+                const dateStr = checkDate.toISOString().split('T')[0];
+                if (logs[dateStr]) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            return streak;
+        }
+
+        habits.forEach(habit => {
+            const streak = calculateStreak(habitLogs[habit.id]);
+            const lastAward = streakAwards[habit.id] || 0;
+            if (streak >= 7 && streak > lastAward) {
+                newPoints += 5;
+                newAchievements.push({
+                    name: `7-day streak for ${habit.text}`,
+                    date: new Date().toISOString(),
+                    type: 'habit',
+                    points: 5
+                });
+                streakAwards[habit.id] = streak;
+            }
+        });
+        localStorage.setItem('adhd-habit-streak-awards', JSON.stringify(streakAwards));
         
         // Update points and achievements if any were earned
         if (newPoints > 0) {
