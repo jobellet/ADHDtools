@@ -1127,3 +1127,37 @@ button {
         width: 100%;
     }
 }
+
+/* Task Breakdown */
+.task-breakdown-container input[type="checkbox"] {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1rem;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.progress-label {
+    font-weight: 500;
+}
