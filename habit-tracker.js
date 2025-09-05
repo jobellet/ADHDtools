@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addHabitBtn = document.getElementById('add-habit');
     const habitList = document.getElementById('habit-stats');
     const habitCalendar = document.getElementById('habit-calendar');
+    const exportHabitsBtn = document.getElementById('export-habits');
     
     // Get current date information
     const currentDate = new Date();
@@ -42,7 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const streakCounter = document.createElement('div');
             streakCounter.className = 'streak-counter';
             const streak = calculateStreak(habit.id);
-            streakCounter.textContent = `${streak} day${streak !== 1 ? 's' : ''} streak`;
+            const longest = calculateLongestStreak(habit.id);
+            streakCounter.textContent = `${streak} day${streak !== 1 ? 's' : ''} streak (Longest: ${longest} day${longest !== 1 ? 's' : ''})`;
 
             // Create edit button
             const editBtn = document.createElement('button');
@@ -167,17 +169,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 habits.forEach(habit => {
                     const dateStr = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                     const isCompleted = habitLogs[habit.id] && habitLogs[habit.id][dateStr];
+                    const habitId = habit.id;
 
                     const habitCheck = document.createElement('div');
                     habitCheck.className = `habit-check ${isCompleted ? 'completed' : ''}`;
                     habitCheck.title = habit.name;
-                    habitCheck.dataset.habitId = habit.id;
+                    habitCheck.dataset.habitId = habitId;
 
                     // Only allow toggling for dates up to today
                     const checkDate = new Date(currentYear, currentMonth, day);
                     if (checkDate <= currentDate) {
-                        habitCheck.addEventListener('click', function() {
-                            toggleHabitCompletion(this.dataset.habitId, dateStr);
+                        habitCheck.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            toggleHabitCompletion(habitId, dateStr);
                         });
                     }
 
@@ -328,6 +332,35 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return currentStreak;
     }
+
+    // Calculate longest streak for a habit
+    function calculateLongestStreak(habitId) {
+        if (!habitLogs[habitId]) return 0;
+
+        const dates = Object.keys(habitLogs[habitId]).sort();
+        let longest = 0;
+        let current = 0;
+        let prevDate = null;
+
+        dates.forEach(dateStr => {
+            const date = new Date(dateStr);
+            if (prevDate) {
+                const diff = (date - prevDate) / (1000 * 60 * 60 * 24);
+                if (diff === 1) {
+                    current += 1;
+                } else {
+                    current = 1;
+                }
+            } else {
+                current = 1;
+            }
+
+            if (current > longest) longest = current;
+            prevDate = date;
+        });
+
+        return longest;
+    }
     
     // Save habits to localStorage
     function saveHabits() {
@@ -339,6 +372,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save habit logs to localStorage
     function saveHabitLogs() {
         localStorage.setItem('adhd-habit-logs', JSON.stringify(habitLogs));
+    }
+
+    // Export habits and logs as JSON file
+    function exportHabitData() {
+        const data = { habits, habitLogs };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `habit-data-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
     
     // Event listeners
@@ -353,7 +400,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
+    if (exportHabitsBtn) {
+        exportHabitsBtn.addEventListener('click', exportHabitData);
+    }
+
     // Initial render
     renderHabits();
     renderCalendar();

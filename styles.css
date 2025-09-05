@@ -439,6 +439,12 @@ footer {
     flex: 1;
 }
 
+.habit-actions {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
 .habit-list .habit-item {
     margin-bottom: 1rem;
     border: 1px solid #eee;
