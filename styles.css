@@ -1087,6 +1087,12 @@ button {
     min-height: 3rem;
 }
 
+.validation-error {
+    color: var(--error);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
 .calendar-event {
     display: flex;
     align-items: center;
