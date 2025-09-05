@@ -683,6 +683,7 @@ footer {
 .day-planner-container {
     max-width: 1000px;
     margin: 0 auto;
+    position: relative;
 }
 
 .planner-header {
@@ -705,6 +706,21 @@ footer {
     overflow-y: auto;
     height: calc(4 * 60 * var(--minute-height));
     max-height: 80vh;
+}
+
+.time-scroll-slider {
+    position: absolute;
+    right: -1.5rem;
+    width: 1rem;
+    writing-mode: bt-lr;
+    transform: rotate(180deg);
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .time-scroll-slider {
+        display: block;
+    }
 }
 
 .hour-row {

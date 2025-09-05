@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const eventTaskSelect = document.getElementById('event-task');
     const eventDurationInput = document.getElementById('event-duration');
     const eventModalTitle = document.getElementById('event-modal-title');
+    const scrollSlider = document.getElementById('time-scroll-slider');
 
     let editingTaskId = null;
 
@@ -29,35 +30,72 @@ document.addEventListener('DOMContentLoaded', function() {
 
         dateDisplay.textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         timeBlocksContainer.innerHTML = '';
-        const allTasks = window.DataManager.getTasks();
-        const plannerDateStr = currentDate.toISOString().slice(0, 10);
-
-        const todaysTasks = allTasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
+        const hourContents = [];
 
         for (let hour = 0; hour < 24; hour++) {
-            for (let minute = 0; minute < 60; minute += 60) { // Simplified to hourly blocks
-                const timeBlock = document.createElement('div');
-                timeBlock.className = 'time-block';
-                const timeKey = `${plannerDateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-                
-                const timeLabel = document.createElement('div');
-                timeLabel.className = 'time-label';
-                timeLabel.textContent = formatTime(hour, minute);
-                timeBlock.appendChild(timeLabel);
+            const timeBlock = document.createElement('div');
+            timeBlock.className = 'time-block';
 
-                const eventContent = document.createElement('div');
-                eventContent.className = 'event-content';
+            const timeLabel = document.createElement('div');
+            timeLabel.className = 'time-label';
+            timeLabel.textContent = formatTime(hour, 0);
+            timeBlock.appendChild(timeLabel);
 
-                const tasksInBlock = todaysTasks.filter(t => t.plannerDate.startsWith(timeKey.slice(0, 13)));
+            const eventContent = document.createElement('div');
+            eventContent.className = 'event-content';
+            hourContents.push(eventContent);
 
-                tasksInBlock.forEach(task => {
-                    const eventDiv = document.createElement('div');
-                    eventDiv.className = 'event';
-                    eventDiv.textContent = task.text;
-                    eventDiv.style.height = `calc(${task.duration || 60} * var(--minute-height))`;
+            timeBlock.appendChild(eventContent);
+            timeBlocksContainer.appendChild(timeBlock);
+        }
 
-                    eventDiv.addEventListener('click', () => openModal(task));
+        const allTasks = window.DataManager.getTasks();
+        const plannerDateStr = currentDate.toISOString().slice(0, 10);
+        const todaysTasks = allTasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
 
+        // Include tasks from previous day that run past midnight
+        const prevDate = new Date(currentDate);
+        prevDate.setDate(currentDate.getDate() - 1);
+        const prevDateStr = prevDate.toISOString().slice(0, 10);
+        allTasks.filter(task => task.plannerDate && task.plannerDate.startsWith(prevDateStr)).forEach(task => {
+            const startMins = parseInt(task.plannerDate.slice(11, 13)) * 60 + parseInt(task.plannerDate.slice(14, 16));
+            const dur = task.duration || 60;
+            if (startMins + dur > 1440) {
+                const remainder = startMins + dur - 1440;
+                todaysTasks.push({
+                    ...task,
+                    plannerDate: `${plannerDateStr}T00:00`,
+                    duration: remainder,
+                    _continuation: true
+                });
+            }
+        });
+
+        todaysTasks.forEach(task => {
+            const startHour = parseInt(task.plannerDate.slice(11, 13));
+            const startMin = parseInt(task.plannerDate.slice(14, 16));
+            const start = startHour * 60 + startMin;
+            const duration = task.duration || 60;
+            const end = start + duration;
+            const lastHour = Math.min(23, Math.floor((end - 1) / 60));
+            for (let h = Math.floor(start / 60); h <= lastHour; h++) {
+                const hourContent = hourContents[h];
+                if (!hourContent) continue;
+                const hourStart = h * 60;
+                const segStart = Math.max(start, hourStart);
+                const segEnd = Math.min(end, hourStart + 60);
+                const segMinutes = segEnd - segStart;
+                const segOffset = segStart - hourStart;
+
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'event';
+                eventDiv.textContent = task.text;
+                eventDiv.style.top = `calc(${segOffset} * var(--minute-height))`;
+                eventDiv.style.height = `calc(${segMinutes} * var(--minute-height))`;
+
+                eventDiv.addEventListener('click', () => openModal(task));
+
+                if (h === Math.floor(start / 60) && !task._continuation) {
                     const del = document.createElement('span');
                     del.className = 'delete-event';
                     del.textContent = '×';
@@ -71,14 +109,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     handle.className = 'resize-handle';
                     handle.addEventListener('mousedown', e => startResize(e, task, eventDiv));
                     eventDiv.appendChild(handle);
+                }
 
-                    eventContent.appendChild(eventDiv);
-                });
-
-                timeBlock.appendChild(eventContent);
-                timeBlocksContainer.appendChild(timeBlock);
+                hourContent.appendChild(eventDiv);
             }
-        }
+        });
+
+        updateSlider();
     }
 
     function formatTime(h, m) {
@@ -90,10 +127,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function populateTimeOptions() {
         eventTimeSelect.innerHTML = '';
         for (let h = 0; h < 24; h++) {
-            const opt = document.createElement('option');
-            opt.value = `${String(h).padStart(2, '0')}:00`;
-            opt.textContent = formatTime(h, 0);
-            eventTimeSelect.appendChild(opt);
+            for (let m = 0; m < 60; m += 5) {
+                const opt = document.createElement('option');
+                opt.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                opt.textContent = formatTime(h, m);
+                eventTimeSelect.appendChild(opt);
+            }
         }
     }
 
@@ -108,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function openModal(task) {
+    function openModal(task, presetTime) {
         eventModal.style.display = 'block';
         populateTimeOptions();
         populateTaskOptions();
@@ -125,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
             editingTaskId = null;
             eventModalTitle.textContent = 'Add Event';
             eventTitleInput.value = '';
-            eventTimeSelect.selectedIndex = 0;
+            eventTimeSelect.value = presetTime || '00:00';
             eventDurationInput.value = 60;
             eventTitleInput.disabled = false;
             eventTaskSelect.value = '';
@@ -145,6 +184,30 @@ document.addEventListener('DOMContentLoaded', function() {
     addEventBtn.addEventListener('click', () => openModal());
     closeButton.addEventListener('click', closeModal);
     window.addEventListener('click', e => { if (e.target === eventModal) closeModal(); });
+
+    timeBlocksContainer.addEventListener('click', e => {
+        if (e.target.closest('.event')) return;
+        const cls = e.target.classList;
+        if (!(e.target === timeBlocksContainer || cls.contains('time-block') || cls.contains('event-content'))) return;
+        const rect = timeBlocksContainer.getBoundingClientRect();
+        const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
+        const y = e.clientY - rect.top + timeBlocksContainer.scrollTop;
+        let minutes = Math.round(y / minuteHeight / 5) * 5;
+        minutes = Math.min(1435, Math.max(0, minutes));
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        openModal(null, timeStr);
+    });
+
+    if (scrollSlider) {
+        scrollSlider.addEventListener('input', () => {
+            timeBlocksContainer.scrollTop = scrollSlider.value;
+        });
+        timeBlocksContainer.addEventListener('scroll', () => {
+            scrollSlider.value = timeBlocksContainer.scrollTop;
+        });
+    }
 
     eventTaskSelect.addEventListener('change', () => {
         const id = eventTaskSelect.value;
@@ -205,24 +268,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
         function onMove(ev) {
             const diff = ev.clientY - startY;
-            const minutes = Math.max(15, startDuration + Math.round(diff / minuteHeight / 15) * 15);
+            const minutes = Math.max(5, startDuration + Math.round(diff / minuteHeight / 5) * 5);
             eventDiv.style.height = `calc(${minutes} * var(--minute-height))`;
         }
         function onUp(ev) {
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
             const diff = ev.clientY - startY;
-            const minutes = Math.max(15, startDuration + Math.round(diff / minuteHeight / 15) * 15);
+            const minutes = Math.max(5, startDuration + Math.round(diff / minuteHeight / 5) * 5);
             window.DataManager.updateTask(task.id, { duration: minutes });
         }
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
     }
 
+    function updateSlider() {
+        if (!scrollSlider) return;
+        scrollSlider.max = Math.max(0, timeBlocksContainer.scrollHeight - timeBlocksContainer.clientHeight);
+        scrollSlider.value = timeBlocksContainer.scrollTop;
+        scrollSlider.style.height = `${timeBlocksContainer.clientHeight}px`;
+        scrollSlider.style.top = `${timeBlocksContainer.offsetTop}px`;
+    }
+
     // Zoom handling
     let zoomLevel = 1;
     function applyZoom() {
         document.documentElement.style.setProperty('--minute-height', `${2 * zoomLevel}px`);
+        updateSlider();
     }
     applyZoom();
 
@@ -258,11 +330,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const hoursFromStart = now.getHours();
         const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
         timeBlocksContainer.scrollTop = hoursFromStart * 60 * minuteHeight;
+        updateSlider();
     }
 
     window.EventBus.addEventListener('dataChanged', () => {
+        const prev = timeBlocksContainer.scrollTop;
         renderDayPlanner();
-        scrollToCurrent();
+        timeBlocksContainer.scrollTop = prev;
+        updateSlider();
     });
 
     // Handle tasks sent from other tools
@@ -291,11 +366,11 @@ document.addEventListener('DOMContentLoaded', function() {
             plannerDate: plannerDateTime,
             duration
         });
-        renderDayPlanner();
         alert(`Task '${task.text}' added to Day Planner.`);
     }
 
     renderDayPlanner();
     scrollToCurrent();
+    updateSlider();
 });
 
