@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM elements
   const taskInput = document.getElementById('task-input');
   const addTaskButton = document.getElementById('add-task');
+  const taskError = document.getElementById('task-error');
 
   // Create and insert import dropdown (from Task Manager & Task Breakdown)
   if (!document.getElementById('import-task-eisenhower')) {
@@ -90,7 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
         div.dataset.quadrant = q;
 
         const span = document.createElement('span');
-        span.textContent = task.text;
+        const MAX_LEN = 100;
+        const displayText = task.text.length > MAX_LEN ? task.text.slice(0, MAX_LEN) + '…' : task.text;
+        span.textContent = displayText;
+        span.title = task.text;
         if (task.completed) {
           span.style.textDecoration = 'line-through';
           span.style.opacity = '0.6';
@@ -176,7 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (imported) {
       text = imported;
     }
-    if (!text) return;
+    if (!text) {
+      if (taskError) {
+        taskError.textContent = 'Please enter a task';
+        taskError.style.display = 'block';
+      }
+      taskInput.focus();
+      return;
+    }
+    if (taskError) {
+      taskError.style.display = 'none';
+    }
     const quadrant = quadrantSelect.value;
     const id = window.crypto?.randomUUID?.() || 't-' + Date.now();
     tasks[quadrant].push({ id, text, completed: false, createdAt: new Date().toISOString() });
@@ -185,6 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
     taskInput.value = '';
     importSelect.value = '';
     taskInput.focus();
+    if (taskError) {
+      taskError.style.display = 'none';
+    }
     // Notify cross-tool bus
     window.EventBus?.dispatchEvent(new CustomEvent('eisenhowerTaskAdded', {
       detail: { id, text, quadrant }
@@ -241,6 +258,9 @@ document.addEventListener('DOMContentLoaded', () => {
   addTaskButton.addEventListener('click', addNewTask);
   taskInput.addEventListener('keypress', e => {
     if (e.key === 'Enter') addNewTask();
+  });
+  taskInput.addEventListener('input', () => {
+    if (taskError) taskError.style.display = 'none';
   });
   importSelect.addEventListener('change', () => {
     if (importSelect.value) addNewTask();
