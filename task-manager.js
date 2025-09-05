@@ -24,6 +24,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // Local cache of tasks from DataManager
   let tasks = DataManager ? DataManager.getTasks() : [];
 
+  function sanitizeText(str) {
+    return str
+      .replace(/(\b\w+\b)(\s+\1)+/gi, '$1') // remove consecutive duplicate words
+      .replace(/(\b\w+\b)\1+/gi, '$1') // remove directly concatenated duplicates
+      .replace(/\s+/g, ' ') // collapse whitespace
+      .trim();
+  }
+
+  function createMeta(priority, category) {
+    const meta = document.createElement('div');
+    meta.className = 'task-meta';
+    const prio = document.createElement('span');
+    prio.className = 'task-priority';
+    prio.textContent = priority.charAt(0).toUpperCase() + priority.slice(1);
+    const cat = document.createElement('span');
+    cat.className = 'task-category';
+    cat.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    meta.append(prio, document.createTextNode(' | '), cat);
+    return meta;
+  }
+
   function refreshTasks() {
     tasks = DataManager.getTasks();
   }
@@ -66,16 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       text.textContent = task.text;
 
       // Meta container
-      const meta = document.createElement('div');
-      meta.className = 'task-meta';
-      const prio = document.createElement('span');
-      prio.className = 'task-priority';
-      prio.textContent = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
-      const cat = document.createElement('span');
-      cat.className = 'task-category';
-      cat.textContent = task.category.charAt(0).toUpperCase() + task.category.slice(1);
-      // Add a separator so the priority and category don't run together
-      meta.append(prio, document.createTextNode(' | '), cat);
+      const meta = createMeta(task.priority, task.category);
 
       // Actions
       const actions = document.createElement('div');
@@ -120,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.textContent = 'Save';
         saveBtn.className = 'edit-task-save-btn';
         saveBtn.addEventListener('click', () => {
-          const newText = textInput.value.trim();
+          const newText = sanitizeText(textInput.value);
           if (newText) {
             task.text = newText;
             task.priority = prioritySelect.value;
@@ -183,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
           notes: null,
           subTasks: [] 
         };
-        window.CrossTool.sendTaskToTool(standardizedTask, 'DayPlanner');
+        window.CrossTool.sendTaskToTool(standardizedTask, 'DayPlanner', { openTool: false });
         alert(`Task "${task.text}" sent to Day Planner.`);
       });
 
@@ -203,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
           notes: null,
           subTasks: []
         };
-        window.CrossTool.sendTaskToTool(standardizedTask, 'TaskBreakdown');
+        window.CrossTool.sendTaskToTool(standardizedTask, 'TaskBreakdown', { openTool: false });
         alert(`Task "${task.text}" sent to Task Breakdown.`);
       });
 
@@ -225,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
           notes: null,
           subTasks: []
         };
-        window.CrossTool.sendTaskToTool(standardizedTask, 'Routine');
+        window.CrossTool.sendTaskToTool(standardizedTask, 'Routine', { openTool: false });
         alert(`Task "${task.text}" sent to Routine.`);
       });
 
@@ -319,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Add new task
   function addTask() {
-    const text = inputEl.value.trim();
+    const text = sanitizeText(inputEl.value);
     if (!text) return;
 
     const newTask = DataManager.addTask({

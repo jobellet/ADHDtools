@@ -144,7 +144,7 @@
      * @param {object} taskObject - The task object, ideally adhering to StandardizedTask structure.
      * @param {string} targetTool - The identifier of the target tool (e.g., 'DayPlanner').
      */
-    sendTaskToTool: function(taskObject, targetTool) {
+    sendTaskToTool: function(taskObject, targetTool, options = {}) {
       if (!taskObject || typeof taskObject !== 'object') {
         console.error('CrossTool.sendTaskToTool: taskObject is invalid.', taskObject);
         return;
@@ -154,10 +154,14 @@
         return;
       }
 
+      const { openTool: open = true } = options;
+
       const eventName = `ef-receiveTaskFor-${targetTool}`;
       console.log(`CrossTool: Dispatching event '${eventName}' with task:`, taskObject);
       this.bus.dispatchEvent(new CustomEvent(eventName, { detail: taskObject }));
-      this.openTool(targetTool);
+      if (open) {
+        this.openTool(targetTool);
+      }
     },
 
     /**
@@ -165,12 +169,12 @@
      * @param {Array<object>} tasks - array of task objects
      * @param {string} targetTool - identifier of the target tool
      */
-    sendTasksToTool: function(tasks, targetTool) {
+    sendTasksToTool: function(tasks, targetTool, options) {
       if (!Array.isArray(tasks)) {
         console.error('CrossTool.sendTasksToTool: tasks must be an array');
         return;
       }
-      tasks.forEach(task => this.sendTaskToTool(task, targetTool));
+      tasks.forEach(task => this.sendTaskToTool(task, targetTool, options));
     }
   };
 })();
