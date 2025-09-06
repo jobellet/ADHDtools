@@ -715,6 +715,7 @@ footer {
     overflow-y: auto;
     height: calc(4 * 60 * var(--minute-height));
     max-height: 80vh;
+    position: relative;
 }
 
 .time-scroll-slider {

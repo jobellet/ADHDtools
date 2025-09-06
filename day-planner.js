@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let editingTaskId = null;
     let pendingExternalTask = null;
+    let dragSuppressClick = false;
 
     let currentDate = new Date();
 
@@ -124,7 +125,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 eventDiv.style.top = `calc(${segOffset} * var(--minute-height))`;
                 eventDiv.style.height = `calc(${segMinutes} * var(--minute-height))`;
 
-                eventDiv.addEventListener('click', () => openModal(task));
+                eventDiv.addEventListener('mousedown', e => startDrag(e, task, eventDiv));
+                eventDiv.addEventListener('click', e => {
+                    if (dragSuppressClick) {
+                        dragSuppressClick = false;
+                        return;
+                    }
+                    openModal(task);
+                });
 
                 if (h === Math.floor(start / 60) && !task._continuation) {
                     const del = document.createElement('span');
@@ -491,6 +499,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 start: ev.start.slice(11,16),
                 end: ev.end ? ev.end.slice(11,16) : null
             }));
+    }
+
+    function startDrag(e, task, eventDiv) {
+        if (e.target.closest('.delete-event') || e.target.closest('.resize-handle')) return;
+        e.preventDefault();
+        let dragging = false;
+        const containerRect = timeBlocksContainer.getBoundingClientRect();
+        const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
+        const containerHeight = timeBlocksContainer.scrollHeight;
+        const eventRect = eventDiv.getBoundingClientRect();
+        const offsetY = e.clientY - eventRect.top;
+        function onMove(ev) {
+            const y = ev.clientY - containerRect.top + timeBlocksContainer.scrollTop - offsetY;
+            if (!dragging) {
+                dragging = true;
+                dragSuppressClick = true;
+                timeBlocksContainer.appendChild(eventDiv);
+                eventDiv.style.left = `${eventRect.left - containerRect.left}px`;
+                eventDiv.style.width = `${eventRect.width}px`;
+                eventDiv.style.top = `${eventRect.top - containerRect.top + timeBlocksContainer.scrollTop}px`;
+                eventDiv.style.zIndex = '1000';
+            }
+            const clamped = Math.max(0, Math.min(y, containerHeight - eventDiv.offsetHeight));
+            eventDiv.style.top = `${clamped}px`;
+        }
+        function onUp(ev) {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            if (!dragging) return;
+            const y = ev.clientY - containerRect.top + timeBlocksContainer.scrollTop - offsetY;
+            const minutes = Math.round(y / minuteHeight / 5) * 5;
+            const maxMinutes = 24 * 60 - 5;
+            if (minutes < 0 || minutes > maxMinutes) {
+                renderDayPlanner();
+                return;
+            }
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+            window.DataManager.updateTask(task.id, { plannerDate: plannerDateTime });
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
     }
 
     function startResize(e, task, eventDiv) {
