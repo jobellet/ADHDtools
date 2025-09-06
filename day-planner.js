@@ -51,6 +51,34 @@ document.addEventListener('DOMContentLoaded', function() {
             timeBlocksContainer.appendChild(timeBlock);
         }
 
+        // Render Google Calendar events stored from the integration
+        const calendarEvents = getCalendarEvents();
+        calendarEvents.forEach(ev => {
+            const startHour = parseInt(ev.start.slice(0, 2));
+            const startMin = parseInt(ev.start.slice(3, 5));
+            const start = startHour * 60 + startMin;
+            const end = ev.end
+                ? parseInt(ev.end.slice(0, 2)) * 60 + parseInt(ev.end.slice(3, 5))
+                : start + 60;
+            const lastHour = Math.min(23, Math.floor((end - 1) / 60));
+            for (let h = Math.floor(start / 60); h <= lastHour; h++) {
+                const hourContent = hourContents[h];
+                if (!hourContent) continue;
+                const hourStart = h * 60;
+                const segStart = Math.max(start, hourStart);
+                const segEnd = Math.min(end, hourStart + 60);
+                const segMinutes = segEnd - segStart;
+                const segOffset = segStart - hourStart;
+
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'event calendar-event';
+                eventDiv.textContent = ev.title;
+                eventDiv.style.top = `calc(${segOffset} * var(--minute-height))`;
+                eventDiv.style.height = `calc(${segMinutes} * var(--minute-height))`;
+                hourContent.appendChild(eventDiv);
+            }
+        });
+
         const allTasks = window.DataManager.getTasks();
         const plannerDateStr = currentDate.toISOString().slice(0, 10);
         const todaysTasks = allTasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
@@ -486,6 +514,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.EventBus.addEventListener('dataChanged', () => {
+        const prev = timeBlocksContainer.scrollTop;
+        renderDayPlanner();
+        timeBlocksContainer.scrollTop = prev;
+        updateSlider();
+    });
+
+    window.EventBus.addEventListener('calendarEventsUpdated', () => {
         const prev = timeBlocksContainer.scrollTop;
         renderDayPlanner();
         timeBlocksContainer.scrollTop = prev;
