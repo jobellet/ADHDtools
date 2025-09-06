@@ -63,12 +63,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the gapi.client object
     async function initializeGapiClient() {
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-        });
-        gapiInited = true;
-        maybeEnableButtons();
+        try {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        } catch (err) {
+            console.error('Failed to initialize Google API client:', err);
+            const statusElements = document.querySelectorAll('#calendar-status');
+            statusElements.forEach(el => {
+                el.textContent = 'Invalid API key or Client ID';
+            });
+        }
     }
     
     // Initialize the tokenClient
@@ -108,7 +116,10 @@ document.addEventListener('DOMContentLoaded', function() {
         tokenClient.callback = async (resp) => {
             if (resp.error !== undefined) {
                 statusElements.forEach(el => {
-                    el.textContent = 'Error: ' + resp.error;
+                    const msg = (resp.error === 'invalid_client' || resp.error === 'unauthorized_client')
+                        ? 'Invalid API key or Client ID'
+                        : 'Error: ' + resp.error;
+                    el.textContent = msg;
                 });
                 return;
             }
