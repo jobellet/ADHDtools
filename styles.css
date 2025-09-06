@@ -809,6 +809,11 @@ footer {
     overflow: hidden;
 }
 
+.event.calendar-event {
+    background-color: var(--secondary-color);
+    color: var(--on-secondary);
+}
+
 .event .delete-event {
     position: absolute;
     top: 2px;

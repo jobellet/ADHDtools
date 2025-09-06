@@ -90,6 +90,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.disabled = false;
                 button.addEventListener('click', handleAuthClick);
             });
+            if (gapi.client.getToken()) {
+                const signoutButtons = document.querySelectorAll('#signout-button');
+                signoutButtons.forEach(button => {
+                    button.disabled = false;
+                    button.addEventListener('click', handleSignoutClick);
+                });
+                loadCalendarEvents();
+            }
         }
     }
     
@@ -142,53 +150,43 @@ document.addEventListener('DOMContentLoaded', function() {
             signoutButtons.forEach(button => {
                 button.disabled = true;
             });
+
+            localStorage.removeItem('adhd-calendar-events');
+            window.EventBus.dispatchEvent(new Event('calendarEventsUpdated'));
         }
     }
     
     // Load calendar events
     async function loadCalendarEvents() {
         try {
+            const startOfDay = new Date();
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(startOfDay);
+            endOfDay.setDate(endOfDay.getDate() + 1);
+
             const response = await gapi.client.calendar.events.list({
-                'calendarId': 'primary',
-                'timeMin': (new Date()).toISOString(),
-                'showDeleted': false,
-                'singleEvents': true,
-                'maxResults': 10,
-                'orderBy': 'startTime'
+                calendarId: 'primary',
+                timeMin: startOfDay.toISOString(),
+                timeMax: endOfDay.toISOString(),
+                showDeleted: false,
+                singleEvents: true,
+                orderBy: 'startTime'
             });
-            
-            const events = response.result.items;
-            
-            // Update Day Planner with calendar events
-            if (events.length > 0) {
-                events.forEach(event => {
-                    const start = event.start.dateTime || event.start.date;
-                    const startDate = new Date(start);
-                    const hour = startDate.getHours();
-                    
-                    // Add to day planner if within time range
-                    if (hour >= 6 && hour < 22) {
-                        const eventContent = document.querySelector(`.event-content[data-hour="${hour}"]`);
-                        if (eventContent) {
-                            const eventDiv = document.createElement('div');
-                            eventDiv.className = 'event google-event';
-                            eventDiv.innerHTML = `${event.summary} <span class="event-source">(Google Calendar)</span>`;
-                            eventContent.appendChild(eventDiv);
-                            
-                            // Save to localStorage to persist
-                            localStorage.setItem(`day-planner-${hour}`, eventContent.innerHTML);
-                        }
-                    }
-                    
-                    // Add to task manager if it's a task-like event
-                    if (event.summary.toLowerCase().includes('task') || 
-                        event.summary.toLowerCase().includes('todo') ||
-                        event.summary.toLowerCase().includes('to do')) {
-                        addTaskFromCalendar(event.summary, startDate);
-                    }
-                });
-            }
-            
+
+            const events = (response.result.items || []).map(ev => {
+                const start = ev.start.dateTime || ev.start.date;
+                const end = ev.end && (ev.end.dateTime || ev.end.date);
+                const startStr = new Date(start).toISOString().slice(0,16);
+                const endStr = end ? new Date(end).toISOString().slice(0,16) : null;
+                return {
+                    title: ev.summary || '',
+                    start: startStr,
+                    end: endStr
+                };
+            });
+
+            localStorage.setItem('adhd-calendar-events', JSON.stringify(events));
+            window.EventBus.dispatchEvent(new Event('calendarEventsUpdated'));
         } catch (err) {
             console.error('Error loading calendar events:', err);
             const statusElements = document.querySelectorAll('#calendar-status');
@@ -198,47 +196,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Add a task from calendar event
-    function addTaskFromCalendar(summary, dueDate) {
-        // Get task list and add the task
-        const taskList = document.getElementById('task-list');
-        if (!taskList) return;
-        
-        // Create a new task from calendar event
-        const taskItem = document.createElement('li');
-        taskItem.className = 'task-item';
-        taskItem.dataset.priority = 'medium';
-        taskItem.dataset.category = 'calendar';
-        
-        const formattedDate = dueDate.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-        
-        taskItem.innerHTML = `
-            <div class="task-content">
-                <input type="checkbox" class="task-checkbox">
-                <span class="task-text">${summary}</span>
-                <span class="task-meta">
-                    <span class="task-due-date">${formattedDate}</span>
-                    <span class="task-source">Google Calendar</span>
-                </span>
-            </div>
-            <div class="task-actions">
-                <button class="task-edit"><i class="fas fa-edit"></i></button>
-                <button class="task-delete"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-        
-        taskList.appendChild(taskItem);
-        
-        // Update task counts
-        updateTaskCounts();
-        
-        // Save tasks to localStorage
-        saveTasks();
-    }
     
     // Export events to Google Calendar
     async function exportEventToCalendar(summary, startTime, endTime, description) {
