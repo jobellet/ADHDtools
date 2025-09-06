@@ -47,17 +47,13 @@ That's it! The Gemini-powered features in ADHD Tools should now be enabled.
 
 ## Optional Google Calendar Integration
 
-If you want to connect the Day Planner to your Google Calendar, follow these steps:
+To connect the Day Planner to your Google Calendar:
 
 1. **Create API credentials** – In the [Google Cloud Console](https://console.cloud.google.com/), enable the *Google Calendar API* and create an **API key** and an **OAuth client ID** (type Web application).
-2. **Store credentials in the browser** – Open the site and run the following in the browser console:
-   ```javascript
-   localStorage.setItem('gcalClientId', 'YOUR_CLIENT_ID');
-   localStorage.setItem('gcalApiKey', 'YOUR_API_KEY');
-   ```
-3. **Reload and connect** – Refresh the page and click **Connect Google Calendar**. After authorizing, events from the current day in your primary calendar are saved locally and shown automatically in the Day Planner.
+2. **Enter credentials in the Calendar tool** – Open the Calendar page and use the **Google Calendar API** box at the top to save your Client ID and API key.
+3. **Connect your calendar** – After saving, click **Connect Google Calendar** in the Day Planner or Task Manager and authorize access. Events from the current day in your primary calendar are saved locally and shown automatically.
 
-Your credentials remain in your browser only. Remove them anytime with `localStorage.removeItem('gcalClientId')` and `localStorage.removeItem('gcalApiKey')`.
+Your credentials remain in your browser only. Use the **Clear** button in the Calendar settings to remove them at any time.
 
 ## Deprecated Backend Notebook
 
