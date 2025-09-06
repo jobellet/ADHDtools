@@ -793,12 +793,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const isTaskLate = activeTaskTimeLeftSeconds < 0; 
             drawPieChart(percentageRemaining, isTaskLate);
 
-            if (activeTaskTimeLeftSeconds < 0 && originalTaskDurationSeconds <= 0) { 
-                 clearInterval(currentTaskTimer);
-                 currentTaskTimer = null;
-                 currentTaskIndex++;
-                 startNextTask();
-                 return; 
+            if (activeTaskTimeLeftSeconds < 0) {
+                clearInterval(currentTaskTimer);
+                currentTaskTimer = null;
+                currentTaskIndex++;
+                startNextTask();
+                return;
             }
 
             if (activeTaskTimeLeftSeconds <= 0 && !isTaskLate) {
