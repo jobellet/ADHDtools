@@ -510,6 +510,12 @@
     if (window.DataManager && window.DataManager.EventBus) {
       window.DataManager.EventBus.addEventListener('dataChanged', render);
     }
+    if (window.EventBus) {
+      window.EventBus.addEventListener('calendarEventsUpdated', () => {
+        events = loadEvents();
+        render();
+      });
+    }
 
     const defaultBtn = container.querySelector('.calendar-view-btn[data-view="' + currentView + '"]');
     if (defaultBtn) defaultBtn.classList.add('active');
