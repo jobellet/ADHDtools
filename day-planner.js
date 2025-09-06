@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const addEventBtn = document.getElementById('add-event-btn');
     const clearBtn = document.getElementById('clear-events-btn');
     const aiPlanBtn = document.getElementById('ai-plan-day-btn');
+    const recordBtn = document.getElementById('record-event-btn');
     const eventModal = document.getElementById('event-modal');
     const closeButton = eventModal.querySelector('.close-button');
     const eventForm = document.getElementById('event-form');
@@ -232,7 +233,58 @@ document.addEventListener('DOMContentLoaded', function() {
         if (eventTaskSelect) eventTaskSelect.disabled = false;
     }
 
+    function startVoiceRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Speech recognition not supported in this browser.');
+            return;
+        }
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onresult = async (event) => {
+            const transcript = event.results[0][0].transcript;
+            await handleVoiceCommand(transcript);
+        };
+        recognition.onerror = (e) => console.error('Speech recognition error:', e.error);
+        recognition.start();
+    }
+
+    async function handleVoiceCommand(text) {
+        if (!window.callGemini) {
+            console.warn('Gemini API not available');
+            return;
+        }
+        const todayStr = currentDate.toISOString().slice(0, 10);
+        const prompt = `Today is ${todayStr}. From the following text: "${text}", extract the event title, date, start time, and duration in minutes. Return JSON with keys: title, date (YYYY-MM-DD), time (HH:MM), duration.`;
+        const response = await window.callGemini(prompt);
+        if (!response) return;
+        let parsed;
+        try {
+            parsed = JSON.parse(response);
+        } catch (err) {
+            console.error('Failed to parse Gemini response:', response);
+            return;
+        }
+        if (!parsed.title || !parsed.time) return;
+        const datePart = parsed.date || todayStr;
+        const plannerDate = `${datePart}T${parsed.time}`;
+        window.DataManager.addTask({
+            text: parsed.title,
+            plannerDate,
+            duration: Number(parsed.duration) || 60,
+            originalTool: 'planner'
+        });
+        renderDayPlanner();
+    }
+
     addEventBtn.addEventListener('click', () => openModal(null, getDefaultTime()));
+    if (recordBtn) {
+        recordBtn.addEventListener('click', startVoiceRecognition);
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) recordBtn.disabled = true;
+    }
     closeButton.addEventListener('click', closeModal);
     window.addEventListener('click', e => { if (e.target === eventModal) closeModal(); });
 
