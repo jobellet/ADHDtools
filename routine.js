@@ -654,51 +654,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- PIE CHART FUNCTION ---
-    function drawPieChart(percentage, isLate) {
-        const ctx = routinePieChartCanvas.getContext('2d');
-        const centerX = routinePieChartCanvas.width / 2;
-        const centerY = routinePieChartCanvas.height / 2;
-        const radius = Math.min(centerX, centerY) - 10; // 10px padding
-
-        // Clear Canvas
-        ctx.clearRect(0, 0, routinePieChartCanvas.width, routinePieChartCanvas.height);
-
-        // Draw Background Circle (Time Total)
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#e0e0e0'; // Light grey
-        ctx.fill();
-
-        // Draw Foreground Arc (Time Remaining)
-        if (percentage > 0) { // Only draw if there's time remaining or it's late (percentage could be > 0 if late)
-            const startAngle = -0.5 * Math.PI; // Start at the top
-            // If late, percentage might become negative from calculation, cap at 0 for visual if not desired to go reverse
-            // However, the prompt logic is percentageRemaining = Math.max(0, timeLeft / original)
-            // So percentage will be 0 if timeLeft is negative.
-            // To make it red when late (timeLeft < 0), the percentage for drawing should still be >0, or we draw full red circle.
-            // The current prompt implies `percentageRemaining` is used for the arc size.
-            // If timeLeftForTask < 0, percentageRemaining will be 0.
-            // Let's adjust so if it's late, we draw a full red circle, otherwise draw the percentage.
-            
-            let displayPercentage = percentage;
-            if (isLate && percentage <= 0) { 
-                // If truly late (time ran out and is negative) and percentage is 0, draw full red circle
-                displayPercentage = 1; 
-            } else if (percentage <= 0 && !isLate) {
-                // Task completed on time, do not draw foreground.
-                return;
-            }
-
-
-            const endAngle = startAngle + (displayPercentage * 2 * Math.PI);
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-            ctx.closePath();
-            ctx.fillStyle = isLate ? '#ff4d4d' : '#4CAF50'; // Red if late, Green if on time
-            ctx.fill();
-        }
-    }
 
 
     // --- ROUTINE EXECUTION LOGIC ---
