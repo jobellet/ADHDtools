@@ -1180,3 +1180,26 @@ button {
 .progress-label {
     font-weight: 500;
 }
+
+/* Flow Mode */
+#flow-mode-toggle {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+#flow-container {
+    padding: 2rem;
+}
+
+.flow-mode-only {
+    display: none;
+}
+
+body:has(#flow-container:not(.hidden)) .flow-mode-only {
+    display: inline-block;
+}
+
+#flow-container .tool-section {
+    display: block;
+}

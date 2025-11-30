@@ -722,6 +722,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
             if (pieChartContainer) pieChartContainer.style.display = 'none';
             notify("Routine finished!");
+
+            // Notify Flow Manager that the routine is complete
+            const event = new CustomEvent('routineComplete', {
+                detail: { routineId: activeRoutine.id }
+            });
+            document.dispatchEvent(event);
+
             return;
         }
 

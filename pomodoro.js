@@ -175,6 +175,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionCountDisplay.textContent = sessionCount;
                 localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
 
+                document.dispatchEvent(new CustomEvent('focusSessionComplete'));
+
                 const isLongBreak = sessionCount % settings.sessionsBeforeLongBreak === 0;
                 if (isLongBreak) {
                     currentMode = 'longBreak';
@@ -198,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             } else {
+                document.dispatchEvent(new CustomEvent('breakComplete'));
                 currentMode = 'focus';
                 minutes = settings.focusDuration;
                 currentSessionTotalSeconds = settings.focusDuration * 60;
