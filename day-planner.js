@@ -18,8 +18,7 @@ let dateDisplay,
     eventTimeSelect,
     eventTaskSelect,
     eventDurationInput,
-    eventModalTitle,
-    scrollSlider;
+    eventModalTitle;
 
 function openModal(task, presetTime, externalTask) {
     eventModal.style.display = 'block';
@@ -133,18 +132,9 @@ function startResize(e, task, eventDiv) {
     document.addEventListener('mouseup', onUp);
 }
 
-function updateSlider() {
-    if (!scrollSlider) return;
-    scrollSlider.max = Math.max(0, timeBlocksContainer.scrollHeight - timeBlocksContainer.clientHeight);
-    scrollSlider.value = timeBlocksContainer.scrollTop;
-    scrollSlider.style.height = `${timeBlocksContainer.clientHeight}px`;
-    scrollSlider.style.top = `${timeBlocksContainer.offsetTop}px`;
-}
-
 let zoomLevel = 1;
 function applyZoom() {
     document.documentElement.style.setProperty('--minute-height', `${2 * zoomLevel}px`);
-    updateSlider();
 }
 
 function scrollToCurrent() {
@@ -157,7 +147,6 @@ function scrollToCurrent() {
     const scrollPosition = (currentMinutes * minuteHeight) - (containerHeight / 2);
 
     timeBlocksContainer.scrollTop = Math.max(0, scrollPosition);
-    updateSlider();
 }
 
 function getBreakdownTasks() {
@@ -290,7 +279,6 @@ function initDayPlanner() {
     eventTaskSelect = document.getElementById('event-task');
     eventDurationInput = document.getElementById('event-duration');
     eventModalTitle = document.getElementById('event-modal-title');
-    scrollSlider = document.getElementById('time-scroll-slider');
 
     addEventBtn.addEventListener('click', () => openModal(null, getDefaultTime()));
     if (recordBtn) {
@@ -315,15 +303,6 @@ function initDayPlanner() {
         const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         openModal(null, timeStr);
     });
-
-    if (scrollSlider) {
-        scrollSlider.addEventListener('input', () => {
-            timeBlocksContainer.scrollTop = scrollSlider.value;
-        });
-        timeBlocksContainer.addEventListener('scroll', () => {
-            scrollSlider.value = timeBlocksContainer.scrollTop;
-        });
-    }
 
     eventTaskSelect.addEventListener('change', () => {
         const id = eventTaskSelect.value;
@@ -404,14 +383,12 @@ function initDayPlanner() {
         const prev = timeBlocksContainer.scrollTop;
         renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
         timeBlocksContainer.scrollTop = prev;
-        updateSlider();
     });
 
     window.EventBus.addEventListener('ef-receiveTaskFor-DayPlanner', handleReceivedTaskForDayPlanner);
 
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
     scrollToCurrent();
-    updateSlider();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

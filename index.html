@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,6 +28,7 @@
     <script src="script-loader.js" defer></script>
     <script src="i18n.js" defer></script>
 </head>
+
 <body>
     <header>
         <div class="container">
@@ -38,7 +40,8 @@
 
     <nav>
         <div class="container">
-            <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
+            <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i
+                    class="fas fa-bars"></i></button>
             <select id="language-select" aria-label="Select language">
                 <option value="en">English</option>
                 <option value="fr">Français</option>
@@ -46,18 +49,29 @@
                 <option value="es">Español</option>
             </select>
             <ul id="main-nav-links">
-                <li><a href="#" class="active" data-tool="home" data-i18n="nav-home"><i class="fas fa-home"></i> Home</a></li>
-                <li><a href="#" data-tool="pomodoro" data-i18n="nav-pomodoro"><i class="fas fa-clock"></i> Pomodoro Timer</a></li>
-                <li><a href="#" data-tool="eisenhower" data-i18n="nav-eisenhower"><i class="fas fa-th-large"></i> Eisenhower Matrix</a></li>
-                <li><a href="#" data-tool="planner" data-i18n="nav-planner"><i class="fas fa-calendar-alt"></i> Day Planner</a></li>
-                <li><a href="#" data-tool="calendar" data-i18n="nav-calendar"><i class="fas fa-calendar"></i> Calendar</a></li>
-                <li><a href="#" data-tool="tasks" data-i18n="nav-tasks"><i class="fas fa-tasks"></i> Task Manager</a></li>
-                <li><a href="#" data-tool="breakdown" data-i18n="nav-breakdown"><i class="fas fa-project-diagram"></i> Task Breakdown</a></li>
-                <li><a href="#" data-tool="habits" data-i18n="nav-habits"><i class="fas fa-check-square"></i> Habit Tracker</a></li>
-                <li><a href="#" data-tool="routine" data-i18n="nav-routine"><i class="fas fa-tasks-alt"></i> Routine Tool</a></li>
+                <li><a href="#" class="active" data-tool="home" data-i18n="nav-home"><i class="fas fa-home"></i>
+                        Home</a></li>
+                <li><a href="#" data-tool="pomodoro" data-i18n="nav-pomodoro"><i class="fas fa-clock"></i> Pomodoro
+                        Timer</a></li>
+                <li><a href="#" data-tool="eisenhower" data-i18n="nav-eisenhower"><i class="fas fa-th-large"></i>
+                        Eisenhower Matrix</a></li>
+                <li><a href="#" data-tool="planner" data-i18n="nav-planner"><i class="fas fa-calendar-alt"></i> Day
+                        Planner</a></li>
+                <li><a href="#" data-tool="calendar" data-i18n="nav-calendar"><i class="fas fa-calendar"></i>
+                        Calendar</a></li>
+                <li><a href="#" data-tool="tasks" data-i18n="nav-tasks"><i class="fas fa-tasks"></i> Task Manager</a>
+                </li>
+                <li><a href="#" data-tool="breakdown" data-i18n="nav-breakdown"><i class="fas fa-project-diagram"></i>
+                        Task Breakdown</a></li>
+                <li><a href="#" data-tool="habits" data-i18n="nav-habits"><i class="fas fa-check-square"></i> Habit
+                        Tracker</a></li>
+                <li><a href="#" data-tool="routine" data-i18n="nav-routine"><i class="fas fa-tasks-alt"></i> Routine
+                        Tool</a></li>
                 <li><a href="#" data-tool="focus" data-i18n="nav-focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
-                <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a></li>
-                <li><a href="#" data-tool="about" data-i18n="nav-about"><i class="fas fa-info-circle"></i> About</a></li>
+                <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a>
+                </li>
+                <li><a href="#" data-tool="about" data-i18n="nav-about"><i class="fas fa-info-circle"></i> About</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -67,19 +81,20 @@
             <!-- Home Section -->
             <section id="home" class="tool-section active">
                 <h2 data-i18n="home-heading">Welcome to ADHD Tools Hub</h2>
-                <p data-i18n="home-text">This website provides a collection of interactive tools designed specifically to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
-                
+                <p data-i18n="home-text">This website provides a collection of interactive tools designed specifically
+                    to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+
                 <div class="tools-grid">
                     <div class="tool-card" data-tool="pomodoro">
                         <div class="tool-icon"><i class="fas fa-clock"></i></div>
                         <h3 data-i18n="card-pomodoro">Pomodoro Timer</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="eisenhower">
                         <div class="tool-icon"><i class="fas fa-th-large"></i></div>
                         <h3 data-i18n="card-eisenhower">Eisenhower Matrix</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="planner">
                         <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
                         <h3 data-i18n="card-planner">Day Planner</h3>
@@ -94,27 +109,27 @@
                         <div class="tool-icon"><i class="fas fa-tasks"></i></div>
                         <h3 data-i18n="card-tasks">Task Manager</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="breakdown">
                         <div class="tool-icon"><i class="fas fa-project-diagram"></i></div>
                         <h3 data-i18n="card-breakdown">Task Breakdown</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="habits">
                         <div class="tool-icon"><i class="fas fa-check-square"></i></div>
                         <h3 data-i18n="card-habits">Habit Tracker</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="routine">
                         <div class="tool-icon"><i class="fas fa-tasks-alt"></i></div>
                         <h3 data-i18n="card-routine">Routine Tool</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="focus">
                         <div class="tool-icon"><i class="fas fa-eye"></i></div>
                         <h3 data-i18n="card-focus">Focus Mode</h3>
                     </div>
-                    
+
                     <div class="tool-card" data-tool="rewards">
                         <div class="tool-icon"><i class="fas fa-trophy"></i></div>
                         <h3 data-i18n="card-rewards">Rewards</h3>
@@ -132,8 +147,9 @@
                 <div id="pomodoro-progress-container" class="sticky-progress-container">
                     <div id="pomodoro-progress-bar" class="progress-bar-fill"></div>
                 </div>
-                <p data-i18n="pomodoro-text">The Pomodoro Technique helps you work with time, instead of against it. Break your workday into 25-minute chunks separated by five-minute breaks.</p>
-                
+                <p data-i18n="pomodoro-text">The Pomodoro Technique helps you work with time, instead of against it.
+                    Break your workday into 25-minute chunks separated by five-minute breaks.</p>
+
                 <div class="pomodoro-container">
                     <div class="timer-display">
                         <div class="timer-circle">
@@ -143,50 +159,51 @@
                             <div class="timer-label" id="timer-label">FOCUS</div>
                         </div>
                     </div>
-                    
+
                     <div class="timer-controls">
                         <button id="start-timer" class="btn btn-primary"><i class="fas fa-play"></i> Start</button>
-                        <button id="pause-timer" class="btn btn-secondary" disabled><i class="fas fa-pause"></i> Pause</button>
+                        <button id="pause-timer" class="btn btn-secondary" disabled><i class="fas fa-pause"></i>
+                            Pause</button>
                         <button id="reset-timer" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
                     </div>
-                    
+
                     <div class="session-counter">
                         <span>Sessions completed: <span id="session-count">0</span></span>
                         <span> (Long break in <span id="sessions-until-long">0</span>)</span>
                     </div>
                     <div id="mode-change-message" class="mode-change-message"></div>
-                    
+
                     <details class="pomodoro-settings-collapsible">
                         <summary>Settings <i class="fas fa-cog"></i></summary>
                         <div class="timer-settings">
                             <h3>Settings</h3>
                             <div class="setting-group">
                                 <label for="focus-duration">Focus Duration (minutes):</label>
-                            <input type="number" id="focus-duration" min="1" max="60" value="25">
-                        </div>
-                        <div class="setting-group">
-                            <label for="short-break-duration">Short Break Duration (minutes):</label>
-                            <input type="number" id="short-break-duration" min="1" max="30" value="5">
-                        </div>
-                        <div class="setting-group">
-                            <label for="long-break-duration">Long Break Duration (minutes):</label>
-                            <input type="number" id="long-break-duration" min="1" max="60" value="15">
-                        </div>
-                        <div class="setting-group">
-                            <label for="sessions-before-long-break">Sessions Before Long Break:</label>
-                            <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
-                        </div>
-                        <div class="setting-group">
-                            <label for="audio-notification">Audio Notification:</label>
-                            <select id="audio-notification">
-                                <option value="bell">Bell (Service Bell)</option>
-                                <option value="chime">Chime (Wind Chimes)</option>
-                                <option value="digital">Digital (Beep)</option>
-                                <option value="none">None (No Sound)</option>
-                            </select>
-                            <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
-                        </div>
-                        <button id="save-settings" class="btn">Save Settings</button>
+                                <input type="number" id="focus-duration" min="1" max="60" value="25">
+                            </div>
+                            <div class="setting-group">
+                                <label for="short-break-duration">Short Break Duration (minutes):</label>
+                                <input type="number" id="short-break-duration" min="1" max="30" value="5">
+                            </div>
+                            <div class="setting-group">
+                                <label for="long-break-duration">Long Break Duration (minutes):</label>
+                                <input type="number" id="long-break-duration" min="1" max="60" value="15">
+                            </div>
+                            <div class="setting-group">
+                                <label for="sessions-before-long-break">Sessions Before Long Break:</label>
+                                <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
+                            </div>
+                            <div class="setting-group">
+                                <label for="audio-notification">Audio Notification:</label>
+                                <select id="audio-notification">
+                                    <option value="bell">Bell (Service Bell)</option>
+                                    <option value="chime">Chime (Wind Chimes)</option>
+                                    <option value="digital">Digital (Beep)</option>
+                                    <option value="none">None (No Sound)</option>
+                                </select>
+                                <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
+                            </div>
+                            <button id="save-settings" class="btn">Save Settings</button>
                         </div>
                     </details>
                 </div>
@@ -195,17 +212,19 @@
             <!-- Eisenhower Matrix Section -->
             <section id="eisenhower" class="tool-section">
                 <h2 data-i18n="eisenhower-heading">Eisenhower Matrix</h2>
-                <p data-i18n="eisenhower-text">Prioritize your tasks based on their importance and urgency. This helps you focus on what truly matters.</p>
-                
+                <p data-i18n="eisenhower-text">Prioritize your tasks based on their importance and urgency. This helps
+                    you focus on what truly matters.</p>
+
                 <div class="eisenhower-container">
                     <div class="matrix-controls">
                         <div class="task-input">
                             <input type="text" id="task-input" placeholder="Enter a new task...">
                             <button id="add-task" class="btn">Add Task</button>
-                            <div id="task-error" class="validation-error" aria-live="polite" style="display:none;"></div>
+                            <div id="task-error" class="validation-error" aria-live="polite" style="display:none;">
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div class="matrix-grid">
                         <div class="matrix-header-row">
                             <div class="matrix-header-cell"></div>
@@ -241,7 +260,8 @@
             <!-- Day Planner Section -->
             <section id="planner" class="tool-section">
                 <h2 data-i18n="planner-heading">Day Planner</h2>
-                <p data-i18n="planner-text">Visualize your day with time blocks for better time management. Plan your activities hour by hour to stay organized.</p>
+                <p data-i18n="planner-text">Visualize your day with time blocks for better time management. Plan your
+                    activities hour by hour to stay organized.</p>
 
                 <div class="day-planner-container">
                     <div class="planner-header">
@@ -265,28 +285,27 @@
                     <div class="time-blocks-container" id="time-blocks">
                         <!-- Time blocks will be generated by JavaScript -->
                     </div>
-                    <input type="range" id="time-scroll-slider" class="time-scroll-slider" orient="vertical">
                 </div>
 
                 <!-- Modal for Adding/Editing an Event -->
                 <div id="event-modal" class="modal">
-                  <div class="modal-content">
-                    <span class="close-button">&times;</span>
-                    <h3 id="event-modal-title">Add Event</h3>
-                    <form id="event-form">
-                      <label for="event-task">Import Task:</label>
-                      <select id="event-task">
-                        <option value="">-- New Event --</option>
-                      </select>
-                      <label for="event-title">Title:</label>
-                      <input type="text" id="event-title" required>
-                      <label for="event-time">Start Time:</label>
-                      <select id="event-time"></select>
-                      <label for="event-duration">Duration (minutes):</label>
-                      <input type="number" id="event-duration" min="5" step="5" value="60" required>
-                      <button type="submit" class="btn">Save Event</button>
-                    </form>
-                  </div>
+                    <div class="modal-content">
+                        <span class="close-button">&times;</span>
+                        <h3 id="event-modal-title">Add Event</h3>
+                        <form id="event-form">
+                            <label for="event-task">Import Task:</label>
+                            <select id="event-task">
+                                <option value="">-- New Event --</option>
+                            </select>
+                            <label for="event-title">Title:</label>
+                            <input type="text" id="event-title" required>
+                            <label for="event-time">Start Time:</label>
+                            <select id="event-time"></select>
+                            <label for="event-duration">Duration (minutes):</label>
+                            <input type="number" id="event-duration" min="5" step="5" value="60" required>
+                            <button type="submit" class="btn">Save Event</button>
+                        </form>
+                    </div>
                 </div>
             </section>
 
@@ -311,8 +330,10 @@
                         <button id="load-ics-url-btn" class="btn">Load ICS URL</button>
                     </div>
                     <div class="voice-options">
-                        <label><input type="checkbox" id="calendar-voice-enable"> <span data-i18n="calendar-voice-label">Voice alerts</span></label>
-                        <label><span data-i18n="calendar-voice-early-label">Minutes early:</span> <input type="number" id="calendar-voice-early" value="0" min="0" style="width:4rem"></label>
+                        <label><input type="checkbox" id="calendar-voice-enable"> <span
+                                data-i18n="calendar-voice-label">Voice alerts</span></label>
+                        <label><span data-i18n="calendar-voice-early-label">Minutes early:</span> <input type="number"
+                                id="calendar-voice-early" value="0" min="0" style="width:4rem"></label>
                     </div>
                     <div id="calendar-view" class="calendar-events-list"></div>
                 </div>
@@ -321,8 +342,9 @@
             <!-- Task Manager Section -->
             <section id="tasks" class="tool-section">
                 <h2 data-i18n="tasks-heading">Task Manager</h2>
-                <p data-i18n="tasks-text">Keep track of your to-do list with priorities and categories. Organize your tasks to ensure nothing falls through the cracks.</p>
-                
+                <p data-i18n="tasks-text">Keep track of your to-do list with priorities and categories. Organize your
+                    tasks to ensure nothing falls through the cracks.</p>
+
                 <div class="task-manager-container">
                     <div class="task-input-container">
                         <input type="text" id="task-manager-input" placeholder="Add a new task...">
@@ -345,44 +367,44 @@
                             <option value="">--Import Task--</option>
                         </select>
                     </div>
-                    
+
                     <details class="task-filters-collapsible">
                         <summary><i class="fas fa-filter"></i> Filter Tasks</summary>
                         <div class="task-filters">
                             <div class="filter-group">
                                 <label>Filter by Priority:</label>
-                            <select id="priority-filter">
-                                <option value="all" selected>All</option>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Filter by Category:</label>
-                            <select id="category-filter">
-                                <option value="all" selected>All</option>
-                                <option value="work">Work</option>
-                                <option value="personal">Personal</option>
-                                <option value="health">Health</option>
-                                <option value="education">Education</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Show Completed:</label>
-                            <input type="checkbox" id="show-completed">
-                        </div>
+                                <select id="priority-filter">
+                                    <option value="all" selected>All</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Filter by Category:</label>
+                                <select id="category-filter">
+                                    <option value="all" selected>All</option>
+                                    <option value="work">Work</option>
+                                    <option value="personal">Personal</option>
+                                    <option value="health">Health</option>
+                                    <option value="education">Education</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Show Completed:</label>
+                                <input type="checkbox" id="show-completed">
+                            </div>
                         </div>
                     </details>
-                    
+
                     <div class="task-list-container">
                         <h3>Tasks</h3>
                         <ul id="task-list" class="task-list">
                             <!-- Tasks will be added here by JavaScript -->
                         </ul>
                     </div>
-                    
+
                     <div class="task-stats">
                         <div class="stat">
                             <span>Total Tasks:</span>
@@ -403,8 +425,9 @@
             <!-- Task Breakdown Section -->
             <section id="breakdown" class="tool-section">
                 <h2 data-i18n="breakdown-heading">Task Breakdown</h2>
-                <p data-i18n="breakdown-text">Break complex tasks into smaller, manageable steps. This helps reduce overwhelm and makes progress more visible.</p>
-                
+                <p data-i18n="breakdown-text">Break complex tasks into smaller, manageable steps. This helps reduce
+                    overwhelm and makes progress more visible.</p>
+
                 <div class="task-breakdown-container">
                     <div class="project-section">
                         <h3>Projects</h3>
@@ -417,7 +440,7 @@
                             <!-- Projects will be added here by JavaScript -->
                         </ul>
                     </div>
-                    
+
                     <div class="subtasks-section">
                         <h3 id="current-project-title">Select a project</h3>
                         <div class="subtask-input">
@@ -441,8 +464,9 @@
             <!-- Habit Tracker Section -->
             <section id="habits" class="tool-section">
                 <h2 data-i18n="habits-heading">Habit Tracker</h2>
-                <p data-i18n="habits-text">Build consistency with daily habit tracking and streaks. Visualize your progress and stay motivated.</p>
-                
+                <p data-i18n="habits-text">Build consistency with daily habit tracking and streaks. Visualize your
+                    progress and stay motivated.</p>
+
                 <div class="habit-tracker-container new-layout">
                     <div class="habit-list-panel">
                         <h3>Your Habits</h3>
@@ -469,11 +493,13 @@
             <!-- Focus Mode Section -->
             <section id="focus" class="tool-section">
                 <h2 data-i18n="focus-heading">Focus Mode</h2>
-                <p data-i18n="focus-text">Minimize distractions with a clean, focused interface. Create a distraction-free environment for deep work.</p>
-                
+                <p data-i18n="focus-text">Minimize distractions with a clean, focused interface. Create a
+                    distraction-free environment for deep work.</p>
+
                 <div class="focus-mode-container">
                     <div class="focus-controls">
-                        <button id="enter-focus-mode" class="btn btn-primary"><i class="fas fa-expand"></i> Enter Focus Mode</button>
+                        <button id="enter-focus-mode" class="btn btn-primary"><i class="fas fa-expand"></i> Enter Focus
+                            Mode</button>
                         <div class="focus-settings">
                             <div class="setting-group">
                                 <label for="focus-duration-setting">Focus Session Duration (minutes):</label>
@@ -490,10 +516,12 @@
                                     <div class="setting-group">
                                         <label for="focus-background">Background:</label>
                                         <select id="focus-background">
-                                            <option value="solid" title="Simple solid color background">Solid Color</option>
+                                            <option value="solid" title="Simple solid color background">Solid Color
+                                            </option>
                                             <option value="gradient" title="Soft gradient background">Gradient</option>
                                             <option value="nature" title="Calming nature scene">Nature</option>
-                                            <option value="minimal" title="Low‑distraction minimal theme">Minimal</option>
+                                            <option value="minimal" title="Low‑distraction minimal theme">Minimal
+                                            </option>
                                         </select>
                                     </div>
                                     <div class="setting-group">
@@ -505,13 +533,14 @@
                                             <option value="cafe">Cafe Ambience</option>
                                             <option value="forest">Forest</option>
                                         </select>
-                                        <button id="focus-sound-preview" class="btn btn-secondary" type="button">Preview Sound</button>
+                                        <button id="focus-sound-preview" class="btn btn-secondary" type="button">Preview
+                                            Sound</button>
                                     </div>
                                 </div>
                             </details>
                         </div>
                     </div>
-                    
+
                     <div class="focus-preview">
                         <h3>Preview</h3>
                         <div class="preview-container" id="focus-preview">
@@ -522,7 +551,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="fullscreen-focus-mode" class="fullscreen-focus hidden">
                     <div class="fullscreen-content">
                         <div id="focus-mode-progress-container" class="fullscreen-progress-container">
@@ -530,7 +559,8 @@
                         </div>
                         <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
                         <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
-                        <button id="pause-focus-mode" class="btn btn-secondary"><i class="fas fa-pause"></i> Pause</button>
+                        <button id="pause-focus-mode" class="btn btn-secondary"><i class="fas fa-pause"></i>
+                            Pause</button>
                         <div class="fullscreen-settings">
                             <div class="setting-group">
                                 <label for="focus-background-fullscreen">Background:</label>
@@ -550,14 +580,16 @@
                                     <option value="cafe">Cafe Ambience</option>
                                     <option value="forest">Forest</option>
                                 </select>
-                                <button id="focus-sound-preview-fullscreen" class="btn btn-secondary" type="button">Preview Sound</button>
+                                <button id="focus-sound-preview-fullscreen" class="btn btn-secondary"
+                                    type="button">Preview Sound</button>
                             </div>
                         </div>
                         <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>
                         <div class="focus-text-actions">
                             <button id="download-focus-text" class="btn btn-secondary">Download Notes</button>
                         </div>
-                        <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus Mode</button>
+                        <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus
+                            Mode</button>
                     </div>
                 </div>
             </section>
@@ -565,10 +597,12 @@
             <!-- Rewards Section -->
             <section id="rewards" class="tool-section">
                 <h2 data-i18n="rewards-heading">Rewards</h2>
-                <p data-i18n="rewards-text">Celebrate your accomplishments with visual rewards. Positive reinforcement helps build motivation and consistency.</p>
-                
+                <p data-i18n="rewards-text">Celebrate your accomplishments with visual rewards. Positive reinforcement
+                    helps build motivation and consistency.</p>
+
                 <div class="rewards-container">
-                    <button id="toggle-rewards-setup-btn" class="btn btn-primary" aria-expanded="false" aria-controls="rewards-setup-panel">
+                    <button id="toggle-rewards-setup-btn" class="btn btn-primary" aria-expanded="false"
+                        aria-controls="rewards-setup-panel">
                         <i class="fas fa-plus"></i> Add New Reward
                     </button>
 
@@ -620,33 +654,44 @@
             <!-- About Section -->
             <section id="about" class="tool-section">
                 <h2 data-i18n="about-heading">About ADHD Tools Hub</h2>
-                <p data-i18n="about-text">ADHD Tools Hub is a collection of interactive tools designed to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
-                
+                <p data-i18n="about-text">ADHD Tools Hub is a collection of interactive tools designed to help
+                    individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+
                 <div class="about-content">
                     <details>
                         <summary>Why These Tools?</summary>
-                        <p>People with ADHD often struggle with executive functions like time management, organization, prioritization, and maintaining focus. The tools in this hub are specifically designed to address these challenges using evidence-based strategies.</p>
+                        <p>People with ADHD often struggle with executive functions like time management, organization,
+                            prioritization, and maintaining focus. The tools in this hub are specifically designed to
+                            address these challenges using evidence-based strategies.</p>
                     </details>
-                    
+
                     <details>
                         <summary>Features</summary>
                         <ul>
-                            <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain productivity.</li>
-                            <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.</li>
-                        <li><strong>Day Planner:</strong> Visualize your day with time blocks for better time management.</li>
-                        <li><strong>Task Manager:</strong> Keep track of your to-do list with priorities and categories.</li>
-                        <li><strong>Task Breakdown:</strong> Break complex tasks into smaller, manageable steps.</li>
-                        <li><strong>Habit Tracker:</strong> Build consistency with daily habit tracking and streaks.</li>
-                        <li><strong>Focus Mode:</strong> Minimize distractions with a clean, focused interface.</li>
-                        <li><strong>Rewards:</strong> Celebrate your accomplishments with visual rewards.</li>
+                            <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain
+                                productivity.</li>
+                            <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.
+                            </li>
+                            <li><strong>Day Planner:</strong> Visualize your day with time blocks for better time
+                                management.</li>
+                            <li><strong>Task Manager:</strong> Keep track of your to-do list with priorities and
+                                categories.</li>
+                            <li><strong>Task Breakdown:</strong> Break complex tasks into smaller, manageable steps.
+                            </li>
+                            <li><strong>Habit Tracker:</strong> Build consistency with daily habit tracking and streaks.
+                            </li>
+                            <li><strong>Focus Mode:</strong> Minimize distractions with a clean, focused interface.</li>
+                            <li><strong>Rewards:</strong> Celebrate your accomplishments with visual rewards.</li>
                         </ul>
                     </details>
-                    
+
                     <h3 data-i18n="about-privacy-heading">Privacy</h3>
-                    <p data-i18n="about-privacy-text">All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.</p>
+                    <p data-i18n="about-privacy-text">All data is stored locally in your browser. Nothing is sent to any
+                        server, ensuring your information remains private.</p>
 
                     <h3 data-i18n="about-feedback-heading">Feedback</h3>
-                    <p data-i18n="about-feedback-text">We're constantly working to improve these tools. If you have suggestions or feedback, please let us know!</p>
+                    <p data-i18n="about-feedback-text">We're constantly working to improve these tools. If you have
+                        suggestions or feedback, please let us know!</p>
                 </div>
             </section>
 
@@ -655,9 +700,11 @@
                 <h2 data-i18n="routine-heading">Routine Tool</h2>
                 <p data-i18n="routine-text">Create, manage, and run daily routines with timed tasks.</p>
 
-                <div class="routine-view-controls" >
-                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true" title="Run your routine" data-i18n="routine-run-btn">Run Routine</button>
-                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false" title="Manage your routines" data-i18n="routine-manage-btn">Manage Routines</button>
+                <div class="routine-view-controls">
+                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true"
+                        title="Run your routine" data-i18n="routine-run-btn">Run Routine</button>
+                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false"
+                        title="Manage your routines" data-i18n="routine-manage-btn">Manage Routines</button>
                 </div>
 
                 <div class="routine-container routine-layout">
@@ -666,7 +713,8 @@
                         <div class="input-group">
                             <label for="routine-name" data-i18n="routine-name-label">Routine Name:</label>
                             <input type="text" id="routine-name" placeholder="e.g., Morning Prep">
-                            <button id="create-routine-btn" class="btn" title="Create a new routine" data-i18n="routine-create-btn">Create Routine</button>
+                            <button id="create-routine-btn" class="btn" title="Create a new routine"
+                                data-i18n="routine-create-btn">Create Routine</button>
                         </div>
 
                         <div class="input-group">
@@ -681,19 +729,23 @@
                             <input type="text" id="task-name" placeholder="e.g., Make Bed">
                         </div>
                         <div class="input-group">
-                            <label for="task-duration" data-i18n="routine-task-duration-label">Task Duration (minutes):</label>
+                            <label for="task-duration" data-i18n="routine-task-duration-label">Task Duration
+                                (minutes):</label>
                             <input type="number" id="task-duration" min="1" placeholder="e.g., 5">
                         </div>
                         <div class="input-group">
                             <label for="task-break-duration">Break After Task (minutes, optional):</label>
                             <input type="number" id="task-break-duration" min="0" placeholder="e.g., 2">
-                            <button id="add-task-to-routine-btn" class="btn" title="Add task to routine" data-i18n="routine-add-task-btn">Add Task</button>
+                            <button id="add-task-to-routine-btn" class="btn" title="Add task to routine"
+                                data-i18n="routine-add-task-btn">Add Task</button>
                         </div>
 
                         <div class="input-group">
-                            <label for="routine-start-time" data-i18n="routine-start-time-label">Set Auto Start Time (optional):</label>
+                            <label for="routine-start-time" data-i18n="routine-start-time-label">Set Auto Start Time
+                                (optional):</label>
                             <input type="time" id="routine-start-time">
-                            <button id="set-start-time-btn" class="btn" title="Set automatic start time" data-i18n="routine-set-time-btn">Set Time</button>
+                            <button id="set-start-time-btn" class="btn" title="Set automatic start time"
+                                data-i18n="routine-set-time-btn">Set Time</button>
                         </div>
 
                         <h4 data-i18n="routine-task-list-heading">Routine Tasks</h4>
@@ -704,26 +756,33 @@
                     <div class="routine-player">
                         <h3 data-i18n="routine-active-heading">Active Routine</h3>
                         <div id="active-routine-display">
-                            <h4 id="player-current-routine-name" data-i18n="routine-none-active">No routine selected/active</h4>
+                            <h4 id="player-current-routine-name" data-i18n="routine-none-active">No routine
+                                selected/active</h4>
                             <ul id="player-routine-tasks" class="routine-task-list">
                                 <!-- Tasks will be listed here -->
                             </ul>
-                            <p data-i18n="routine-finish-time">Expected Finish Time: <span id="expected-finish-time">-</span></p>
+                            <p data-i18n="routine-finish-time">Expected Finish Time: <span
+                                    id="expected-finish-time">-</span></p>
                         </div>
 
                         <div class="routine-controls">
-                            <button id="start-selected-routine-btn" class="btn btn-primary" title="Start the selected routine" data-i18n="routine-start-btn">Start Selected Routine</button>
+                            <button id="start-selected-routine-btn" class="btn btn-primary"
+                                title="Start the selected routine" data-i18n="routine-start-btn">Start Selected
+                                Routine</button>
                         </div>
 
                         <div id="current-task-display">
-                            <h4 data-i18n="routine-current-task">Current Task: <span id="current-task-name">-</span></h4>
-                            <p data-i18n="routine-time-left">Time Remaining: <span id="current-task-time-left">-</span></p>
+                            <h4 data-i18n="routine-current-task">Current Task: <span id="current-task-name">-</span>
+                            </h4>
+                            <p data-i18n="routine-time-left">Time Remaining: <span id="current-task-time-left">-</span>
+                            </p>
                         </div>
 
                         <div class="pie-chart-container">
                             <canvas id="routine-pie-chart" width="200" height="200"></canvas>
                         </div>
-                        <p class="instructions" data-i18n="routine-instruction">Tap the screen or press SPACEBAR to mark the current task as done.</p>
+                        <p class="instructions" data-i18n="routine-instruction">Tap the screen or press SPACEBAR to mark
+                            the current task as done.</p>
                     </div>
                 </div>
             </section>
@@ -732,9 +791,11 @@
 
     <footer>
         <div class="container">
-            <p data-i18n="footer-text">&copy; 2025 ADHD Tools Hub. All tools are free to use and data is stored locally in your browser.</p>
+            <p data-i18n="footer-text">&copy; 2025 ADHD Tools Hub. All tools are free to use and data is stored locally
+                in your browser.</p>
         </div>
     </footer>
 
 </body>
+
 </html>

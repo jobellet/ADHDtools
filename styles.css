@@ -688,9 +688,9 @@ footer {
     .eisenhower-container .task-input input, .eisenhower-container .task-input button { width: 100%; }
 }
 
-/* Add these specific styles for the day planner to ensure 4 columns and 24 rows layout */
+/* Day Planner - Modern, User-Friendly Design */
 .day-planner-container {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     position: relative;
 }
@@ -702,73 +702,83 @@ footer {
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
     gap: 1rem;
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-color) 100%);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.planner-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
 }
 
 .planner-controls {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.planner-controls .btn {
+    background-color: rgba(255,255,255,0.95);
+    color: var(--primary-dark);
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.planner-controls .btn:hover {
+    background-color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .time-blocks-container {
-    border: 1px solid #ddd;
+    border: 2px solid #e0e0e0;
     border-radius: var(--border-radius);
     overflow-y: auto;
-    height: calc(4 * 60 * var(--minute-height));
+    overflow-x: hidden;
+    height: calc(8 * 60 * var(--minute-height));
     max-height: 80vh;
+    background: white;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    scroll-behavior: smooth;
 }
 
-.time-scroll-slider {
-    position: absolute;
-    right: -1.5rem;
-    width: 1rem;
-    writing-mode: bt-lr;
-    transform: rotate(180deg);
-    display: none;
+/* Custom scrollbar */
+.time-blocks-container::-webkit-scrollbar {
+    width: 10px;
 }
 
-@media (min-width: 768px) {
-    .time-scroll-slider {
-        display: block;
-    }
+.time-blocks-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
 }
 
-.hour-row {
-    display: flex;
-    border-bottom: 1px solid #eee;
+.time-blocks-container::-webkit-scrollbar-thumb {
+    background: var(--primary-light);
+    border-radius: 10px;
+    transition: background 0.2s;
 }
 
-.hour-row:last-child {
-    border-bottom: none;
+.time-blocks-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
 }
-
-.hour-label {
-    width: 80px;
-    padding: 0.5rem;
-    font-weight: bold;
-    background-color: #f5f5f5;
-    border-right: 1px solid #ddd;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.time-blocks-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Explicitly set 4 columns */
-    flex-grow: 1;
-    width: calc(100% - 80px);
-}
-
 
 :root {
     --minute-height: 2px;
 }
 
 .time-block {
-    padding: 0.5rem;
+    padding: 0.75rem 1rem;
     height: calc(60 * var(--minute-height));
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f0f0f0;
     position: relative;
+    transition: background-color 0.2s ease;
+}
+
+.time-block:hover {
+    background-color: #f8f9fa;
 }
 
 .time-block:last-child {
@@ -776,9 +786,14 @@ footer {
 }
 
 .time-label {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: #666;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+    background-color: #f5f5f5;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
 }
 
 .event-content {
@@ -788,38 +803,61 @@ footer {
 }
 
 .time-block.past {
-    background-color: #f9f9f9;
+    background-color: #fafafa;
+}
+
+.time-block.past .time-label {
     color: #999;
 }
 
-.time-block.current {
-    background-color: rgba(187, 134, 252, 0.1);
-    border: 2px solid var(--primary-light);
-}
-
 .event {
-    background-color: var(--primary-light);
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
     color: var(--on-primary);
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
     position: absolute;
     left: 0;
     right: 0;
     overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid rgba(255,255,255,0.5);
+}
+
+.event:hover {
+    transform: translateX(2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .event.calendar-event {
-    background-color: var(--secondary-color);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
     color: var(--on-secondary);
 }
 
 .event .delete-event {
     position: absolute;
-    top: 2px;
-    right: 4px;
+    top: 4px;
+    right: 6px;
     cursor: pointer;
     font-weight: bold;
+    background-color: rgba(255,255,255,0.9);
+    color: #d32f2f;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.event .delete-event:hover {
+    background-color: #d32f2f;
+    color: white;
+    transform: scale(1.1);
 }
 
 .event .resize-handle {
@@ -827,9 +865,19 @@ footer {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 6px;
+    height: 8px;
     cursor: s-resize;
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0,0,0,0.15);
+    transition: background-color 0.2s;
+}
+
+.event .resize-handle:hover {
+    background-color: rgba(0,0,0,0.3);
+}
+
+/* Current time indicator styling */
+.current-time-indicator {
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
 }
 
 /* Modal styles */
