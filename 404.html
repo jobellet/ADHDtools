@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
+    <script>
+        // 404.html - Redirects to index.html with the path as a query parameter
+        // This allows the SPA to handle the route on GitHub Pages.
+        
+        const path = window.location.pathname;
+        const repoName = '/ADHDtools'; 
+        
+        // Check if we are on the correct path
+        if (path.startsWith(repoName)) {
+            // Extract the sub-path (e.g., /pomodoro)
+            // If path is /ADHDtools/pomodoro, route is /pomodoro
+            let route = path.substring(repoName.length);
+            
+            // If route is empty or just slash, no need to redirect (but 404 shouldn't trigger then)
+            // If 404 triggered, it means it's a file/folder that doesn't exist.
+            
+            // Redirect to /ADHDtools/?redirect=/pomodoro
+            // We use window.location.replace to avoid adding this intermediate step to history
+            window.location.replace(repoName + '/?redirect=' + encodeURIComponent(route));
+        } else {
+            // Fallback
+            window.location.replace(repoName + '/');
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting to application...</p>
+</body>
+</html>

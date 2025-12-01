@@ -6,6 +6,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // URL Routing Configuration
     const BASE_PATH = '/ADHDtools'; // Adjust if deployed elsewhere
+
+    // Handle Redirect from 404.html (GitHub Pages SPA Hack)
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectPath = urlParams.get('redirect');
+    if (redirectPath) {
+        // Reconstruct the original URL
+        const newPath = BASE_PATH + redirectPath;
+        // Update the URL in the browser without reloading
+        window.history.replaceState(null, '', newPath);
+    }
+
     const TOOL_SLUG_MAP = {
         'home': '',
         'pomodoro': 'pomodoro',
