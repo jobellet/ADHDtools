@@ -241,7 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`Task "${task.text}" sent to Routine.`);
       });
 
-      actions.append(editBtn, deleteBtn, sendToPlannerBtn, sendToBreakdownBtn, sendToRoutineBtn);
+      const sendToEisenhowerBtn = document.createElement('button');
+      sendToEisenhowerBtn.textContent = 'To Matrix';
+      sendToEisenhowerBtn.className = 'send-to-eisenhower-btn task-action-btn';
+      sendToEisenhowerBtn.addEventListener('click', () => {
+        const standardizedTask = {
+          id: task.id,
+          text: task.text,
+          originalTool: 'TaskManager',
+          priority: task.priority,
+          category: task.category,
+          isCompleted: task.isCompleted,
+          dueDate: null,
+          duration: null,
+          notes: null,
+          subTasks: []
+        };
+        window.CrossTool.sendTaskToTool(standardizedTask, 'EisenhowerMatrix', { openTool: false });
+        alert(`Task "${task.text}" sent to Eisenhower Matrix.`);
+      });
+
+      actions.append(editBtn, deleteBtn, sendToPlannerBtn, sendToBreakdownBtn, sendToRoutineBtn, sendToEisenhowerBtn);
 
       li.append(checkbox, text, meta, actions);
       listEl.appendChild(li);

@@ -41,8 +41,8 @@
 
   // --- ID Generation ---
   function generateId() {
-    return crypto && crypto.randomUUID 
-      ? crypto.randomUUID() 
+    return crypto && crypto.randomUUID
+      ? crypto.randomUUID()
       : 'item-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
   }
 
@@ -50,7 +50,7 @@
   const DataManager = {
     // --- Task Management ---
     getTasks: () => [...dataStore.tasks], // Return a copy
-    
+
     getTask: (id) => dataStore.tasks.find(t => t.id === id),
 
     addTask: (taskData) => {
@@ -107,18 +107,23 @@
 
     // --- Utility Functions ---
     generateId: generateId,
-    
+
     openTool: (toolName) => {
-        if (!toolName) return;
-        const sections = document.querySelectorAll('.tool-section');
-        const navLinks = document.querySelectorAll('nav a[data-tool]');
-        sections.forEach(sec => sec.classList.remove('active'));
-        const target = document.getElementById(toolName);
-        if (target) {
-            target.classList.add('active');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        navLinks.forEach(link => link.classList.toggle('active', link.dataset.tool === toolName));
+      if (!toolName) return;
+      if (window.switchTool) {
+        window.switchTool(toolName);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      const sections = document.querySelectorAll('.tool-section');
+      const navLinks = document.querySelectorAll('nav a[data-tool]');
+      sections.forEach(sec => sec.classList.remove('active'));
+      const target = document.getElementById(toolName);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      navLinks.forEach(link => link.classList.toggle('active', link.dataset.tool === toolName));
     },
 
     // --- Direct access to EventBus ---

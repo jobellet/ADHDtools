@@ -266,6 +266,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if (importSelect.value) addNewTask();
   });
 
+  // Task Receiving Logic
+  function handleReceivedTaskForEisenhower(event) {
+    const task = event.detail;
+    if (!task || !task.text) {
+      console.warn('Eisenhower Matrix received invalid task:', task);
+      return;
+    }
+
+    // Default to Q2 (Schedule) if not specified, or map priority
+    let targetQuadrant = 'q2';
+    if (task.priority === 'high') targetQuadrant = 'q1';
+    else if (task.priority === 'low') targetQuadrant = 'q4'; // Or q3 depending on logic
+
+    const id = window.crypto?.randomUUID?.() || 't-' + Date.now();
+    tasks[targetQuadrant].push({
+      id,
+      text: task.text,
+      completed: task.isCompleted || false,
+      createdAt: new Date().toISOString()
+    });
+    saveTasks();
+    renderTasks();
+
+    // Notify user
+    // alert(`Task "${task.text}" added to Eisenhower Matrix (Quadrant ${targetQuadrant.toUpperCase()}).`);
+  }
+
+  window.EventBus.addEventListener('ef-receiveTaskFor-EisenhowerMatrix', handleReceivedTaskForEisenhower);
+
   // Initial render
   renderTasks();
 });

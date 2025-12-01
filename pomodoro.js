@@ -1,11 +1,11 @@
 // Pomodoro Timer JavaScript
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Request notification permission immediately when page loads
     if ('Notification' in window) {
         if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-            Notification.requestPermission().then(function(permission) {
+            Notification.requestPermission().then(function (permission) {
                 if (permission === 'granted') {
-                    new Notification('Notifications Enabled', { 
+                    new Notification('Notifications Enabled', {
                         body: 'You will be notified when your Pomodoro sessions complete.'
                     });
                 }
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sessionsUntilLongDisplay = document.getElementById('sessions-until-long');
     const modeChangeMessage = document.getElementById('mode-change-message');
     const pomodoroProgressBar = document.getElementById('pomodoro-progress-bar');
-    
+
     // Settings elements
     const focusDurationInput = document.getElementById('focus-duration');
     const shortBreakDurationInput = document.getElementById('short-break-duration');
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const audioNotificationSelect = document.getElementById('audio-notification');
     const saveSettingsButton = document.getElementById('save-settings');
     const testSoundButton = document.getElementById('test-sound');
-    
+
     // Timer variables
     let timer = null;
     let minutes;
@@ -44,12 +44,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentMode = 'focus'; // 'focus', 'shortBreak', 'longBreak'
     let sessionCount = parseInt(localStorage.getItem('pomodoroSessionsCompleted'), 10) || 0;
     let currentSessionTotalSeconds = 0; // For progress bar calculation
-    
+
     // Audio elements
     const bellAudio = new Audio('https://soundbible.com/mp3/service-bell_daniel_simion.mp3');
     const chimeAudio = new Audio('https://soundbible.com/mp3/wind-chimes-daniel_simon.mp3');
     const digitalAudio = new Audio('https://soundbible.com/mp3/sms-alert-5-daniel_simon.mp3');
-    
+
     // Load settings from localStorage
     let settings = JSON.parse(localStorage.getItem('pomodoroSettings')) || {
         focusDuration: 25,
@@ -58,28 +58,28 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionsBeforeLongBreak: 4,
         audioNotification: 'bell'
     };
-    
+
     // Initialize settings inputs
     focusDurationInput.value = settings.focusDuration;
     shortBreakDurationInput.value = settings.shortBreakDuration;
     longBreakDurationInput.value = settings.longBreakDuration;
     sessionsBeforeLongBreakInput.value = settings.sessionsBeforeLongBreak;
     audioNotificationSelect.value = settings.audioNotification;
-    
+
     // Initialize timer display
     updateTimerDisplay(settings.focusDuration, 0);
     sessionCountDisplay.textContent = sessionCount;
     updateLongBreakInfo();
     // Persist session count
     localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
-    
+
     // Event listeners
     startButton.addEventListener('click', startTimer);
     pauseButton.addEventListener('click', pauseTimer);
     resetButton.addEventListener('click', resetTimer);
     saveSettingsButton.addEventListener('click', saveSettings);
     if (testSoundButton) testSoundButton.addEventListener('click', testSelectedSound);
-    
+
     // Functions
     function startTimer() {
         if (isRunning && !isPaused) return;
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
             timer = setInterval(updateTimer, 1000);
         }
     }
-    
+
     function pauseTimer() {
         if (isRunning && !isPaused) {
             clearInterval(timer);
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             pauseButton.disabled = true;
         }
     }
-    
+
     function resetTimer() {
         clearInterval(timer);
         isRunning = false;
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (modeChangeMessage) modeChangeMessage.textContent = '';
         updateLongBreakInfo();
     }
-    
+
     function updateTimer() {
         const remainingTotal = Math.max(0, Math.round((endTime - Date.now()) / 1000));
         minutes = Math.floor(remainingTotal / 60);
@@ -174,6 +174,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 sessionCount++;
                 sessionCountDisplay.textContent = sessionCount;
                 localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
+
+                // Dispatch event
+                if (window.EventBus) {
+                    window.EventBus.dispatchEvent(new CustomEvent('pomodoroCompleted', {
+                        detail: {
+                            timestamp: new Date().toISOString(),
+                            duration: settings.focusDuration
+                        }
+                    }));
+                }
 
                 const isLongBreak = sessionCount % settings.sessionsBeforeLongBreak === 0;
                 if (isLongBreak) {
@@ -220,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         updateTimerDisplay(minutes, seconds);
     }
-    
+
     function updateTimerDisplay(mins, secs) {
         minutesDisplay.textContent = mins < 10 ? '0' + mins : mins;
         secondsDisplay.textContent = secs < 10 ? '0' + secs : secs;
@@ -230,24 +240,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const elapsedSeconds = currentSessionTotalSeconds - timeLeftInSeconds;
             let progressPercentage = (elapsedSeconds / currentSessionTotalSeconds) * 100;
             pomodoroProgressBar.style.width = Math.min(progressPercentage, 100) + '%';
-        } else if (pomodoroProgressBar && !isRunning && !isPaused) { 
+        } else if (pomodoroProgressBar && !isRunning && !isPaused) {
             // Ensure bar is at 0 if timer is reset and not just paused
-             pomodoroProgressBar.style.width = '0%';
+            pomodoroProgressBar.style.width = '0%';
         }
     }
-    
+
     function playNotification() {
         // Play sound safely
         try {
             switch (settings.audioNotification) {
                 case 'bell':
-                    bellAudio.play().catch(() => {});
+                    bellAudio.play().catch(() => { });
                     break;
                 case 'chime':
-                    chimeAudio.play().catch(() => {});
+                    chimeAudio.play().catch(() => { });
                     break;
                 case 'digital':
-                    digitalAudio.play().catch(() => {});
+                    digitalAudio.play().catch(() => { });
                     break;
                 case 'none':
                 default:
@@ -264,19 +274,19 @@ document.addEventListener('DOMContentLoaded', function() {
             new Notification(title, { body });
         }
     }
-    
+
     function saveSettings() {
         // Validate inputs
         const focusDuration = parseInt(focusDurationInput.value);
         const shortBreakDuration = parseInt(shortBreakDurationInput.value);
         const longBreakDuration = parseInt(longBreakDurationInput.value);
         const sessionsBeforeLongBreak = parseInt(sessionsBeforeLongBreakInput.value);
-        
+
         if (isNaN(focusDuration) || isNaN(shortBreakDuration) || isNaN(longBreakDuration) || isNaN(sessionsBeforeLongBreak)) {
             alert('Please enter valid numbers for all durations.');
             return;
         }
-        
+
         if (focusDuration < 1 || shortBreakDuration < 1 || longBreakDuration < 1 || sessionsBeforeLongBreak < 1) {
             alert('All values must be at least 1.');
             return;
@@ -286,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please keep durations within the allowed limits.');
             return;
         }
-        
+
         // Update settings
         settings = {
             focusDuration,
@@ -295,10 +305,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sessionsBeforeLongBreak,
             audioNotification: audioNotificationSelect.value
         };
-        
+
         // Save to localStorage
         localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
-        
+
         // Remember current state to resume automatically
         const previousMode = currentMode;
         const wasRunning = isRunning;
@@ -356,7 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
         }
         audio.currentTime = 0;
-        audio.play().catch(() => {});
+        audio.play().catch(() => { });
     }
 
     function updateLongBreakInfo() {

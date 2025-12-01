@@ -100,8 +100,14 @@
      * change the active section when passing data around.
      * @param {string} toolName - id of the tool section to activate
      */
-    openTool: function(toolName) {
+    openTool: function (toolName) {
       if (!toolName) return;
+      if (window.switchTool) {
+        window.switchTool(toolName);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      // Fallback if switchTool not available
       const sections = document.querySelectorAll('.tool-section');
       const navLinks = document.querySelectorAll('nav a[data-tool]');
       sections.forEach(sec => sec.classList.remove('active'));
@@ -133,7 +139,7 @@
      * Generates a unique ID.
      * @returns {string} A UUID or a time-based fallback.
      */
-    generateId: function() {
+    generateId: function () {
       return crypto && crypto.randomUUID
         ? crypto.randomUUID()
         : 'task-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
@@ -144,7 +150,7 @@
      * @param {object} taskObject - The task object, ideally adhering to StandardizedTask structure.
      * @param {string} targetTool - The identifier of the target tool (e.g., 'DayPlanner').
      */
-    sendTaskToTool: function(taskObject, targetTool, options = {}) {
+    sendTaskToTool: function (taskObject, targetTool, options = {}) {
       if (!taskObject || typeof taskObject !== 'object') {
         console.error('CrossTool.sendTaskToTool: taskObject is invalid.', taskObject);
         return;
@@ -169,7 +175,7 @@
      * @param {Array<object>} tasks - array of task objects
      * @param {string} targetTool - identifier of the target tool
      */
-    sendTasksToTool: function(tasks, targetTool, options) {
+    sendTasksToTool: function (tasks, targetTool, options) {
       if (!Array.isArray(tasks)) {
         console.error('CrossTool.sendTasksToTool: tasks must be an array');
         return;
