@@ -30,7 +30,8 @@ export function populateTaskOptions(select) {
 export function getDefaultTime() {
     const now = new Date();
     const minutes = now.getHours() * 60 + now.getMinutes();
-    const rounded = Math.ceil(minutes / 30) * 30;
+    // Round up to the next 15 minutes for easier scheduling
+    const rounded = Math.ceil(minutes / 15) * 15;
     const h = Math.floor(rounded / 60) % 24;
     const m = rounded % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -38,12 +39,12 @@ export function getDefaultTime() {
 
 export function getCalendarEvents(currentDate) {
     const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
-    const dayStr = currentDate.toISOString().slice(0,10);
+    const dayStr = currentDate.toISOString().slice(0, 10);
     return events
         .filter(ev => ev.start && ev.start.startsWith(dayStr))
         .map(ev => ({
             title: ev.title || '',
-            start: ev.start.slice(11,16),
-            end: ev.end ? ev.end.slice(11,16) : null
+            start: ev.start.slice(11, 16),
+            end: ev.end ? ev.end.slice(11, 16) : null
         }));
 }

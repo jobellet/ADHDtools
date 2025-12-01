@@ -149,9 +149,14 @@ function applyZoom() {
 
 function scrollToCurrent() {
     const now = new Date();
-    const hoursFromStart = now.getHours();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
-    timeBlocksContainer.scrollTop = hoursFromStart * 60 * minuteHeight;
+
+    // Center current time in viewport by subtracting half the container height
+    const containerHeight = timeBlocksContainer.clientHeight;
+    const scrollPosition = (currentMinutes * minuteHeight) - (containerHeight / 2);
+
+    timeBlocksContainer.scrollTop = Math.max(0, scrollPosition);
     updateSlider();
 }
 
@@ -195,11 +200,11 @@ async function autoPlanDay() {
         }
         const events = getCalendarEvents(currentDate);
         events.forEach(ev => {
-            const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${ev.start}`;
+            const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${ev.start}`;
             const existing = window.DataManager.getTasks().find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
             if (!existing) {
-                const startMins = parseInt(ev.start.slice(0,2)) * 60 + parseInt(ev.start.slice(3,5));
-                const endMins = ev.end ? parseInt(ev.end.slice(0,2)) * 60 + parseInt(ev.end.slice(3,5)) : startMins + 60;
+                const startMins = parseInt(ev.start.slice(0, 2)) * 60 + parseInt(ev.start.slice(3, 5));
+                const endMins = ev.end ? parseInt(ev.end.slice(0, 2)) * 60 + parseInt(ev.end.slice(3, 5)) : startMins + 60;
                 window.DataManager.addTask({
                     text: ev.title,
                     plannerDate: plannerDateTime,
@@ -243,7 +248,7 @@ async function autoPlanDay() {
         plan.forEach(item => {
             if (!item.time || !item.text) return;
             const duration = parseInt(item.duration, 10) || 60;
-            const plannerDateTime = `${currentDate.toISOString().slice(0,10)}T${item.time}`;
+            const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${item.time}`;
             window.DataManager.addTask({
                 text: item.text,
                 plannerDate: plannerDateTime,

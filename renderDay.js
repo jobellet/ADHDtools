@@ -120,4 +120,44 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
             hourContent.appendChild(eventDiv);
         }
     });
+
+    // Add current time indicator
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const currentDateStr = currentDate.toISOString().slice(0, 10);
+
+    if (todayStr === currentDateStr) {
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const currentHour = Math.floor(currentMinutes / 60);
+        const minutesIntoHour = currentMinutes % 60;
+
+        if (currentHour >= 0 && currentHour < 24) {
+            const hourContent = hourContents[currentHour];
+            if (hourContent) {
+                const indicator = document.createElement('div');
+                indicator.className = 'current-time-indicator';
+                indicator.style.position = 'absolute';
+                indicator.style.top = `calc(${minutesIntoHour} * var(--minute-height))`;
+                indicator.style.left = '0';
+                indicator.style.right = '0';
+                indicator.style.height = '2px';
+                indicator.style.backgroundColor = '#ff4444';
+                indicator.style.zIndex = '100';
+                indicator.style.pointerEvents = 'none';
+
+                // Add a dot at the left side
+                const dot = document.createElement('div');
+                dot.style.position = 'absolute';
+                dot.style.left = '-5px';
+                dot.style.top = '-4px';
+                dot.style.width = '10px';
+                dot.style.height = '10px';
+                dot.style.borderRadius = '50%';
+                dot.style.backgroundColor = '#ff4444';
+                indicator.appendChild(dot);
+
+                hourContent.appendChild(indicator);
+            }
+        }
+    }
 }
