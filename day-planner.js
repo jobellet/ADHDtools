@@ -393,33 +393,6 @@ function initDayPlanner() {
 
     applyZoom();
 
-    timeBlocksContainer.addEventListener('wheel', e => {
-        if (e.ctrlKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-            e.preventDefault();
-            const factor = e.deltaY > 0 ? 0.9 : 1.1;
-            zoomLevel = Math.min(4, Math.max(0.5, zoomLevel * factor));
-            applyZoom();
-        }
-    }, { passive: false });
-
-    let pinchDist = null;
-    timeBlocksContainer.addEventListener('touchmove', e => {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            const dist = Math.hypot(
-                e.touches[0].clientX - e.touches[1].clientX,
-                e.touches[0].clientY - e.touches[1].clientY
-            );
-            if (pinchDist) {
-                const factor = dist / pinchDist;
-                zoomLevel = Math.min(4, Math.max(0.5, zoomLevel * factor));
-                applyZoom();
-            }
-            pinchDist = dist;
-        }
-    }, { passive: false });
-    timeBlocksContainer.addEventListener('touchend', () => pinchDist = null);
-
     window.EventBus.addEventListener('dataChanged', () => {
         const prev = timeBlocksContainer.scrollTop;
         renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
