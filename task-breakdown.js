@@ -268,7 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskData = {
       text: node.text,
       duration: node.duration,
-      isCompleted: node.completed
+      isCompleted: node.completed,
+      originalTool: 'TaskBreakdown'
     };
 
     window.CrossTool.sendTaskToTool(taskData, 'DayPlanner', { openTool: true });
