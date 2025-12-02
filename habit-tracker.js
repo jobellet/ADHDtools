@@ -9,6 +9,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const habitCalendar = document.getElementById('habit-calendar');
     const exportHabitsBtn = document.getElementById('export-habits');
 
+    // Color palette for habits (8 distinct colors)
+    const HABIT_COLORS = [
+        '#8b5cf6', // Purple
+        '#ec4899', // Pink
+        '#f59e0b', // Amber
+        '#10b981', // Emerald
+        '#3b82f6', // Blue
+        '#f97316', // Orange
+        '#06b6d4', // Cyan
+        '#84cc16'  // Lime
+    ];
+
     // Get current date information
     const currentDate = new Date();
     let currentMonth = currentDate.getMonth();
@@ -29,6 +41,13 @@ document.addEventListener('DOMContentLoaded', function () {
         habits.forEach((habit, index) => {
             const habitItem = document.createElement('div');
             habitItem.className = 'habit-item';
+            const habitColor = HABIT_COLORS[index % HABIT_COLORS.length];
+            habitItem.style.setProperty('--habit-color', habitColor);
+
+            // Create color indicator
+            const colorIndicator = document.createElement('div');
+            colorIndicator.className = 'habit-color-indicator';
+            colorIndicator.style.backgroundColor = habitColor;
 
             // Create habit header
             const habitHeader = document.createElement('div');
@@ -63,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             // Assemble habit header
+            habitHeader.appendChild(colorIndicator);
             habitHeader.appendChild(habitName);
             habitHeader.appendChild(streakCounter);
             habitHeader.appendChild(editBtn);
@@ -166,15 +186,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 const habitChecks = document.createElement('div');
                 habitChecks.className = 'habit-checks';
 
-                habits.forEach(habit => {
+                habits.forEach((habit, habitIndex) => {
                     const dateStr = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                     const isCompleted = habitLogs[habit.id] && habitLogs[habit.id][dateStr];
                     const habitId = habit.id;
+                    const habitColor = HABIT_COLORS[habitIndex % HABIT_COLORS.length];
 
                     const habitCheck = document.createElement('div');
                     habitCheck.className = `habit-check ${isCompleted ? 'completed' : ''}`;
                     habitCheck.title = habit.name;
                     habitCheck.dataset.habitId = habitId;
+                    habitCheck.style.setProperty('--habit-color', habitColor);
 
                     // Only allow toggling for dates up to today
                     const checkDate = new Date(currentYear, currentMonth, day);
