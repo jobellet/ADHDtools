@@ -16,8 +16,46 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load or initialize tree
   let tree = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
+  // Ensure all nodes have duration
+  function normalizeTree(nodes) {
+    nodes.forEach(node => {
+      if (typeof node.duration === 'undefined') {
+        node.duration = 5; // Default for existing nodes
+      }
+      if (node.subtasks && node.subtasks.length > 0) {
+        normalizeTree(node.subtasks);
+      }
+    });
+  }
+  normalizeTree(tree);
+  recalculateDurations(); // Initial calculation
+
   function saveTree() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tree));
+  }
+
+  function recalculateDurations() {
+    function calc(nodes) {
+      let total = 0;
+      nodes.forEach(node => {
+        if (node.subtasks && node.subtasks.length > 0) {
+          node.duration = calc(node.subtasks);
+        } else {
+          // Leaf node: ensure it has a duration, default 5
+          if (!node.duration) node.duration = 5;
+        }
+        total += parseInt(node.duration) || 0;
+      });
+      return total;
+    }
+    // We don't sum the top level for a global duration, but we update each top level node
+    tree.forEach(root => {
+      if (root.subtasks && root.subtasks.length > 0) {
+        root.duration = calc(root.subtasks);
+      } else {
+        if (!root.duration) root.duration = 5;
+      }
+    });
   }
 
   function countCompletion(nodes) {
@@ -47,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderNodes(nodes, parentEl, path = []) {
     nodes.forEach((node, index) => {
       const nodePath = path.concat(index);
+      const isLeaf = !node.subtasks || node.subtasks.length === 0;
 
       // Create item container
       const item = document.createElement('div');
@@ -64,12 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       item.appendChild(cb);
 
+      // Content Container
+      const content = document.createElement('div');
+      content.className = 'task-content';
+
       // Text
       const text = document.createElement('span');
+      text.className = 'task-text';
       text.textContent = node.text;
-      // Allow inline editing on click
-      text.style.cursor = 'pointer';
-      text.title = 'Click to edit';
+      text.title = 'Click to edit text';
       text.addEventListener('click', () => {
         const newText = prompt('Edit this step:', node.text);
         if (newText !== null && newText.trim()) {
@@ -78,18 +120,63 @@ document.addEventListener('DOMContentLoaded', () => {
           renderTree();
         }
       });
-      text.style.margin = '0 8px';
       if (node.completed) text.style.textDecoration = 'line-through';
-      item.appendChild(text);
+      content.appendChild(text);
 
-      // Delete
+      // Duration Badge
+      const durationBadge = document.createElement('span');
+      durationBadge.className = 'task-duration-badge';
+      durationBadge.textContent = `${node.duration} min`;
+      durationBadge.title = isLeaf ? 'Click to edit duration' : 'Calculated from subtasks';
+      if (isLeaf) {
+        durationBadge.style.cursor = 'pointer';
+        durationBadge.addEventListener('click', () => {
+          const newDur = prompt('Enter duration in minutes:', node.duration);
+          if (newDur !== null) {
+            const val = parseInt(newDur);
+            if (!isNaN(val) && val > 0) {
+              node.duration = val;
+              recalculateDurations();
+              saveTree();
+              renderTree();
+            }
+          }
+        });
+      } else {
+        durationBadge.style.cursor = 'default';
+        durationBadge.style.opacity = '0.8';
+      }
+      content.appendChild(durationBadge);
+
+      item.appendChild(content);
+
+      // Actions
+      const actions = document.createElement('div');
+      actions.className = 'task-actions';
+
+      // Import to Planner Button
+      const importBtn = document.createElement('button');
+      importBtn.className = 'import-btn';
+      importBtn.innerHTML = '<i class="fas fa-calendar-plus"></i> Import';
+      importBtn.title = 'Import to Day Planner';
+      importBtn.addEventListener('click', () => {
+        importToPlanner(node);
+      });
+      actions.appendChild(importBtn);
+
+      // Delete Button
       const del = document.createElement('button');
-      del.innerHTML = '&times;';
+      del.className = 'action-btn';
+      del.innerHTML = '<i class="fas fa-trash"></i>';
       del.title = 'Delete';
       del.addEventListener('click', () => {
-        deleteNode(nodePath);
+        if (confirm('Delete this task?')) {
+          deleteNode(nodePath);
+        }
       });
-      item.appendChild(del);
+      actions.appendChild(del);
+
+      item.appendChild(actions);
 
       // Append this item
       parentEl.appendChild(item);
@@ -101,18 +188,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Add Subtask form for this node
       const addForm = document.createElement('div');
+      addForm.className = 'add-step-form';
       addForm.style.marginLeft = `${(path.length + 1) * 20}px`;
+
       const subInput = document.createElement('input');
       subInput.type = 'text';
-      subInput.placeholder = 'New step...';
+      subInput.placeholder = 'Add subtask...';
+
       const subBtn = document.createElement('button');
-      subBtn.textContent = 'Add Step';
-      subBtn.addEventListener('click', () => {
+      subBtn.textContent = 'Add';
+
+      const handleAdd = () => {
         const val = subInput.value.trim();
         if (!val) return;
         addNode(nodePath, val);
         subInput.value = '';
+      };
+
+      subBtn.addEventListener('click', handleAdd);
+      subInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleAdd();
       });
+
       addForm.append(subInput, subBtn);
       parentEl.appendChild(addForm);
     });
@@ -127,7 +224,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function addNode(path, text) {
     const target = getNodeByPath(path);
     if (!target.subtasks) target.subtasks = [];
-    target.subtasks.push({ text, completed: false, subtasks: [] });
+    // New subtask gets default 5 min duration
+    target.subtasks.push({ text, completed: false, subtasks: [], duration: 5 });
+    recalculateDurations();
     saveTree();
     renderTree();
   }
@@ -139,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const parent = getNodeByPath(path.slice(0, -1));
       parent.subtasks.splice(path[path.length - 1], 1);
     }
+    recalculateDurations();
     saveTree();
     renderTree();
   }
@@ -152,10 +252,26 @@ document.addEventListener('DOMContentLoaded', () => {
   function addMain() {
     const val = mainInput.value.trim();
     if (!val) return;
-    tree.push({ text: val, completed: false, subtasks: [] });
+    // Main task default 5 min (will increase if subtasks added)
+    tree.push({ text: val, completed: false, subtasks: [], duration: 5 });
     mainInput.value = '';
     saveTree();
     renderTree();
+  }
+
+  function importToPlanner(node) {
+    if (!window.CrossTool) {
+      alert('CrossTool integration not available.');
+      return;
+    }
+
+    const taskData = {
+      text: node.text,
+      duration: node.duration,
+      isCompleted: node.completed
+    };
+
+    window.CrossTool.sendTaskToTool(taskData, 'DayPlanner', { openTool: true });
   }
 
   // Bind main add
@@ -174,8 +290,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const aiText = await callGemini(prompt);
       if (!aiText) throw new Error('No response');
       const steps = aiText.split('\n').map(t => t.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
-      const newNode = { text: task, completed: false, subtasks: steps.map(s => ({ text: s, completed: false, subtasks: [] })) };
+
+      // Create new node with subtasks. Subtasks get 5 min default.
+      // Parent duration will be calculated.
+      const newNode = {
+        text: task,
+        completed: false,
+        subtasks: steps.map(s => ({ text: s, completed: false, subtasks: [], duration: 5 })),
+        duration: 0 // Will be recalculated
+      };
+
       tree.push(newNode);
+      recalculateDurations();
       saveTree();
       renderTree();
       mainInput.value = '';
@@ -198,37 +324,32 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    let subtasks = [];
-    try {
-      const prompt = `Break down the task '${standardizedTask.text}' into a list of simple sub-tasks. Put each sub-task on a new line.`;
-      const aiText = await callGemini(prompt);
-      if (aiText) {
-        subtasks = aiText
-          .split('\n')
-          .map(t => t.replace(/^[*-]\s*/, '').trim())
-          .filter(Boolean)
-          .map(s => ({ text: s, completed: false, subtasks: [] }));
-      }
-    } catch (err) {
-      console.warn('Auto breakdown failed:', err);
-    }
-
-    const newTaskNode = {
+    // Add as a new main project
+    tree.push({
       text: standardizedTask.text,
-      completed: standardizedTask.isCompleted || false,
-      subtasks
-    };
+      completed: !!standardizedTask.isCompleted,
+      subtasks: [],
+      duration: standardizedTask.duration || 5
+    });
 
-    tree.push(newTaskNode);
+    recalculateDurations();
     saveTree();
     renderTree();
 
-    const msg = subtasks.length
-      ? `Task '${standardizedTask.text}' added and broken into steps.`
-      : `Task '${standardizedTask.text}' added to Task Breakdown.`;
-    alert(msg);
+    // Switch to breakdown view
+    document.querySelectorAll('.tool-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-links li a').forEach(el => el.classList.remove('active'));
+
+    const breakdownSection = document.getElementById('breakdown');
+    if (breakdownSection) breakdownSection.classList.add('active');
+
+    const navLink = document.querySelector('a[data-tool="breakdown"]');
+    if (navLink) navLink.classList.add('active');
+
+    alert(`Task '${standardizedTask.text}' added to Task Breakdown.`);
   }
 
-  window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
-
+  if (window.EventBus) {
+    window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
+  }
 });

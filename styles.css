@@ -1617,36 +1617,213 @@ button {
     }
 }
 
-/* Task Breakdown */
-.task-breakdown-container input[type="checkbox"] {
-    width: 1.5rem;
-    height: 1.5rem;
-    margin-right: 8px;
-    vertical-align: middle;
+/* Task Breakdown - Modern Design */
+.task-breakdown-container {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.project-section {
+    margin-bottom: 2rem;
+}
+
+.project-input {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.project-input input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.project-input input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.1);
+    outline: none;
+}
+
+.project-input button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#add-project {
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+    color: white;
+}
+
+#ai-breakdown {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #444;
+}
+
+.project-input button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Tree Node Styling */
+.main-task-item,
+.subtask-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.main-task-item:hover,
+.subtask-item:hover {
+    background: white;
+    border-color: var(--primary-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.main-task-item {
+    background: #fff;
+    border-left: 4px solid var(--primary-color);
+    margin-top: 1rem;
+}
+
+.subtask-item {
+    border-left: 4px solid #e0e0e0;
+}
+
+.task-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.task-text {
+    font-weight: 500;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+.task-duration-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.task-actions {
+    display: flex;
+    gap: 0.5rem;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.main-task-item:hover .task-actions,
+.subtask-item:hover .task-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: #eee;
+    color: var(--primary-color);
+}
+
+.add-step-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+    border-left: 2px dashed #e0e0e0;
+}
+
+.add-step-form input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.add-step-form button {
+    padding: 0.5rem 1rem;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-step-form button:hover {
+    background: #e0e0e0;
 }
 
 .progress-container {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 2rem;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 1rem;
+    gap: 1rem;
 }
 
 .progress-bar-container {
     flex: 1;
-    height: 10px;
-    background: #e0e0e0;
-    border-radius: 5px;
+    height: 12px;
+    background: #e9ecef;
+    border-radius: 6px;
     overflow: hidden;
 }
 
 .progress-bar {
     height: 100%;
-    background: var(--primary-color);
+    background: linear-gradient(90deg, var(--primary-light) 0%, var(--primary-color) 100%);
     width: 0%;
-    transition: width 0.3s ease;
+    transition: width 0.5s ease;
 }
 
 .progress-label {
-    font-weight: 500;
+    font-weight: 600;
+    color: #495057;
+}
+
+.import-btn {
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.import-btn:hover {
+    background: #c8e6c9;
 }

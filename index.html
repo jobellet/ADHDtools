@@ -430,34 +430,22 @@
                     overwhelm and makes progress more visible.</p>
 
                 <div class="task-breakdown-container">
-                    <div class="project-section">
-                        <h3>Projects</h3>
-                        <div class="project-input">
-                            <input type="text" id="project-input" placeholder="New project name...">
-                            <button id="add-project" class="btn">Add Project</button>
-                            <button id="ai-breakdown" class="btn">✨ Break it Down for Me</button>
-                        </div>
-                        <ul id="project-list" class="project-list">
-                            <!-- Projects will be added here by JavaScript -->
-                        </ul>
+                    <div class="project-input">
+                        <input type="text" id="project-input" placeholder="New task or project name...">
+                        <button id="add-project" class="btn">Add Task</button>
+                        <button id="ai-breakdown" class="btn">✨ AI Breakdown</button>
                     </div>
 
-                    <div class="subtasks-section">
-                        <h3 id="current-project-title">Select a project</h3>
-                        <div class="subtask-input">
-                            <input type="text" id="subtask-input" placeholder="New step..." disabled>
-                            <button id="add-subtask" class="btn" disabled>Add Step</button>
+                    <div class="progress-container" aria-label="Project progress">
+                        <div class="progress-label">Overall Progress:</div>
+                        <div class="progress-bar-container">
+                            <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
                         </div>
-                        <ul id="subtask-list" class="subtask-list">
-                            <!-- Subtasks will be added here by JavaScript -->
-                        </ul>
-                        <div class="progress-container" aria-label="Project progress">
-                            <div class="progress-label">Project Progress:</div>
-                            <div class="progress-bar-container">
-                                <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
-                            </div>
-                            <div id="progress-percentage" aria-live="polite">0%</div>
-                        </div>
+                        <div id="progress-percentage" aria-live="polite">0%</div>
+                    </div>
+
+                    <div id="project-list" class="project-list">
+                        <!-- Tasks will be added here by JavaScript -->
                     </div>
                 </div>
             </section>
