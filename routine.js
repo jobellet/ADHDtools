@@ -122,36 +122,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PIE CHART FUNCTION ---
     function drawPieChart(percentage, isLate) {
-        if (!routinePieChartCanvas) return; 
+        if (!routinePieChartCanvas) return;
         const ctx = routinePieChartCanvas.getContext('2d');
         const centerX = routinePieChartCanvas.width / 2;
         const centerY = routinePieChartCanvas.height / 2;
-        const radius = Math.min(centerX, centerY) - 10; 
+        const radius = Math.min(centerX, centerY) - 10;
 
         ctx.clearRect(0, 0, routinePieChartCanvas.width, routinePieChartCanvas.height);
 
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = '#e0e0e0'; 
+        ctx.fillStyle = '#e0e0e0';
         ctx.fill();
-        
+
         let displayPercentage = percentage;
 
-        if (isLate) { 
-            displayPercentage = 1; 
-        } else if (percentage <= 0) { 
+        if (isLate) {
+            displayPercentage = 1;
+        } else if (percentage <= 0) {
             return;
         }
 
         if (displayPercentage > 0) {
-            const startAngle = -0.5 * Math.PI; 
+            const startAngle = -0.5 * Math.PI;
             const endAngle = startAngle + (displayPercentage * 2 * Math.PI);
-            
+
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.closePath();
-            ctx.fillStyle = isLate ? '#ff4d4d' : '#4CAF50'; 
+            ctx.fillStyle = isLate ? '#ff4d4d' : '#4CAF50';
             ctx.fill();
         }
     }
@@ -181,11 +181,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // This will be handled by loadRoutines or the change listener
             // If no routine is selected after load, it will stay on "-- Select a Routine --"
             // or be set to the first routine by loadRoutines.
-             if (routineSelect.options.length > 1 && !previouslySelected) {
+            if (routineSelect.options.length > 1 && !previouslySelected) {
                 // This case is mostly for when routines array is populated and no specific ID was pre-selected
-             } else if (routines.length === 0) {
-                 routineSelect.value = "";
-             }
+            } else if (routines.length === 0) {
+                routineSelect.value = "";
+            }
         }
     }
 
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             routine.totalDuration = 0; // Initialize or reset
             if (!Array.isArray(routine.tasks)) routine.tasks = []; // Ensure tasks is an array
-            
+
             routine.tasks.forEach(task => {
                 if (!task.id) {
                     task.id = generateId();
@@ -242,17 +242,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Ensure duration is a number
                 task.duration = parseInt(task.duration, 10) || 0;
                 routine.totalDuration += task.duration;
-                 // Remove 'completed' field if it exists from older structures
+                // Remove 'completed' field if it exists from older structures
                 delete task.completed;
             });
         });
-        
+
         updateRoutineSelectDropdown();
 
         if (routines.length > 0) {
             // If selectedRoutineId is not valid or not set, select the first routine
             if (!selectedRoutineId || !getRoutineById(selectedRoutineId)) {
-                 selectedRoutineId = routines[0].id;
+                selectedRoutineId = routines[0].id;
             }
             routineSelect.value = selectedRoutineId; // Update dropdown selection
         } else {
@@ -461,10 +461,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (breakDur && breakDur > 0) {
             routine.tasks.push({ id: generateId(), name: 'Break', duration: breakDur });
         }
-        
+
         // Recalculate totalDuration
         routine.totalDuration = routine.tasks.reduce((sum, task) => sum + task.duration, 0);
-        
+
         saveRoutines();
         displaySelectedRoutineDetails(); // Refresh display
 
@@ -525,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const trimmedName = newName.trim();
         if (!trimmedName) {
             alert("Task name cannot be empty.");
-            return; 
+            return;
         }
 
         const duration = parseInt(newDuration, 10);
@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI FOR EDITING TASK ---
     function showEditTaskUI(listItem, task) {
         // Clear current content
-        listItem.innerHTML = ''; 
+        listItem.innerHTML = '';
 
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler);
         setStartTimeBtn.addEventListener('click', setRoutineStartTimeHandler);
         startSelectedRoutineBtn.addEventListener('click', startSelectedRoutineHandler);
-        
+
         console.log("Routine Tool Initialized with core event handlers and start/activate logic.");
     }
 
@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (currentTaskTimer) { 
+        if (currentTaskTimer) {
             clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
@@ -691,6 +691,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTaskDisplay) currentTaskDisplay.style.display = '';
         if (pieChartContainer) pieChartContainer.style.display = '';
         drawPieChart(1, false);
+
+        // Enter focus mode
+        enterFocusMode();
+
         startNextTask();
     }
 
@@ -705,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Routine completed.");
             currentTaskNameDisplay.textContent = "Routine Finished!";
             currentTaskTimeLeftDisplay.textContent = "-";
-            
+
             routineSelect.disabled = false;
             createRoutineBtn.disabled = false;
             addTaskToRoutineBtn.disabled = false;
@@ -721,6 +725,12 @@ document.addEventListener('DOMContentLoaded', () => {
             drawPieChart(0, false);
             if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
             if (pieChartContainer) pieChartContainer.style.display = 'none';
+
+            // Exit focus mode
+            if (typeof exitFocusMode === 'function') {
+                exitFocusMode();
+            }
+
             notify("Routine finished!");
             return;
         }
@@ -736,17 +746,22 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTaskNameDisplay.textContent = currentTask.name;
         activeTaskTimeLeftSeconds = currentTask.duration * 60;
         const originalTaskDurationSeconds = currentTask.duration * 60;
-        
-        drawPieChart(1, false); 
+
+        drawPieChart(1, false);
         currentTaskTimeLeftDisplay.textContent = `${Math.floor(activeTaskTimeLeftSeconds / 60)}:${String(activeTaskTimeLeftSeconds % 60).padStart(2, '0')}`;
 
         currentTaskTimer = setInterval(() => {
             activeTaskTimeLeftSeconds--;
             currentTaskTimeLeftDisplay.textContent = `${Math.floor(activeTaskTimeLeftSeconds / 60)}:${String(activeTaskTimeLeftSeconds % 60).padStart(2, '0')}`;
-            
+
             const percentageRemaining = Math.max(0, activeTaskTimeLeftSeconds / originalTaskDurationSeconds);
-            const isTaskLate = activeTaskTimeLeftSeconds < 0; 
+            const isTaskLate = activeTaskTimeLeftSeconds < 0;
             drawPieChart(percentageRemaining, isTaskLate);
+
+            // Update focus mode timer
+            if (typeof updateFocusTimer === 'function') {
+                updateFocusTimer();
+            }
 
             if (activeTaskTimeLeftSeconds < 0) {
                 clearInterval(currentTaskTimer);
@@ -767,11 +782,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function manualAdvanceTask() {
-         if (!activeRoutine) { 
+        if (!activeRoutine) {
             return;
         }
-      
-        if (!currentTaskTimer && activeTaskTimeLeftSeconds > 0) { 
+
+        if (!currentTaskTimer && activeTaskTimeLeftSeconds > 0) {
             // Timer isn't running (e.g. error/paused), but the task wasn't finished or late
             return;
         }
@@ -786,10 +801,10 @@ document.addEventListener('DOMContentLoaded', () => {
         notify(`Task "${finishedTask.name}" finished`);
         startNextTask();
     }
-    
+
     // --- INITIALIZATION (adjusting the previous one) ---
     function initializeRoutines() {
-        loadRoutines(); 
+        loadRoutines();
 
         routineSelect.addEventListener('change', () => {
             selectedRoutineId = routineSelect.value;
@@ -828,7 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
             routinePieChartCanvas.addEventListener('click', tapHandler);
             routinePieChartCanvas.addEventListener('touchstart', tapHandler);
         }
-        
+
         console.log("Routine Tool Initialized with task timer, spacebar/tap control, and input focus check.");
 
         // --- Task Receiving Logic ---
@@ -854,14 +869,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             if (routineIdPrompt.toUpperCase() === 'NEW') {
-                 const newRoutineName = prompt("Enter name for the new routine:");
-                 if (newRoutineName) {
+                const newRoutineName = prompt("Enter name for the new routine:");
+                if (newRoutineName) {
                     createRoutineHandler(newRoutineName); // Assuming createRoutineHandler can take a name and sets selectedRoutineId
                     targetRoutineId = selectedRoutineId; // createRoutineHandler should set this
-                 } else {
+                } else {
                     alert("New routine creation cancelled. Task not added.");
                     return;
-                 }
+                }
             } else if (routineIdPrompt.trim() !== '') {
                 targetRoutineId = routineIdPrompt.trim();
             } else if (routines.length > 0) {
@@ -877,10 +892,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
         }
-        
+
         if (!targetRoutineId) {
-             alert("No target routine selected or created. Task not added.");
-             return;
+            alert("No target routine selected or created. Task not added.");
+            return;
         }
 
         const targetRoutine = getRoutineById(targetRoutineId);
@@ -888,11 +903,11 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(`Routine with ID '${targetRoutineId}' not found. Task not added.`);
             return;
         }
-        
+
         // If a different routine was selected via prompt, update the main selection
         if (selectedRoutineId !== targetRoutineId) {
             selectedRoutineId = targetRoutineId;
-            routineSelect.value = targetRoutineId; 
+            routineSelect.value = targetRoutineId;
             // Update start time input if the new routine has one
             if (targetRoutine.startTime) {
                 routineStartTimeInput.value = targetRoutine.startTime;
@@ -927,11 +942,11 @@ document.addEventListener('DOMContentLoaded', () => {
         displaySelectedRoutineDetails(); // Refresh display
         alert(`Task '${standardizedTask.text}' added to routine '${targetRoutine.name}'.`);
     }
-    
+
     // Modify createRoutineHandler to optionally take a name and not clear input if name is passed
     // This is an adjustment to make the 'NEW' routine flow smoother
     const originalCreateRoutineHandler = createRoutineHandler;
-    createRoutineHandler = function(nameFromPrompt) {
+    createRoutineHandler = function (nameFromPrompt) {
         const routineName = typeof nameFromPrompt === 'string' ? nameFromPrompt : routineNameInput.value.trim();
         if (!routineName) {
             alert("Please enter a routine name.");
@@ -949,12 +964,12 @@ document.addEventListener('DOMContentLoaded', () => {
         routines.push(newRoutine);
         saveRoutines();
 
-        selectedRoutineId = newRoutine.id; 
-        updateRoutineSelectDropdown(); 
-        displaySelectedRoutineDetails(); 
+        selectedRoutineId = newRoutine.id;
+        updateRoutineSelectDropdown();
+        displaySelectedRoutineDetails();
 
         if (typeof nameFromPrompt !== 'string') { // Only clear if not programmatically called
-            routineNameInput.value = ''; 
+            routineNameInput.value = '';
         }
     };
 
@@ -989,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', () => {
             routineShowPlayerBtn.setAttribute('aria-pressed', 'false');
         }
     }
-    
+
     window.initializeRoutines = initializeRoutines;
     window.createRoutineHandler = createRoutineHandler;
     window.addTaskToRoutineHandler = addTaskToRoutineHandler;
@@ -997,6 +1012,136 @@ document.addEventListener('DOMContentLoaded', () => {
     window.manualAdvanceTask = manualAdvanceTask;
     window.editTaskInRoutine = editTaskInRoutine;
     window.deleteTaskFromRoutine = deleteTaskFromRoutine;
+
+    // --- FOCUS MODE FUNCTIONS ---
+    const focusModeEl = document.getElementById('routine-focus-mode');
+    const exitFocusBtn = document.getElementById('exit-routine-focus');
+    const focusRoutineName = document.getElementById('focus-routine-name');
+    const focusTaskNumber = document.getElementById('focus-task-number');
+    const focusFinishTime = document.getElementById('focus-finish-time');
+    const focusCurrentTaskName = document.getElementById('focus-current-task-name');
+    const focusTimeRemaining = document.getElementById('focus-time-remaining');
+    const focusTimerCircle = document.getElementById('focus-timer-circle');
+    const focusProgressBar = document.getElementById('routine-focus-progress');
+    const focusUpcomingTasks = document.getElementById('focus-upcoming-tasks');
+    const focusCompleteBtn = document.getElementById('focus-complete-task-btn');
+    const focusSkipBtn = document.getElementById('focus-skip-task-btn');
+
+    function enterFocusMode() {
+        if (!focusModeEl) return;
+        focusModeEl.classList.remove('hidden');
+        updateFocusUI();
+    }
+
+    function exitFocusMode() {
+        if (!focusModeEl) return;
+        focusModeEl.classList.add('hidden');
+    }
+
+    function updateFocusUI() {
+        if (!activeRoutine) return;
+
+        // Update routine name
+        if (focusRoutineName) {
+            focusRoutineName.textContent = activeRoutine.name;
+        }
+
+        // Update task number
+        if (focusTaskNumber) {
+            focusTaskNumber.textContent = `Task ${currentTaskIndex + 1} of ${activeRoutine.tasks.length}`;
+        }
+
+        // Update finish time
+        const remainingTasks = activeRoutine.tasks.slice(currentTaskIndex);
+        const totalRemainingMinutes = remainingTasks.reduce((s, t) => s + t.duration, 0);
+        const finishTime = new Date(Date.now() + totalRemainingMinutes * 60000);
+        if (focusFinishTime) {
+            focusFinishTime.textContent = `Finish by ${finishTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        }
+
+        // Update progress bar
+        const completedTasks = currentTaskIndex;
+        const totalTasks = activeRoutine.tasks.length;
+        const progressPercent = (completedTasks / totalTasks) * 100;
+        if (focusProgressBar) {
+            focusProgressBar.style.width = `${progressPercent}%`;
+        }
+
+        // Update current task
+        const currentTask = activeRoutine.tasks[currentTaskIndex];
+        if (currentTask && focusCurrentTaskName) {
+            focusCurrentTaskName.textContent = currentTask.name;
+        }
+
+        // Update upcoming tasks
+        if (focusUpcomingTasks) {
+            focusUpcomingTasks.innerHTML = '';
+            const upcoming = activeRoutine.tasks.slice(currentTaskIndex + 1);
+            upcoming.forEach(task => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${task.name}</span>
+                    <span class="task-duration">${task.duration} min</span>
+                `;
+                focusUpcomingTasks.appendChild(li);
+            });
+        }
+    }
+
+    function updateFocusTimer() {
+        if (!focusTimeRemaining || !focusTimerCircle) return;
+
+        const minutes = Math.floor(activeTaskTimeLeftSeconds / 60);
+        const seconds = activeTaskTimeLeftSeconds % 60;
+        focusTimeRemaining.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+        // Update circle timer
+        if (activeRoutine && currentTaskIndex < activeRoutine.tasks.length) {
+            const currentTask = activeRoutine.tasks[currentTaskIndex];
+            const totalSeconds = currentTask.duration * 60;
+            const circumference = 2 * Math.PI * 90; // radius is 90
+            const progress = Math.max(0, activeTaskTimeLeftSeconds / totalSeconds);
+            const offset = circumference * (1 - progress);
+            focusTimerCircle.style.strokeDashoffset = offset;
+        }
+    }
+
+    // Event listeners for focus mode
+    if (exitFocusBtn) {
+        exitFocusBtn.addEventListener('click', exitFocusMode);
+    }
+
+    if (focusCompleteBtn) {
+        focusCompleteBtn.addEventListener('click', () => {
+            manualAdvanceTask();
+        });
+    }
+
+    if (focusSkipBtn) {
+        focusSkipBtn.addEventListener('click', () => {
+            manualAdvanceTask();
+        });
+    }
+
+    // Add keyboard support (spacebar to complete task)
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && activeRoutine && !focusModeEl.classList.contains('hidden')) {
+            e.preventDefault();
+            manualAdvanceTask();
+        }
+        if (e.code === 'Escape' && activeRoutine && !focusModeEl.classList.contains('hidden')) {
+            exitFocusMode();
+        }
+    });
+
+    // Modify startNextTask to update focus UI
+    const originalStartNextTask = startNextTask;
+    startNextTask = function () {
+        originalStartNextTask();
+        if (activeRoutine && !focusModeEl.classList.contains('hidden')) {
+            updateFocusUI();
+        }
+    };
 
     if (routineShowPlayerBtn && routineShowSetupBtn) {
         routineShowPlayerBtn.addEventListener('click', () => updateRoutineView(true));

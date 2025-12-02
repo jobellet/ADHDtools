@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADHD Tools Hub</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="routine-focus.css">
     <script src="timestamp-storage.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="app.js" defer></script>
@@ -786,6 +787,63 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Fullscreen Routine Focus Mode -->
+            <div id="routine-focus-mode" class="routine-focus-mode hidden">
+                <button id="exit-routine-focus" class="exit-focus-btn" title="Exit Focus Mode">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div class="routine-focus-content">
+                    <div class="routine-focus-header">
+                        <h2 id="focus-routine-name">-</h2>
+                        <div class="routine-focus-progress-bar">
+                            <div class="routine-focus-progress-fill" id="routine-focus-progress"></div>
+                        </div>
+                        <p class="routine-focus-meta">
+                            <span id="focus-task-number">Task 1 of 5</span>
+                            <span class="separator">•</span>
+                            <span id="focus-finish-time">Finish by 10:30 AM</span>
+                        </p>
+                    </div>
+
+                    <div class="routine-focus-current-task">
+                        <div class="task-title-container">
+                            <h1 id="focus-current-task-name">Loading...</h1>
+                        </div>
+
+                        <div class="task-timer-container">
+                            <svg class="timer-circle-svg" viewBox="0 0 200 200">
+                                <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
+                                <circle class="timer-circle-progress" id="focus-timer-circle" cx="100" cy="100" r="90">
+                                </circle>
+                            </svg>
+                            <div class="timer-text">
+                                <span id="focus-time-remaining" class="time-large">--:--</span>
+                                <span class="time-label">remaining</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="routine-focus-actions">
+                        <button id="focus-complete-task-btn" class="focus-action-btn primary">
+                            <i class="fas fa-check"></i>
+                            <span>Complete Task</span>
+                        </button>
+                        <button id="focus-skip-task-btn" class="focus-action-btn secondary">
+                            <i class="fas fa-forward"></i>
+                            <span>Skip</span>
+                        </button>
+                    </div>
+
+                    <div class="routine-focus-task-list">
+                        <h3>Upcoming Tasks</h3>
+                        <ul id="focus-upcoming-tasks">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
