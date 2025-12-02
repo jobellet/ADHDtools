@@ -189,6 +189,221 @@
     showNotification('Data exported successfully.', 'success');
   }
 
+  // --- Collision Handling Logic ---
+
+  function detectCollisions(importedData) {
+    const collisions = [];
+    const updates = {}; // Key -> New Value (for non-collisions)
+
+    Object.keys(importedData).forEach(key => {
+      if (key === 'metadata') return;
+
+      const importedVal = importedData[key];
+      const existingValStr = localStorage.getItem(key);
+
+      if (!existingValStr) {
+        // No existing data, safe to add
+        updates[key] = importedVal;
+        return;
+      }
+
+      let existingVal;
+      try {
+        existingVal = JSON.parse(existingValStr);
+      } catch {
+        existingVal = existingValStr;
+      }
+
+      // Array Handling (Tasks, Routines, etc.)
+      if (Array.isArray(importedVal) && Array.isArray(existingVal)) {
+        const newItems = [];
+        importedVal.forEach(item => {
+          // Identify collision based on ID or unique property
+          let conflict = null;
+
+          if (item.id) {
+            conflict = existingVal.find(e => e.id === item.id);
+          } else if (key === 'adhd-habits' && typeof item === 'string') {
+            // Habits as simple strings
+            if (existingVal.includes(item)) conflict = item;
+          } else if (item.text) {
+            // Fallback for items without ID but with text (e.g. breakdown root)
+            conflict = existingVal.find(e => e.text === item.text && !e.id);
+          }
+
+          if (conflict) {
+            collisions.push({
+              key: key,
+              type: 'array-item',
+              id: item.id || item.text || 'unknown',
+              existing: conflict,
+              imported: item,
+              label: item.text || item.name || item.title || item.id || 'Item'
+            });
+          } else {
+            newItems.push(item);
+          }
+        });
+
+        // If we have new items to append, we prepare the update
+        // We will merge these later with resolved collisions
+        if (newItems.length > 0) {
+          updates[key] = [...existingVal, ...newItems];
+        } else {
+          updates[key] = existingVal; // Keep existing if only collisions
+        }
+
+      } else if (JSON.stringify(existingVal) !== JSON.stringify(importedVal)) {
+        // Primitive or Object collision
+        collisions.push({
+          key: key,
+          type: 'value',
+          existing: existingVal,
+          imported: importedVal,
+          label: key
+        });
+      } else {
+        // Values identical, ignore
+      }
+    });
+
+    return { collisions, updates };
+  }
+
+  function showCollisionModal(collisions, updates, onResolve) {
+    const modal = document.createElement('div');
+    modal.className = 'data-import-modal';
+
+    let html = `
+      <div class="data-import-modal-content">
+        <h3>Data Import Conflicts</h3>
+        <p>Some items in the imported file conflict with your existing data. Please choose how to handle them.</p>
+        <div class="collision-list">
+    `;
+
+    collisions.forEach((c, index) => {
+      const existingDisp = typeof c.existing === 'object' ? JSON.stringify(c.existing).substring(0, 50) + '...' : c.existing;
+      const importedDisp = typeof c.imported === 'object' ? JSON.stringify(c.imported).substring(0, 50) + '...' : c.imported;
+
+      html += `
+        <div class="collision-item" data-index="${index}">
+          <div class="collision-header">
+            <span>${c.key}: ${c.label}</span>
+          </div>
+          <div class="collision-details">
+            <div class="collision-val">
+              <label>Existing</label>
+              <div>${existingDisp}</div>
+            </div>
+            <div class="collision-val">
+              <label>Imported</label>
+              <div>${importedDisp}</div>
+            </div>
+          </div>
+          <div class="collision-actions">
+            <button class="collision-btn selected" data-action="keep-existing">Keep Existing</button>
+            <button class="collision-btn" data-action="overwrite">Overwrite</button>
+            ${c.type === 'array-item' ? '<button class="collision-btn" data-action="keep-both">Keep Both</button>' : ''}
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+        <div class="modal-actions">
+          <button id="cancel-import" class="btn btn-secondary">Cancel Import</button>
+          <button id="confirm-import" class="btn btn-primary">Apply Changes</button>
+        </div>
+      </div>
+    `;
+
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+
+    // Event Listeners
+    modal.querySelectorAll('.collision-item').forEach(item => {
+      item.querySelectorAll('.collision-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          item.querySelectorAll('.collision-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        });
+      });
+    });
+
+    document.getElementById('cancel-import').addEventListener('click', () => {
+      modal.remove();
+      showNotification('Import cancelled.', 'error');
+    });
+
+    document.getElementById('confirm-import').addEventListener('click', () => {
+      const resolutions = [];
+      modal.querySelectorAll('.collision-item').forEach((item, index) => {
+        const action = item.querySelector('.collision-btn.selected').dataset.action;
+        resolutions.push({ collision: collisions[index], action });
+      });
+      modal.remove();
+      onResolve(resolutions, updates);
+    });
+  }
+
+  function applyResolutions(resolutions, updates) {
+    // Clone updates to avoid mutation issues
+    const finalData = { ...updates };
+
+    // We need to re-fetch current data because 'updates' only contains non-colliding merges
+    // But for array items, we need to merge resolved items into the array
+
+    resolutions.forEach(res => {
+      const { collision, action } = res;
+      const key = collision.key;
+
+      // Ensure we have the base array/value in finalData
+      if (!finalData[key]) {
+        const existing = localStorage.getItem(key);
+        finalData[key] = existing ? JSON.parse(existing) : (Array.isArray(collision.existing) ? [] : {});
+      }
+
+      if (collision.type === 'array-item') {
+        const arr = finalData[key];
+        // Find if item is already in the array (it might be if we processed other collisions for same key)
+        // Actually, 'arr' currently contains [existing... + newItems...].
+        // The colliding item is NOT in 'newItems'. It IS in 'existing'.
+
+        if (action === 'overwrite') {
+          // Find and replace
+          const idx = arr.findIndex(i => (i.id && i.id === collision.id) || i === collision.existing);
+          if (idx !== -1) arr[idx] = collision.imported;
+        } else if (action === 'keep-both') {
+          // Append imported with new ID
+          const newItem = JSON.parse(JSON.stringify(collision.imported));
+          if (newItem.id) newItem.id = generateId();
+          if (typeof newItem === 'string') newItem += ' (Imported)';
+          else if (newItem.text) newItem.text += ' (Imported)';
+          else if (newItem.name) newItem.name += ' (Imported)';
+
+          arr.push(newItem);
+        }
+        // 'keep-existing' does nothing
+      } else {
+        // Value type
+        if (action === 'overwrite') {
+          finalData[key] = collision.imported;
+        }
+        // 'keep-existing' does nothing
+      }
+    });
+
+    // Save all
+    Object.keys(finalData).forEach(key => {
+      const val = finalData[key];
+      localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+    });
+
+    showNotification('Data imported successfully. Reloading...', 'success');
+    setTimeout(() => location.reload(), 1500);
+  }
+
   function importDataFromFile(file) {
     if (!file) return;
     const reader = new FileReader();
@@ -198,17 +413,21 @@
         if (!imported.metadata || imported.metadata.app !== APP_NAME) {
           throw new Error('Invalid data file');
         }
-        if (localStorage.length && !confirm('This will overwrite existing data. Continue?')) {
-          return;
+
+        const { collisions, updates } = detectCollisions(imported);
+
+        if (collisions.length === 0) {
+          // No collisions, just apply updates
+          Object.keys(updates).forEach(key => {
+            const val = updates[key];
+            localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+          });
+          showNotification('Data imported successfully. Reloading...', 'success');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showCollisionModal(collisions, updates, applyResolutions);
         }
-        localStorage.clear();
-        Object.keys(imported).forEach(key => {
-          if (key !== 'metadata') {
-            localStorage.setItem(key, JSON.stringify(imported[key]));
-          }
-        });
-        showNotification('Data imported successfully. Reloading...', 'success');
-        setTimeout(() => location.reload(), 1500);
+
       } catch (err) {
         console.error(err);
         showNotification(`Import failed: ${err.message}`, 'error');
