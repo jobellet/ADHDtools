@@ -711,35 +711,33 @@
                             <select id="routine-select"></select>
                         </div>
 
+                        <div class="routine-actions-row" style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+                            <button id="import-routine-btn" class="btn btn-secondary" title="Import routine from CSV">
+                                <i class="fas fa-file-import"></i> Import CSV
+                            </button>
+                            <button id="export-routine-btn" class="btn btn-secondary"
+                                title="Export selected routine to CSV">
+                                <i class="fas fa-file-export"></i> Export CSV
+                            </button>
+                            <input type="file" id="routine-file-input" accept=".csv" style="display: none;">
+                        </div>
+
                         <h4 id="current-routine-name" data-i18n="routine-none-active">No routine selected</h4>
-                        <h4 data-i18n="routine-add-tasks-heading">Add Tasks to Selected Routine</h4>
-                        <div class="input-group">
-                            <label for="task-name" data-i18n="routine-task-name-label">Task Name:</label>
-                            <input type="text" id="task-name" placeholder="e.g., Make Bed">
-                        </div>
-                        <div class="input-group">
-                            <label for="task-duration" data-i18n="routine-task-duration-label">Task Duration
-                                (minutes):</label>
-                            <input type="number" id="task-duration" min="1" placeholder="e.g., 5">
-                        </div>
-                        <div class="input-group">
-                            <label for="task-break-duration">Break After Task (minutes, optional):</label>
-                            <input type="number" id="task-break-duration" min="0" placeholder="e.g., 2">
-                            <button id="add-task-to-routine-btn" class="btn" title="Add task to routine"
-                                data-i18n="routine-add-task-btn">Add Task</button>
+
+                        <div class="routine-editor-table">
+                            <div class="routine-table-header">
+                                <div class="col-grip"></div>
+                                <div class="col-time">Time</div>
+                                <div class="col-name">Task Name</div>
+                                <div class="col-duration">Duration (min)</div>
+                                <div class="col-actions">Actions</div>
+                            </div>
+                            <div id="current-routine-tasks" class="routine-task-list-container"></div>
                         </div>
 
-                        <div class="input-group">
-                            <label for="routine-start-time" data-i18n="routine-start-time-label">Set Auto Start Time
-                                (optional):</label>
-                            <input type="time" id="routine-start-time">
-                            <button id="set-start-time-btn" class="btn" title="Set automatic start time"
-                                data-i18n="routine-set-time-btn">Set Time</button>
+                        <div class="routine-footer-stats">
+                            <p>Total Duration: <span id="manage-total-duration">0</span> min</p>
                         </div>
-
-                        <h4 data-i18n="routine-task-list-heading">Routine Tasks</h4>
-                        <ul id="current-routine-tasks" class="routine-task-list"></ul>
-                        <p>Total Duration: <span id="manage-total-duration">0</span> min</p>
                     </div>
 
                     <div class="routine-player">

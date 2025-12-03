@@ -55,9 +55,6 @@ To connect the Day Planner to your Google Calendar:
 
 Your credentials remain in your browser only. Use the **Clear** button in the Calendar settings to remove them at any time.
 
-## Deprecated Backend Notebook
-
-Earlier iterations of this project included a `website_backend.ipynb` Colab notebook used for experimentation. The live site now stores all data locally and does not rely on this backend, so the notebook has been removed.
 
 ## Contributing
 

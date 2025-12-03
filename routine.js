@@ -12,10 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const createRoutineBtn = document.getElementById('create-routine-btn');
     const routineSelect = document.getElementById('routine-select');
 
-    const taskNameInput = document.getElementById('task-name');
-    const taskDurationInput = document.getElementById('task-duration');
-    const taskBreakInput = document.getElementById('task-break-duration');
-    const addTaskToRoutineBtn = document.getElementById('add-task-to-routine-btn');
+    // const taskNameInput = document.getElementById('task-name'); // Removed
+    // const taskDurationInput = document.getElementById('task-duration'); // Removed
+    // const taskBreakInput = document.getElementById('task-break-duration'); // Removed
+    // const addTaskToRoutineBtn = document.getElementById('add-task-to-routine-btn'); // Removed
 
     const routineStartTimeInput = document.getElementById('routine-start-time');
     const setStartTimeBtn = document.getElementById('set-start-time-btn');
@@ -47,17 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePlayerSection = document.querySelector('.routine-player'); // Assuming this is the correct selector
     const routineSetupSection = document.querySelector('.routine-setup'); // Assuming this is the correct selector
 
-    const essential = [
-        routineNameInput,
+    routineNameInput,
         createRoutineBtn,
         routineSelect,
-        taskNameInput,
-        taskDurationInput,
-        addTaskToRoutineBtn,
+        // taskNameInput, // Removed
+        // taskDurationInput, // Removed
+        // addTaskToRoutineBtn, // Removed
         routineStartTimeInput,
         setStartTimeBtn,
         startSelectedRoutineBtn
-    ];
     if (essential.some(el => !el)) {
         console.warn('Routine tool elements missing; skipping initialization');
         return;
@@ -262,117 +260,36 @@ document.addEventListener('DOMContentLoaded', () => {
         displaySelectedRoutineDetails(); // Display details for the loaded/selected routine
     }
 
+    // --- TIME CALCULATION HELPER ---
+    function calculateTaskTimes(routine) {
+        let currentTime = new Date();
+        if (routine.startTime) {
+            const [hours, minutes] = routine.startTime.split(':').map(Number);
+            currentTime.setHours(hours, minutes, 0, 0);
+        } else {
+            // If no start time, use 00:00 as base for relative time
+            currentTime.setHours(0, 0, 0, 0);
+        }
+
+        return routine.tasks.map(task => {
+            const startTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            currentTime.setMinutes(currentTime.getMinutes() + task.duration);
+            const endTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `${startTime} - ${endTime}`;
+        });
+    }
+
     // --- DISPLAY FUNCTIONS ---
     function displaySelectedRoutineDetails() {
         const routine = getRoutineById(selectedRoutineId);
+
+        // Update header info
         if (routine) {
             if (currentRoutineNameDisplay) currentRoutineNameDisplay.textContent = routine.name;
-            if (currentRoutineTasksList) {
-                currentRoutineTasksList.innerHTML = '';
-                routine.tasks.forEach((task, index) => {
-                    const li = document.createElement('li');
-                    li.dataset.taskId = task.id;
-                    li.draggable = true;
-                    li.tabIndex = 0;
-                    li.addEventListener('dragstart', e => {
-                        e.dataTransfer.setData('text/plain', index);
-                    });
-                    li.addEventListener('dragover', e => e.preventDefault());
-                    li.addEventListener('drop', e => {
-                        e.preventDefault();
-                        const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                        const to = index;
-                        if (isNaN(from) || from === to) return;
-                        const moved = routine.tasks.splice(from, 1)[0];
-                        routine.tasks.splice(to, 0, moved);
-                        saveRoutines();
-                        displaySelectedRoutineDetails();
-                        setTimeout(() => {
-                            if (currentRoutineTasksList.children[to]) {
-                                currentRoutineTasksList.children[to].focus();
-                            }
-                        }, 0);
-                    });
-                    li.addEventListener('keydown', e => {
-                        if (e.key === 'ArrowUp' && index > 0) {
-                            const moved = routine.tasks.splice(index, 1)[0];
-                            routine.tasks.splice(index - 1, 0, moved);
-                            saveRoutines();
-                            displaySelectedRoutineDetails();
-                        } else if (e.key === 'ArrowDown' && index < routine.tasks.length - 1) {
-                            const moved = routine.tasks.splice(index, 1)[0];
-                            routine.tasks.splice(index + 1, 0, moved);
-                            saveRoutines();
-                            displaySelectedRoutineDetails();
-                        }
-                    });
-
-                    const taskText = document.createElement('span');
-                    taskText.textContent = `${task.name} (${task.duration} min)`;
-                    li.appendChild(taskText);
-
-                    const actionsDiv = document.createElement('div');
-                    actionsDiv.className = 'routine-task-actions';
-
-                    const upBtn = document.createElement('button');
-                    upBtn.textContent = '↑';
-                    upBtn.title = 'Move task up';
-                    upBtn.addEventListener('click', () => {
-                        if (index > 0) {
-                            const moved = routine.tasks.splice(index, 1)[0];
-                            routine.tasks.splice(index - 1, 0, moved);
-                            saveRoutines();
-                            displaySelectedRoutineDetails();
-                        }
-                    });
-
-                    const downBtn = document.createElement('button');
-                    downBtn.textContent = '↓';
-                    downBtn.title = 'Move task down';
-                    downBtn.addEventListener('click', () => {
-                        if (index < routine.tasks.length - 1) {
-                            const moved = routine.tasks.splice(index, 1)[0];
-                            routine.tasks.splice(index + 1, 0, moved);
-                            saveRoutines();
-                            displaySelectedRoutineDetails();
-                        }
-                    });
-
-                    const editBtn = document.createElement('button');
-                    editBtn.textContent = 'Edit';
-                    editBtn.title = 'Edit task';
-                    editBtn.className = 'edit-routine-task-btn';
-                    editBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        showEditTaskUI(li, task);
-                    });
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = 'Delete';
-                    deleteBtn.title = 'Delete task';
-                    deleteBtn.className = 'delete-routine-task-btn';
-                    deleteBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (confirm(`Are you sure you want to delete task: "${task.name}"?`)) {
-                            deleteTaskFromRoutine(task.id);
-                        }
-                    });
-
-                    actionsDiv.appendChild(upBtn);
-                    actionsDiv.appendChild(downBtn);
-                    actionsDiv.appendChild(editBtn);
-                    actionsDiv.appendChild(deleteBtn);
-                    li.appendChild(actionsDiv);
-
-                    currentRoutineTasksList.appendChild(li);
-                });
-            }
-
-            if (manageTotalDurationDisplay) {
-                manageTotalDurationDisplay.textContent = routine.totalDuration || 0;
-            }
-
+            if (manageTotalDurationDisplay) manageTotalDurationDisplay.textContent = routine.totalDuration || 0;
             if (playerRoutineNameDisplay) playerRoutineNameDisplay.textContent = routine.name;
+
+            // Update Player List (Read-only)
             if (playerRoutineTasksList) {
                 playerRoutineTasksList.innerHTML = '';
                 routine.tasks.forEach(task => {
@@ -384,12 +301,231 @@ document.addEventListener('DOMContentLoaded', () => {
             if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
         } else {
             if (currentRoutineNameDisplay) currentRoutineNameDisplay.textContent = 'No routine selected';
-            if (currentRoutineTasksList) currentRoutineTasksList.innerHTML = '';
             if (manageTotalDurationDisplay) manageTotalDurationDisplay.textContent = '0';
             if (playerRoutineNameDisplay) playerRoutineNameDisplay.textContent = 'No routine selected/active';
             if (playerRoutineTasksList) playerRoutineTasksList.innerHTML = '';
             if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
+            if (currentRoutineTasksList) currentRoutineTasksList.innerHTML = '';
+            return;
         }
+
+        // Render Editor Table
+        if (currentRoutineTasksList) {
+            currentRoutineTasksList.innerHTML = '';
+            const taskTimes = calculateTaskTimes(routine);
+
+            // Render Insert Zone at the very top
+            currentRoutineTasksList.appendChild(renderInsertZone(0));
+
+            routine.tasks.forEach((task, index) => {
+                const row = document.createElement('div');
+                row.className = 'routine-row';
+                row.dataset.taskId = task.id;
+                row.dataset.index = index;
+
+                // Drag & Drop Attributes
+                row.draggable = true;
+                row.addEventListener('dragstart', handleDragStart);
+                row.addEventListener('dragover', handleDragOver);
+                row.addEventListener('drop', handleDrop);
+                row.addEventListener('dragend', handleDragEnd);
+
+                // 1. Grip Column
+                const gripCol = document.createElement('div');
+                gripCol.className = 'col-grip';
+                gripCol.innerHTML = '<i class="fas fa-grip-vertical"></i>'; // FontAwesome grip icon
+                row.appendChild(gripCol);
+
+                // 2. Time Column
+                const timeCol = document.createElement('div');
+                timeCol.className = 'col-time';
+                timeCol.textContent = taskTimes[index];
+                row.appendChild(timeCol);
+
+                // 3. Name Column (Input)
+                const nameCol = document.createElement('div');
+                nameCol.className = 'col-name';
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = task.name;
+                nameInput.addEventListener('change', (e) => {
+                    task.name = e.target.value;
+                    saveRoutines();
+                });
+                nameCol.appendChild(nameInput);
+                row.appendChild(nameCol);
+
+                // 4. Duration Column (Smart Controls)
+                const durationCol = document.createElement('div');
+                durationCol.className = 'col-duration';
+                const durationControl = document.createElement('div');
+                durationControl.className = 'duration-control';
+
+                const minusBtn = document.createElement('button');
+                minusBtn.className = 'duration-btn';
+                minusBtn.textContent = '-';
+                minusBtn.tabIndex = -1;
+                minusBtn.addEventListener('click', () => updateTaskDuration(task, -5));
+
+                const durationInput = document.createElement('input');
+                durationInput.type = 'number';
+                durationInput.value = task.duration;
+                durationInput.min = 1;
+                durationInput.addEventListener('change', (e) => {
+                    let val = parseInt(e.target.value, 10);
+                    if (val < 1) val = 1;
+                    updateTaskDuration(task, val - task.duration); // Pass difference
+                });
+
+                const plusBtn = document.createElement('button');
+                plusBtn.className = 'duration-btn';
+                plusBtn.textContent = '+';
+                plusBtn.tabIndex = -1;
+                plusBtn.addEventListener('click', () => updateTaskDuration(task, 5));
+
+                durationControl.appendChild(minusBtn);
+                durationControl.appendChild(durationInput);
+                durationControl.appendChild(plusBtn);
+                durationCol.appendChild(durationControl);
+                row.appendChild(durationCol);
+
+                // 5. Actions Column
+                const actionsCol = document.createElement('div');
+                actionsCol.className = 'col-actions';
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.title = 'Delete task';
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm(`Delete "${task.name}"?`)) {
+                        deleteTaskFromRoutine(task.id);
+                    }
+                });
+                actionsCol.appendChild(deleteBtn);
+                row.appendChild(actionsCol);
+
+                currentRoutineTasksList.appendChild(row);
+
+                // Render Insert Zone after each task
+                currentRoutineTasksList.appendChild(renderInsertZone(index + 1));
+            });
+        }
+    }
+
+    function renderInsertZone(index) {
+        const zone = document.createElement('div');
+        zone.className = 'routine-insert-zone';
+        zone.title = 'Click to add task here';
+        zone.addEventListener('click', () => {
+            // Replace zone with new task input row
+            const newRow = document.createElement('div');
+            newRow.className = 'routine-new-task-row';
+
+            newRow.innerHTML = `
+                <div class="col-grip"></div>
+                <div class="col-time">New</div>
+                <div class="col-name"><input type="text" placeholder="Task Name" id="new-task-name-${index}"></div>
+                <div class="col-duration"><input type="number" value="5" min="1" id="new-task-duration-${index}"></div>
+                <div class="col-actions">
+                    <button id="save-new-task-${index}" class="btn btn-primary btn-sm">Add</button>
+                    <button id="cancel-new-task-${index}" class="btn btn-secondary btn-sm">X</button>
+                </div>
+            `;
+
+            zone.replaceWith(newRow);
+
+            const nameInput = newRow.querySelector(`#new-task-name-${index}`);
+            const durationInput = newRow.querySelector(`#new-task-duration-${index}`);
+            const saveBtn = newRow.querySelector(`#save-new-task-${index}`);
+            const cancelBtn = newRow.querySelector(`#cancel-new-task-${index}`);
+
+            nameInput.focus();
+
+            const saveHandler = () => {
+                const name = nameInput.value.trim();
+                const duration = parseInt(durationInput.value, 10);
+                if (name && duration > 0) {
+                    addTaskAt(index, name, duration);
+                }
+            };
+
+            saveBtn.addEventListener('click', saveHandler);
+            nameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') saveHandler();
+            });
+            durationInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') saveHandler();
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                displaySelectedRoutineDetails(); // Re-render to restore zones
+            });
+        });
+        return zone;
+    }
+
+    function addTaskAt(index, name, duration) {
+        const routine = getRoutineById(selectedRoutineId);
+        if (!routine) return;
+
+        const newTask = {
+            id: generateId(),
+            name: name,
+            duration: duration
+        };
+
+        routine.tasks.splice(index, 0, newTask);
+        recalculateTotalDuration(routine);
+        saveRoutines();
+        displaySelectedRoutineDetails();
+    }
+
+    function updateTaskDuration(task, change) {
+        let newDuration = task.duration + change;
+        if (newDuration < 1) newDuration = 1;
+        task.duration = newDuration;
+
+        const routine = getRoutineById(selectedRoutineId);
+        recalculateTotalDuration(routine);
+        saveRoutines();
+        displaySelectedRoutineDetails();
+    }
+
+    function recalculateTotalDuration(routine) {
+        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
+    }
+
+    // --- DRAG & DROP HANDLERS ---
+    let draggedItemIndex = null;
+
+    function handleDragStart(e) {
+        draggedItemIndex = parseInt(this.dataset.index, 10);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+        this.classList.add('dragging');
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function handleDrop(e) {
+        e.stopPropagation();
+        const targetIndex = parseInt(this.dataset.index, 10);
+        if (draggedItemIndex !== null && draggedItemIndex !== targetIndex) {
+            const routine = getRoutineById(selectedRoutineId);
+            const movedTask = routine.tasks.splice(draggedItemIndex, 1)[0];
+            routine.tasks.splice(targetIndex, 0, movedTask);
+            saveRoutines();
+            displaySelectedRoutineDetails();
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        draggedItemIndex = null;
     }
 
     // --- EVENT HANDLERS ---
@@ -418,60 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
         routineNameInput.value = ''; // Clear input
     }
 
-    function addTaskToRoutineHandler() {
-        const taskName = taskNameInput.value.trim();
-        const taskDuration = taskDurationInput.value;
-        const breakDuration = taskBreakInput.value;
-
-        if (!selectedRoutineId) {
-            alert("Please select a routine first.");
-            return;
-        }
-
-        const routine = getRoutineById(selectedRoutineId);
-        if (!routine) {
-            alert("Selected routine not found. Please try reloading.");
-            return;
-        }
-
-        if (!taskName) {
-            alert("Please enter a task name.");
-            return;
-        }
-
-        const duration = parseInt(taskDuration, 10);
-        if (isNaN(duration) || duration <= 0) {
-            alert("Please enter a valid positive number for task duration.");
-            return;
-        }
-
-        const breakDur = parseInt(breakDuration, 10);
-        if (breakDuration && (isNaN(breakDur) || breakDur < 0)) {
-            alert("Please enter a valid number for break duration (0 or more).");
-            return;
-        }
-
-        const newTask = {
-            id: generateId(),
-            name: taskName,
-            duration: duration
-        };
-
-        routine.tasks.push(newTask);
-        if (breakDur && breakDur > 0) {
-            routine.tasks.push({ id: generateId(), name: 'Break', duration: breakDur });
-        }
-
-        // Recalculate totalDuration
-        routine.totalDuration = routine.tasks.reduce((sum, task) => sum + task.duration, 0);
-
-        saveRoutines();
-        displaySelectedRoutineDetails(); // Refresh display
-
-        taskNameInput.value = '';
-        taskDurationInput.value = '';
-        taskBreakInput.value = '';
-    }
+    // addTaskToRoutineHandler removed as it is replaced by inline insertion logic
 
 
     // --- CORE DATA FUNCTIONS (Continued) ---
@@ -586,28 +669,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- INITIALIZATION ---
-    function initializeRoutines() {
-        loadRoutines(); // Load routines and display the first one or empty state
+    // --- INITIALIZATION ---
+    // (Moved to end of file)
 
-        routineSelect.addEventListener('change', () => {
-            selectedRoutineId = routineSelect.value;
-            displaySelectedRoutineDetails();
-            // When selection changes, also update the start time input if the new routine has one
-            const selected = getRoutineById(selectedRoutineId);
-            if (selected && selected.startTime) {
-                routineStartTimeInput.value = selected.startTime;
-            } else {
-                routineStartTimeInput.value = '';
-            }
-        });
-
-        createRoutineBtn.addEventListener('click', createRoutineHandler);
-        addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler);
-        setStartTimeBtn.addEventListener('click', setRoutineStartTimeHandler);
-        startSelectedRoutineBtn.addEventListener('click', startSelectedRoutineHandler);
-
-        console.log("Routine Tool Initialized with core event handlers and start/activate logic.");
-    }
 
     // --- EVENT HANDLERS (Continued) ---
     function setRoutineStartTimeHandler() {
@@ -803,6 +867,112 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- INITIALIZATION (adjusting the previous one) ---
+    // --- CSV IMPORT/EXPORT ---
+    function exportRoutineToCSV() {
+        const routine = getRoutineById(selectedRoutineId);
+        if (!routine) {
+            alert('Please select a routine to export.');
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        // Format: Task Name, Duration
+        routine.tasks.forEach(task => {
+            const name = task.name.replace(/"/g, '""'); // Escape quotes
+            const row = `"${name}",${task.duration}`;
+            csvContent += row + "\r\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${routine.name}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function importRoutineFromCSV(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const text = e.target.result;
+            const rows = text.split(/[\r\n]+/).filter(row => row.trim() !== '');
+
+            const tasks = [];
+            let totalDuration = 0;
+
+            rows.forEach(row => {
+                // Regex to match CSV fields: "..." or non-comma
+                const regex = /(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)/g;
+                let match;
+                const columns = [];
+                while ((match = regex.exec(row))) {
+                    let val = match[1];
+                    if (val.length && val.charAt(0) === '"') {
+                        val = val.slice(1, -1).replace(/""/g, '"');
+                    }
+                    columns.push(val);
+                }
+
+                // Expecting: Name, Duration
+                if (columns.length >= 2) {
+                    // Clean up regex artifacts if needed, but the loop handles it.
+                    // Actually, let's use a simpler robust split for the specific format requested.
+                    // If the user edits in Excel, it might be standard CSV.
+
+                    let name = columns[0].trim();
+                    let duration = parseInt(columns[1], 10);
+
+                    // Fallback for simple comma split if regex failed or for simple lines
+                    if (!name && row.indexOf(',') > -1) {
+                        const parts = row.split(',');
+                        name = parts[0].trim();
+                        duration = parseInt(parts[1], 10);
+                    }
+
+                    if (name && !isNaN(duration)) {
+                        tasks.push({
+                            id: generateId(),
+                            name: name,
+                            duration: duration
+                        });
+                        totalDuration += duration;
+                    }
+                }
+            });
+
+            if (tasks.length === 0) {
+                alert('No valid tasks found in CSV. Format should be: Task Name, Duration (minutes)');
+                return;
+            }
+
+            const routineName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+
+            const newRoutine = {
+                id: generateId(),
+                name: routineName,
+                startTime: null,
+                tasks: tasks,
+                totalDuration: totalDuration
+            };
+
+            routines.push(newRoutine);
+            saveRoutines();
+            updateRoutineSelectDropdown();
+
+            // Select the new routine
+            selectedRoutineId = newRoutine.id;
+            routineSelect.value = newRoutine.id;
+            displaySelectedRoutineDetails();
+
+            alert(`Routine "${routineName}" imported successfully!`);
+        };
+        reader.readAsText(file);
+    }
+
+    // --- INITIALIZATION (adjusting the previous one) ---
     function initializeRoutines() {
         loadRoutines();
 
@@ -821,6 +991,25 @@ document.addEventListener('DOMContentLoaded', () => {
         addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler);
         setStartTimeBtn.addEventListener('click', setRoutineStartTimeHandler);
         startSelectedRoutineBtn.addEventListener('click', startSelectedRoutineHandler);
+
+        // Import/Export Listeners
+        const importBtn = document.getElementById('import-routine-btn');
+        const exportBtn = document.getElementById('export-routine-btn');
+        const fileInput = document.getElementById('routine-file-input');
+
+        if (importBtn && fileInput) {
+            importBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importRoutineFromCSV(e.target.files[0]);
+                    fileInput.value = ''; // Reset
+                }
+            });
+        }
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', exportRoutineToCSV);
+        }
 
         document.addEventListener('keydown', (event) => {
             if (document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
@@ -847,7 +1036,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Routine Tool Initialized with task timer, spacebar/tap control, and input focus check.");
 
         // --- Task Receiving Logic ---
-        window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);
+        if (window.EventBus) {
+            window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);
+        }
 
         requestNotificationPermission();
         scheduleAutoStartCheck();
