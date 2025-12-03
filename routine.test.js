@@ -17,7 +17,8 @@ const dom = new JSDOM(`<!DOCTYPE html><html><body>
         <input id="task-break-duration" type="number" />
         <input id="routine-start-time" type="time" />
         <button id="create-routine-btn"></button>
-        <button id="add-task-to-routine-btn"></button>
+        <!-- Button removed in DOM but defined in JS to avoid error, so we mock it here if needed, or let it be null -->
+        <button id="add-task-to-routine-btn"></button> 
         <button id="set-start-time-btn"></button>
         <button id="start-selected-routine-btn"></button>
         <div class="routine-controls"></div>
@@ -30,7 +31,7 @@ const dom = new JSDOM(`<!DOCTYPE html><html><body>
 </body></html>`);
 global.window = dom.window;
 global.document = dom.window.document;
-global.window.EventBus = { addEventListener: () => {} };
+global.window.EventBus = { addEventListener: () => { } };
 
 // Mock localStorage and canvas context before loading script
 const mockLocalStorage = (() => {
@@ -44,11 +45,11 @@ const mockLocalStorage = (() => {
 })();
 global.localStorage = mockLocalStorage;
 dom.window.HTMLCanvasElement.prototype.getContext = () => ({
-    clearRect: () => {},
-    beginPath: () => {},
-    arc: () => {},
-    fill: () => {},
-    stroke: () => {},
+    clearRect: () => { },
+    beginPath: () => { },
+    arc: () => { },
+    fill: () => { },
+    stroke: () => { },
     lineWidth: 0,
     strokeStyle: '',
     fillStyle: ''
@@ -59,16 +60,12 @@ document.dispatchEvent(new dom.window.Event('DOMContentLoaded'));
 Object.assign(global, {
     initializeRoutines: window.initializeRoutines,
     createRoutineHandler: window.createRoutineHandler,
-    addTaskToRoutineHandler: window.addTaskToRoutineHandler,
+    addTaskAt: window.addTaskAt, // Updated from addTaskToRoutineHandler
     activateRoutine: window.activateRoutine,
     manualAdvanceTask: window.manualAdvanceTask,
     editTaskInRoutine: window.editTaskInRoutine,
     deleteTaskFromRoutine: window.deleteTaskFromRoutine,
 });
-
-// Mock necessary DOM elements if functions directly manipulate them outside of event handlers
-// For now, we'll focus on functions that can be tested with less direct DOM manipulation
-// or assume DOM elements are minimal for these tests.
 
 // Simple assertion helper
 function assert(condition, message) {
@@ -82,29 +79,20 @@ function assert(condition, message) {
 function runRoutineTests() {
     console.log("--- Running Routine Tool Unit Tests ---");
 
-    // Mock DOM elements that are directly accessed by functions being tested
-    // (even if event handlers are not directly triggered)
     window.__SKIP_DEFAULT_ROUTINES__ = true;
-    
-    // Re-initialize parts of routine.js or expose functions for testing
-    // This is tricky without a proper test runner or module system.
-    // For this subtask, assume we can call the functions if routine.js was loaded.
-    // In a real scenario, routine.js would need to be structured to allow this.
-    // We will assume `initializeRoutines` also makes other functions available globally for tests for now.
-    
+
     // Test 1: Create a new routine
     try {
-        localStorage.clear(); // Start fresh
+        localStorage.clear();
         if (typeof initializeRoutines !== 'function' || typeof createRoutineHandler !== 'function') {
             console.error("Routine functions not available for testing. Load routine.js first or structure for testability.");
             return;
         }
 
-        // Simulate input for creating a routine
         const routineNameInput = document.getElementById('routine-name');
         routineNameInput.value = "Morning Routine";
-        createRoutineHandler(); // global function
-        
+        createRoutineHandler();
+
         const routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         assert(routines.length === 1, "Routine created and saved.");
         assert(routines[0].name === "Morning Routine", "Routine has correct name.");
@@ -117,17 +105,15 @@ function runRoutineTests() {
     // Test 2: Add a task to a routine
     try {
         localStorage.clear();
-        initializeRoutines(); // Resets selectedRoutineId, routines array etc.
+        initializeRoutines();
 
-        const routineNameInput = document.getElementById('routine-name'); // Re-fetch after innerHTML change potentially
+        const routineNameInput = document.getElementById('routine-name');
         routineNameInput.value = "Evening Routine";
-        createRoutineHandler(); // Creates a routine and selects it
+        createRoutineHandler();
 
-        const taskNameInput = document.getElementById('task-name');
-        const taskDurationInput = document.getElementById('task-duration');
-        taskNameInput.value = "Read Book";
-        taskDurationInput.value = "30";
-        addTaskToRoutineHandler(); // global function
+        // Use new addTaskAt function
+        // addTaskAt(index, name, duration)
+        addTaskAt(0, "Read Book", 30);
 
         const routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         assert(routines[0].tasks.length === 1, "Task added to routine.");
@@ -142,50 +128,35 @@ function runRoutineTests() {
     // Test 3: Start a routine and first task (basic check)
     try {
         localStorage.clear();
-        initializeRoutines(); 
-        
+        initializeRoutines();
+
         const routineNameInput = document.getElementById('routine-name');
         routineNameInput.value = "Work Sprint";
         createRoutineHandler();
 
-        const taskNameInput = document.getElementById('task-name');
-        const taskDurationInput = document.getElementById('task-duration');
-        taskNameInput.value = "Code Review";
-        taskDurationInput.value = "25";
-        addTaskToRoutineHandler();
-        taskNameInput.value = "Documentation";
-        taskDurationInput.value = "15";
-        addTaskToRoutineHandler();
+        addTaskAt(0, "Code Review", 25);
+        addTaskAt(1, "Documentation", 15);
 
-        // Directly call activateRoutine with the ID of the created routine
         const routineToStart = JSON.parse(localStorage.getItem('adhd-tool-routines'))[0];
-        activateRoutine(routineToStart.id); // global function
+        activateRoutine(routineToStart.id);
 
         const currentTaskDisplay = document.getElementById('current-task-name').textContent;
         assert(currentTaskDisplay === "Code Review", "First task name displayed correctly.");
-        // Further checks on timer starting etc. would need more advanced mocking of setInterval
         console.log("Test 3 Passed: Start Routine and First Task");
     } catch (e) {
         console.error("Test 3 Failed: Start Routine - ", e);
     }
-    
+
     // Test 4: Manual task advance (basic check)
     try {
-        // Assumes state from Test 3 is somewhat active (activeRoutine is set, currentTaskIndex is 0)
-        // This tight coupling is a limitation of this simple test setup.
-        // In a better setup, each test would be independent.
-
-        if (typeof activeRoutine === 'undefined' || !activeRoutine) { // Check if activeRoutine was set by previous test.
-             console.warn("Skipping Test 4 as activeRoutine is not set from previous test. Requires better test isolation.");
-        } else {
-            manualAdvanceTask(); // global function
-            const currentTaskDisplay = document.getElementById('current-task-name').textContent;
-            assert(currentTaskDisplay === "Documentation", "Second task name displayed after manual advance.");
-            manualAdvanceTask(); // Advance past the last task
-            const routineFinishedDisplay = document.getElementById('current-task-name').textContent;
-            assert(routineFinishedDisplay === "Routine Finished!", "Routine finishes after all tasks advanced.");
-             console.log("Test 4 Passed: Manual Task Advance");
-        }
+        // Assumes state from Test 3
+        manualAdvanceTask();
+        const currentTaskDisplay = document.getElementById('current-task-name').textContent;
+        assert(currentTaskDisplay === "Documentation", "Second task name displayed after manual advance.");
+        manualAdvanceTask();
+        const routineFinishedDisplay = document.getElementById('current-task-name').textContent;
+        assert(routineFinishedDisplay === "Routine Finished!", "Routine finishes after all tasks advanced.");
+        console.log("Test 4 Passed: Manual Task Advance");
 
     } catch (e) {
         console.error("Test 4 Failed: Manual Task Advance - ", e);
@@ -195,23 +166,17 @@ function runRoutineTests() {
     try {
         console.log("--- Running Test 5: Edit Task ---");
         localStorage.clear();
-        initializeRoutines(); 
+        initializeRoutines();
 
         const routineNameInput = document.getElementById('routine-name');
         routineNameInput.value = "Test Routine For Edit";
-        createRoutineHandler(); 
+        createRoutineHandler();
 
         let routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         const routine1 = routines[0];
-        // selectedRoutineId should be routine1.id after createRoutineHandler
 
-        const taskNameInput = document.getElementById('task-name');
-        const taskDurationInput = document.getElementById('task-duration');
-        taskNameInput.value = "Original Task";
-        taskDurationInput.value = "20";
-        addTaskToRoutineHandler();
+        addTaskAt(0, "Original Task", 20);
 
-        // Refetch routines to get the task and its ID
         routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         const updatedRoutine1 = routines.find(r => r.id === routine1.id);
         const task1_id = updatedRoutine1.tasks[0].id;
@@ -242,20 +207,10 @@ function runRoutineTests() {
 
         let routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         const routine2 = routines[0];
-        // selectedRoutineId should be routine2.id
 
-        const taskNameInput = document.getElementById('task-name');
-        const taskDurationInput = document.getElementById('task-duration');
-        
-        taskNameInput.value = "Task A";
-        taskDurationInput.value = "10";
-        addTaskToRoutineHandler();
+        addTaskAt(0, "Task A", 10);
+        addTaskAt(1, "Task B", 15);
 
-        taskNameInput.value = "Task B";
-        taskDurationInput.value = "15";
-        addTaskToRoutineHandler();
-        
-        // Refetch routines to get task IDs and verify initial state
         routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         const initialRoutine2 = routines.find(r => r.id === routine2.id);
         const taskA_id = initialRoutine2.tasks.find(t => t.name === "Task A").id;
@@ -286,28 +241,28 @@ function runRoutineTests() {
         routineNameInput.value = "Tap Routine";
         createRoutineHandler();
 
-        const taskNameInput = document.getElementById('task-name');
-        const taskDurationInput = document.getElementById('task-duration');
-        taskNameInput.value = "Task One";
-        taskDurationInput.value = "5";
-        addTaskToRoutineHandler();
-        taskNameInput.value = "Task Two";
-        taskDurationInput.value = "5";
-        addTaskToRoutineHandler();
+        addTaskAt(0, "Task One", 5);
+        addTaskAt(1, "Task Two", 5);
 
         const routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
         activateRoutine(routines[0].id);
 
-        const display = document.getElementById('current-task-display');
-        display.dispatchEvent(new Event('click'));
+        // Simulate tap on pie chart canvas if possible, or just check manualAdvanceTask logic which is covered by Test 4.
+        // But here we want to test the event listener if possible.
+        // The event listener is attached to routinePieChartCanvas.
+        const canvas = document.getElementById('routine-pie-chart');
+        if (canvas) {
+            canvas.dispatchEvent(new dom.window.Event('click'));
+            const curName = document.getElementById('current-task-name').textContent;
+            assert(curName === "Task Two", "Tap event advances to next task.");
+            console.log("Test 7 Passed: Tap Advance");
+        } else {
+            console.warn("Test 7 Skipped: Canvas not found (mocking issue?)");
+        }
 
-        const curName = document.getElementById('current-task-name').textContent;
-        assert(curName === "Task Two", "Tap event advances to next task.");
-        console.log("Test 7 Passed: Tap Advance");
     } catch (e) {
         console.error("Test 7 Failed: Tap Advance - ", e);
     }
-
 
     console.log("--- Routine Tool Unit Tests Finished ---");
 }

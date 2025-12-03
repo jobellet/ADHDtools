@@ -15,7 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // const taskNameInput = document.getElementById('task-name'); // Removed
     // const taskDurationInput = document.getElementById('task-duration'); // Removed
     // const taskBreakInput = document.getElementById('task-break-duration'); // Removed
-    // const addTaskToRoutineBtn = document.getElementById('add-task-to-routine-btn'); // Removed
+    // const taskNameInput = document.getElementById('task-name'); // Removed
+    // const taskDurationInput = document.getElementById('task-duration'); // Removed
+    // const taskBreakInput = document.getElementById('task-break-duration'); // Removed
+    const addTaskToRoutineBtn = document.getElementById('add-task-to-routine-btn'); // Defined to prevent ReferenceError
 
     const routineStartTimeInput = document.getElementById('routine-start-time');
     const setStartTimeBtn = document.getElementById('set-start-time-btn');
@@ -771,7 +774,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         routineSelect.disabled = true;
         createRoutineBtn.disabled = true;
-        addTaskToRoutineBtn.disabled = true;
+        routineSelect.disabled = true;
+        createRoutineBtn.disabled = true;
+        if (addTaskToRoutineBtn) addTaskToRoutineBtn.disabled = true;
+        setStartTimeBtn.disabled = true;
         setStartTimeBtn.disabled = true;
         startSelectedRoutineBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Routine Active';
         startSelectedRoutineBtn.disabled = true;
@@ -808,7 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             routineSelect.disabled = false;
             createRoutineBtn.disabled = false;
-            addTaskToRoutineBtn.disabled = false;
+            if (addTaskToRoutineBtn) addTaskToRoutineBtn.disabled = false;
             setStartTimeBtn.disabled = false;
             startSelectedRoutineBtn.innerHTML = '<i class="fas fa-play"></i> Start Selected Routine';
             startSelectedRoutineBtn.disabled = false;
@@ -1384,5 +1390,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Call initialization
     initializeRoutines();
+
+    // Expose functions for testing
+    window.initializeRoutines = loadRoutines; // loadRoutines is the initialization function
+    window.createRoutineHandler = createRoutineHandler;
+    window.addTaskAt = addTaskAt;
+    window.activateRoutine = activateRoutine;
+    window.manualAdvanceTask = manualAdvanceTask;
+    window.editTaskInRoutine = editTaskInRoutine;
+    window.deleteTaskFromRoutine = deleteTaskFromRoutine;
 
 });
