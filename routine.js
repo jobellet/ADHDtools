@@ -987,7 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         createRoutineBtn.addEventListener('click', createRoutineHandler);
-        addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler);
+        // addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler); // Removed
         setStartTimeBtn.addEventListener('click', setRoutineStartTimeHandler);
         startSelectedRoutineBtn.addEventListener('click', startSelectedRoutineHandler);
 
@@ -1197,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.initializeRoutines = initializeRoutines;
     window.createRoutineHandler = createRoutineHandler;
-    window.addTaskToRoutineHandler = addTaskToRoutineHandler;
+    // window.addTaskToRoutineHandler = addTaskToRoutineHandler; // Removed
     window.activateRoutine = activateRoutine;
     window.manualAdvanceTask = manualAdvanceTask;
     window.editTaskInRoutine = editTaskInRoutine;
