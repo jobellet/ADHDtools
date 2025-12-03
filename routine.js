@@ -713,6 +713,10 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Cannot start an empty routine. Add some tasks first.");
             return;
         }
+
+        // Switch to player view if not already
+        updateRoutineView(true);
+
         activateRoutine(selectedRoutineId);
     }
 
@@ -740,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createRoutineBtn.disabled = true;
         addTaskToRoutineBtn.disabled = true;
         setStartTimeBtn.disabled = true;
-        startSelectedRoutineBtn.textContent = "Routine Active";
+        startSelectedRoutineBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Routine Active';
         startSelectedRoutineBtn.disabled = true;
         startSelectedRoutineBtn.blur();
         if (activeRoutineDisplay) activeRoutineDisplay.style.display = 'none';
@@ -777,7 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
             createRoutineBtn.disabled = false;
             addTaskToRoutineBtn.disabled = false;
             setStartTimeBtn.disabled = false;
-            startSelectedRoutineBtn.textContent = "Start Selected Routine";
+            startSelectedRoutineBtn.innerHTML = '<i class="fas fa-play"></i> Start Selected Routine';
             startSelectedRoutineBtn.disabled = false;
 
             if (activeRoutineDisplay) activeRoutineDisplay.style.display = '';
