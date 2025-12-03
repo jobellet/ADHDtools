@@ -47,15 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePlayerSection = document.querySelector('.routine-player'); // Assuming this is the correct selector
     const routineSetupSection = document.querySelector('.routine-setup'); // Assuming this is the correct selector
 
-    routineNameInput,
+    const essential = [
+        routineNameInput,
         createRoutineBtn,
         routineSelect,
-        // taskNameInput, // Removed
-        // taskDurationInput, // Removed
-        // addTaskToRoutineBtn, // Removed
         routineStartTimeInput,
         setStartTimeBtn,
         startSelectedRoutineBtn
+    ];
     if (essential.some(el => !el)) {
         console.warn('Routine tool elements missing; skipping initialization');
         return;
