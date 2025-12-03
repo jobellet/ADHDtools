@@ -1936,7 +1936,9 @@ button {
     gap: 1rem;
     border-top: 2px solid #f0f0f0;
     padding-top: 1rem;
-}/* Routine Editor Table Layout */
+}
+
+/* Routine Editor Table Layout */
 .routine-editor-table {
     display: flex;
     flex-direction: column;
@@ -2045,7 +2047,9 @@ button {
     margin-top: 1rem;
     font-weight: bold;
     text-align: right;
-}/* Routine Editor Table Layout - Enhanced */
+}
+
+/* Routine Editor Table Layout - Enhanced */
 .routine-editor-table {
     display: flex;
     flex-direction: column;
@@ -2059,7 +2063,7 @@ button {
 
 .routine-table-header {
     display: grid;
-    grid-template-columns: 40px 100px 1fr 140px 100px;
+    grid-template-columns: 30px 85px 1fr 110px 65px;
     background-color: #f5f5f5;
     padding: 0.75rem 1rem;
     font-weight: bold;
@@ -2078,8 +2082,8 @@ button {
 .routine-task-list-container::before {
     content: '';
     position: absolute;
-    left: 20px;
-    /* Center of grip column (40px/2) */
+    left: 15px;
+    /* Center of grip column (30px/2) */
     top: 0;
     bottom: 0;
     width: 2px;
@@ -2089,7 +2093,7 @@ button {
 
 .routine-row {
     display: grid;
-    grid-template-columns: 40px 100px 1fr 140px 100px;
+    grid-template-columns: 30px 85px 1fr 110px 65px;
     padding: 0.75rem 1rem;
     align-items: center;
     border-bottom: 1px solid #eee;
@@ -2129,7 +2133,7 @@ button {
 .col-time {
     font-family: monospace;
     color: #666;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 /* Duration Column with Smart Controls */
@@ -2237,7 +2241,7 @@ button {
 /* New Task Input Row */
 .routine-new-task-row {
     display: grid;
-    grid-template-columns: 40px 100px 1fr 140px 100px;
+    grid-template-columns: 30px 85px 1fr 110px 65px;
     padding: 0.75rem 1rem;
     align-items: center;
     background-color: #e8f5e9;
