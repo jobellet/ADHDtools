@@ -553,6 +553,35 @@ document.addEventListener('DOMContentLoaded', () => {
         routineNameInput.value = ''; // Clear input
     }
 
+    function deleteRoutineHandler() {
+        if (!selectedRoutineId) {
+            alert("Please select a routine to delete.");
+            return;
+        }
+
+        const routine = getRoutineById(selectedRoutineId);
+        if (!routine) return;
+
+        if (confirm(`Are you sure you want to delete the routine "${routine.name}"? This cannot be undone.`)) {
+            const index = routines.findIndex(r => r.id === selectedRoutineId);
+            if (index > -1) {
+                routines.splice(index, 1);
+                saveRoutines();
+
+                // Select another routine if available
+                if (routines.length > 0) {
+                    selectedRoutineId = routines[Math.max(0, index - 1)].id;
+                } else {
+                    selectedRoutineId = null;
+                }
+
+                updateRoutineSelectDropdown();
+                displaySelectedRoutineDetails();
+                alert(`Routine "${routine.name}" deleted.`);
+            }
+        }
+    }
+
     // addTaskToRoutineHandler removed as it is replaced by inline insertion logic
 
 
@@ -994,6 +1023,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // addTaskToRoutineBtn.addEventListener('click', addTaskToRoutineHandler); // Removed
         setStartTimeBtn.addEventListener('click', setRoutineStartTimeHandler);
         startSelectedRoutineBtn.addEventListener('click', startSelectedRoutineHandler);
+
+        const deleteRoutineBtn = document.getElementById('delete-routine-btn');
+        if (deleteRoutineBtn) {
+            deleteRoutineBtn.addEventListener('click', deleteRoutineHandler);
+        }
 
         // Import/Export Listeners
         const importBtn = document.getElementById('import-routine-btn');

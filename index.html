@@ -702,27 +702,44 @@
                 <div class="routine-container routine-layout">
                     <div class="routine-setup routine-section-hidden">
                         <h3 data-i18n="routine-manage-heading">Create & Manage Routines</h3>
-                        <div class="input-group">
-                            <label for="routine-name" data-i18n="routine-name-label">Routine Name:</label>
-                            <input type="text" id="routine-name" placeholder="e.g., Morning Prep">
-                            <button id="create-routine-btn" class="btn" title="Create a new routine"
-                                data-i18n="routine-create-btn">Create Routine</button>
+
+                        <!-- Consolidated Controls -->
+                        <div class="routine-management-controls"
+                            style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                            <div class="input-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
+                                <label for="routine-select" data-i18n="routine-select-label"
+                                    style="display: block; margin-bottom: 0.5rem;">Select Routine:</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <select id="routine-select" style="flex: 1;"></select>
+                                    <button id="delete-routine-btn" class="btn btn-danger"
+                                        title="Delete current routine">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="routine-actions-row" style="display: flex; gap: 0.5rem;">
+                                <button id="import-routine-btn" class="btn btn-secondary"
+                                    title="Import routine from CSV">
+                                    <i class="fas fa-file-import"></i> Import
+                                </button>
+                                <button id="export-routine-btn" class="btn btn-secondary"
+                                    title="Export selected routine to CSV">
+                                    <i class="fas fa-file-export"></i> Export
+                                </button>
+                                <input type="file" id="routine-file-input" accept=".csv" style="display: none;">
+                            </div>
                         </div>
 
-                        <div class="input-group">
-                            <label for="routine-select" data-i18n="routine-select-label">Select Routine:</label>
-                            <select id="routine-select"></select>
-                        </div>
-
-                        <div class="routine-actions-row" style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
-                            <button id="import-routine-btn" class="btn btn-secondary" title="Import routine from CSV">
-                                <i class="fas fa-file-import"></i> Import CSV
-                            </button>
-                            <button id="export-routine-btn" class="btn btn-secondary"
-                                title="Export selected routine to CSV">
-                                <i class="fas fa-file-export"></i> Export CSV
-                            </button>
-                            <input type="file" id="routine-file-input" accept=".csv" style="display: none;">
+                        <div class="input-group" style="margin-bottom: 1.5rem;">
+                            <label for="routine-name" data-i18n="routine-name-label">Create New Routine:</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="routine-name" placeholder="e.g., Morning Prep" style="flex: 1;">
+                                <button id="create-routine-btn" class="btn" title="Create a new routine"
+                                    data-i18n="routine-create-btn">
+                                    <i class="fas fa-plus"></i> Create
+                                </button>
+                            </div>
                         </div>
 
                         <h4 id="current-routine-name" data-i18n="routine-none-active">No routine selected</h4>
