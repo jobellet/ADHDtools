@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
     if (pieChartContainer) pieChartContainer.style.display = 'none';
     let pieChart; // To be initialized later with Chart.js or a custom implementation
+    let autoRunEnabled = false; // Track auto-run state
+    // const routineAutoRunCheckbox = document.getElementById('routine-auto-run'); // Removed/Moved to focus mode
+    // const routineSkipBtn = document.getElementById('routine-skip-btn'); // Removed/Moved to focus mode
 
     // View Switching Elements
     const routineShowPlayerBtn = document.getElementById('routine-show-player-btn');
@@ -757,12 +760,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ROUTINE EXECUTION LOGIC ---
     function activateRoutine(routineId) {
-        activeRoutine = getRoutineById(routineId);
-        if (!activeRoutine) {
+        const originalRoutine = getRoutineById(routineId);
+        if (!originalRoutine) {
             console.error("Failed to activate routine: ID not found", routineId);
             alert("Error: Could not find the routine to activate.");
             return;
         }
+        // Deep copy the routine to allow modification (skipping/reordering) without affecting the saved routine
+        activeRoutine = JSON.parse(JSON.stringify(originalRoutine));
 
         if (currentTaskTimer) {
             clearInterval(currentTaskTimer);
@@ -806,6 +811,11 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTaskTimer = null;
         }
         activeTaskTimeLeftSeconds = 0; // Reset for next task or completion
+
+        // Clear flicker effect
+        if (focusModeEl) {
+            focusModeEl.classList.remove('overdue-flicker');
+        }
 
         if (!activeRoutine || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) {
             console.log("Routine completed.");
@@ -866,21 +876,71 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (activeTaskTimeLeftSeconds < 0) {
-                clearInterval(currentTaskTimer);
-                currentTaskTimer = null;
-                currentTaskIndex++;
-                startNextTask();
-                return;
+                // Overdue logic
+                if (focusModeEl && !focusModeEl.classList.contains('overdue-flicker')) {
+                    focusModeEl.classList.add('overdue-flicker');
+                }
+
+                // If Auto Run is enabled, advance immediately even if overdue
+                if (autoRunEnabled) {
+                    clearInterval(currentTaskTimer);
+                    currentTaskTimer = null;
+                    notify(`Task "${currentTask.name}" finished (Auto Run)`);
+                    currentTaskIndex++;
+                    startNextTask();
+                    return;
+                }
             }
 
             if (activeTaskTimeLeftSeconds <= 0 && !isTaskLate) {
-                clearInterval(currentTaskTimer);
-                currentTaskTimer = null;
-                notify(`Task "${currentTask.name}" finished`);
-                currentTaskIndex++;
-                startNextTask();
+                if (autoRunEnabled) {
+                    clearInterval(currentTaskTimer);
+                    currentTaskTimer = null;
+                    notify(`Task "${currentTask.name}" finished (Auto Run)`);
+                    currentTaskIndex++;
+                    startNextTask();
+                } else {
+                    // Just notify once when hitting 0, but let timer continue into negative for flicker
+                    if (activeTaskTimeLeftSeconds === 0) {
+                        notify(`Task "${currentTask.name}" time up!`);
+                    }
+                }
             }
         }, 1000);
+    }
+
+    function skipCurrentTask() {
+        if (!activeRoutine || currentTaskIndex >= activeRoutine.tasks.length) return;
+
+        const skippedTask = activeRoutine.tasks[currentTaskIndex];
+        console.log("Skipping task:", skippedTask.name);
+
+        // Remove current task
+        activeRoutine.tasks.splice(currentTaskIndex, 1);
+
+        // Insert after the *next* task (n+2 logic relative to original index, but since we removed one, it's index + 1)
+        // Current task was at `currentTaskIndex`. Next task is now at `currentTaskIndex`.
+        // We want to place skipped task AFTER the task that is currently at `currentTaskIndex`.
+        // So we insert at `currentTaskIndex + 1`.
+
+        // Check if there is a next task
+        if (currentTaskIndex < activeRoutine.tasks.length) {
+            // Insert after the next task
+            activeRoutine.tasks.splice(currentTaskIndex + 1, 0, skippedTask);
+            notify(`Skipped "${skippedTask.name}". Rescheduled after next task.`);
+        } else {
+            // No next task, just push to end (which is effectively the same as it was, but let's just re-add it)
+            // If it was the last task, skipping just restarts it? Or maybe we should just let it be.
+            // Requirement: "postponed and added to the cue after the next one".
+            // If there is no next one, maybe just add to end.
+            activeRoutine.tasks.push(skippedTask);
+            notify(`Skipped "${skippedTask.name}". Rescheduled to end.`);
+        }
+
+        // Don't increment currentTaskIndex because the "next" task shifted into the current slot
+        // But startNextTask expects to start the task at currentTaskIndex.
+        // So we just call startNextTask().
+        startNextTask();
     }
 
     function manualAdvanceTask() {
@@ -1078,6 +1138,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log("Routine Tool Initialized with task timer, spacebar/tap control, and input focus check.");
 
+        if (routineAutoRunCheckbox) {
+            routineAutoRunCheckbox.addEventListener('change', (e) => {
+                autoRunEnabled = e.target.checked;
+                console.log("Auto Run:", autoRunEnabled);
+            });
+        }
+
+        if (routineSkipBtn) {
+            routineSkipBtn.addEventListener('click', skipCurrentTask);
+        }
+
         // --- Task Receiving Logic ---
         if (window.EventBus) {
             window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);
@@ -1260,6 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const focusUpcomingTasks = document.getElementById('focus-upcoming-tasks');
     const focusCompleteBtn = document.getElementById('focus-complete-task-btn');
     const focusSkipBtn = document.getElementById('focus-skip-task-btn');
+    const focusAutoRunCheckbox = document.getElementById('focus-auto-run');
 
     function enterFocusMode() {
         if (!focusModeEl) return;
@@ -1353,7 +1425,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (focusSkipBtn) {
         focusSkipBtn.addEventListener('click', () => {
-            manualAdvanceTask();
+            skipCurrentTask(); // Use the new smart skip logic
+        });
+    }
+
+    if (focusAutoRunCheckbox) {
+        focusAutoRunCheckbox.addEventListener('change', (e) => {
+            autoRunEnabled = e.target.checked;
         });
     }
 

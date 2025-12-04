@@ -783,6 +783,17 @@
 
                         <div class="routine-controls">
                             <!-- Start button moved to top -->
+                            <div class="routine-player-controls"
+                                style="display: flex; gap: 1rem; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="routine-auto-run">
+                                    <span class="slider round"></span>
+                                    <span class="label-text">Auto Run</span>
+                                </label>
+                                <button id="routine-skip-btn" class="btn btn-warning"
+                                    title="Skip current task and reschedule"><i class="fas fa-forward"></i>
+                                    Skip</button>
+                            </div>
                         </div>
 
                         <div id="current-task-display">
@@ -847,6 +858,12 @@
                             <i class="fas fa-forward"></i>
                             <span>Skip</span>
                         </button>
+                        <label class="toggle-switch" style="flex-direction: column; gap: 0.2rem; margin-left: 1rem;">
+                            <input type="checkbox" id="focus-auto-run">
+                            <span class="slider round"></span>
+                            <span class="label-text" style="font-size: 0.8rem; color: var(--text-color);">Auto
+                                Run</span>
+                        </label>
                     </div>
 
                     <div class="routine-focus-task-list">
