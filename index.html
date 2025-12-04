@@ -885,8 +885,10 @@
                                     <span class="label-text">Auto Run</span>
                                 </label>
                                 <button id="routine-skip-btn" class="btn btn-warning"
-                                    title="Skip current task and reschedule"><i class="fas fa-forward"></i>
+                                    title="Skip current task"><i class="fas fa-forward"></i>
                                     Skip</button>
+                                <button id="routine-reschedule-btn" class="btn btn-secondary"
+                                    title="Reschedule current task">Reschedule</button>
                             </div>
                         </div>
 
@@ -905,6 +907,24 @@
                     </div>
                 </div>
             </section>
+
+            <div id="routine-reschedule-modal" class="routine-reschedule-modal hidden">
+                <div class="routine-reschedule-dialog">
+                    <div class="routine-reschedule-header">
+                        <h3>Reschedule Current Task</h3>
+                        <button id="routine-reschedule-close" class="close-btn" aria-label="Close reschedule window">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <p class="routine-reschedule-tip">Drag and drop to move the current task to a different spot in the
+                        queue.</p>
+                    <ul id="routine-reschedule-list" class="routine-reschedule-list"></ul>
+                    <div class="routine-reschedule-actions">
+                        <button id="routine-reschedule-cancel" class="btn btn-secondary">Cancel</button>
+                        <button id="routine-reschedule-save" class="btn btn-primary">Save Order</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Fullscreen Routine Focus Mode -->
             <div id="routine-focus-mode" class="routine-focus-mode hidden">
