@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Data Storage
     const ROUTINE_STORAGE_KEY = 'adhd-tool-routines';
+    const ROUTINE_RUN_REQUEST_KEY = 'adhd-tool-pending-routine-run';
     let routines = []; // Array to hold routine objects
     let selectedRoutineId = null; // ID of the currently selected routine in the dropdown
     let activeRoutine = null; // The routine object that is currently running
@@ -172,6 +173,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return crypto.randomUUID ? crypto.randomUUID() : 'routine-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     }
 
+    function buildRoutineRunUrl() {
+        const newTabUrl = new URL(window.location.href);
+        const pathSegments = newTabUrl.pathname.split('/').filter(Boolean);
+
+        if (pathSegments[pathSegments.length - 1]?.toLowerCase() !== 'routine') {
+            pathSegments[pathSegments.length] = 'routine';
+        }
+
+        newTabUrl.pathname = '/' + pathSegments.join('/');
+        newTabUrl.searchParams.set('autostartRoutine', '1');
+        return newTabUrl.toString();
+    }
+
     function updateRoutineSelectDropdown() {
         const previouslySelected = selectedRoutineId;
         routineSelect.innerHTML = '<option value="">-- Select a Routine --</option>';
@@ -267,6 +281,43 @@ document.addEventListener('DOMContentLoaded', () => {
             routineSelect.value = ""; // Ensure "-- Select a Routine --" is selected
         }
         displaySelectedRoutineDetails(); // Display details for the loaded/selected routine
+    }
+
+    function handlePendingRoutineRun() {
+        const params = new URLSearchParams(window.location.search);
+        const shouldAutoStart = params.get('autostartRoutine') === '1';
+        const pendingRunRaw = localStorage.getItem(ROUTINE_RUN_REQUEST_KEY);
+
+        if (!shouldAutoStart || !pendingRunRaw) {
+            return;
+        }
+
+        let pendingRun;
+        try {
+            pendingRun = JSON.parse(pendingRunRaw);
+        } catch (err) {
+            console.warn('Could not parse pending routine run request:', err);
+            localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
+            return;
+        }
+
+        if (!pendingRun || !pendingRun.routineId) {
+            localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
+            return;
+        }
+
+        const routineToRun = getRoutineById(pendingRun.routineId);
+        if (!routineToRun) {
+            localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
+            alert('The requested routine could not be found. Please try starting it again.');
+            return;
+        }
+
+        selectedRoutineId = routineToRun.id;
+        routineSelect.value = routineToRun.id;
+        updateRoutineView(true);
+        activateRoutine(routineToRun.id);
+        localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
     }
 
     // --- TIME CALCULATION HELPER ---
@@ -763,10 +814,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Switch to player view if not already
-        updateRoutineView(true);
+        const pendingRun = {
+            routineId: selectedRoutineId,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(ROUTINE_RUN_REQUEST_KEY, JSON.stringify(pendingRun));
 
-        activateRoutine(selectedRoutineId);
+        const newTabUrl = buildRoutineRunUrl();
+        const openedTab = window.open(newTabUrl, '_blank', 'noopener');
+
+        if (!openedTab) {
+            alert('Popup blocked. Starting routine in this tab instead.');
+            updateRoutineView(true);
+            activateRoutine(selectedRoutineId);
+            localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
+            return;
+        }
+
+        notify('Routine will run in a new tab.');
     }
 
     // --- PIE CHART FUNCTION ---
@@ -1099,6 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
         if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
         loadRoutines();
+        handlePendingRoutineRun();
 
         routineSelect.addEventListener('change', () => {
             selectedRoutineId = routineSelect.value;
