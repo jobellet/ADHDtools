@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerRoutineNameDisplay = document.getElementById('player-current-routine-name');
     const playerRoutineTasksList = document.getElementById('player-routine-tasks');
     const expectedFinishTimeDisplay = document.getElementById('expected-finish-time');
+    const calendarConflictDisplay = document.getElementById('routine-calendar-conflicts');
 
     const startSelectedRoutineBtn = document.getElementById('start-selected-routine-btn');
     const currentTaskNameDisplay = document.getElementById('current-task-name');
@@ -79,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeTaskTimeLeftSeconds = 0; // Stores the actual time left for the currently running task for manualAdvance logic
     let autoStartCheckTimer = null; // Stores the setInterval ID for checking auto-start times
     const autoStartedToday = {}; // Tracks routines that have auto-started today
+    let activeRoutineStartTime = null; // Timestamp of when the current routine began
+    let activeRoutineEndTime = null; // Expected end time based on current run
 
     // --- NOTIFICATION & AUTO-START HELPERS ---
     function requestNotificationPermission() {
@@ -101,6 +104,71 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.log(message);
         }
+    }
+
+    // --- CALENDAR COLLISION HELPERS ---
+    function parseCalendarDate(value, isEnd = false) {
+        if (!value) return null;
+        const dateString = value.length === 10 ? `${value}T${isEnd ? '23:59:59' : '00:00:00'}` : value;
+        const parsed = new Date(dateString);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function getCalendarEventsForToday() {
+        const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
+        const todayStr = new Date().toISOString().slice(0, 10);
+        return events.filter(ev => ev.start && ev.start.startsWith(todayStr));
+    }
+
+    function findRoutineCalendarConflicts(windowStart, windowEnd) {
+        if (!windowStart || !windowEnd) return [];
+
+        return getCalendarEventsForToday()
+            .map(ev => {
+                const start = parseCalendarDate(ev.start, false);
+                let end = parseCalendarDate(ev.end, true);
+
+                if (start && !end) {
+                    const defaultDurationMs = ev.start.length === 10 ? 24 * 60 * 60 * 1000 : 30 * 60 * 1000;
+                    end = new Date(start.getTime() + defaultDurationMs);
+                }
+
+                return {
+                    title: ev.title || 'Calendar event',
+                    start,
+                    end
+                };
+            })
+            .filter(ev => ev.start && ev.end && ev.start < windowEnd && ev.end > windowStart);
+    }
+
+    function formatClockTime(dateObj) {
+        return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function updateRoutineCalendarConflicts() {
+        if (!calendarConflictDisplay) return;
+
+        if (!activeRoutineStartTime || !activeRoutineEndTime) {
+            calendarConflictDisplay.style.display = 'none';
+            calendarConflictDisplay.textContent = '';
+            return;
+        }
+
+        const conflicts = findRoutineCalendarConflicts(activeRoutineStartTime, activeRoutineEndTime);
+
+        if (!conflicts.length) {
+            calendarConflictDisplay.style.display = 'none';
+            calendarConflictDisplay.textContent = '';
+            return;
+        }
+
+        const conflictText = conflicts
+            .map(ev => `${formatClockTime(ev.start)}–${formatClockTime(ev.end)}: ${ev.title}`)
+            .join('; ');
+
+        calendarConflictDisplay.textContent = `Calendar events overlap this routine: ${conflictText}`;
+        calendarConflictDisplay.style.display = '';
     }
 
     function scheduleAutoStartCheck() {
@@ -946,7 +1014,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const now = new Date();
         const finishTime = new Date(now.getTime() + activeRoutine.totalDuration * 60000);
+        activeRoutineStartTime = now;
+        activeRoutineEndTime = finishTime;
         expectedFinishTimeDisplay.textContent = finishTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        updateRoutineCalendarConflicts();
         if (currentTaskDisplay) currentTaskDisplay.style.display = '';
         if (pieChartContainer) pieChartContainer.style.display = '';
         drawPieChart(1, false);
@@ -1022,6 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (routineControls) routineControls.style.display = '';
             displaySelectedRoutineDetails();
             activeRoutine = null;
+            activeRoutineStartTime = null;
+            activeRoutineEndTime = null;
             currentTaskTimer = null;
             drawPieChart(0, false);
             if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
@@ -1033,6 +1106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             notify("Routine finished!");
+            updateRoutineCalendarConflicts();
             return;
         }
 
@@ -1365,6 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Task Receiving Logic ---
         if (window.EventBus) {
             window.EventBus.addEventListener('ef-receiveTaskFor-Routine', handleReceivedTaskForRoutine);
+            window.EventBus.addEventListener('calendarEventsUpdated', updateRoutineCalendarConflicts);
         }
 
         requestNotificationPermission();
