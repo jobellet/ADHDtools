@@ -129,6 +129,12 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             const toolName = link.dataset.tool;
             switchTool(toolName);
+
+            // Close the mobile nav menu after selection
+            if (mainNavLinks.classList.contains("nav-open")) {
+                mainNavLinks.classList.remove("nav-open");
+                hamburger.setAttribute("aria-expanded", false);
+            }
         });
     });
 
@@ -139,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hamburger.addEventListener("click", () => {
         const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
         hamburger.setAttribute("aria-expanded", !expanded);
-        mainNavLinks.classList.toggle("show");
+        mainNavLinks.classList.toggle("nav-open");
         // Don't switch to home on menu toggle, just toggle menu
     });
 
