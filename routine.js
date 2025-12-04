@@ -40,6 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentTaskDisplay = document.getElementById('current-task-display');
     const pieChartContainer = document.querySelector('.pie-chart-container');
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
+    const routineAutoRunCheckbox = document.getElementById('routine-auto-run');
+    const routineSkipBtn = document.getElementById('routine-skip-btn');
     if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
     if (pieChartContainer) pieChartContainer.style.display = 'none';
     let pieChart; // To be initialized later with Chart.js or a custom implementation
@@ -113,7 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (
                     routine.startTime === hhmm &&
                     autoStartedToday[routine.id] !== today &&
-                    !activeRoutine
+                    !activeRoutine &&
+                    Array.isArray(routine.tasks) &&
+                    routine.tasks.length > 0
                 ) {
                     autoStartedToday[routine.id] = today;
                     notify(`Starting routine: ${routine.name}`);
@@ -472,10 +476,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const routine = getRoutineById(selectedRoutineId);
         if (!routine) return;
 
+        const trimmedName = (name || '').trim();
+        const parsedDuration = parseInt(duration, 10);
+
+        if (!trimmedName || isNaN(parsedDuration) || parsedDuration <= 0) {
+            if (typeof alert === 'function') {
+                alert('Please provide a task name and a positive duration.');
+            }
+            return;
+        }
+
         const newTask = {
             id: generateId(),
-            name: name,
-            duration: duration
+            name: trimmedName,
+            duration: parsedDuration
         };
 
         routine.tasks.splice(index, 0, newTask);
@@ -764,6 +778,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!originalRoutine) {
             console.error("Failed to activate routine: ID not found", routineId);
             alert("Error: Could not find the routine to activate.");
+            return;
+        }
+        if (!originalRoutine.tasks || originalRoutine.tasks.length === 0) {
+            alert("Cannot start an empty routine. Add some tasks first.");
+            startSelectedRoutineBtn.disabled = false;
+            startSelectedRoutineBtn.innerHTML = '<i class="fas fa-play"></i> Start Selected Routine';
+            if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
+            if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
             return;
         }
         // Deep copy the routine to allow modification (skipping/reordering) without affecting the saved routine
@@ -1072,6 +1094,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALIZATION (adjusting the previous one) ---
     function initializeRoutines() {
+        startSelectedRoutineBtn.disabled = false;
+        startSelectedRoutineBtn.innerHTML = '<i class="fas fa-play"></i> Start Selected Routine';
+        if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
+        if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
         loadRoutines();
 
         routineSelect.addEventListener('change', () => {
@@ -1437,11 +1463,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add keyboard support (spacebar to complete task)
     document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && activeRoutine && !focusModeEl.classList.contains('hidden')) {
+        if (e.code === 'Space' && activeRoutine && focusModeEl && !focusModeEl.classList.contains('hidden')) {
             e.preventDefault();
             manualAdvanceTask();
         }
-        if (e.code === 'Escape' && activeRoutine && !focusModeEl.classList.contains('hidden')) {
+        if (e.code === 'Escape' && activeRoutine && focusModeEl && !focusModeEl.classList.contains('hidden')) {
             exitFocusMode();
         }
     });
@@ -1450,7 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const originalStartNextTask = startNextTask;
     startNextTask = function () {
         originalStartNextTask();
-        if (activeRoutine && !focusModeEl.classList.contains('hidden')) {
+        if (activeRoutine && focusModeEl && !focusModeEl.classList.contains('hidden')) {
             updateFocusUI();
         }
     };

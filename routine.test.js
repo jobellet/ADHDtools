@@ -32,6 +32,7 @@ const dom = new JSDOM(`<!DOCTYPE html><html><body>
 global.window = dom.window;
 global.document = dom.window.document;
 global.window.EventBus = { addEventListener: () => { } };
+global.alert = () => { };
 
 // Mock localStorage and canvas context before loading script
 const mockLocalStorage = (() => {
@@ -48,6 +49,8 @@ dom.window.HTMLCanvasElement.prototype.getContext = () => ({
     clearRect: () => { },
     beginPath: () => { },
     arc: () => { },
+    moveTo: () => { },
+    closePath: () => { },
     fill: () => { },
     stroke: () => { },
     lineWidth: 0,
@@ -84,6 +87,7 @@ function runRoutineTests() {
     // Test 1: Create a new routine
     try {
         localStorage.clear();
+        initializeRoutines();
         if (typeof initializeRoutines !== 'function' || typeof createRoutineHandler !== 'function') {
             console.error("Routine functions not available for testing. Load routine.js first or structure for testability.");
             return;
@@ -125,6 +129,26 @@ function runRoutineTests() {
         console.error("Test 2 Failed: Add Task - ", e);
     }
 
+    // Test 2b: Reject invalid task input
+    try {
+        console.log("--- Running Test 2b: Reject Invalid Task ---");
+        localStorage.clear();
+        initializeRoutines();
+
+        const routineNameInput = document.getElementById('routine-name');
+        routineNameInput.value = "Validation Routine";
+        createRoutineHandler();
+
+        // Attempt to add an invalid task (negative duration)
+        addTaskAt(0, " ", -5);
+
+        const routines = JSON.parse(localStorage.getItem('adhd-tool-routines'));
+        assert(routines[0].tasks.length === 0, "Invalid task data is ignored.");
+        console.log("Test 2b Passed: Reject Invalid Task");
+    } catch (e) {
+        console.error("Test 2b Failed: Reject Invalid Task - ", e);
+    }
+
     // Test 3: Start a routine and first task (basic check)
     try {
         localStorage.clear();
@@ -145,6 +169,27 @@ function runRoutineTests() {
         console.log("Test 3 Passed: Start Routine and First Task");
     } catch (e) {
         console.error("Test 3 Failed: Start Routine - ", e);
+    }
+
+    // Test 3b: Prevent starting an empty routine
+    try {
+        console.log("--- Running Test 3b: Prevent Empty Routine Start ---");
+        localStorage.clear();
+        initializeRoutines();
+
+        const routineNameInput = document.getElementById('routine-name');
+        routineNameInput.value = "Empty Routine";
+        createRoutineHandler();
+
+        const routineToStart = JSON.parse(localStorage.getItem('adhd-tool-routines'))[0];
+        const startButton = document.getElementById('start-selected-routine-btn');
+        activateRoutine(routineToStart.id);
+
+        assert(startButton.disabled === false, "Start button remains enabled when routine activation is rejected.");
+        assert(document.getElementById('current-task-name').textContent === "", "No task is started for empty routines.");
+        console.log("Test 3b Passed: Prevent Empty Routine Start");
+    } catch (e) {
+        console.error("Test 3b Failed: Prevent Empty Routine Start - ", e);
     }
 
     // Test 4: Manual task advance (basic check)
