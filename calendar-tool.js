@@ -490,24 +490,19 @@
 
   async function handleICSUrl(url) {
     if (!url) return;
-    try {
-      // Try direct fetch first
-      let resp = await fetch(url);
-      let text = await resp.text();
 
-      const parsed = parseICS(text);
-      parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
-      events = removeDuplicateEvents(events.concat(parsed));
-      saveEvents(events);
-      render();
-    } catch (err) {
-      console.error('Direct ICS fetch failed', err);
+    const proxyCandidates = [
+      url,
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      `https://cors.isomorphic-git.org/${encodeURIComponent(url)}`
+    ];
 
-      // Try using CORS proxy as fallback
+    for (const candidate of proxyCandidates) {
       try {
-        console.log('Attempting CORS proxy fallback...');
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const resp = await fetch(proxyUrl);
+        // The first attempt uses the direct URL. If CORS blocks it (common with Google
+        // Calendar ICS links), we progressively fall back to known CORS-friendly proxies.
+        const resp = await fetch(candidate);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const text = await resp.text();
 
         const parsed = parseICS(text);
@@ -515,12 +510,13 @@
         events = removeDuplicateEvents(events.concat(parsed));
         saveEvents(events);
         render();
-        console.log('Successfully loaded ICS via CORS proxy');
-      } catch (proxyErr) {
-        console.error('CORS proxy fetch also failed', proxyErr);
-        alert('Failed to load calendar. Please check the URL and try again.');
+        return;
+      } catch (err) {
+        console.error('ICS fetch failed for', candidate, err);
       }
     }
+
+    alert('Failed to load calendar. Please check the URL and try again.');
   }
 
   document.addEventListener('DOMContentLoaded', () => {
