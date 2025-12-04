@@ -906,6 +906,90 @@ footer {
     cursor: pointer;
 }
 
+.routine-view-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.routine-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.routine-setup,
+.routine-player {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: var(--box-shadow);
+}
+
+.routine-management-controls,
+.routine-select-row,
+.routine-name-row,
+.routine-player-controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.routine-task-list {
+    padding-left: 1rem;
+}
+
+@media (max-width: 768px) {
+    .routine-container {
+        grid-template-columns: 1fr;
+    }
+
+    .routine-view-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .routine-view-controls .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .routine-management-controls,
+    .routine-select-row,
+    .routine-name-row,
+    .routine-actions-row,
+    .routine-player-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .routine-management-controls .input-group,
+    .routine-actions-row,
+    .routine-name-row,
+    .routine-player-controls {
+        width: 100%;
+    }
+
+    .routine-select-row select,
+    .routine-select-row button,
+    .routine-name-row input,
+    .routine-name-row button,
+    .routine-actions-row button,
+    .routine-player-controls button,
+    #routine-start-time,
+    #set-start-time-btn {
+        width: 100%;
+    }
+
+    .routine-player-controls {
+        gap: 0.5rem;
+    }
+}
+
 /* Eisenhower Matrix */
 .eisenhower-container {
     max-width: 800px;
