@@ -166,11 +166,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DATA STRUCTURES ---
     // Routine Object: { id: string, name: string, tasks: Array, startTime: string (HH:MM), totalDuration: number (minutes) }
-    // Task Object: { id: string, name: string, duration: number (minutes) } // Note: 'completed' field removed as per new instructions
+    // Task Object: { id: string, name: string, duration: number (minutes), startAt?: string (HH:MM) } // Note: 'completed' field removed as per new instructions
 
     // --- UTILITY FUNCTIONS ---
     function generateId() {
         return crypto.randomUUID ? crypto.randomUUID() : 'routine-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    }
+
+    function parseTimeToMinutes(hhmm) {
+        if (!hhmm || typeof hhmm !== 'string') return null;
+        const trimmed = hhmm.trim();
+        const match = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+        if (!match) return null;
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        return hours * 60 + minutes;
+    }
+
+    function minutesToDate(minutesOfDay) {
+        const base = new Date();
+        const totalMinutes = Math.max(0, minutesOfDay || 0);
+        base.setHours(0, 0, 0, 0);
+        base.setMinutes(totalMinutes);
+        return base;
     }
 
     function buildRoutineRunUrl() {
@@ -262,6 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 // Ensure duration is a number
                 task.duration = parseInt(task.duration, 10) || 0;
+                const validatedStart = parseTimeToMinutes(task.startAt);
+                task.startAt = validatedStart !== null ? minutesToDate(validatedStart).toTimeString().slice(0, 5) : null;
                 routine.totalDuration += task.duration;
                 // Remove 'completed' field if it exists from older structures
                 delete task.completed;
@@ -322,19 +342,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- TIME CALCULATION HELPER ---
     function calculateTaskTimes(routine) {
-        let currentTime = new Date();
-        if (routine.startTime) {
-            const [hours, minutes] = routine.startTime.split(':').map(Number);
-            currentTime.setHours(hours, minutes, 0, 0);
-        } else {
-            // If no start time, use 00:00 as base for relative time
-            currentTime.setHours(0, 0, 0, 0);
-        }
+        let currentMinutes = routine.startTime ? parseTimeToMinutes(routine.startTime) : 0;
+        if (currentMinutes === null) currentMinutes = 0;
 
         return routine.tasks.map(task => {
-            const startTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            currentTime.setMinutes(currentTime.getMinutes() + task.duration);
-            const endTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const taskStartMinutes = parseTimeToMinutes(task.startAt);
+            const startMinutes = taskStartMinutes !== null ? taskStartMinutes : currentMinutes;
+            const endMinutes = startMinutes + task.duration;
+            currentMinutes = endMinutes;
+
+            const startDate = minutesToDate(startMinutes);
+            const endDate = minutesToDate(endMinutes);
+
+            const startTime = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const endTime = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return `${startTime} - ${endTime}`;
         });
     }
@@ -416,6 +437,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.appendChild(nameCol);
 
                 // 4. Duration Column (Smart Controls)
+                const startCol = document.createElement('div');
+                startCol.className = 'col-start';
+                const startInput = document.createElement('input');
+                startInput.type = 'time';
+                startInput.value = task.startAt || '';
+                startInput.addEventListener('change', (e) => {
+                    const value = e.target.value.trim();
+                    const minutesValue = parseTimeToMinutes(value);
+                    if (value && minutesValue === null) {
+                        alert('Please enter a valid start time in HH:MM format or leave blank.');
+                        e.target.value = task.startAt || '';
+                        return;
+                    }
+                    task.startAt = value && minutesValue !== null ? minutesToDate(minutesValue).toTimeString().slice(0, 5) : null;
+                    saveRoutines();
+                });
+                startCol.appendChild(startInput);
+                row.appendChild(startCol);
+
+                // 5. Duration Column (Smart Controls)
                 const durationCol = document.createElement('div');
                 durationCol.className = 'col-duration';
                 const durationControl = document.createElement('div');
@@ -449,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 durationCol.appendChild(durationControl);
                 row.appendChild(durationCol);
 
-                // 5. Actions Column
+                // 6. Actions Column
                 const actionsCol = document.createElement('div');
                 actionsCol.className = 'col-actions';
                 const deleteBtn = document.createElement('button');
@@ -484,6 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="col-grip"></div>
                 <div class="col-time">New</div>
                 <div class="col-name"><input type="text" placeholder="Task Name" id="new-task-name-${index}"></div>
+                <div class="col-start"><input type="time" id="new-task-start-${index}" aria-label="Task start time"></div>
                 <div class="col-duration"><input type="number" value="5" min="1" id="new-task-duration-${index}"></div>
                 <div class="col-actions">
                     <button id="save-new-task-${index}" class="btn btn-primary btn-sm">Add</button>
@@ -495,6 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const nameInput = newRow.querySelector(`#new-task-name-${index}`);
             const durationInput = newRow.querySelector(`#new-task-duration-${index}`);
+            const startInput = newRow.querySelector(`#new-task-start-${index}`);
             const saveBtn = newRow.querySelector(`#save-new-task-${index}`);
             const cancelBtn = newRow.querySelector(`#cancel-new-task-${index}`);
 
@@ -503,8 +546,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const saveHandler = () => {
                 const name = nameInput.value.trim();
                 const duration = parseInt(durationInput.value, 10);
+                const startAt = startInput.value.trim();
+                if (startAt && parseTimeToMinutes(startAt) === null) {
+                    alert('Please enter a valid start time (HH:MM) or leave blank.');
+                    return;
+                }
                 if (name && duration > 0) {
-                    addTaskAt(index, name, duration);
+                    addTaskAt(index, name, duration, startAt || null);
                 }
             };
 
@@ -523,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return zone;
     }
 
-    function addTaskAt(index, name, duration) {
+    function addTaskAt(index, name, duration, startAt = null) {
         const routine = getRoutineById(selectedRoutineId);
         if (!routine) return;
 
@@ -537,10 +585,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const normalizedStart = parseTimeToMinutes(startAt);
+
         const newTask = {
             id: generateId(),
             name: trimmedName,
-            duration: parsedDuration
+            duration: parsedDuration,
+            startAt: normalizedStart !== null ? minutesToDate(normalizedStart).toTimeString().slice(0, 5) : null
         };
 
         routine.tasks.splice(index, 0, newTask);
@@ -684,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- CORE DATA FUNCTIONS (Continued) ---
-    function editTaskInRoutine(taskId, newName, newDuration) {
+    function editTaskInRoutine(taskId, newName, newDuration, newStartAt = null) {
         if (!selectedRoutineId) {
             console.error("No routine selected to edit task in.");
             alert("Error: No routine selected.");
@@ -716,8 +767,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const normalizedStart = parseTimeToMinutes(newStartAt);
+        if (newStartAt && normalizedStart === null) {
+            alert('Please enter a valid start time in HH:MM format or leave blank.');
+            return;
+        }
+
         task.name = trimmedName;
         task.duration = duration;
+        task.startAt = normalizedStart !== null ? minutesToDate(normalizedStart).toTimeString().slice(0, 5) : null;
 
         // Recalculate totalDuration
         routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
@@ -742,6 +800,11 @@ document.addEventListener('DOMContentLoaded', () => {
         durationInput.min = '1';
         durationInput.className = 'edit-routine-task-duration-input';
 
+        const startInput = document.createElement('input');
+        startInput.type = 'time';
+        startInput.value = task.startAt || '';
+        startInput.className = 'edit-routine-task-start-input';
+
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Save';
         saveBtn.className = 'save-routine-task-btn';
@@ -749,7 +812,8 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const newName = nameInput.value.trim();
             const newDuration = parseInt(durationInput.value, 10);
-            editTaskInRoutine(task.id, newName, newDuration);
+            const newStartAt = startInput.value.trim();
+            editTaskInRoutine(task.id, newName, newDuration, newStartAt || null);
             // displaySelectedRoutineDetails() called by editTaskInRoutine will restore view
         });
 
@@ -763,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         listItem.appendChild(nameInput);
         listItem.appendChild(durationInput);
+        listItem.appendChild(startInput);
         listItem.appendChild(saveBtn);
         listItem.appendChild(cancelBtn);
     }
@@ -892,6 +957,43 @@ document.addEventListener('DOMContentLoaded', () => {
         startNextTask();
     }
 
+    function selectNextTaskIndexAndDelay() {
+        const now = new Date();
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        const remaining = activeRoutine.tasks
+            .map((task, idx) => ({ task, idx, startMinutes: parseTimeToMinutes(task.startAt) }))
+            .filter(item => item.idx >= currentTaskIndex);
+
+        if (remaining.length === 0) return null;
+
+        const upcomingWithStart = remaining
+            .filter(item => item.startMinutes !== null && item.startMinutes >= nowMinutes)
+            .sort((a, b) => a.startMinutes - b.startMinutes);
+
+        const earliestScheduled = upcomingWithStart[0];
+
+        if (!earliestScheduled) {
+            return { index: currentTaskIndex, delaySeconds: 0 };
+        }
+
+        const windowMinutes = earliestScheduled.startMinutes - nowMinutes;
+
+        if (windowMinutes > 0) {
+            const fitCandidates = remaining
+                .filter(item => item.idx !== earliestScheduled.idx)
+                .filter(item => (item.startMinutes === null || item.startMinutes <= nowMinutes) && item.task.duration <= windowMinutes)
+                .sort((a, b) => a.task.duration - b.task.duration);
+
+            if (fitCandidates.length > 0) {
+                return { index: fitCandidates[0].idx, delaySeconds: 0 };
+            }
+
+            return { index: earliestScheduled.idx, delaySeconds: windowMinutes * 60 };
+        }
+
+        return { index: earliestScheduled.idx, delaySeconds: 0 };
+    }
+
     function startNextTask() {
         if (currentTaskTimer) {
             clearInterval(currentTaskTimer);
@@ -934,17 +1036,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const selection = selectNextTaskIndexAndDelay();
+        if (!selection) {
+            console.log("No further tasks available.");
+            return;
+        }
+
+        const targetIndex = selection.index;
+        if (targetIndex !== currentTaskIndex) {
+            const [nextTask] = activeRoutine.tasks.splice(targetIndex, 1);
+            activeRoutine.tasks.splice(currentTaskIndex, 0, nextTask);
+        }
+
         const currentTask = activeRoutine.tasks[currentTaskIndex];
         console.log("Starting task:", currentTask.name, "Duration:", currentTask.duration, "min");
 
         const remainingTasks = activeRoutine.tasks.slice(currentTaskIndex);
-        const totalRemainingMinutes = remainingTasks.reduce((s, t) => s + t.duration, 0);
+        const totalRemainingMinutes = remainingTasks.reduce((s, t) => s + t.duration, 0) + (selection.delaySeconds || 0) / 60;
         const finishTime = new Date(Date.now() + totalRemainingMinutes * 60000);
         expectedFinishTimeDisplay.textContent = finishTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         currentTaskNameDisplay.textContent = currentTask.name;
-        activeTaskTimeLeftSeconds = currentTask.duration * 60;
-        const originalTaskDurationSeconds = currentTask.duration * 60;
+        activeTaskTimeLeftSeconds = currentTask.duration * 60 + (selection.delaySeconds || 0);
+        const originalTaskDurationSeconds = activeTaskTimeLeftSeconds;
 
         drawPieChart(1, false);
         currentTaskTimeLeftDisplay.textContent = `${Math.floor(activeTaskTimeLeftSeconds / 60)}:${String(activeTaskTimeLeftSeconds % 60).padStart(2, '0')}`;
@@ -1061,10 +1175,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let csvContent = "data:text/csv;charset=utf-8,";
-        // Format: Task Name, Duration
+        // Format: Task Name, Duration, Start At (HH:MM optional)
         routine.tasks.forEach(task => {
             const name = task.name.replace(/"/g, '""'); // Escape quotes
-            const row = `"${name}",${task.duration}`;
+            const start = task.startAt ? task.startAt : '';
+            const row = `"${name}",${task.duration},"${start}"`;
             csvContent += row + "\r\n";
         });
 
@@ -1101,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     columns.push(val);
                 }
 
-                // Expecting: Name, Duration
+                // Expecting: Name, Duration, Optional Start
                 if (columns.length >= 2) {
                     // Clean up regex artifacts if needed, but the loop handles it.
                     // Actually, let's use a simpler robust split for the specific format requested.
@@ -1109,19 +1224,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     let name = columns[0].trim();
                     let duration = parseInt(columns[1], 10);
+                    let startAt = columns[2] ? columns[2].trim() : '';
 
                     // Fallback for simple comma split if regex failed or for simple lines
                     if (!name && row.indexOf(',') > -1) {
                         const parts = row.split(',');
                         name = parts[0].trim();
                         duration = parseInt(parts[1], 10);
+                        startAt = parts[2] ? parts[2].trim() : '';
                     }
+
+                    const normalizedStart = parseTimeToMinutes(startAt);
+                    const safeStart = startAt && normalizedStart !== null ? minutesToDate(normalizedStart).toTimeString().slice(0, 5) : null;
 
                     if (name && !isNaN(duration)) {
                         tasks.push({
                             id: generateId(),
                             name: name,
-                            duration: duration
+                            duration: duration,
+                            startAt: safeStart
                         });
                         totalDuration += duration;
                     }
@@ -1129,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (tasks.length === 0) {
-                alert('No valid tasks found in CSV. Format should be: Task Name, Duration (minutes)');
+                alert('No valid tasks found in CSV. Format should be: Task Name, Duration (minutes), Optional Start Time (HH:MM)');
                 return;
             }
 
