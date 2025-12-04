@@ -2497,6 +2497,90 @@ input:checked + .slider:before {
          g a p :   1 r e m ;  
  }  
   
+/* Routine reschedule modal */
+.routine-reschedule-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.routine-reschedule-modal.hidden {
+    display: none;
+}
+
+.routine-reschedule-dialog {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: min(480px, 90vw);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.routine-reschedule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.routine-reschedule-tip {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.routine-reschedule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.routine-reschedule-item {
+    background: #f8f8f8;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: grab;
+}
+
+.routine-reschedule-item.dragging {
+    opacity: 0.6;
+}
+
+.routine-reschedule-grip {
+    color: #999;
+}
+
+.routine-reschedule-name {
+    flex: 1;
+    font-weight: 600;
+}
+
+.routine-reschedule-meta {
+    color: #777;
+    font-size: 0.9rem;
+}
+
+.routine-reschedule-current {
+    background: #e8f4ff;
+    border-color: #90c2ff;
+}
+
+.routine-reschedule-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
  . c a l e n d a r - h e a d e r - t i t l e   {  
          m a r g i n :   0 ;  
          f o n t - s i z e :   1 . 2 5 r e m ;  

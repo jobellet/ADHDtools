@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
     const routineAutoRunCheckbox = document.getElementById('routine-auto-run');
     const routineSkipBtn = document.getElementById('routine-skip-btn');
+    const routineRescheduleBtn = document.getElementById('routine-reschedule-btn');
+    const rescheduleModal = document.getElementById('routine-reschedule-modal');
+    const rescheduleList = document.getElementById('routine-reschedule-list');
+    const rescheduleSaveBtn = document.getElementById('routine-reschedule-save');
+    const rescheduleCancelBtn = document.getElementById('routine-reschedule-cancel');
+    const rescheduleCloseBtn = document.getElementById('routine-reschedule-close');
     if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
     if (pieChartContainer) pieChartContainer.style.display = 'none';
     let pieChart; // To be initialized later with Chart.js or a custom implementation
@@ -1190,31 +1196,121 @@ document.addEventListener('DOMContentLoaded', () => {
         const skippedTask = activeRoutine.tasks[currentTaskIndex];
         console.log("Skipping task:", skippedTask.name);
 
-        // Remove current task
+        // Remove current task completely and move to the next item in the queue
         activeRoutine.tasks.splice(currentTaskIndex, 1);
+        notify(`Skipped "${skippedTask.name}".`);
 
-        // Insert after the *next* task (n+2 logic relative to original index, but since we removed one, it's index + 1)
-        // Current task was at `currentTaskIndex`. Next task is now at `currentTaskIndex`.
-        // We want to place skipped task AFTER the task that is currently at `currentTaskIndex`.
-        // So we insert at `currentTaskIndex + 1`.
+        startNextTask();
+    }
 
-        // Check if there is a next task
-        if (currentTaskIndex < activeRoutine.tasks.length) {
-            // Insert after the next task
-            activeRoutine.tasks.splice(currentTaskIndex + 1, 0, skippedTask);
-            notify(`Skipped "${skippedTask.name}". Rescheduled after next task.`);
-        } else {
-            // No next task, just push to end (which is effectively the same as it was, but let's just re-add it)
-            // If it was the last task, skipping just restarts it? Or maybe we should just let it be.
-            // Requirement: "postponed and added to the cue after the next one".
-            // If there is no next one, maybe just add to end.
-            activeRoutine.tasks.push(skippedTask);
-            notify(`Skipped "${skippedTask.name}". Rescheduled to end.`);
+    let draggingRescheduleItem = null;
+
+    function getRescheduleDragAfterElement(container, y) {
+        const items = [...container.querySelectorAll('.routine-reschedule-item:not(.dragging)')];
+        return items.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset, element: child };
+            }
+            return closest;
+        }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+    }
+
+    function handleRescheduleDragStart(e) {
+        draggingRescheduleItem = e.currentTarget;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => draggingRescheduleItem.classList.add('dragging'), 0);
+    }
+
+    function handleRescheduleDragEnd() {
+        if (draggingRescheduleItem) {
+            draggingRescheduleItem.classList.remove('dragging');
+            draggingRescheduleItem = null;
         }
+    }
 
-        // Don't increment currentTaskIndex because the "next" task shifted into the current slot
-        // But startNextTask expects to start the task at currentTaskIndex.
-        // So we just call startNextTask().
+    function handleRescheduleDragOver(e) {
+        e.preventDefault();
+        if (!draggingRescheduleItem) return;
+        const afterElement = getRescheduleDragAfterElement(rescheduleList, e.clientY);
+        if (!afterElement) {
+            rescheduleList.appendChild(draggingRescheduleItem);
+        } else if (afterElement !== draggingRescheduleItem) {
+            rescheduleList.insertBefore(draggingRescheduleItem, afterElement);
+        }
+    }
+
+    function buildRescheduleList() {
+        if (!rescheduleList || !activeRoutine) return;
+        const remainingTasks = activeRoutine.tasks.slice(currentTaskIndex);
+        rescheduleList.innerHTML = '';
+
+        remainingTasks.forEach((task, idx) => {
+            const li = document.createElement('li');
+            li.className = 'routine-reschedule-item';
+            if (idx === 0) {
+                li.classList.add('routine-reschedule-current');
+            }
+            li.draggable = true;
+            li.dataset.index = currentTaskIndex + idx;
+
+            const grip = document.createElement('span');
+            grip.className = 'routine-reschedule-grip';
+            grip.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+
+            const name = document.createElement('span');
+            name.className = 'routine-reschedule-name';
+            name.textContent = task.name;
+
+            const meta = document.createElement('span');
+            meta.className = 'routine-reschedule-meta';
+            const parts = [`${task.duration} min`];
+            if (task.startAt) parts.push(task.startAt);
+            if (idx === 0) parts.push('current');
+            meta.textContent = parts.join(' • ');
+
+            li.appendChild(grip);
+            li.appendChild(name);
+            li.appendChild(meta);
+
+            li.addEventListener('dragstart', handleRescheduleDragStart);
+            li.addEventListener('dragend', handleRescheduleDragEnd);
+
+            rescheduleList.appendChild(li);
+        });
+    }
+
+    function openRescheduleModal() {
+        if (!activeRoutine || !rescheduleModal || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) return;
+        if (currentTaskTimer) {
+            clearInterval(currentTaskTimer);
+            currentTaskTimer = null;
+        }
+        buildRescheduleList();
+        rescheduleModal.classList.remove('hidden');
+    }
+
+    function closeRescheduleModal(shouldResume = false) {
+        if (rescheduleModal) {
+            rescheduleModal.classList.add('hidden');
+        }
+        if (shouldResume && activeRoutine) {
+            startNextTask();
+        }
+    }
+
+    function saveRescheduledOrder() {
+        if (!activeRoutine || !rescheduleList) return;
+        const order = Array.from(rescheduleList.children).map(item => Number(item.dataset.index));
+        const completedTasks = activeRoutine.tasks.slice(0, currentTaskIndex);
+        const remainingTasks = order.map(idx => activeRoutine.tasks[idx]).filter(Boolean);
+
+        activeRoutine.tasks = completedTasks.concat(remainingTasks);
+        currentTaskIndex = completedTasks.length;
+
+        closeRescheduleModal(false);
+        notify('Task order updated.');
         startNextTask();
     }
 
@@ -1434,6 +1530,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (routineSkipBtn) {
             routineSkipBtn.addEventListener('click', skipCurrentTask);
+        }
+
+        if (routineRescheduleBtn && rescheduleModal && rescheduleList) {
+            routineRescheduleBtn.addEventListener('click', openRescheduleModal);
+        }
+        if (rescheduleSaveBtn) {
+            rescheduleSaveBtn.addEventListener('click', saveRescheduledOrder);
+        }
+        if (rescheduleCancelBtn) {
+            rescheduleCancelBtn.addEventListener('click', () => closeRescheduleModal(true));
+        }
+        if (rescheduleCloseBtn) {
+            rescheduleCloseBtn.addEventListener('click', () => closeRescheduleModal(true));
+        }
+        if (rescheduleList) {
+            rescheduleList.addEventListener('dragover', handleRescheduleDragOver);
         }
 
         // --- Task Receiving Logic ---
