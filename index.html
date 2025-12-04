@@ -312,31 +312,123 @@
 
             <!-- Calendar Section -->
             <section id="calendar" class="tool-section">
-                <h2 data-i18n="calendar-heading">Calendar</h2>
-                <p data-i18n="calendar-text">Import calendar events from ICS files and manage them with other tools.</p>
+                <div class="calendar-layout">
+                    <!-- Sidebar / Settings -->
+                    <div class="calendar-sidebar">
+                        <h2 data-i18n="calendar-heading">Calendar</h2>
 
-                <div class="calendar-container">
-                    <div class="calendar-controls">
-                        <button id="calendar-prev-btn" class="btn">&lt;</button>
-                        <button data-view="day" class="calendar-view-btn btn">Day</button>
-                        <button data-view="week" class="calendar-view-btn btn">Week</button>
-                        <button data-view="month" class="calendar-view-btn btn">Month</button>
-                        <button id="calendar-next-btn" class="btn">&gt;</button>
+                        <div class="calendar-actions">
+                            <button id="import-ics-btn" class="btn btn-secondary btn-block"><i
+                                    class="fas fa-file-import"></i> Import ICS File</button>
+                            <input type="file" id="ics-file-input" accept=".ics" style="display:none">
+
+                            <div class="ics-url-input-group">
+                                <input type="url" id="ics-url" placeholder="Paste ICS URL...">
+                                <button id="load-ics-url-btn" class="btn btn-secondary btn-sm">Load</button>
+                            </div>
+                        </div>
+
+                        <div class="calendar-settings-panel">
+                            <h3>Settings</h3>
+                            <div class="voice-options">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="calendar-voice-enable">
+                                    <span data-i18n="calendar-voice-label">Voice alerts</span>
+                                </label>
+                                <div class="voice-early-input">
+                                    <span data-i18n="calendar-voice-early-label">Minutes early:</span>
+                                    <input type="number" id="calendar-voice-early" value="0" min="0">
+                                </div>
+                            </div>
+                            <!-- Google Calendar API Settings Container -->
+                            <div id="gcal-settings-container"></div>
+                        </div>
+
+                        <div class="calendar-guide-link">
+                            <button id="show-calendar-guide-btn" class="btn btn-outline btn-block">
+                                <i class="fas fa-question-circle"></i> How to Link Calendar
+                            </button>
+                        </div>
                     </div>
-                    <div id="calendar-header" class="calendar-header"></div>
-                    <button id="import-ics-btn" class="btn">Import ICS</button>
-                    <input type="file" id="ics-file-input" accept=".ics" style="display:none">
-                    <div class="ics-url-input">
-                        <input type="url" id="ics-url" placeholder="https://...ics">
-                        <button id="load-ics-url-btn" class="btn">Load ICS URL</button>
+
+                    <!-- Main Calendar View -->
+                    <div class="calendar-main">
+                        <div class="calendar-toolbar">
+                            <div class="calendar-nav">
+                                <button id="calendar-prev-btn" class="btn btn-icon"><i
+                                        class="fas fa-chevron-left"></i></button>
+                                <h3 id="calendar-header" class="calendar-header-title"></h3>
+                                <button id="calendar-next-btn" class="btn btn-icon"><i
+                                        class="fas fa-chevron-right"></i></button>
+                            </div>
+                            <div class="calendar-view-toggles">
+                                <button data-view="day" class="calendar-view-btn btn">Day</button>
+                                <button data-view="week" class="calendar-view-btn btn">Week</button>
+                                <button data-view="month" class="calendar-view-btn btn">Month</button>
+                            </div>
+                        </div>
+                        <div id="calendar-view" class="calendar-events-list"></div>
                     </div>
-                    <div class="voice-options">
-                        <label><input type="checkbox" id="calendar-voice-enable"> <span
-                                data-i18n="calendar-voice-label">Voice alerts</span></label>
-                        <label><span data-i18n="calendar-voice-early-label">Minutes early:</span> <input type="number"
-                                id="calendar-voice-early" value="0" min="0" style="width:4rem"></label>
+                </div>
+
+                <!-- How to Guide Modal -->
+                <div id="calendar-guide-modal" class="modal">
+                    <div class="modal-content guide-modal-content">
+                        <span class="close-button">&times;</span>
+                        <h2>How to Link Your Calendar</h2>
+                        <div class="guide-tabs">
+                            <button class="guide-tab active" data-target="guide-google">Google Calendar</button>
+                            <button class="guide-tab" data-target="guide-outlook">Outlook</button>
+                            <button class="guide-tab" data-target="guide-apple">Apple Calendar</button>
+                        </div>
+
+                        <div id="guide-google" class="guide-content active">
+                            <h3>Linking Google Calendar</h3>
+                            <ol>
+                                <li>Open Google Calendar on your computer.</li>
+                                <li>In the top right, click Settings <i class="fas fa-cog"></i> >
+                                    <strong>Settings</strong>.</li>
+                                <li>On the left sidebar, select the calendar you want to share.</li>
+                                <li>Scroll down to <strong>Integrate calendar</strong>.</li>
+                                <li>Copy the <strong>Secret address in iCal format</strong>.</li>
+                                <li>Paste this URL into the "Paste ICS URL..." box in this tool and click
+                                    <strong>Load</strong>.</li>
+                            </ol>
+                            <div class="guide-note">
+                                <i class="fas fa-info-circle"></i> <strong>Note:</strong> Use the "Secret address" to
+                                keep your calendar private while allowing this tool to access it.
+                            </div>
+                        </div>
+
+                        <div id="guide-outlook" class="guide-content">
+                            <h3>Linking Outlook Calendar</h3>
+                            <ol>
+                                <li>Open Outlook Web (outlook.office.com).</li>
+                                <li>Click Settings <i class="fas fa-cog"></i> > <strong>View all Outlook
+                                        settings</strong>.</li>
+                                <li>Go to <strong>Calendar</strong> > <strong>Shared calendars</strong>.</li>
+                                <li>Under "Publish a calendar", select the calendar and permissions (e.g., "Can view all
+                                    details").</li>
+                                <li>Click <strong>Publish</strong>.</li>
+                                <li>Copy the <strong>ICS</strong> link.</li>
+                                <li>Paste this URL into the "Paste ICS URL..." box in this tool and click
+                                    <strong>Load</strong>.</li>
+                            </ol>
+                        </div>
+
+                        <div id="guide-apple" class="guide-content">
+                            <h3>Linking Apple Calendar (iCloud)</h3>
+                            <ol>
+                                <li>Open the Calendar app on iCloud.com or your Mac.</li>
+                                <li>Click the broadcast icon <i class="fas fa-rss"></i> next to the calendar name.</li>
+                                <li>Check <strong>Public Calendar</strong>.</li>
+                                <li>Copy the link provided.</li>
+                                <li>Replace <code>webcal://</code> with <code>https://</code> in the URL.</li>
+                                <li>Paste this URL into the "Paste ICS URL..." box in this tool and click
+                                    <strong>Load</strong>.</li>
+                            </ol>
+                        </div>
                     </div>
-                    <div id="calendar-view" class="calendar-events-list"></div>
                 </div>
             </section>
 
@@ -570,7 +662,8 @@
                                     <option value="forest">Forest</option>
                                 </select>
                                 <button id="focus-sound-preview-fullscreen" class="btn btn-secondary"
-                                    type="button">Preview Sound</button>
+                                    type="button">Preview
+                                    Sound</button>
                             </div>
                         </div>
                         <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>

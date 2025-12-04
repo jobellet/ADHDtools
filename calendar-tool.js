@@ -1,7 +1,7 @@
 // calendar-tool.js
 // Simple Calendar tool with ICS import
 
-(function() {
+(function () {
   const STORAGE_KEY = 'adhd-calendar-events';
   const ICS_URL_KEY = 'adhd-calendar-ics-url';
   const VOICE_ENABLED_KEY = 'adhd-calendar-voice-enabled';
@@ -26,7 +26,7 @@
         if (t.duration) {
           const s = new Date(start);
           const e = new Date(s.getTime() + t.duration * 60000);
-          end = e.toISOString().slice(0,16);
+          end = e.toISOString().slice(0, 16);
         }
         return {
           id: t.id,
@@ -78,8 +78,8 @@
     const ev = {
       id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
       title,
-      start: start.toISOString().slice(0,16),
-      end: end.toISOString().slice(0,16)
+      start: start.toISOString().slice(0, 16),
+      end: end.toISOString().slice(0, 16)
     };
     events.push(ev);
     saveEvents(events);
@@ -90,12 +90,12 @@
     if (ev.start) {
       const start = new Date(ev.start);
       start.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-      ev.start = start.toISOString().slice(0,16);
+      ev.start = start.toISOString().slice(0, 16);
     }
     if (ev.end) {
       const end = new Date(ev.end);
       end.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-      ev.end = end.toISOString().slice(0,16);
+      ev.end = end.toISOString().slice(0, 16);
     }
   }
 
@@ -118,8 +118,8 @@
     const ev = events.find(ev => ev.id === id);
     if (!ev) return;
     const newTitle = prompt('Event title:', ev.title) || ev.title;
-    const newStart = prompt('Start (YYYY-MM-DDTHH:MM):', ev.start.slice(0,16)) || ev.start.slice(0,16);
-    const newEnd = prompt('End (YYYY-MM-DDTHH:MM):', ev.end ? ev.end.slice(0,16) : '') || (ev.end ? ev.end.slice(0,16) : '');
+    const newStart = prompt('Start (YYYY-MM-DDTHH:MM):', ev.start.slice(0, 16)) || ev.start.slice(0, 16);
+    const newEnd = prompt('End (YYYY-MM-DDTHH:MM):', ev.end ? ev.end.slice(0, 16) : '') || (ev.end ? ev.end.slice(0, 16) : '');
     ev.title = newTitle;
     ev.start = newStart;
     ev.end = newEnd;
@@ -172,7 +172,7 @@
     // collapse to plain string
     const match = value.match(/(\d{4})(\d{2})(\d{2})(T(\d{2})(\d{2})(\d{2}))?/);
     if (!match) return '';
-    const [ , y,m,d, , hh,mm,ss ] = match;
+    const [, y, m, d, , hh, mm, ss] = match;
     if (hh !== undefined) {
       return `${y}-${m}-${d}T${hh || '00'}:${mm || '00'}:${ss || '00'}` + (value.endsWith('Z') ? 'Z' : '');
     }
@@ -261,6 +261,9 @@
 
   function saveEvents(events) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    if (window.EventBus) {
+      window.EventBus.dispatchEvent(new Event('calendarEventsUpdated'));
+    }
   }
 
   function removeDuplicateEvents(evts) {
@@ -315,7 +318,7 @@
     if (!container) return;
     container.innerHTML = '';
     const allEvents = removeDuplicateEvents(events.concat(getPlannerEvents()));
-    allEvents.sort((a,b) => new Date(a.start) - new Date(b.start));
+    allEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
     updateHeader();
     switch (currentView) {
       case 'week':
@@ -354,8 +357,8 @@
       const tr = document.createElement('tr');
       const timeCell = document.createElement('td');
       if (ev.start) {
-        const startT = new Date(ev.start).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
-        const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+        const startT = new Date(ev.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const endT = ev.end ? new Date(ev.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
         timeCell.textContent = endT ? `${startT} - ${endT}` : startT;
       } else {
         timeCell.textContent = '';
@@ -376,11 +379,11 @@
     const day = (start.getDay() + 6) % 7; // Monday=0
     start.setDate(start.getDate() - day);
     const headerRow = document.createElement('tr');
-    for (let i=0;i<7;i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(start);
-      d.setDate(start.getDate()+i);
+      d.setDate(start.getDate() + i);
       const th = document.createElement('th');
-      th.textContent = d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+      th.textContent = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
       headerRow.appendChild(th);
     }
     const table = document.createElement('table');
@@ -389,9 +392,9 @@
     thead.appendChild(headerRow);
     const tbody = document.createElement('tbody');
     const row = document.createElement('tr');
-    for (let i=0;i<7;i++) {
+    for (let i = 0; i < 7; i++) {
       const cellDate = new Date(start);
-      cellDate.setDate(start.getDate()+i);
+      cellDate.setDate(start.getDate() + i);
       const cell = document.createElement('td');
       const dayStr = cellDate.toISOString().split('T')[0];
       cell.dataset.date = dayStr;
@@ -423,20 +426,20 @@
     table.className = 'calendar-table';
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
-    for (let i=0;i<7;i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(first);
       d.setDate(first.getDate() - startOffset + i);
       const th = document.createElement('th');
-      th.textContent = d.toLocaleDateString(undefined, {weekday:'short'});
+      th.textContent = d.toLocaleDateString(undefined, { weekday: 'short' });
       headRow.appendChild(th);
     }
     thead.appendChild(headRow);
     table.appendChild(thead);
     const tbody = document.createElement('tbody');
     let current = 1 - startOffset;
-    for (let r=0;r<6;r++) {
+    for (let r = 0; r < 6; r++) {
       const tr = document.createElement('tr');
-      for (let c=0;c<7;c++) {
+      for (let c = 0; c < 7; c++) {
         const cellDate = new Date(year, month, current);
         const cell = document.createElement('td');
         if (current >= 1 && current <= daysInMonth) {
@@ -484,23 +487,74 @@
     reader.readAsText(file);
   }
 
+
   async function handleICSUrl(url) {
     if (!url) return;
     try {
-      const resp = await fetch(url);
-      const text = await resp.text();
+      // Try direct fetch first
+      let resp = await fetch(url);
+      let text = await resp.text();
+
       const parsed = parseICS(text);
       parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
       events = removeDuplicateEvents(events.concat(parsed));
       saveEvents(events);
       render();
     } catch (err) {
-      console.error('ICS fetch failed', err);
+      console.error('Direct ICS fetch failed', err);
+
+      // Try using CORS proxy as fallback
+      try {
+        console.log('Attempting CORS proxy fallback...');
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const resp = await fetch(proxyUrl);
+        const text = await resp.text();
+
+        const parsed = parseICS(text);
+        parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
+        events = removeDuplicateEvents(events.concat(parsed));
+        saveEvents(events);
+        render();
+        console.log('Successfully loaded ICS via CORS proxy');
+      } catch (proxyErr) {
+        console.error('CORS proxy fetch also failed', proxyErr);
+        alert('Failed to load calendar. Please check the URL and try again.');
+      }
     }
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const container = document.querySelector('.calendar-container');
+    // Guide Modal Logic
+    const guideBtn = document.getElementById('show-calendar-guide-btn');
+    const guideModal = document.getElementById('calendar-guide-modal');
+    const guideClose = guideModal ? guideModal.querySelector('.close-button') : null;
+    const guideTabs = guideModal ? guideModal.querySelectorAll('.guide-tab') : [];
+    const guideContents = guideModal ? guideModal.querySelectorAll('.guide-content') : [];
+
+    if (guideBtn && guideModal) {
+      guideBtn.addEventListener('click', () => guideModal.style.display = 'block');
+    }
+    if (guideClose) {
+      guideClose.addEventListener('click', () => guideModal.style.display = 'none');
+    }
+    if (guideModal) {
+      window.addEventListener('click', (e) => {
+        if (e.target === guideModal) guideModal.style.display = 'none';
+      });
+    }
+
+    guideTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        guideTabs.forEach(t => t.classList.remove('active'));
+        guideContents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const targetId = tab.dataset.target;
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) targetContent.classList.add('active');
+      });
+    });
+
+    const container = document.getElementById('calendar'); // Main section
     if (!container) return;
 
     events = loadEvents();
@@ -541,9 +595,42 @@
 
     if (urlInput) urlInput.value = icsUrl;
 
+    // Smart input preprocessing for ICS URLs
+    function preprocessICSInput(input) {
+      input = input.trim();
+
+      // 1. Handle webcal:// protocol
+      if (input.startsWith('webcal://')) {
+        return input.replace('webcal://', 'https://');
+      }
+
+      // 2. Handle iframe embed codes
+      const iframeMatch = input.match(/src=["']([^"']+)["']/);
+      if (iframeMatch) {
+        input = iframeMatch[1];
+      }
+
+      // 3. Handle Google Calendar embed URLs (convert to ICS format)
+      const embedMatch = input.match(/calendar\.google\.com\/calendar\/embed\?src=([^&]+)/);
+      if (embedMatch) {
+        const calendarId = decodeURIComponent(embedMatch[1]);
+        return `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
+      }
+
+      // 4. Handle email addresses (assume it's a public Google Calendar ID)
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (emailRegex.test(input) && !input.includes('http')) {
+        return `https://calendar.google.com/calendar/ical/${encodeURIComponent(input)}/public/basic.ics`;
+      }
+
+      return input;
+    }
+
     if (loadUrlBtn && urlInput) {
       loadUrlBtn.addEventListener('click', () => {
-        icsUrl = urlInput.value.trim();
+        const rawInput = urlInput.value.trim();
+        icsUrl = preprocessICSInput(rawInput);
+        urlInput.value = icsUrl; // Update display with processed URL
         saveIcsUrl(icsUrl);
         handleICSUrl(icsUrl);
       });
