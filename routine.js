@@ -2074,7 +2074,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeRoutines();
 
     // Expose functions for testing
-    window.initializeRoutines = loadRoutines; // loadRoutines is the initialization function
+    window.initializeRoutines = initializeRoutines;
     window.createRoutineHandler = createRoutineHandler;
     window.addTaskAt = addTaskAt;
     window.activateRoutine = activateRoutine;
