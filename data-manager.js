@@ -482,6 +482,7 @@
     container.className = 'data-management-container';
     container.innerHTML = `
       <h3>Data Management</h3>
+      <p class="data-management-note">Exports include every saved item in your browser storage, including API keys and parameters.</p>
       <button id="export-data-btn" class="btn btn-primary">
         <i class="fas fa-download"></i> Export Data
       </button>

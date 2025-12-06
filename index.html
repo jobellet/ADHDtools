@@ -527,187 +527,229 @@
                 <form id="settings-form" class="settings-form">
                     <div class="settings-grid">
                         <div class="settings-panel">
-                            <h3>General</h3>
-                            <div class="setting-group">
-                                <label for="setting-day-start">Start of day</label>
-                                <input type="time" id="setting-day-start" name="dayStart" value="07:00">
-                            </div>
-                            <div class="setting-group">
-                                <label for="setting-day-end">End of day</label>
-                                <input type="time" id="setting-day-end" name="dayEnd" value="22:00">
-                            </div>
+                            <details class="settings-toggle">
+                                <summary>General</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group">
+                                        <label for="setting-day-start">Start of day</label>
+                                        <input type="time" id="setting-day-start" name="dayStart" value="07:00">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="setting-day-end">End of day</label>
+                                        <input type="time" id="setting-day-end" name="dayEnd" value="22:00">
+                                    </div>
+                                </div>
+                            </details>
                         </div>
 
                         <div class="settings-panel">
-                            <h3>Calendar</h3>
-                            <div class="setting-group">
-                                <label for="setting-ics-refresh">ICS refresh interval (seconds)</label>
-                                <input type="number" id="setting-ics-refresh" name="icsRefreshSeconds" min="10" step="5"
-                                    value="30">
-                            </div>
-                            <div class="setting-group">
-                                <label for="setting-fixed-tag">Default tag for fixed events</label>
-                                <input type="text" id="setting-fixed-tag" name="fixedTag" value="[FIX]">
-                            </div>
-                            <div class="setting-group">
-                                <label for="setting-flexible-tag">Default tag for flexible events</label>
-                                <input type="text" id="setting-flexible-tag" name="flexibleTag" value="[FLEX]">
-                            </div>
+                            <details class="settings-toggle">
+                                <summary>Calendar</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group">
+                                        <label for="setting-ics-refresh">ICS refresh interval (seconds)</label>
+                                        <input type="number" id="setting-ics-refresh" name="icsRefreshSeconds" min="10" step="5"
+                                            value="30">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="setting-fixed-tag">Default tag for fixed events</label>
+                                        <input type="text" id="setting-fixed-tag" name="fixedTag" value="[FIX]">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="setting-flexible-tag">Default tag for flexible events</label>
+                                        <input type="text" id="setting-flexible-tag" name="flexibleTag" value="[FLEX]">
+                                    </div>
+                                </div>
+                            </details>
                         </div>
 
                         <div class="settings-panel">
-                            <h3>Tasks</h3>
-                            <div class="setting-group">
-                                <label for="setting-default-task-minutes">Default estimated duration (minutes)</label>
-                                <input type="number" id="setting-default-task-minutes" name="defaultTaskMinutes" min="5"
-                                    max="240" value="25">
-                            </div>
+                            <details class="settings-toggle">
+                                <summary>Tasks</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group">
+                                        <label for="setting-default-task-minutes">Default estimated duration (minutes)</label>
+                                        <input type="number" id="setting-default-task-minutes" name="defaultTaskMinutes" min="5"
+                                            max="240" value="25">
+                                    </div>
+                                </div>
+                            </details>
                         </div>
 
                         <div class="settings-panel">
-                            <h3>Experimental</h3>
-                            <div class="setting-group checkbox-group">
-                                <input type="checkbox" id="setting-unified-scheduler" name="enableUnifiedScheduler">
-                                <label for="setting-unified-scheduler">Enable experimental unified scheduler (WIP)</label>
-                            </div>
-                            <div class="setting-group checkbox-group">
-                                <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
-                                <label for="setting-include-calendar">Include calendar events in unified scheduler</label>
-                            </div>
-                            <p class="coming-soon">More experimental features coming soon.</p>
+                            <details class="settings-toggle">
+                                <summary>Experimental</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-unified-scheduler" name="enableUnifiedScheduler">
+                                        <label for="setting-unified-scheduler">Enable experimental unified scheduler (WIP)</label>
+                                    </div>
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
+                                        <label for="setting-include-calendar">Include calendar events in unified scheduler</label>
+                                    </div>
+                                    <p class="coming-soon">More experimental features coming soon.</p>
+                                </div>
+                            </details>
                         </div>
 
                         <!-- Pomodoro Settings Panel -->
                         <div class="settings-panel">
-                            <h3>Pomodoro</h3>
-                            <div class="setting-group">
-                                <label for="focus-duration">Focus Duration (minutes)</label>
-                                <input type="number" id="focus-duration" min="1" max="60" value="25">
-                            </div>
-                            <div class="setting-group">
-                                <label for="short-break-duration">Short Break Duration (minutes)</label>
-                                <input type="number" id="short-break-duration" min="1" max="30" value="5">
-                            </div>
-                            <div class="setting-group">
-                                <label for="long-break-duration">Long Break Duration (minutes)</label>
-                                <input type="number" id="long-break-duration" min="1" max="60" value="15">
-                            </div>
-                            <div class="setting-group">
-                                <label for="sessions-before-long-break">Sessions Before Long Break</label>
-                                <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
-                            </div>
-                            <div class="setting-group">
-                                <label for="audio-notification">Audio Notification</label>
-                                <select id="audio-notification">
-                                    <option value="bell">Bell (Service Bell)</option>
-                                    <option value="chime">Chime (Wind Chimes)</option>
-                                    <option value="digital">Digital (Beep)</option>
-                                    <option value="none">None (No Sound)</option>
-                                </select>
-                                <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
-                            </div>
-                            <button id="save-settings" class="btn">Save Pomodoro Settings</button>
+                            <details class="settings-toggle">
+                                <summary>Pomodoro</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group">
+                                        <label for="focus-duration">Focus Duration (minutes)</label>
+                                        <input type="number" id="focus-duration" min="1" max="60" value="25">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="short-break-duration">Short Break Duration (minutes)</label>
+                                        <input type="number" id="short-break-duration" min="1" max="30" value="5">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="long-break-duration">Long Break Duration (minutes)</label>
+                                        <input type="number" id="long-break-duration" min="1" max="60" value="15">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="sessions-before-long-break">Sessions Before Long Break</label>
+                                        <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="audio-notification">Audio Notification</label>
+                                        <select id="audio-notification">
+                                            <option value="bell">Bell (Service Bell)</option>
+                                            <option value="chime">Chime (Wind Chimes)</option>
+                                            <option value="digital">Digital (Beep)</option>
+                                            <option value="none">None (No Sound)</option>
+                                        </select>
+                                        <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
+                                    </div>
+                                    <button id="save-settings" class="btn">Save Pomodoro Settings</button>
+                                </div>
+                            </details>
                         </div>
 
                         <!-- Focus Mode Settings Panel -->
                         <div class="settings-panel">
-                            <h3>Focus Mode</h3>
-                            <div class="setting-group">
-                                <label for="focus-duration-setting">Default Focus Session (minutes)</label>
-                                <input type="number" id="focus-duration-setting" min="5" max="240" value="25">
-                            </div>
-                            <div class="setting-group">
-                                <label for="focus-background">Default Background</label>
-                                <select id="focus-background">
-                                    <option value="solid">Solid Color</option>
-                                    <option value="gradient">Gradient</option>
-                                    <option value="nature">Nature</option>
-                                    <option value="minimal">Minimal</option>
-                                </select>
-                            </div>
-                            <div class="setting-group">
-                                <label for="focus-sound">Default Background Sound</label>
-                                <select id="focus-sound">
-                                    <option value="none">None</option>
-                                    <option value="white-noise">White Noise</option>
-                                    <option value="pink-noise">Pink Noise</option>
-                                    <option value="rain">Rain</option>
-                                    <option value="cafe">Cafe Ambience</option>
-                                    <option value="forest">Forest</option>
-                                </select>
-                                <!-- Preview Sound button removed to streamline Focus Mode settings -->
-                            </div>
+                            <details class="settings-toggle">
+                                <summary>Focus Mode</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group">
+                                        <label for="focus-duration-setting">Default Focus Session (minutes)</label>
+                                        <input type="number" id="focus-duration-setting" min="5" max="240" value="25">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="focus-background">Default Background</label>
+                                        <select id="focus-background">
+                                            <option value="solid">Solid Color</option>
+                                            <option value="gradient">Gradient</option>
+                                            <option value="nature">Nature</option>
+                                            <option value="minimal">Minimal</option>
+                                        </select>
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="focus-sound">Default Background Sound</label>
+                                        <select id="focus-sound">
+                                            <option value="none">None</option>
+                                            <option value="white-noise">White Noise</option>
+                                            <option value="pink-noise">Pink Noise</option>
+                                            <option value="rain">Rain</option>
+                                            <option value="cafe">Cafe Ambience</option>
+                                            <option value="forest">Forest</option>
+                                        </select>
+                                        <!-- Preview Sound button removed to streamline Focus Mode settings -->
+                                    </div>
+                                </div>
+                            </details>
                         </div>
 
                         <!-- Calendar Notifications & Google Calendar Panel -->
                         <div class="settings-panel">
-                            <h3>Calendar Notifications</h3>
-                            <div class="voice-options">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="calendar-voice-enable">
-                                    <span data-i18n="calendar-voice-label">Voice alerts</span>
-                                </label>
-                                <div class="voice-early-input">
-                                    <span data-i18n="calendar-voice-early-label">Minutes early:</span>
-                                    <input type="number" id="calendar-voice-early" value="0" min="0">
+                            <details class="settings-toggle">
+                                <summary>Calendar Notifications</summary>
+                                <div class="settings-content">
+                                    <div class="voice-options">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="calendar-voice-enable">
+                                            <span data-i18n="calendar-voice-label">Voice alerts</span>
+                                        </label>
+                                        <div class="voice-early-input">
+                                            <span data-i18n="calendar-voice-early-label">Minutes early:</span>
+                                            <input type="number" id="calendar-voice-early" value="0" min="0">
+                                        </div>
+                                    </div>
+                                    <div id="gcal-settings-container"></div>
                                 </div>
-                            </div>
-                            <div id="gcal-settings-container"></div>
+                            </details>
                         </div>
 
                         <!-- Tasks Overview Panel -->
                         <div class="settings-panel">
-                            <details>
+                            <details class="settings-toggle">
                                 <summary>Tasks Overview</summary>
-                                <div class="tasks-table-container">
-                                    <table id="settings-task-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Task</th>
-                                                <th>Priority</th>
-                                                <th>Category</th>
-                                                <th>Importance</th>
-                                                <th>Urgency</th>
-                                                <th>Depends On</th>
-                                                <th>Planner Date</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
+                                <div class="settings-content">
+                                    <div class="tasks-table-container">
+                                        <table id="settings-task-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Task</th>
+                                                    <th>Priority</th>
+                                                    <th>Category</th>
+                                                    <th>Importance</th>
+                                                    <th>Urgency</th>
+                                                    <th>Depends On</th>
+                                                    <th>Planner Date</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </details>
                         </div>
 
                         <!-- API / AI Settings Panel -->
                         <div class="settings-panel">
-                            <h3>API / AI</h3>
-                            <div id="api-settings"></div>
+                            <details class="settings-toggle">
+                                <summary>API / AI</summary>
+                                <div class="settings-content">
+                                    <div id="api-settings"></div>
+                                </div>
+                            </details>
                         </div>
 
                         <!-- Routine Settings Panel -->
                         <div class="settings-panel">
-                            <h3>Routine</h3>
-                            <div class="setting-group checkbox-group">
-                                <input type="checkbox" id="setting-routine-auto-run">
-                                <label for="setting-routine-auto-run">Enable auto-run by default</label>
-                            </div>
+                            <details class="settings-toggle">
+                                <summary>Routine</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-routine-auto-run">
+                                        <label for="setting-routine-auto-run">Enable auto-run by default</label>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
 
                         <!-- Calendar Imports Panel -->
                         <div class="settings-panel">
-                            <h3>Calendar Imports</h3>
-                            <div class="setting-group">
-                                <button id="import-ics-btn" class="btn btn-secondary" type="button">
-                                    <i class="fas fa-file-import"></i> Import .ics File
-                                </button>
-                                <input type="file" id="ics-file-input" accept=".ics" style="display:none">
-                            </div>
-                            <div class="setting-group">
-                                <label for="ics-url">ICS URL</label>
-                                <input type="url" id="ics-url" placeholder="Paste ics URL…">
-                                <button id="load-ics-url-btn" class="btn btn-secondary" type="button">Load</button>
-                            </div>
+                            <details class="settings-toggle">
+                                <summary>Calendar Imports</summary>
+                                <div class="settings-content">
+                                    <div class="setting-group">
+                                        <button id="import-ics-btn" class="btn btn-secondary" type="button">
+                                            <i class="fas fa-file-import"></i> Import .ics File
+                                        </button>
+                                        <input type="file" id="ics-file-input" accept=".ics" style="display:none">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="ics-url">ICS URL</label>
+                                        <input type="url" id="ics-url" placeholder="Paste ics URL…">
+                                        <button id="load-ics-url-btn" class="btn btn-secondary" type="button">Load</button>
+                                    </div>
+                                </div>
+                            </details>
                         </div>
                     </div>
 
