@@ -14,6 +14,8 @@
   let voiceEarly = 0; // minutes before event
   const announcedEarly = new Set();
   const announcedStart = new Set();
+  const createTask = window.TaskModel?.createTask;
+  const wrapTask = (task) => createTask ? createTask(task, task) : task;
 
   function getConfig() {
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
@@ -30,6 +32,7 @@
     if (!window.DataManager) return [];
     return window.DataManager
       .getTasks()
+      .map(wrapTask)
       .filter(t => t.plannerDate)
       .map(t => {
         const start = t.plannerDate;
