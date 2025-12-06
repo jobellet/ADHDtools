@@ -21,6 +21,44 @@
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
   }
 
+  function getTagConfig() {
+    const cfg = getConfig();
+    return {
+      fixedTag: cfg.fixedTag || '',
+      flexibleTag: cfg.flexibleTag || '',
+    };
+  }
+
+  function stripTagsFromTitle(title, tags = []) {
+    let cleaned = title || '';
+    tags.forEach(tag => {
+      if (!tag) return;
+      cleaned = cleaned.split(tag).join('');
+    });
+    return cleaned.trim();
+  }
+
+  function normalizeEvent(ev) {
+    if (!ev) return ev;
+    const { fixedTag, flexibleTag } = getTagConfig();
+    ev.rawTitle = ev.rawTitle || ev.title || '';
+    if (typeof ev.localOverride !== 'boolean') ev.localOverride = false;
+    const hasFixedTag = fixedTag && ev.rawTitle.includes(fixedTag);
+    const hasFlexibleTag = flexibleTag && ev.rawTitle.includes(flexibleTag);
+    if (hasFixedTag) ev.isFixed = true;
+    else if (hasFlexibleTag) ev.isFixed = false;
+    ev.title = stripTagsFromTitle(ev.rawTitle, [fixedTag, flexibleTag]);
+
+    if (!ev.id) ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now();
+    ev.calendarUid = ev.calendarUid || ev.uid || ev.id || null;
+    ev.instanceStart = ev.instanceStart || ev.start || null;
+    if (!ev.calendarInstanceId && ev.calendarUid && ev.instanceStart) {
+      ev.calendarInstanceId = `${ev.calendarUid}:${ev.instanceStart}`;
+    }
+    if (!ev.uid && ev.calendarUid) ev.uid = ev.calendarUid;
+    return ev;
+  }
+
   function getIcsRefreshIntervalMs() {
     const cfg = getConfig();
     const seconds = parseInt(cfg.icsRefreshSeconds, 10);
@@ -89,12 +127,12 @@
     const end = new Date(date);
     end.setHours(eh || sh || 0, em || sm || 0, 0, 0);
 
-    const ev = {
+    const ev = normalizeEvent({
       id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
       title,
       start: start.toISOString().slice(0, 16),
       end: end.toISOString().slice(0, 16)
-    };
+    });
     events.push(ev);
     saveEvents(events);
     render();
@@ -102,6 +140,7 @@
 
   function updateEventDate(ev, newDate) {
     if (ev.start) {
+      if (!ev.instanceStart) ev.instanceStart = ev.start;
       const start = new Date(ev.start);
       start.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
       ev.start = start.toISOString().slice(0, 16);
@@ -111,6 +150,8 @@
       end.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
       ev.end = end.toISOString().slice(0, 16);
     }
+    ev.localOverride = true;
+    normalizeEvent(ev);
   }
 
   function handleDragStart(e) {
@@ -131,12 +172,17 @@
   function editEvent(id) {
     const ev = events.find(ev => ev.id === id);
     if (!ev) return;
+    const previousStart = ev.start;
     const newTitle = prompt('Event title:', ev.title) || ev.title;
     const newStart = prompt('Start (YYYY-MM-DDTHH:MM):', ev.start.slice(0, 16)) || ev.start.slice(0, 16);
     const newEnd = prompt('End (YYYY-MM-DDTHH:MM):', ev.end ? ev.end.slice(0, 16) : '') || (ev.end ? ev.end.slice(0, 16) : '');
+    ev.rawTitle = newTitle;
     ev.title = newTitle;
     ev.start = newStart;
     ev.end = newEnd;
+    if (!ev.instanceStart && previousStart) ev.instanceStart = previousStart;
+    ev.localOverride = true;
+    normalizeEvent(ev);
     saveEvents(events);
     render();
   }
@@ -239,7 +285,7 @@
   function loadEvents() {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      return removeDuplicateEvents(stored);
+      return removeDuplicateEvents(stored.map(normalizeEvent));
     } catch {
       return [];
     }
@@ -283,11 +329,27 @@
   function removeDuplicateEvents(evts) {
     const seen = new Set();
     return evts.filter(ev => {
-      const key = ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
+      const key = ev.calendarInstanceId || ev.calendarUid || ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+  }
+
+  function mergeEventsPreserveOverrides(existing, incoming) {
+    const merged = new Map();
+    const getKey = (ev) => ev.calendarInstanceId || ev.calendarUid || ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
+
+    existing.forEach(ev => merged.set(getKey(ev), ev));
+
+    incoming.forEach(ev => {
+      const key = getKey(ev);
+      const current = merged.get(key);
+      if (current && current.localOverride) return;
+      merged.set(key, ev);
+    });
+
+    return Array.from(merged.values());
   }
 
   function speak(text) {
@@ -331,7 +393,8 @@
     const container = document.getElementById('calendar-view');
     if (!container) return;
     container.innerHTML = '';
-    const allEvents = removeDuplicateEvents(events.concat(getPlannerEvents()));
+    const plannerEvents = getPlannerEvents().map(ev => normalizeEvent({ ...ev }));
+    const allEvents = removeDuplicateEvents(events.concat(plannerEvents));
     allEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
     updateHeader();
     switch (currentView) {
@@ -488,8 +551,12 @@
     reader.onload = e => {
       try {
         const parsed = parseICS(e.target.result);
-        parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
-        events = removeDuplicateEvents(events.concat(parsed));
+        const normalized = parsed.map(ev => normalizeEvent({
+          ...ev,
+          id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
+          instanceStart: ev.start || ev.instanceStart,
+        }));
+        events = mergeEventsPreserveOverrides(events, normalized);
         saveEvents(events);
         render();
         alert(`Imported ${parsed.length} events.`);
@@ -520,8 +587,12 @@
         const text = await resp.text();
 
         const parsed = parseICS(text);
-        parsed.forEach(ev => ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
-        events = removeDuplicateEvents(events.concat(parsed));
+        const normalized = parsed.map(ev => normalizeEvent({
+          ...ev,
+          id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
+          instanceStart: ev.start || ev.instanceStart,
+        }));
+        events = mergeEventsPreserveOverrides(events, normalized);
         saveEvents(events);
         render();
         return;
@@ -580,6 +651,11 @@
         render();
       });
     }
+
+    window.addEventListener('configUpdated', () => {
+      events = events.map(normalizeEvent);
+      render();
+    });
 
     const defaultBtn = container.querySelector('.calendar-view-btn[data-view="' + currentView + '"]');
     if (defaultBtn) defaultBtn.classList.add('active');
