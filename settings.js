@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     flexibleTag: document.getElementById('setting-flexible-tag'),
     defaultTaskMinutes: document.getElementById('setting-default-task-minutes'),
     enableUnifiedScheduler: document.getElementById('setting-unified-scheduler'),
+    includeCalendarInSchedule: document.getElementById('setting-include-calendar'),
   };
 
   function populateFields(values) {
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.flexibleTag) fields.flexibleTag.value = values.flexibleTag;
     if (fields.defaultTaskMinutes) fields.defaultTaskMinutes.value = values.defaultTaskMinutes;
     if (fields.enableUnifiedScheduler) fields.enableUnifiedScheduler.checked = values.enableUnifiedScheduler;
+    if (fields.includeCalendarInSchedule) fields.includeCalendarInSchedule.checked = values.includeCalendarInSchedule;
   }
 
   populateFields(config);
@@ -46,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         flexibleTag: fields.flexibleTag?.value || window.ConfigManager.DEFAULT_CONFIG.flexibleTag,
         defaultTaskMinutes: Number(fields.defaultTaskMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.defaultTaskMinutes,
         enableUnifiedScheduler: fields.enableUnifiedScheduler?.checked || false,
+        includeCalendarInSchedule: fields.includeCalendarInSchedule?.checked || false,
       };
 
       const updated = window.ConfigManager.updateConfig(updates);

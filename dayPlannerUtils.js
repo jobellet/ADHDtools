@@ -1,4 +1,5 @@
 import { buildSchedule } from './core/scheduler.js';
+import { createTask as createTaskModel } from './core/task-model.js';
 
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -6,6 +7,23 @@ function clamp(value, min, max) {
 
 function getConfig() {
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
+}
+
+function getTagConfig() {
+    const cfg = getConfig();
+    return {
+        fixedTag: cfg.fixedTag || '',
+        flexibleTag: cfg.flexibleTag || '',
+    };
+}
+
+function stripTagsFromTitle(title, tags = []) {
+    let cleaned = title || '';
+    tags.forEach(tag => {
+        if (!tag) return;
+        cleaned = cleaned.split(tag).join('');
+    });
+    return cleaned.trim();
 }
 
 function minutesToTimeStr(minutes) {
@@ -90,6 +108,11 @@ export function getPlannerTasksForDay(currentDate) {
         });
     });
 
+    if (cfg.includeCalendarInSchedule) {
+        const calendarTasks = getCalendarTasksForDay(currentDate, defaultDuration);
+        schedulerTasks.push(...calendarTasks);
+    }
+
     const schedule = buildSchedule({
         tasks: schedulerTasks,
         now: currentDate,
@@ -153,9 +176,64 @@ export function getCalendarEvents(currentDate) {
     const dayStr = currentDate.toISOString().slice(0, 10);
     return events
         .filter(ev => ev.start && ev.start.startsWith(dayStr))
+        .map(ev => normalizeCalendarEvent(ev))
         .map(ev => ({
             title: ev.title || '',
-            start: ev.start.slice(11, 16),
-            end: ev.end ? ev.end.slice(11, 16) : null
+            start: ev.start ? ev.start.slice(11, 16) : null,
+            end: ev.end ? ev.end.slice(11, 16) : null,
+            isFixed: ev.isFixed !== false,
         }));
+}
+
+function normalizeCalendarEvent(rawEvent) {
+    const { fixedTag, flexibleTag } = getTagConfig();
+    const ev = { ...rawEvent };
+    ev.rawTitle = ev.rawTitle || ev.title || '';
+    const hasFixedTag = fixedTag && ev.rawTitle.includes(fixedTag);
+    const hasFlexibleTag = flexibleTag && ev.rawTitle.includes(flexibleTag);
+    if (hasFixedTag) ev.isFixed = true;
+    else if (hasFlexibleTag) ev.isFixed = false;
+    ev.title = stripTagsFromTitle(ev.rawTitle, [fixedTag, flexibleTag]) || ev.title || '';
+    if (!ev.calendarUid && ev.uid) ev.calendarUid = ev.uid;
+    if (!ev.instanceStart && ev.start) ev.instanceStart = ev.start;
+    if (!ev.calendarInstanceId && ev.calendarUid && ev.instanceStart) {
+        ev.calendarInstanceId = `${ev.calendarUid}:${ev.instanceStart}`;
+    }
+    return ev;
+}
+
+function getCalendarTasksForDay(currentDate, defaultDuration) {
+    const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
+    const dayStr = currentDate.toISOString().slice(0, 10);
+    return events
+        .filter(ev => ev.start && ev.start.startsWith(dayStr))
+        .map(ev => normalizeCalendarEvent(ev))
+        .map(ev => {
+            const startTimeStr = ev.start ? ev.start.slice(11, 16) : null;
+            let durationMinutes = defaultDuration;
+            if (ev.start && ev.end) {
+                const startDate = new Date(ev.start);
+                const endDate = new Date(ev.end);
+                const diff = Math.round((endDate - startDate) / 60000);
+                if (Number.isFinite(diff) && diff > 0) {
+                    durationMinutes = diff;
+                }
+            }
+            const isFixed = ev.isFixed !== undefined ? ev.isFixed : true;
+            const taskBase = {
+                id: ev.id || ev.calendarInstanceId || ev.calendarUid || `calendar-${Date.now()}`,
+                title: ev.title || '',
+                text: ev.title || '',
+                source: 'calendar',
+                calendarUid: ev.calendarUid || null,
+                calendarInstanceId: ev.calendarInstanceId || null,
+                isFixed,
+                startTime: isFixed ? startTimeStr : null,
+                durationMinutes,
+                importance: 10,
+                urgency: 10,
+            };
+            return createTaskModel ? createTaskModel(taskBase, taskBase) : taskBase;
+        })
+        .filter(task => task && (!task.isFixed || task.startTime));
 }
