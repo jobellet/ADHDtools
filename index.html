@@ -864,6 +864,28 @@
                 </div>
 
                 <div class="routine-container routine-layout">
+                    <div class="routine-quick-add card">
+                        <h4>Quick add to Day Planner</h4>
+                        <form id="routine-quick-task-form" class="routine-quick-task-form">
+                            <label for="routine-quick-task-title">Task title</label>
+                            <input id="routine-quick-task-title" type="text" placeholder="Capture a task for later" required>
+
+                            <div class="routine-slider-group">
+                                <label for="routine-quick-task-importance">Importance: <span id="routine-importance-value">5</span></label>
+                                <input id="routine-quick-task-importance" type="range" min="0" max="10" value="5">
+                            </div>
+
+                            <div class="routine-slider-group">
+                                <label for="routine-quick-task-urgency">Urgency: <span id="routine-urgency-value">5</span></label>
+                                <input id="routine-quick-task-urgency" type="range" min="0" max="10" value="5">
+                            </div>
+
+                            <label for="routine-quick-task-duration">Duration (minutes, optional)</label>
+                            <input id="routine-quick-task-duration" type="number" min="1" step="5" placeholder="Use default">
+
+                            <button type="submit" class="btn btn-primary">Add task</button>
+                        </form>
+                    </div>
                     <div class="routine-setup routine-section-hidden">
                         <h3 data-i18n="routine-manage-heading">Create & Manage Routines</h3>
 
