@@ -1143,6 +1143,10 @@ document.addEventListener('DOMContentLoaded', () => {
         drawPieChart(1, false);
         currentTaskTimeLeftDisplay.textContent = `${Math.floor(activeTaskTimeLeftSeconds / 60)}:${String(activeTaskTimeLeftSeconds % 60).padStart(2, '0')}`;
 
+        if (typeof updateFocusUI === 'function') {
+            updateFocusUI();
+        }
+
         currentTaskTimer = setInterval(() => {
             activeTaskTimeLeftSeconds--;
             currentTaskTimeLeftDisplay.textContent = `${Math.floor(activeTaskTimeLeftSeconds / 60)}:${String(activeTaskTimeLeftSeconds % 60).padStart(2, '0')}`;
@@ -1732,6 +1736,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const focusCompleteBtn = document.getElementById('focus-complete-task-btn');
     const focusSkipBtn = document.getElementById('focus-skip-task-btn');
     const focusAutoRunCheckbox = document.getElementById('focus-auto-run');
+    const queuePreviewPanel = document.getElementById('routine-queue-panel');
+    const queuePreviewList = document.getElementById('routine-queue-list');
+    const queueDropIndicator = document.createElement('li');
+    queueDropIndicator.className = 'queue-drop-indicator';
+    queueDropIndicator.textContent = 'Release to place';
+    let queueDragIndex = null;
+    let queueDropIndex = null;
+    let isQueueDragging = false;
 
     function enterFocusMode() {
         if (!focusModeEl) return;
@@ -1792,6 +1804,132 @@ document.addEventListener('DOMContentLoaded', () => {
                 focusUpcomingTasks.appendChild(li);
             });
         }
+
+        renderQueuePreview();
+    }
+
+    function getUpcomingTasksWithTimes() {
+        if (!activeRoutine || currentTaskIndex < 0) return [];
+
+        const upcoming = activeRoutine.tasks.slice(currentTaskIndex + 1);
+        let runningStart = Date.now() + Math.max(0, activeTaskTimeLeftSeconds) * 1000;
+
+        return upcoming.map(task => {
+            const startAt = new Date(runningStart);
+            runningStart += task.duration * 60000;
+            return { task, startAt };
+        });
+    }
+
+    function renderQueuePreview() {
+        if (!queuePreviewPanel || !queuePreviewList) return;
+
+        if (!activeRoutine || currentTaskIndex < 0 || !activeRoutine.tasks.length) {
+            queuePreviewPanel.classList.add('hidden');
+            queuePreviewList.innerHTML = '';
+            return;
+        }
+
+        queuePreviewPanel.classList.remove('hidden');
+        queuePreviewList.innerHTML = '';
+        const items = getUpcomingTasksWithTimes();
+
+        items.forEach((entry, index) => {
+            const li = document.createElement('li');
+            li.className = 'queue-item';
+            li.draggable = true;
+            li.dataset.queueIndex = index;
+            li.textContent = `${formatClockTime(entry.startAt)} ${entry.task.name}`;
+
+            li.addEventListener('dragstart', () => handleQueueDragStart(index, li));
+            li.addEventListener('dragend', handleQueueDragEnd);
+            li.addEventListener('dragover', handleQueueDragOver);
+
+            queuePreviewList.appendChild(li);
+        });
+
+        queuePreviewList.addEventListener('dragover', handleQueueDragOver);
+        queuePreviewList.addEventListener('drop', handleQueueDrop);
+    }
+
+    function updateQueueTimes() {
+        if (!queuePreviewList || isQueueDragging) return;
+        const items = getUpcomingTasksWithTimes();
+        const liNodes = queuePreviewList.querySelectorAll('.queue-item');
+
+        if (liNodes.length !== items.length) {
+            renderQueuePreview();
+            return;
+        }
+
+        items.forEach((entry, idx) => {
+            const li = liNodes[idx];
+            li.dataset.queueIndex = idx;
+            li.textContent = `${formatClockTime(entry.startAt)} ${entry.task.name}`;
+        });
+    }
+
+    function handleQueueDragStart(index, li) {
+        queueDragIndex = index;
+        isQueueDragging = true;
+        li.classList.add('dragging');
+    }
+
+    function handleQueueDragEnd() {
+        const indicator = queuePreviewList ? queuePreviewList.querySelector('.queue-drop-indicator') : null;
+        if (indicator) indicator.remove();
+        queueDragIndex = null;
+        queueDropIndex = null;
+        isQueueDragging = false;
+        renderQueuePreview();
+    }
+
+    function handleQueueDragOver(event) {
+        if (!queuePreviewList || queueDragIndex === null) return;
+        event.preventDefault();
+
+        const target = event.target.closest('.queue-item');
+        const items = Array.from(queuePreviewList.querySelectorAll('.queue-item:not(.dragging)'));
+        if (!target || !items.length) return;
+
+        const targetIndex = items.indexOf(target);
+        const { top, height } = target.getBoundingClientRect();
+        const isAfter = event.clientY > top + height / 2;
+        queueDropIndex = isAfter ? targetIndex + 1 : targetIndex;
+
+        queueDropIndicator.style.marginTop = isAfter ? '0.35rem' : '0';
+        queueDropIndicator.style.marginBottom = isAfter ? '0' : '0.35rem';
+
+        const existingIndicator = queuePreviewList.querySelector('.queue-drop-indicator');
+        if (existingIndicator) existingIndicator.remove();
+
+        if (queueDropIndex >= items.length) {
+            queuePreviewList.appendChild(queueDropIndicator);
+        } else {
+            queuePreviewList.insertBefore(queueDropIndicator, items[queueDropIndex]);
+        }
+    }
+
+    function handleQueueDrop(event) {
+        if (queueDragIndex === null || queueDropIndex === null) return;
+        event.preventDefault();
+
+        const upcoming = activeRoutine.tasks.slice(currentTaskIndex + 1);
+        const [movedTask] = upcoming.splice(queueDragIndex, 1);
+        const safeDropIndex = Math.min(Math.max(queueDropIndex, 0), upcoming.length);
+        upcoming.splice(safeDropIndex, 0, movedTask);
+
+        activeRoutine.tasks = activeRoutine.tasks.slice(0, currentTaskIndex + 1).concat(upcoming);
+        queueDragIndex = null;
+        queueDropIndex = null;
+        isQueueDragging = false;
+
+        const indicator = queuePreviewList.querySelector('.queue-drop-indicator');
+        if (indicator) indicator.remove();
+
+        renderQueuePreview();
+        updateFocusUI();
+        displaySelectedRoutineDetails();
     }
 
     function updateFocusTimer() {
@@ -1800,6 +1938,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const minutes = Math.floor(activeTaskTimeLeftSeconds / 60);
         const seconds = activeTaskTimeLeftSeconds % 60;
         focusTimeRemaining.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+        updateQueueTimes();
 
         // Update circle timer
         if (activeRoutine && currentTaskIndex < activeRoutine.tasks.length) {
