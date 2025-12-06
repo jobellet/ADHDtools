@@ -62,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePlayerSection = document.querySelector('.routine-player'); // Assuming this is the correct selector
     const routineSetupSection = document.querySelector('.routine-setup'); // Assuming this is the correct selector
 
+    const durationLearning = window.DurationLearning || {};
+    const recordTaskDuration = durationLearning.recordTaskDuration;
+    const getEstimatedDuration = durationLearning.getEstimatedDuration;
+
     const essential = [
         routineNameInput,
         createRoutineBtn,
@@ -84,10 +88,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTaskIndex = -1; // Index of the current task in the active routine
     let currentTaskTimer = null; // Stores the setInterval ID for the current task
     let activeTaskTimeLeftSeconds = 0; // Stores the actual time left for the currently running task for manualAdvance logic
+    let activeTaskStartTimestamp = null; // Timestamp when the current task timer began
     let autoStartCheckTimer = null; // Stores the setInterval ID for checking auto-start times
     const autoStartedToday = {}; // Tracks routines that have auto-started today
     let activeRoutineStartTime = null; // Timestamp of when the current routine began
     let activeRoutineEndTime = null; // Expected end time based on current run
+
+    function getDefaultTaskMinutes(taskName = '') {
+        const configDefault = window.ConfigManager?.getConfig?.()?.defaultTaskMinutes
+            ?? window.ConfigManager?.DEFAULT_CONFIG?.defaultTaskMinutes
+            ?? 25;
+
+        if (typeof getEstimatedDuration === 'function') {
+            const estimated = getEstimatedDuration(taskName);
+            if (estimated && Number.isFinite(estimated)) {
+                return Math.round(estimated);
+            }
+        }
+
+        return configDefault;
+    }
 
     // --- NOTIFICATION & AUTO-START HELPERS ---
     function requestNotificationPermission() {
@@ -615,6 +635,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const saveBtn = newRow.querySelector(`#save-new-task-${index}`);
             const cancelBtn = newRow.querySelector(`#cancel-new-task-${index}`);
 
+            let durationEdited = false;
+            durationInput.value = getDefaultTaskMinutes();
+            durationInput.addEventListener('input', () => {
+                durationEdited = true;
+            });
+
+            const applySuggestedDuration = () => {
+                if (durationEdited) return;
+                const trimmed = nameInput.value.trim();
+                const estimate = typeof getEstimatedDuration === 'function' ? getEstimatedDuration(trimmed) : null;
+                if (estimate && Number.isFinite(estimate)) {
+                    durationInput.value = Math.round(estimate);
+                } else {
+                    durationInput.value = getDefaultTaskMinutes(trimmed);
+                }
+            };
+
+            nameInput.addEventListener('blur', applySuggestedDuration);
+
             nameInput.focus();
 
             const saveHandler = () => {
@@ -1071,12 +1110,51 @@ document.addEventListener('DOMContentLoaded', () => {
         return { index: earliestScheduled.idx, delaySeconds: 0 };
     }
 
+    function captureActualMinutes(task) {
+        const elapsedMs = activeTaskStartTimestamp ? Date.now() - activeTaskStartTimestamp : null;
+        const elapsedMinutes = elapsedMs !== null ? elapsedMs / 60000 : null;
+
+        if (elapsedMinutes !== null && elapsedMinutes > 0) {
+            return elapsedMinutes;
+        }
+
+        const fallbackDuration = Number(task?.duration);
+        return Number.isFinite(fallbackDuration) && fallbackDuration > 0 ? fallbackDuration : null;
+    }
+
+    function finishCurrentTask(message) {
+        if (!activeRoutine || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) {
+            return;
+        }
+
+        const finishedTask = activeRoutine.tasks[currentTaskIndex];
+        const actualMinutes = captureActualMinutes(finishedTask);
+
+        if (currentTaskTimer) {
+            clearInterval(currentTaskTimer);
+            currentTaskTimer = null;
+        }
+
+        if (typeof recordTaskDuration === 'function' && finishedTask?.name) {
+            const safeMinutes = actualMinutes || getDefaultTaskMinutes(finishedTask.name);
+            recordTaskDuration(finishedTask.name, safeMinutes);
+        }
+
+        activeTaskStartTimestamp = null;
+        currentTaskIndex++;
+        if (message) {
+            notify(message);
+        }
+        startNextTask();
+    }
+
     function startNextTask() {
         if (currentTaskTimer) {
             clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
         activeTaskTimeLeftSeconds = 0; // Reset for next task or completion
+        activeTaskStartTimestamp = null;
 
         // Clear flicker effect
         if (focusModeEl) {
@@ -1138,6 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentTaskNameDisplay.textContent = currentTask.name;
         activeTaskTimeLeftSeconds = currentTask.duration * 60 + (selection.delaySeconds || 0);
+        activeTaskStartTimestamp = Date.now();
         const originalTaskDurationSeconds = activeTaskTimeLeftSeconds;
 
         drawPieChart(1, false);
@@ -1168,22 +1247,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // If Auto Run is enabled, advance immediately even if overdue
                 if (autoRunEnabled) {
-                    clearInterval(currentTaskTimer);
-                    currentTaskTimer = null;
-                    notify(`Task "${currentTask.name}" finished (Auto Run)`);
-                    currentTaskIndex++;
-                    startNextTask();
+                    finishCurrentTask(`Task "${currentTask.name}" finished (Auto Run)`);
                     return;
                 }
             }
 
             if (activeTaskTimeLeftSeconds <= 0 && !isTaskLate) {
                 if (autoRunEnabled) {
-                    clearInterval(currentTaskTimer);
-                    currentTaskTimer = null;
-                    notify(`Task "${currentTask.name}" finished (Auto Run)`);
-                    currentTaskIndex++;
-                    startNextTask();
+                    finishCurrentTask(`Task "${currentTask.name}" finished (Auto Run)`);
                 } else {
                     // Just notify once when hitting 0, but let timer continue into negative for flicker
                     if (activeTaskTimeLeftSeconds === 0) {
@@ -1329,14 +1400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log("Manually advancing task.");
-        const finishedTask = activeRoutine.tasks[currentTaskIndex];
-        if (currentTaskTimer) {
-            clearInterval(currentTaskTimer);
-            currentTaskTimer = null;
-        }
-        currentTaskIndex++;
-        notify(`Task "${finishedTask.name}" finished`);
-        startNextTask();
+        finishCurrentTask(`Task "${activeRoutine.tasks[currentTaskIndex].name}" finished`);
     }
 
     // --- INITIALIZATION (adjusting the previous one) ---
