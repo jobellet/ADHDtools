@@ -42,6 +42,7 @@
     if (!ev) return ev;
     const { fixedTag, flexibleTag } = getTagConfig();
     ev.rawTitle = ev.rawTitle || ev.title || '';
+    if (typeof ev.localOverride !== 'boolean') ev.localOverride = false;
     const hasFixedTag = fixedTag && ev.rawTitle.includes(fixedTag);
     const hasFlexibleTag = flexibleTag && ev.rawTitle.includes(flexibleTag);
     if (hasFixedTag) ev.isFixed = true;
@@ -139,6 +140,7 @@
 
   function updateEventDate(ev, newDate) {
     if (ev.start) {
+      if (!ev.instanceStart) ev.instanceStart = ev.start;
       const start = new Date(ev.start);
       start.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
       ev.start = start.toISOString().slice(0, 16);
@@ -148,6 +150,8 @@
       end.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
       ev.end = end.toISOString().slice(0, 16);
     }
+    ev.localOverride = true;
+    normalizeEvent(ev);
   }
 
   function handleDragStart(e) {
@@ -168,6 +172,7 @@
   function editEvent(id) {
     const ev = events.find(ev => ev.id === id);
     if (!ev) return;
+    const previousStart = ev.start;
     const newTitle = prompt('Event title:', ev.title) || ev.title;
     const newStart = prompt('Start (YYYY-MM-DDTHH:MM):', ev.start.slice(0, 16)) || ev.start.slice(0, 16);
     const newEnd = prompt('End (YYYY-MM-DDTHH:MM):', ev.end ? ev.end.slice(0, 16) : '') || (ev.end ? ev.end.slice(0, 16) : '');
@@ -175,6 +180,8 @@
     ev.title = newTitle;
     ev.start = newStart;
     ev.end = newEnd;
+    if (!ev.instanceStart && previousStart) ev.instanceStart = previousStart;
+    ev.localOverride = true;
     normalizeEvent(ev);
     saveEvents(events);
     render();
@@ -327,6 +334,22 @@
       seen.add(key);
       return true;
     });
+  }
+
+  function mergeEventsPreserveOverrides(existing, incoming) {
+    const merged = new Map();
+    const getKey = (ev) => ev.calendarInstanceId || ev.calendarUid || ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
+
+    existing.forEach(ev => merged.set(getKey(ev), ev));
+
+    incoming.forEach(ev => {
+      const key = getKey(ev);
+      const current = merged.get(key);
+      if (current && current.localOverride) return;
+      merged.set(key, ev);
+    });
+
+    return Array.from(merged.values());
   }
 
   function speak(text) {
@@ -533,7 +556,7 @@
           id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
           instanceStart: ev.start || ev.instanceStart,
         }));
-        events = removeDuplicateEvents(events.concat(normalized));
+        events = mergeEventsPreserveOverrides(events, normalized);
         saveEvents(events);
         render();
         alert(`Imported ${parsed.length} events.`);
@@ -569,7 +592,7 @@
           id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
           instanceStart: ev.start || ev.instanceStart,
         }));
-        events = removeDuplicateEvents(events.concat(normalized));
+        events = mergeEventsPreserveOverrides(events, normalized);
         saveEvents(events);
         render();
         return;
