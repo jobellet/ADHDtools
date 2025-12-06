@@ -38,6 +38,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const form = document.getElementById('settings-form');
   const status = document.getElementById('settings-status');
+  const tasksTableBody = document.querySelector('#settings-task-table tbody');
+
+  function renderTasksTable() {
+    if (!tasksTableBody || !window.DataManager) return;
+    const tasks = window.DataManager.getTasks();
+    tasksTableBody.innerHTML = '';
+    tasks.forEach(task => {
+      const tr = document.createElement('tr');
+      const dependsOnTask = task.dependsOn ? tasks.find(t => t.id === task.dependsOn) : null;
+      const cells = [
+        task.text || '',
+        task.priority || 'medium',
+        task.category || 'other',
+        task.importance ?? '',
+        task.urgency ?? '',
+        dependsOnTask ? dependsOnTask.text : (task.dependsOn ? 'Unknown task' : ''),
+        task.plannerDate ? task.plannerDate.replace('T', ' ') : '',
+      ];
+      cells.forEach(val => {
+        const td = document.createElement('td');
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      const actionsTd = document.createElement('td');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn btn-danger btn-sm';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => {
+        if (confirm('Delete this task?')) {
+          window.DataManager.deleteTask(task.id);
+          renderTasksTable();
+        }
+      });
+      actionsTd.appendChild(deleteBtn);
+      tr.appendChild(actionsTd);
+      tasksTableBody.appendChild(tr);
+    });
+  }
+
+  renderTasksTable();
 
   function showStatus(message) {
     if (!status) return;
@@ -74,4 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!event.detail) return;
     populateFields(event.detail);
   });
+
+  if (window.DataManager?.EventBus) {
+    window.DataManager.EventBus.addEventListener('dataChanged', renderTasksTable);
+  }
 });

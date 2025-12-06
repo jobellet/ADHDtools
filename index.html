@@ -17,11 +17,9 @@
     <script src="api-settings.js" defer></script>
     <script src="settings.js" defer></script>
     <script src="pomodoro.js" defer></script>
-    <script src="eisenhower.js" defer></script>
     <script src="core/duration-learning.js" defer></script>
     <script type="module" src="core/task-model.js"></script>
     <script type="module" src="day-planner.js"></script>
-    <script src="task-manager.js" defer></script>
     <script src="task-breakdown.js" defer></script>
     <script src="habit-tracker.js" defer></script>
     <script src="focus-mode.js" defer></script>
@@ -58,14 +56,10 @@
                         Home</a></li>
                 <li><a href="#" data-tool="pomodoro" data-i18n="nav-pomodoro"><i class="fas fa-clock"></i> Pomodoro
                         Timer</a></li>
-                <li><a href="#" data-tool="eisenhower" data-i18n="nav-eisenhower"><i class="fas fa-th-large"></i>
-                        Eisenhower Matrix</a></li>
                 <li><a href="#" data-tool="planner" data-i18n="nav-planner"><i class="fas fa-calendar-alt"></i> Day
                         Planner</a></li>
                 <li><a href="#" data-tool="calendar" data-i18n="nav-calendar"><i class="fas fa-calendar"></i>
                         Calendar</a></li>
-                <li><a href="#" data-tool="tasks" data-i18n="nav-tasks"><i class="fas fa-tasks"></i> Task Manager</a>
-                </li>
                 <li><a href="#" data-tool="breakdown" data-i18n="nav-breakdown"><i class="fas fa-project-diagram"></i>
                         Task Breakdown</a></li>
                 <li><a href="#" data-tool="habits" data-i18n="nav-habits"><i class="fas fa-check-square"></i> Habit
@@ -97,11 +91,6 @@
                         <h3 data-i18n="card-pomodoro">Pomodoro Timer</h3>
                     </div>
 
-                    <div class="tool-card" data-tool="eisenhower">
-                        <div class="tool-icon"><i class="fas fa-th-large"></i></div>
-                        <h3 data-i18n="card-eisenhower">Eisenhower Matrix</h3>
-                    </div>
-
                     <div class="tool-card" data-tool="planner">
                         <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
                         <h3 data-i18n="card-planner">Day Planner</h3>
@@ -110,11 +99,6 @@
                     <div class="tool-card" data-tool="calendar">
                         <div class="tool-icon"><i class="fas fa-calendar"></i></div>
                         <h3 data-i18n="card-calendar">Calendar</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="tasks">
-                        <div class="tool-icon"><i class="fas fa-tasks"></i></div>
-                        <h3 data-i18n="card-tasks">Task Manager</h3>
                     </div>
 
                     <div class="tool-card" data-tool="breakdown">
@@ -191,54 +175,6 @@
                 </div>
             </section>
 
-            <!-- Eisenhower Matrix Section -->
-            <section id="eisenhower" class="tool-section">
-                <h2 data-i18n="eisenhower-heading">Eisenhower Matrix</h2>
-                <p data-i18n="eisenhower-text">Prioritize your tasks based on their importance and urgency. This helps
-                    you focus on what truly matters.</p>
-
-                <div class="eisenhower-container">
-                    <div class="matrix-controls">
-                        <div class="task-input">
-                            <input type="text" id="task-input" placeholder="Enter a new task...">
-                            <button id="add-task" class="btn">Add Task</button>
-                            <div id="task-error" class="validation-error" aria-live="polite" style="display:none;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="matrix-grid">
-                        <div class="matrix-header-row">
-                            <div class="matrix-header-cell"></div>
-                            <div class="matrix-header-cell">Urgent</div>
-                            <div class="matrix-header-cell">Not Urgent</div>
-                        </div>
-                        <div class="matrix-row">
-                            <div class="matrix-header-cell">Important</div>
-                            <div class="matrix-cell" id="important-urgent">
-                                <h4>Do First</h4>
-                                <div class="task-list" id="q1-tasks"></div>
-                            </div>
-                            <div class="matrix-cell" id="important-not-urgent">
-                                <h4>Schedule</h4>
-                                <div class="task-list" id="q2-tasks"></div>
-                            </div>
-                        </div>
-                        <div class="matrix-row">
-                            <div class="matrix-header-cell">Not Important</div>
-                            <div class="matrix-cell" id="not-important-urgent">
-                                <h4>Delegate</h4>
-                                <div class="task-list" id="q3-tasks"></div>
-                            </div>
-                            <div class="matrix-cell" id="not-important-not-urgent">
-                                <h4>Eliminate</h4>
-                                <div class="task-list" id="q4-tasks"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- Day Planner Section -->
             <section id="planner" class="tool-section">
                 <h2 data-i18n="planner-heading">Day Planner</h2>
@@ -257,6 +193,9 @@
                             </button>
                             <button id="ai-plan-day-btn" class="btn btn-secondary">
                                 <i class="fas fa-magic"></i> <span class="btn-text">AI Plan</span>
+                            </button>
+                            <button id="fill-day-tasks-btn" class="btn btn-secondary">
+                                <i class="fas fa-layer-group"></i> <span class="btn-text">Fill from Calendar & Tasks</span>
                             </button>
                             <button id="record-event-btn" class="btn btn-secondary">
                                 <i class="fas fa-microphone"></i> <span class="btn-text">Record</span>
@@ -389,89 +328,6 @@
                                 <li>Paste this URL into the "Paste ICS URL..." box in this tool and click
                                     <strong>Load</strong>.</li>
                             </ol>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Task Manager Section -->
-            <section id="tasks" class="tool-section">
-                <h2 data-i18n="tasks-heading">Task Manager</h2>
-                <p data-i18n="tasks-text">Keep track of your to-do list with priorities and categories. Organize your
-                    tasks to ensure nothing falls through the cracks.</p>
-
-                <div class="task-manager-container">
-                    <div class="task-input-container">
-                        <input type="text" id="task-manager-input" placeholder="Add a new task...">
-                        <div class="task-options">
-                            <select id="task-priority">
-                                <option value="low">Low Priority</option>
-                                <option value="medium" selected>Medium Priority</option>
-                                <option value="high">High Priority</option>
-                            </select>
-                            <select id="task-category">
-                                <option value="work">Work</option>
-                                <option value="personal">Personal</option>
-                                <option value="health">Health</option>
-                                <option value="education">Education</option>
-                                <option value="other" selected>Other</option>
-                            </select>
-                        </div>
-                        <button id="add-task-btn" class="btn">Add Task</button>
-                        <select id="task-import-select">
-                            <option value="">--Import Task--</option>
-                        </select>
-                    </div>
-
-                    <details class="task-filters-collapsible">
-                        <summary><i class="fas fa-filter"></i> Filter Tasks</summary>
-                        <div class="task-filters">
-                            <div class="filter-group">
-                                <label>Filter by Priority:</label>
-                                <select id="priority-filter">
-                                    <option value="all" selected>All</option>
-                                    <option value="high">High</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="low">Low</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Filter by Category:</label>
-                                <select id="category-filter">
-                                    <option value="all" selected>All</option>
-                                    <option value="work">Work</option>
-                                    <option value="personal">Personal</option>
-                                    <option value="health">Health</option>
-                                    <option value="education">Education</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Show Completed:</label>
-                                <input type="checkbox" id="show-completed">
-                            </div>
-                        </div>
-                    </details>
-
-                    <div class="task-list-container">
-                        <h3>Tasks</h3>
-                        <ul id="task-list" class="task-list">
-                            <!-- Tasks will be added here by JavaScript -->
-                        </ul>
-                    </div>
-
-                    <div class="task-stats">
-                        <div class="stat">
-                            <span>Total Tasks:</span>
-                            <span id="total-tasks">0</span>
-                        </div>
-                        <div class="stat">
-                            <span>Completed:</span>
-                            <span id="completed-tasks">0</span>
-                        </div>
-                        <div class="stat">
-                            <span>Remaining:</span>
-                            <span id="remaining-tasks">0</span>
                         </div>
                     </div>
                 </div>
@@ -799,6 +655,30 @@
                             <div id="gcal-settings-container"></div>
                         </div>
 
+                        <!-- Tasks Overview Panel -->
+                        <div class="settings-panel">
+                            <details>
+                                <summary>Tasks Overview</summary>
+                                <div class="tasks-table-container">
+                                    <table id="settings-task-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Task</th>
+                                                <th>Priority</th>
+                                                <th>Category</th>
+                                                <th>Importance</th>
+                                                <th>Urgency</th>
+                                                <th>Depends On</th>
+                                                <th>Planner Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </details>
+                        </div>
+
                         <!-- API / AI Settings Panel -->
                         <div class="settings-panel">
                             <h3>API / AI</h3>
@@ -857,12 +737,9 @@
                         <ul>
                             <li><strong>Pomodoro Timer:</strong> Work in focused sprints with timed breaks to maintain
                                 productivity.</li>
-                            <li><strong>Eisenhower Matrix:</strong> Prioritize tasks based on importance and urgency.
                             </li>
                             <li><strong>Day Planner:</strong> Visualize your day with time blocks for better time
                                 management.</li>
-                            <li><strong>Task Manager:</strong> Keep track of your to-do list with priorities and
-                                categories.</li>
                             <li><strong>Task Breakdown:</strong> Break complex tasks into smaller, manageable steps.
                             </li>
                             <li><strong>Habit Tracker:</strong> Build consistency with daily habit tracking and streaks.

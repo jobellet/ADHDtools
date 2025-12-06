@@ -13,6 +13,7 @@ let dateDisplay,
     addEventBtn,
     clearBtn,
     aiPlanBtn,
+    fillDayBtn,
     recordBtn,
     eventModal,
     closeButton,
@@ -256,6 +257,89 @@ async function autoPlanDay() {
     }
 }
 
+function parseTimeToMinutes(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string') return null;
+    const [h, m] = timeStr.split(':').map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    return h * 60 + m;
+}
+
+function minutesToTime(minutes) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function fillDayFromCalendarAndTasks() {
+    if (!window.DataManager) return;
+    const defaultDuration = getDefaultDurationMinutes();
+    const { startMinutes, endMinutes } = getDayBounds();
+    const dayStr = currentDate.toISOString().slice(0, 10);
+
+    const busyBlocks = getCalendarEvents(currentDate)
+        .map(ev => {
+            const start = parseTimeToMinutes(ev.start);
+            let end = parseTimeToMinutes(ev.end);
+            if (start === null) return null;
+            if (end === null) end = start + defaultDuration;
+            return {
+                start: Math.max(startMinutes, start),
+                end: Math.min(endMinutes, end),
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.start - b.start);
+
+    const tasks = window.DataManager.getTasks()
+        .filter(t => !t.plannerDate && !t.isCompleted)
+        .sort((a, b) => {
+            const impA = Number.isFinite(a.importance) ? a.importance : 5;
+            const impB = Number.isFinite(b.importance) ? b.importance : 5;
+            const urgA = Number.isFinite(a.urgency) ? a.urgency : 5;
+            const urgB = Number.isFinite(b.urgency) ? b.urgency : 5;
+            const bucket = (imp, urg) => (imp >= 7 && urg >= 7 ? 3 : imp >= 7 ? 2 : urg >= 7 ? 1 : 0);
+            const bucketDiff = bucket(impB, urgB) - bucket(impA, urgA);
+            if (bucketDiff !== 0) return bucketDiff;
+            return (impB + urgB) - (impA + urgA);
+        });
+
+    const gaps = [];
+    let cursor = startMinutes;
+    busyBlocks.forEach(block => {
+        if (block.start > cursor) {
+            gaps.push({ start: cursor, end: block.start });
+        }
+        cursor = Math.max(cursor, block.end);
+    });
+    if (cursor < endMinutes) {
+        gaps.push({ start: cursor, end: endMinutes });
+    }
+
+    const unscheduled = [...tasks];
+    gaps.forEach(gap => {
+        let pointer = gap.start;
+        let idx = 0;
+        while (idx < unscheduled.length) {
+            const task = unscheduled[idx];
+            const duration = task.duration || task.durationMinutes || task.estimatedMinutes || defaultDuration;
+            if (pointer + duration <= gap.end) {
+                const timeStr = minutesToTime(pointer);
+                window.DataManager.updateTask(task.id, {
+                    plannerDate: `${dayStr}T${timeStr}`,
+                    duration,
+                });
+                unscheduled.splice(idx, 1);
+                pointer += duration;
+            } else {
+                idx++;
+            }
+        }
+    });
+
+    renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+    alert('Day filled from calendar events and prioritized tasks.');
+}
+
 function handleReceivedTaskForDayPlanner(event) {
     const task = event.detail;
     if (!task || !task.text) {
@@ -275,6 +359,7 @@ function initDayPlanner() {
     addEventBtn = document.getElementById('add-event-btn');
     clearBtn = document.getElementById('clear-events-btn');
     aiPlanBtn = document.getElementById('ai-plan-day-btn');
+    fillDayBtn = document.getElementById('fill-day-tasks-btn');
     recordBtn = document.getElementById('record-event-btn');
     eventModal = document.getElementById('event-modal');
     closeButton = eventModal.querySelector('.close-button');
@@ -404,4 +489,3 @@ document.addEventListener('DOMContentLoaded', () => {
     window.dayPlannerInited = true;
     initDayPlanner();
 });
-

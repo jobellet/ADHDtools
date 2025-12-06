@@ -108,6 +108,7 @@
         duration,
         estimatedMinutes,
         durationMinutes: duration,
+        dependsOn: taskData.dependsOn || null,
         notes: taskData.notes || '',
         subTasks: taskData.subTasks || [],
         status: taskData.status || 'pending',
@@ -531,4 +532,3 @@
   window.DataManager = DataManager;
 
 })();
-

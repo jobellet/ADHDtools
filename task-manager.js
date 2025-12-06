@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const remainingEl = document.getElementById('remaining-tasks');
   const prioritySelectEl = document.getElementById('task-priority');
   const categorySelectEl = document.getElementById('task-category');
+  const dependencySelectEl = document.getElementById('task-dependency');
   const importSelect = document.getElementById('task-import-select');
 
   const DataManager = window.DataManager;
@@ -51,9 +52,27 @@ document.addEventListener('DOMContentLoaded', () => {
     tasks = DataManager.getTasks().map(wrapTask);
   }
 
+  function populateDependencySelect() {
+    if (!dependencySelectEl) return;
+    const current = dependencySelectEl.value;
+    dependencySelectEl.innerHTML = '';
+    const noneOption = document.createElement('option');
+    noneOption.value = '';
+    noneOption.textContent = 'No dependency';
+    dependencySelectEl.appendChild(noneOption);
+    tasks.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.text;
+      if (t.id === current) opt.selected = true;
+      dependencySelectEl.appendChild(opt);
+    });
+  }
+
   // Render task list according to filters
   function renderTasks() {
     refreshTasks();
+    populateDependencySelect();
     listEl.innerHTML = '';
 
     const showCompleted = showCompletedEl.checked;
@@ -78,6 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
       checkbox.className = 'task-checkbox';
       checkbox.checked = task.isCompleted;
       checkbox.addEventListener('change', () => {
+        if (checkbox.checked && task.dependsOn) {
+          const blocker = tasks.find(t => t.id === task.dependsOn);
+          if (blocker && !blocker.isCompleted) {
+            alert(`This task depends on "${blocker.text}". Complete it first.`);
+            checkbox.checked = false;
+            return;
+          }
+        }
         DataManager.updateTask(task.id, { isCompleted: checkbox.checked });
         window.EventBus.dispatchEvent(new CustomEvent('taskCompleted', { detail: { id: task.id, isCompleted: checkbox.checked } }));
         renderTasks();
@@ -90,6 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Meta container
       const meta = createMeta(task.priority, task.category);
+      const dependencyNote = document.createElement('div');
+      dependencyNote.className = 'task-dependency-note';
+      if (task.dependsOn) {
+        const blocker = tasks.find(t => t.id === task.dependsOn);
+        const blockerText = blocker ? blocker.text : 'another task';
+        const blockerDone = blocker ? blocker.isCompleted : false;
+        dependencyNote.textContent = blockerDone ? `Blocked by: ${blockerText} (completed)` : `Blocked by: ${blockerText}`;
+      } else {
+        dependencyNote.textContent = '';
+      }
 
       // Actions
       const actions = document.createElement('div');
@@ -130,6 +167,22 @@ document.addEventListener('DOMContentLoaded', () => {
           categorySelect.appendChild(option);
         });
 
+        const dependencySelect = document.createElement('select');
+        dependencySelect.className = 'edit-task-dependency-select';
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = 'No dependency';
+        dependencySelect.appendChild(noneOpt);
+        tasks
+          .filter(t => t.id !== task.id)
+          .forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.text;
+            dependencySelect.appendChild(opt);
+          });
+        dependencySelect.value = task.dependsOn || '';
+
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Save';
         saveBtn.className = 'edit-task-save-btn';
@@ -139,10 +192,12 @@ document.addEventListener('DOMContentLoaded', () => {
             task.text = newText;
             task.priority = prioritySelect.value;
             task.category = categorySelect.value;
+            task.dependsOn = dependencySelect.value || null;
             DataManager.updateTask(task.id, {
               text: newText,
               priority: prioritySelect.value,
-              category: categorySelect.value
+              category: categorySelect.value,
+              dependsOn: dependencySelect.value || null
             });
             renderTasks(); // This will re-render the entire list
           } else {
@@ -158,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
           renderTasks(); // Re-render to show original task
         });
 
-        editContainer.append(textInput, prioritySelect, categorySelect, saveBtn, cancelBtn);
+        editContainer.append(textInput, prioritySelect, categorySelect, dependencySelect, saveBtn, cancelBtn);
 
         // Replace task item content with editing UI
         const listItem = editBtn.closest('li');
@@ -265,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       actions.append(editBtn, deleteBtn, sendToPlannerBtn, sendToBreakdownBtn, sendToRoutineBtn, sendToEisenhowerBtn);
 
-      li.append(checkbox, text, meta, actions);
+      li.append(checkbox, text, meta, dependencyNote, actions);
       listEl.appendChild(li);
     });
 
@@ -360,12 +415,14 @@ document.addEventListener('DOMContentLoaded', () => {
       text,
       originalTool: 'TaskManager',
       priority: prioritySelectEl.value || 'medium',
-      category: categorySelectEl.value || 'other'
+      category: categorySelectEl.value || 'other',
+      dependsOn: dependencySelectEl?.value || null
     });
     window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
     inputEl.value = '';
     prioritySelectEl.value = 'medium';
     categorySelectEl.value = 'other';
+    if (dependencySelectEl) dependencySelectEl.value = '';
     renderTasks();
   }
 
