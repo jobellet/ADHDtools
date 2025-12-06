@@ -10,10 +10,12 @@
     <script src="timestamp-storage.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="app.js" defer></script>
+    <script src="config.js" defer></script>
     <script src="data-manager.js" defer></script>
     <script src="cross-tool-interaction.js" defer></script>
     <script src="gemini.js" defer></script>
     <script src="api-settings.js" defer></script>
+    <script src="settings.js" defer></script>
     <script src="pomodoro.js" defer></script>
     <script src="eisenhower.js" defer></script>
     <script type="module" src="day-planner.js"></script>
@@ -70,6 +72,8 @@
                         Tool</a></li>
                 <li><a href="#" data-tool="focus" data-i18n="nav-focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
                 <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a>
+                </li>
+                <li><a href="#" data-tool="settings" data-i18n="nav-settings"><i class="fas fa-cog"></i> Settings</a>
                 </li>
                 <li><a href="#" data-tool="about" data-i18n="nav-about"><i class="fas fa-info-circle"></i> About</a>
                 </li>
@@ -134,6 +138,10 @@
                     <div class="tool-card" data-tool="rewards">
                         <div class="tool-icon"><i class="fas fa-trophy"></i></div>
                         <h3 data-i18n="card-rewards">Rewards</h3>
+                    </div>
+                    <div class="tool-card" data-tool="settings">
+                        <div class="tool-icon"><i class="fas fa-cog"></i></div>
+                        <h3 data-i18n="card-settings">Settings</h3>
                     </div>
                     <div class="tool-card" data-tool="about">
                         <div class="tool-icon"><i class="fas fa-info-circle"></i></div>
@@ -731,6 +739,68 @@
                         <!-- Celebration animations will appear here -->
                     </div>
                 </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="tool-section">
+                <h2 data-i18n="settings-heading">Settings</h2>
+                <p data-i18n="settings-text">Centralize key parameters for calendars, tasks, and future experiments.</p>
+
+                <form id="settings-form" class="settings-form">
+                    <div class="settings-grid">
+                        <div class="settings-panel">
+                            <h3>General</h3>
+                            <div class="setting-group">
+                                <label for="setting-day-start">Start of day</label>
+                                <input type="time" id="setting-day-start" name="dayStart" value="07:00">
+                            </div>
+                            <div class="setting-group">
+                                <label for="setting-day-end">End of day</label>
+                                <input type="time" id="setting-day-end" name="dayEnd" value="22:00">
+                            </div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Calendar</h3>
+                            <div class="setting-group">
+                                <label for="setting-ics-refresh">ICS refresh interval (seconds)</label>
+                                <input type="number" id="setting-ics-refresh" name="icsRefreshSeconds" min="10" step="5"
+                                    value="30">
+                            </div>
+                            <div class="setting-group">
+                                <label for="setting-fixed-tag">Default tag for fixed events</label>
+                                <input type="text" id="setting-fixed-tag" name="fixedTag" value="[FIX]">
+                            </div>
+                            <div class="setting-group">
+                                <label for="setting-flexible-tag">Default tag for flexible events</label>
+                                <input type="text" id="setting-flexible-tag" name="flexibleTag" value="[FLEX]">
+                            </div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Tasks</h3>
+                            <div class="setting-group">
+                                <label for="setting-default-task-minutes">Default estimated duration (minutes)</label>
+                                <input type="number" id="setting-default-task-minutes" name="defaultTaskMinutes" min="5"
+                                    max="240" value="25">
+                            </div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Experimental</h3>
+                            <div class="setting-group checkbox-group">
+                                <input type="checkbox" id="setting-unified-scheduler" name="enableUnifiedScheduler">
+                                <label for="setting-unified-scheduler">Enable experimental unified scheduler (WIP)</label>
+                            </div>
+                            <p class="coming-soon">More experimental features coming soon.</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Settings</button>
+                        <span id="settings-status" class="settings-status" aria-live="polite"></span>
+                    </div>
+                </form>
             </section>
 
             <!-- About Section -->
