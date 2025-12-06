@@ -62,6 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePlayerSection = document.querySelector('.routine-player'); // Assuming this is the correct selector
     const routineSetupSection = document.querySelector('.routine-setup'); // Assuming this is the correct selector
 
+    const quickTaskForm = document.getElementById('routine-quick-task-form');
+    const quickTaskTitleInput = document.getElementById('routine-quick-task-title');
+    const quickTaskImportanceInput = document.getElementById('routine-quick-task-importance');
+    const quickTaskUrgencyInput = document.getElementById('routine-quick-task-urgency');
+    const quickTaskDurationInput = document.getElementById('routine-quick-task-duration');
+    const quickTaskImportanceValue = document.getElementById('routine-importance-value');
+    const quickTaskUrgencyValue = document.getElementById('routine-urgency-value');
+    const createTaskModel = window.TaskModel?.createTask;
+
     const essential = [
         routineNameInput,
         createRoutineBtn,
@@ -88,6 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoStartedToday = {}; // Tracks routines that have auto-started today
     let activeRoutineStartTime = null; // Timestamp of when the current routine began
     let activeRoutineEndTime = null; // Expected end time based on current run
+
+    function getDefaultTaskMinutes() {
+        const cfg = window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {};
+        const parsed = parseInt(cfg.defaultTaskMinutes, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+    }
 
     // --- NOTIFICATION & AUTO-START HELPERS ---
     function requestNotificationPermission() {
@@ -200,6 +215,67 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }, 1000);
+    }
+
+    function initQuickTaskCapture() {
+        if (!quickTaskForm || !quickTaskTitleInput) return;
+
+        const defaultMinutes = getDefaultTaskMinutes();
+        if (quickTaskDurationInput && defaultMinutes) {
+            quickTaskDurationInput.value = defaultMinutes;
+            quickTaskDurationInput.placeholder = `Default: ${defaultMinutes} min`;
+        }
+
+        const syncSliderValue = (input, display) => {
+            if (input && display) {
+                display.textContent = input.value;
+            }
+        };
+
+        syncSliderValue(quickTaskImportanceInput, quickTaskImportanceValue);
+        syncSliderValue(quickTaskUrgencyInput, quickTaskUrgencyValue);
+
+        [
+            [quickTaskImportanceInput, quickTaskImportanceValue],
+            [quickTaskUrgencyInput, quickTaskUrgencyValue]
+        ].forEach(([input, display]) => {
+            if (!input || !display) return;
+            input.addEventListener('input', () => syncSliderValue(input, display));
+        });
+
+        quickTaskForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!window.DataManager) return;
+            const title = quickTaskTitleInput.value.trim();
+            if (!title) return;
+
+            const importance = Number(quickTaskImportanceInput?.value ?? 5);
+            const urgency = Number(quickTaskUrgencyInput?.value ?? 5);
+            const duration = parseInt(quickTaskDurationInput?.value, 10);
+            const durationMinutes = Number.isFinite(duration) ? duration : undefined;
+
+            const baseTask = {
+                title,
+                text: title,
+                importance: Number.isFinite(importance) ? importance : 5,
+                urgency: Number.isFinite(urgency) ? urgency : 5,
+                estimatedMinutes: durationMinutes,
+                durationMinutes,
+                duration: durationMinutes,
+                source: 'routine',
+                originalTool: 'routine'
+            };
+
+            const task = createTaskModel ? createTaskModel(baseTask) : baseTask;
+            window.DataManager.addTask(task);
+
+            quickTaskForm.reset();
+            if (quickTaskImportanceInput) quickTaskImportanceInput.value = '5';
+            if (quickTaskUrgencyInput) quickTaskUrgencyInput.value = '5';
+            if (quickTaskDurationInput && defaultMinutes) quickTaskDurationInput.value = defaultMinutes;
+            syncSliderValue(quickTaskImportanceInput, quickTaskImportanceValue);
+            syncSliderValue(quickTaskUrgencyInput, quickTaskUrgencyValue);
+        });
     }
 
     // --- PIE CHART FUNCTION ---
@@ -1458,6 +1534,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startSelectedRoutineBtn.innerHTML = '<i class="fas fa-play"></i> Start Selected Routine';
         if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
         if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
+        initQuickTaskCapture();
         loadRoutines();
         handlePendingRoutineRun();
 

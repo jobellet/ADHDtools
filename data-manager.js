@@ -12,6 +12,12 @@
     // Add other data types here as needed
   };
 
+  function getDefaultTaskMinutes() {
+    const cfg = window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {};
+    const parsed = parseInt(cfg.defaultTaskMinutes, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+  }
+
   // The single source of truth for our application's data
   let dataStore = {};
 
@@ -55,22 +61,56 @@
 
     addTask: (taskData) => {
       if (!taskData.text) {
-        console.error("Task must have text.");
-        return null;
+        if (!taskData.title) {
+          console.error("Task must have text.");
+          return null;
+        }
       }
+      const title = taskData.title || taskData.text || 'New Task';
+      const text = taskData.text || title;
+      const defaultDuration = getDefaultTaskMinutes();
+      const importance = typeof taskData.importance === 'number'
+        ? taskData.importance
+        : taskData.priority === 'high'
+          ? 8
+          : taskData.priority === 'low'
+            ? 2
+            : 5;
+      const urgency = typeof taskData.urgency === 'number'
+        ? taskData.urgency
+        : taskData.priority === 'high'
+          ? 8
+          : taskData.priority === 'low'
+            ? 2
+            : 5;
+      const estimatedMinutes = Number.isFinite(taskData.estimatedMinutes)
+        ? taskData.estimatedMinutes
+        : defaultDuration;
+      const duration = Number.isFinite(taskData.duration)
+        ? taskData.duration
+        : Number.isFinite(taskData.durationMinutes)
+          ? taskData.durationMinutes
+          : estimatedMinutes;
       const newTask = {
         id: generateId(),
-        text: taskData.text,
+        text,
+        title,
         isCompleted: false,
         createdAt: new Date().toISOString(),
         // Add other properties from the standardized model
-        originalTool: taskData.originalTool || 'unknown',
+        originalTool: taskData.originalTool || taskData.source || 'unknown',
+        source: taskData.source || taskData.originalTool || 'unknown',
         priority: taskData.priority || 'medium',
+        importance,
+        urgency,
         category: taskData.category || 'other',
         dueDate: taskData.dueDate || null,
-        duration: taskData.duration || null,
+        duration,
+        estimatedMinutes,
+        durationMinutes: duration,
         notes: taskData.notes || '',
         subTasks: taskData.subTasks || [],
+        status: taskData.status || 'pending',
         // Properties for tool association
         plannerDate: taskData.plannerDate || null,
         eisenhowerQuadrant: taskData.eisenhowerQuadrant || null,
