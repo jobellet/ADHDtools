@@ -10,6 +10,16 @@
     defaultTaskMinutes: 25,
     enableUnifiedScheduler: false,
     includeCalendarInSchedule: true,
+
+    // Default duration for focus sessions (in minutes). Used by the focus-mode
+    // module. Users can set this via the Settings panel. When launching a new
+    // focus mode session, the app will use this duration unless the user
+    // specifies otherwise.
+    focusDefaultMinutes: 25,
+
+    // Determines whether the routine player auto-runs tasks by default. This setting is
+    // exposed in the Settings panel and used by routine.js to initialize the auto-run
+    // checkbox. Users can override it per-session in the routine player itself.
     routineAutoRunDefault: false,
   };
 

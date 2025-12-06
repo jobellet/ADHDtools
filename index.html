@@ -186,7 +186,7 @@
 
                     <details class="pomodoro-settings-collapsible">
                         <summary>Settings <i class="fas fa-cog"></i></summary>
-                        <p>Pomodoro settings are now in the global ⚙️ Settings tab.</p>
+                        <p>Pomodoro settings are now managed in the global <span class="settings-link-icon">⚙️</span> Settings tab.</p>
                     </details>
                 </div>
             </section>
@@ -298,9 +298,13 @@
                     <div class="calendar-sidebar">
                         <h2 data-i18n="calendar-heading">Calendar</h2>
 
-                        <p class="small-note">
-                            Notification and Google Calendar API settings are now in the global ⚙️ Settings tab.
-                        </p>
+                        <!-- Removed the import/export controls from the Calendar view.  These controls
+                             now live in the Settings tab under the "Calendar Imports" panel.  -->
+
+                        <div class="calendar-settings-panel">
+                            <h3>Settings</h3>
+                            <p>Calendar notifications and Google Calendar API settings are now managed in the global <span class="settings-link-icon">⚙️</span> Settings tab.</p>
+                        </div>
 
                         <div class="calendar-guide-link">
                             <button id="show-calendar-guide-btn" class="btn btn-outline btn-block">
@@ -539,12 +543,14 @@
                     <div class="focus-controls">
                         <button id="enter-focus-mode" class="btn btn-primary"><i class="fas fa-expand"></i> Enter Focus
                             Mode</button>
-                        <p class="small-note">Default duration, background and sound are configured in ?? Settings.</p>
                         <div class="focus-settings">
+                            <!-- The default focus session duration is now configured in the Settings tab. -->
                             <div class="setting-group">
                                 <label for="focus-goal">Session Goal (optional):</label>
                                 <input type="text" id="focus-goal" placeholder="What do you want to accomplish?">
                             </div>
+
+                            <p class="small-note">Default duration, background and sound are configured in the ⚙️ Settings tab.</p>
                         </div>
                     </div>
 
@@ -587,9 +593,7 @@
                                     <option value="cafe">Cafe Ambience</option>
                                     <option value="forest">Forest</option>
                                 </select>
-                                <button id="focus-sound-preview-fullscreen" class="btn btn-secondary"
-                                    type="button">Preview
-                                    Sound</button>
+                                <!-- Preview Sound button removed from fullscreen focus mode -->
                             </div>
                         </div>
                         <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>
@@ -705,6 +709,20 @@
                         </div>
 
                         <div class="settings-panel">
+                            <h3>Experimental</h3>
+                            <div class="setting-group checkbox-group">
+                                <input type="checkbox" id="setting-unified-scheduler" name="enableUnifiedScheduler">
+                                <label for="setting-unified-scheduler">Enable experimental unified scheduler (WIP)</label>
+                            </div>
+                            <div class="setting-group checkbox-group">
+                                <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
+                                <label for="setting-include-calendar">Include calendar events in unified scheduler</label>
+                            </div>
+                            <p class="coming-soon">More experimental features coming soon.</p>
+                        </div>
+
+                        <!-- Pomodoro Settings Panel -->
+                        <div class="settings-panel">
                             <h3>Pomodoro</h3>
                             <div class="setting-group">
                                 <label for="focus-duration">Focus Duration (minutes)</label>
@@ -732,9 +750,10 @@
                                 </select>
                                 <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
                             </div>
-                            <button id="save-settings" class="btn" type="button">Save Pomodoro Settings</button>
+                            <button id="save-settings" class="btn">Save Pomodoro Settings</button>
                         </div>
 
+                        <!-- Focus Mode Settings Panel -->
                         <div class="settings-panel">
                             <h3>Focus Mode</h3>
                             <div class="setting-group">
@@ -755,13 +774,16 @@
                                 <select id="focus-sound">
                                     <option value="none">None</option>
                                     <option value="white-noise">White Noise</option>
+                                    <option value="pink-noise">Pink Noise</option>
                                     <option value="rain">Rain</option>
                                     <option value="cafe">Cafe Ambience</option>
                                     <option value="forest">Forest</option>
                                 </select>
+                                <!-- Preview Sound button removed to streamline Focus Mode settings -->
                             </div>
                         </div>
 
+                        <!-- Calendar Notifications & Google Calendar Panel -->
                         <div class="settings-panel">
                             <h3>Calendar Notifications</h3>
                             <div class="voice-options">
@@ -774,32 +796,16 @@
                                     <input type="number" id="calendar-voice-early" value="0" min="0">
                                 </div>
                             </div>
-
                             <div id="gcal-settings-container"></div>
                         </div>
 
-                        <div class="settings-panel">
-                            <h3>Calendar Imports</h3>
-                            <p class="small-note" style="margin-top: 0;">Import ICS files or subscribe via URL.</p>
-                            <div class="setting-group">
-                                <button id="import-ics-btn" class="btn btn-secondary btn-block" type="button"><i
-                                        class="fas fa-file-import"></i> Import ICS File</button>
-                                <input type="file" id="ics-file-input" accept=".ics" style="display:none">
-                            </div>
-                            <div class="setting-group">
-                                <label for="ics-url">ICS URL</label>
-                                <div class="ics-url-input-group">
-                                    <input type="url" id="ics-url" placeholder="Paste ICS URL...">
-                                    <button id="load-ics-url-btn" class="btn btn-secondary btn-sm" type="button">Load</button>
-                                </div>
-                            </div>
-                        </div>
-
+                        <!-- API / AI Settings Panel -->
                         <div class="settings-panel">
                             <h3>API / AI</h3>
                             <div id="api-settings"></div>
                         </div>
 
+                        <!-- Routine Settings Panel -->
                         <div class="settings-panel">
                             <h3>Routine</h3>
                             <div class="setting-group checkbox-group">
@@ -808,17 +814,20 @@
                             </div>
                         </div>
 
+                        <!-- Calendar Imports Panel -->
                         <div class="settings-panel">
-                            <h3>Experimental</h3>
-                            <div class="setting-group checkbox-group">
-                                <input type="checkbox" id="setting-unified-scheduler" name="enableUnifiedScheduler">
-                                <label for="setting-unified-scheduler">Enable experimental unified scheduler (WIP)</label>
+                            <h3>Calendar Imports</h3>
+                            <div class="setting-group">
+                                <button id="import-ics-btn" class="btn btn-secondary" type="button">
+                                    <i class="fas fa-file-import"></i> Import .ics File
+                                </button>
+                                <input type="file" id="ics-file-input" accept=".ics" style="display:none">
                             </div>
-                            <div class="setting-group checkbox-group">
-                                <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
-                                <label for="setting-include-calendar">Include calendar events in unified scheduler</label>
+                            <div class="setting-group">
+                                <label for="ics-url">ICS URL</label>
+                                <input type="url" id="ics-url" placeholder="Paste ics URL…">
+                                <button id="load-ics-url-btn" class="btn btn-secondary" type="button">Load</button>
                             </div>
-                            <p class="coming-soon">More experimental features coming soon.</p>
                         </div>
                     </div>
 
@@ -870,6 +879,7 @@
                     <h3 data-i18n="about-feedback-heading">Feedback</h3>
                     <p data-i18n="about-feedback-text">We're constantly working to improve these tools. If you have
                         suggestions or feedback, please let us know!</p>
+                    <p class="small-note">API and AI key settings have moved to the ⚙️ Settings tab.</p>
                 </div>
             </section>
 

@@ -52,13 +52,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
     if (pieChartContainer) pieChartContainer.style.display = 'none';
     let pieChart; // To be initialized later with Chart.js or a custom implementation
-    let autoRunEnabled = false; // Track auto-run state
+    // Initialize auto-run state based on configuration. Users can override via the
+    // checkbox in the routine player. The default value is pulled from
+    // ConfigManager (routineAutoRunDefault), falling back to false if not set.
+    let autoRunEnabled = false;
+    try {
+        const cfg = window.ConfigManager?.getConfig?.();
+        if (cfg && typeof cfg.routineAutoRunDefault === 'boolean') {
+            autoRunEnabled = cfg.routineAutoRunDefault;
+        }
+    } catch (err) {
+        console.warn('Unable to read routineAutoRunDefault from ConfigManager', err);
+    }
     // const routineAutoRunCheckbox = document.getElementById('routine-auto-run'); // Removed/Moved to focus mode
     // const routineSkipBtn = document.getElementById('routine-skip-btn'); // Removed/Moved to focus mode
-    const routineConfig = window.ConfigManager?.getConfig?.();
-    if (routineConfig && Object.prototype.hasOwnProperty.call(routineConfig, 'routineAutoRunDefault')) {
-        autoRunEnabled = !!routineConfig.routineAutoRunDefault;
-    }
 
     // View Switching Elements
     const routineShowPlayerBtn = document.getElementById('routine-show-player-btn');
@@ -1636,22 +1643,19 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Routine Tool Initialized with task timer, spacebar/tap control, and input focus check.");
 
         if (routineAutoRunCheckbox) {
+            // Set initial state based on configuration
             routineAutoRunCheckbox.checked = autoRunEnabled;
             routineAutoRunCheckbox.addEventListener('change', (e) => {
                 autoRunEnabled = e.target.checked;
-                if (window.ConfigManager?.updateConfig) {
-                    window.ConfigManager.updateConfig({ routineAutoRunDefault: autoRunEnabled });
-                }
                 console.log("Auto Run:", autoRunEnabled);
+                // Persist override back to ConfigManager so future sessions remember the user choice
+                try {
+                    window.ConfigManager?.updateConfig?.({ routineAutoRunDefault: autoRunEnabled });
+                } catch (err) {
+                    console.warn('Failed to persist routineAutoRunDefault to ConfigManager', err);
+                }
             });
         }
-        window.addEventListener('configUpdated', (event) => {
-            if (!event.detail || typeof event.detail.routineAutoRunDefault === 'undefined') return;
-            autoRunEnabled = !!event.detail.routineAutoRunDefault;
-            if (routineAutoRunCheckbox) {
-                routineAutoRunCheckbox.checked = autoRunEnabled;
-            }
-        });
 
         if (routineSkipBtn) {
             routineSkipBtn.addEventListener('click', skipCurrentTask);

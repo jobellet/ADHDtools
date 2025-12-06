@@ -32,13 +32,6 @@ if (window.__focusModeLoaded) {
       return;
     }
 
-    if (fullscreenBackgroundSelect && backgroundSelect) {
-      fullscreenBackgroundSelect.value = backgroundSelect.value;
-    }
-    if (fullscreenSoundSelect && soundSelect) {
-      fullscreenSoundSelect.value = soundSelect.value;
-    }
-
     if (textArea) {
       const savedNotes = localStorage.getItem('focus-notes');
       if (savedNotes) textArea.value = savedNotes;

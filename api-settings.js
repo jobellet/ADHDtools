@@ -2,11 +2,13 @@
 // Allows saving/clearing Gemini API key in localStorage
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Locate the API settings container in the Settings panel. If it doesn't exist,
+  // do nothing. This allows the API key UI to live in the Settings tab rather
+  // than the About section.
   const container = document.getElementById('api-settings');
   if (!container) return;
 
   container.innerHTML = `
-    <h3>API Settings</h3>
     <div class="api-setting">
       <label for="gemini-api-key-input">Gemini API Key:</label>
       <input type="password" id="gemini-api-key-input" placeholder="Enter API Key" />
