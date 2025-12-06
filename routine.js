@@ -386,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         newTabUrl.pathname = '/' + pathSegments.join('/');
         newTabUrl.searchParams.set('autostartRoutine', '1');
+        newTabUrl.searchParams.set('routineView', 'player');
         return newTabUrl.toString();
     }
 
@@ -491,7 +492,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function handlePendingRoutineRun() {
         const params = new URLSearchParams(window.location.search);
         const shouldAutoStart = params.get('autostartRoutine') === '1';
+        const desiredView = params.get('routineView');
         const pendingRunRaw = localStorage.getItem(ROUTINE_RUN_REQUEST_KEY);
+
+        if (desiredView === 'player') {
+            updateRoutineView(true);
+        }
 
         if (!shouldAutoStart || !pendingRunRaw) {
             return;
@@ -1451,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         recordDurationForTask(finishedTask);
         currentTaskIndex++;
-        notify(`Task "${finishedTask.name}" finished`);
+        console.log(`Task "${finishedTask.name}" finished`);
         startNextTask();
     }
 
