@@ -9,6 +9,7 @@
     flexibleTag: "[FLEX]",
     defaultTaskMinutes: 25,
     enableUnifiedScheduler: false,
+    includeCalendarInSchedule: true,
   };
 
   function getConfig() {
