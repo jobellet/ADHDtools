@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTaskIndex = -1; // Index of the current task in the active routine
     let currentTaskTimer = null; // Stores the setInterval ID for the current task
     let activeTaskTimeLeftSeconds = 0; // Stores the actual time left for the currently running task for manualAdvance logic
+    let currentTaskStartTimestamp = null; // Tracks when the active task began
     let autoStartCheckTimer = null; // Stores the setInterval ID for checking auto-start times
     const autoStartedToday = {}; // Tracks routines that have auto-started today
     let activeRoutineStartTime = null; // Timestamp of when the current routine began
@@ -102,6 +103,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const cfg = window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {};
         const parsed = parseInt(cfg.defaultTaskMinutes, 10);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+    }
+
+    function getLearnedDurationMinutes(title) {
+        const getter = window.DurationLearning?.getEstimatedDuration;
+        if (typeof getter !== 'function') return null;
+        return getter(title);
+    }
+
+    function recordDurationForTask(task) {
+        const recorder = window.DurationLearning?.recordTaskDuration;
+        if (typeof recorder !== 'function' || !task) return;
+
+        const now = Date.now();
+        const elapsedMinutes = currentTaskStartTimestamp
+            ? Math.round((now - currentTaskStartTimestamp) / 60000)
+            : null;
+
+        const scheduledMinutes = Number(task.duration) || Number(task.estimatedMinutes) || getDefaultTaskMinutes();
+        const minutesToRecord = Math.max(1, Number.isFinite(elapsedMinutes) && elapsedMinutes > 0 ? elapsedMinutes : scheduledMinutes);
+
+        recorder(task.name || task.title || 'Task', minutesToRecord);
     }
 
     // --- NOTIFICATION & AUTO-START HELPERS ---
@@ -252,7 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const importance = Number(quickTaskImportanceInput?.value ?? 5);
             const urgency = Number(quickTaskUrgencyInput?.value ?? 5);
             const duration = parseInt(quickTaskDurationInput?.value, 10);
-            const durationMinutes = Number.isFinite(duration) ? duration : defaultMinutes;
+            const learnedDuration = getLearnedDurationMinutes(title);
+            const durationMinutes = Number.isFinite(duration) ? duration : (learnedDuration ?? defaultMinutes);
 
             const baseTask = {
                 title,
@@ -1154,6 +1177,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTaskTimer = null;
         }
         activeTaskTimeLeftSeconds = 0; // Reset for next task or completion
+        currentTaskStartTimestamp = null;
 
         // Clear flicker effect
         if (focusModeEl) {
@@ -1216,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTaskNameDisplay.textContent = currentTask.name;
         activeTaskTimeLeftSeconds = currentTask.duration * 60 + (selection.delaySeconds || 0);
         const originalTaskDurationSeconds = activeTaskTimeLeftSeconds;
+        currentTaskStartTimestamp = Date.now();
 
         drawPieChart(1, false);
         currentTaskTimeLeftDisplay.textContent = `${Math.floor(activeTaskTimeLeftSeconds / 60)}:${String(activeTaskTimeLeftSeconds % 60).padStart(2, '0')}`;
@@ -1247,6 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (autoRunEnabled) {
                     clearInterval(currentTaskTimer);
                     currentTaskTimer = null;
+                    recordDurationForTask(currentTask);
                     notify(`Task "${currentTask.name}" finished (Auto Run)`);
                     currentTaskIndex++;
                     startNextTask();
@@ -1258,6 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (autoRunEnabled) {
                     clearInterval(currentTaskTimer);
                     currentTaskTimer = null;
+                    recordDurationForTask(currentTask);
                     notify(`Task "${currentTask.name}" finished (Auto Run)`);
                     currentTaskIndex++;
                     startNextTask();
@@ -1411,6 +1438,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
+        recordDurationForTask(finishedTask);
         currentTaskIndex++;
         notify(`Task "${finishedTask.name}" finished`);
         startNextTask();
