@@ -10,6 +10,7 @@
     defaultTaskMinutes: 25,
     enableUnifiedScheduler: false,
     includeCalendarInSchedule: true,
+    routineAutoRunDefault: false,
   };
 
   function getConfig() {

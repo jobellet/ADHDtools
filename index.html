@@ -186,36 +186,7 @@
 
                     <details class="pomodoro-settings-collapsible">
                         <summary>Settings <i class="fas fa-cog"></i></summary>
-                        <div class="timer-settings">
-                            <h3>Settings</h3>
-                            <div class="setting-group">
-                                <label for="focus-duration">Focus Duration (minutes):</label>
-                                <input type="number" id="focus-duration" min="1" max="60" value="25">
-                            </div>
-                            <div class="setting-group">
-                                <label for="short-break-duration">Short Break Duration (minutes):</label>
-                                <input type="number" id="short-break-duration" min="1" max="30" value="5">
-                            </div>
-                            <div class="setting-group">
-                                <label for="long-break-duration">Long Break Duration (minutes):</label>
-                                <input type="number" id="long-break-duration" min="1" max="60" value="15">
-                            </div>
-                            <div class="setting-group">
-                                <label for="sessions-before-long-break">Sessions Before Long Break:</label>
-                                <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
-                            </div>
-                            <div class="setting-group">
-                                <label for="audio-notification">Audio Notification:</label>
-                                <select id="audio-notification">
-                                    <option value="bell">Bell (Service Bell)</option>
-                                    <option value="chime">Chime (Wind Chimes)</option>
-                                    <option value="digital">Digital (Beep)</option>
-                                    <option value="none">None (No Sound)</option>
-                                </select>
-                                <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
-                            </div>
-                            <button id="save-settings" class="btn">Save Settings</button>
-                        </div>
+                        <p>Pomodoro settings are now in the global ⚙️ Settings tab.</p>
                     </details>
                 </div>
             </section>
@@ -338,21 +309,9 @@
                             </div>
                         </div>
 
-                        <div class="calendar-settings-panel">
-                            <h3>Settings</h3>
-                            <div class="voice-options">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="calendar-voice-enable">
-                                    <span data-i18n="calendar-voice-label">Voice alerts</span>
-                                </label>
-                                <div class="voice-early-input">
-                                    <span data-i18n="calendar-voice-early-label">Minutes early:</span>
-                                    <input type="number" id="calendar-voice-early" value="0" min="0">
-                                </div>
-                            </div>
-                            <!-- Google Calendar API Settings Container -->
-                            <div id="gcal-settings-container"></div>
-                        </div>
+                        <p class="small-note">
+                            Notification and Google Calendar API settings are now in the global ⚙️ Settings tab.
+                        </p>
 
                         <div class="calendar-guide-link">
                             <button id="show-calendar-guide-btn" class="btn btn-outline btn-block">
@@ -591,44 +550,12 @@
                     <div class="focus-controls">
                         <button id="enter-focus-mode" class="btn btn-primary"><i class="fas fa-expand"></i> Enter Focus
                             Mode</button>
+                        <p class="small-note">Default duration, background and sound are configured in ?? Settings.</p>
                         <div class="focus-settings">
-                            <div class="setting-group">
-                                <label for="focus-duration-setting">Focus Session Duration (minutes):</label>
-                                <input type="number" id="focus-duration-setting" min="5" max="240" value="25">
-                            </div>
                             <div class="setting-group">
                                 <label for="focus-goal">Session Goal (optional):</label>
                                 <input type="text" id="focus-goal" placeholder="What do you want to accomplish?">
                             </div>
-
-                            <details class="focus-advanced-settings" open>
-                                <summary>Advanced Options <i class="fas fa-cog"></i></summary>
-                                <div class="advanced-options-content" style="padding-top: 1rem;">
-                                    <div class="setting-group">
-                                        <label for="focus-background">Background:</label>
-                                        <select id="focus-background">
-                                            <option value="solid" title="Simple solid color background">Solid Color
-                                            </option>
-                                            <option value="gradient" title="Soft gradient background">Gradient</option>
-                                            <option value="nature" title="Calming nature scene">Nature</option>
-                                            <option value="minimal" title="Low‑distraction minimal theme">Minimal
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="setting-group">
-                                        <label for="focus-sound">Background Sound:</label>
-                                        <select id="focus-sound">
-                                            <option value="none">None</option>
-                                            <option value="white-noise">White Noise</option>
-                                            <option value="rain">Rain</option>
-                                            <option value="cafe">Cafe Ambience</option>
-                                            <option value="forest">Forest</option>
-                                        </select>
-                                        <button id="focus-sound-preview" class="btn btn-secondary" type="button">Preview
-                                            Sound</button>
-                                    </div>
-                                </div>
-                            </details>
                         </div>
                     </div>
 
@@ -785,6 +712,93 @@
                                 <label for="setting-default-task-minutes">Default estimated duration (minutes)</label>
                                 <input type="number" id="setting-default-task-minutes" name="defaultTaskMinutes" min="5"
                                     max="240" value="25">
+                            </div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Pomodoro</h3>
+                            <div class="setting-group">
+                                <label for="focus-duration">Focus Duration (minutes)</label>
+                                <input type="number" id="focus-duration" min="1" max="60" value="25">
+                            </div>
+                            <div class="setting-group">
+                                <label for="short-break-duration">Short Break Duration (minutes)</label>
+                                <input type="number" id="short-break-duration" min="1" max="30" value="5">
+                            </div>
+                            <div class="setting-group">
+                                <label for="long-break-duration">Long Break Duration (minutes)</label>
+                                <input type="number" id="long-break-duration" min="1" max="60" value="15">
+                            </div>
+                            <div class="setting-group">
+                                <label for="sessions-before-long-break">Sessions Before Long Break</label>
+                                <input type="number" id="sessions-before-long-break" min="1" max="10" value="4">
+                            </div>
+                            <div class="setting-group">
+                                <label for="audio-notification">Audio Notification</label>
+                                <select id="audio-notification">
+                                    <option value="bell">Bell (Service Bell)</option>
+                                    <option value="chime">Chime (Wind Chimes)</option>
+                                    <option value="digital">Digital (Beep)</option>
+                                    <option value="none">None (No Sound)</option>
+                                </select>
+                                <button id="test-sound" class="btn btn-secondary" type="button">Test Sound</button>
+                            </div>
+                            <button id="save-settings" class="btn" type="button">Save Pomodoro Settings</button>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Focus Mode</h3>
+                            <div class="setting-group">
+                                <label for="focus-duration-setting">Default Focus Session (minutes)</label>
+                                <input type="number" id="focus-duration-setting" min="5" max="240" value="25">
+                            </div>
+                            <div class="setting-group">
+                                <label for="focus-background">Default Background</label>
+                                <select id="focus-background">
+                                    <option value="solid">Solid Color</option>
+                                    <option value="gradient">Gradient</option>
+                                    <option value="nature">Nature</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
+                            <div class="setting-group">
+                                <label for="focus-sound">Default Background Sound</label>
+                                <select id="focus-sound">
+                                    <option value="none">None</option>
+                                    <option value="white-noise">White Noise</option>
+                                    <option value="rain">Rain</option>
+                                    <option value="cafe">Cafe Ambience</option>
+                                    <option value="forest">Forest</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Calendar Notifications</h3>
+                            <div class="voice-options">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="calendar-voice-enable">
+                                    <span data-i18n="calendar-voice-label">Voice alerts</span>
+                                </label>
+                                <div class="voice-early-input">
+                                    <span data-i18n="calendar-voice-early-label">Minutes early:</span>
+                                    <input type="number" id="calendar-voice-early" value="0" min="0">
+                                </div>
+                            </div>
+
+                            <div id="gcal-settings-container"></div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>API / AI</h3>
+                            <div id="api-settings"></div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Routine</h3>
+                            <div class="setting-group checkbox-group">
+                                <input type="checkbox" id="setting-routine-auto-run">
+                                <label for="setting-routine-auto-run">Enable auto-run by default</label>
                             </div>
                         </div>
 

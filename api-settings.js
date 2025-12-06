@@ -2,11 +2,9 @@
 // Allows saving/clearing Gemini API key in localStorage
 
 document.addEventListener('DOMContentLoaded', () => {
-  const aboutSection = document.getElementById('about');
-  if (!aboutSection) return;
+  const container = document.getElementById('api-settings');
+  if (!container) return;
 
-  const container = document.createElement('div');
-  container.id = 'api-settings';
   container.innerHTML = `
     <h3>API Settings</h3>
     <div class="api-setting">
@@ -17,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
       <span id="gemini-key-status" class="status"></span>
     </div>
   `;
-  aboutSection.appendChild(container);
 
   // Gemini key handlers
   const geminiInput = container.querySelector('#gemini-api-key-input');

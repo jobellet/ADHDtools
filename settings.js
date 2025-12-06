@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultTaskMinutes: document.getElementById('setting-default-task-minutes'),
     enableUnifiedScheduler: document.getElementById('setting-unified-scheduler'),
     includeCalendarInSchedule: document.getElementById('setting-include-calendar'),
+    routineAutoRunDefault: document.getElementById('setting-routine-auto-run'),
   };
 
   function populateFields(values) {
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.defaultTaskMinutes) fields.defaultTaskMinutes.value = values.defaultTaskMinutes;
     if (fields.enableUnifiedScheduler) fields.enableUnifiedScheduler.checked = values.enableUnifiedScheduler;
     if (fields.includeCalendarInSchedule) fields.includeCalendarInSchedule.checked = values.includeCalendarInSchedule;
+    if (fields.routineAutoRunDefault) fields.routineAutoRunDefault.checked = !!values.routineAutoRunDefault;
   }
 
   populateFields(config);
@@ -49,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultTaskMinutes: Number(fields.defaultTaskMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.defaultTaskMinutes,
         enableUnifiedScheduler: fields.enableUnifiedScheduler?.checked || false,
         includeCalendarInSchedule: fields.includeCalendarInSchedule?.checked || false,
+        routineAutoRunDefault: fields.routineAutoRunDefault?.checked || false,
       };
 
       const updated = window.ConfigManager.updateConfig(updates);
