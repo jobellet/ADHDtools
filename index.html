@@ -298,17 +298,6 @@
                     <div class="calendar-sidebar">
                         <h2 data-i18n="calendar-heading">Calendar</h2>
 
-                        <div class="calendar-actions">
-                            <button id="import-ics-btn" class="btn btn-secondary btn-block"><i
-                                    class="fas fa-file-import"></i> Import ICS File</button>
-                            <input type="file" id="ics-file-input" accept=".ics" style="display:none">
-
-                            <div class="ics-url-input-group">
-                                <input type="url" id="ics-url" placeholder="Paste ICS URL...">
-                                <button id="load-ics-url-btn" class="btn btn-secondary btn-sm">Load</button>
-                            </div>
-                        </div>
-
                         <p class="small-note">
                             Notification and Google Calendar API settings are now in the global ⚙️ Settings tab.
                         </p>
@@ -787,6 +776,23 @@
                             </div>
 
                             <div id="gcal-settings-container"></div>
+                        </div>
+
+                        <div class="settings-panel">
+                            <h3>Calendar Imports</h3>
+                            <p class="small-note" style="margin-top: 0;">Import ICS files or subscribe via URL.</p>
+                            <div class="setting-group">
+                                <button id="import-ics-btn" class="btn btn-secondary btn-block" type="button"><i
+                                        class="fas fa-file-import"></i> Import ICS File</button>
+                                <input type="file" id="ics-file-input" accept=".ics" style="display:none">
+                            </div>
+                            <div class="setting-group">
+                                <label for="ics-url">ICS URL</label>
+                                <div class="ics-url-input-group">
+                                    <input type="url" id="ics-url" placeholder="Paste ICS URL...">
+                                    <button id="load-ics-url-btn" class="btn btn-secondary btn-sm" type="button">Load</button>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="settings-panel">
