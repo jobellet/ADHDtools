@@ -1778,14 +1778,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    window.initializeRoutines = initializeRoutines;
-    window.createRoutineHandler = createRoutineHandler;
-    // window.addTaskToRoutineHandler = addTaskToRoutineHandler; // Removed
-    window.activateRoutine = activateRoutine;
-    window.manualAdvanceTask = manualAdvanceTask;
-    window.editTaskInRoutine = editTaskInRoutine;
-    window.deleteTaskFromRoutine = deleteTaskFromRoutine;
-
     // --- FOCUS MODE FUNCTIONS ---
     const focusModeEl = document.getElementById('routine-focus-mode');
     const exitFocusBtn = document.getElementById('exit-routine-focus');
