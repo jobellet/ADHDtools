@@ -29,6 +29,7 @@ body {
     line-height: 1.6;
     color: var(--on-background);
     background-color: var(--background);
+    overflow-x: hidden;
 }
 
 .container {
@@ -171,6 +172,18 @@ nav ul {
     gap: 0.5rem;
     justify-content: center;
     padding: 0;
+    flex: 1 1 100%;
+}
+
+nav .container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+#language-select {
+    margin-left: auto;
 }
 
 nav li {
@@ -1032,6 +1045,21 @@ footer {
 
 /* Responsive Overrides */
 @media (max-width: 768px) {
+    nav .container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    #language-select {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .hamburger-menu {
+        align-self: flex-end;
+    }
+
     .hamburger-menu {
         display: block;
         background-color: var(--surface);
@@ -1056,14 +1084,12 @@ footer {
         display: none;
         grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
         gap: 0.5rem;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
+        position: static;
         background: var(--surface);
         box-shadow: var(--box-shadow);
         padding: 10px 0;
         z-index: 99;
+        width: 100%;
     }
 
     nav ul#main-nav-links.nav-open {
@@ -1139,7 +1165,7 @@ footer {
     }
 
     .tools-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
     }
 
