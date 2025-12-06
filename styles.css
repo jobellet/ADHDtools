@@ -2442,62 +2442,118 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
- 
- / *   C a l e n d a r   R e d e s i g n   * /  
- . c a l e n d a r - l a y o u t   {  
-         d i s p l a y :   g r i d ;  
-         g r i d - t e m p l a t e - c o l u m n s :   3 0 0 p x   1 f r ;  
-         g a p :   2 r e m ;  
-         a l i g n - i t e m s :   s t a r t ;  
- }  
-  
- . c a l e n d a r - s i d e b a r   {  
-         b a c k g r o u n d :   # f 8 f 9 f a ;  
-         p a d d i n g :   1 . 5 r e m ;  
-         b o r d e r - r a d i u s :   1 2 p x ;  
-         b o r d e r :   1 p x   s o l i d   # e 9 e c e f ;  
- }  
-  
- . c a l e n d a r - s i d e b a r   h 2   {  
-         m a r g i n - t o p :   0 ;  
-         m a r g i n - b o t t o m :   1 . 5 r e m ;  
-         f o n t - s i z e :   1 . 5 r e m ;  
-         c o l o r :   v a r ( - - p r i m a r y - d a r k ) ;  
- }  
-  
- . c a l e n d a r - a c t i o n s   {  
-         d i s p l a y :   f l e x ;  
-         f l e x - d i r e c t i o n :   c o l u m n ;  
-         g a p :   1 r e m ;  
-         m a r g i n - b o t t o m :   2 r e m ;  
- }  
-  
- . b t n - b l o c k   {  
-         w i d t h :   1 0 0 % ;  
-         d i s p l a y :   f l e x ;  
-         a l i g n - i t e m s :   c e n t e r ;  
-         j u s t i f y - c o n t e n t :   c e n t e r ;  
-         g a p :   0 . 5 r e m ;  
- }  
-  
- . i c s - u r l - i n p u t - g r o u p   {  
-         d i s p l a y :   f l e x ;  
-         g a p :   0 . 5 r e m ;  
- }  
-  
- . i c s - u r l - i n p u t - g r o u p   i n p u t   {  
-         f l e x :   1 ;  
-         m i n - w i d t h :   0 ;  
-         f o n t - s i z e :   0 . 9 r e m ;  
- }  
-  
- . c a l e n d a r - s e t t i n g s - p a n e l   {  
-         m a r g i n - b o t t o m :   2 r e m ;  
-         p a d d i n g - t o p :   1 . 5 r e m ;  
-         b o r d e r - t o p :   1 p x   s o l i d   # d e e 2 e 6 ;  
- }  
-  
- . c a l e n d a r - s e t t i n g s - p a n e l   h 3   {  
+
+/* Calendar Redesign */
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.calendar-sidebar {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+}
+
+.calendar-sidebar h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+}
+
+.calendar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.btn-block {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.ics-url-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ics-url-input-group input {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+}
+
+.calendar-settings-panel {
+    margin-bottom: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.calendar-settings-panel h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--secondary-dark);
+}
+
+.voice-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.voice-early-input {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.voice-early-input input {
+    width: 60px;
+    padding: 0.3rem;
+}
+
+.calendar-main {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    overflow: hidden;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-toolbar {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+ 
          f o n t - s i z e :   1 . 1 r e m ;  
          m a r g i n - b o t t o m :   1 r e m ;  
          c o l o r :   v a r ( - - s e c o n d a r y - d a r k ) ;  
@@ -2526,117 +2582,216 @@ input:checked + .slider:before {
  . v o i c e - e a r l y - i n p u t   i n p u t   {  
          w i d t h :   6 0 p x ;  
          p a d d i n g :   0 . 3 r e m ;  
- }  
-  
- . c a l e n d a r - m a i n   {  
-         b a c k g r o u n d :   w h i t e ;  
-         b o r d e r - r a d i u s :   1 2 p x ;  
-         b o x - s h a d o w :   0   2 p x   1 2 p x   r g b a ( 0 , 0 , 0 , 0 . 0 5 ) ;  
-         o v e r f l o w :   h i d d e n ;  
-         m i n - h e i g h t :   6 0 0 p x ;  
-         d i s p l a y :   f l e x ;  
-         f l e x - d i r e c t i o n :   c o l u m n ;  
- }  
-  
- . c a l e n d a r - t o o l b a r   {  
-         p a d d i n g :   1 r e m   1 . 5 r e m ;  
-         b o r d e r - b o t t o m :   1 p x   s o l i d   # e e e ;  
-         d i s p l a y :   f l e x ;  
-         j u s t i f y - c o n t e n t :   s p a c e - b e t w e e n ;  
-         a l i g n - i t e m s :   c e n t e r ;  
-         b a c k g r o u n d :   # f f f ;  
- }  
-  
- . c a l e n d a r - n a v   {  
-         d i s p l a y :   f l e x ;  
-         a l i g n - i t e m s :   c e n t e r ;  
-         g a p :   1 r e m ;  
- }  
-  
-/* Routine reschedule modal */
-.routine-reschedule-modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
+ } 
+.settings-toggle {
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    padding: 0.25rem 0.75rem 0.75rem;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.03);
 }
 
-.routine-reschedule-modal.hidden {
+.settings-toggle summary {
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 0.5rem 0;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.settings-toggle summary::-webkit-details-marker {
     display: none;
 }
 
-.routine-reschedule-dialog {
-    background: #fff;
-    border-radius: 12px;
-    padding: 1.5rem;
-    width: min(480px, 90vw);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.settings-toggle summary::before {
+    content: '\25BA';
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
 }
 
-.routine-reschedule-header {
+.settings-toggle[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+
+.tasks-table-container {
+    overflow-x: auto;
+}
+
+.tasks-table-container table {
+    min-width: 620px;
+}
+
+.data-management-note {
+    font-size: 0.95rem;
+    color: #4a4a4a;
+    margin: 0 0 0.75rem 0;
+}
+
+@media (max-width: 640px) {
+    .settings-form {
+        padding: 1rem;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-panel {
+        padding: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    .settings-toggle {
+        padding: 0.15rem 0.75rem 0.75rem;
+    }
+}
+.calendar-header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    min-width: 200px;
+    text-align: center;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid #dee2e6;
+}
+
+.btn-icon:hover {
+    background: #f1f3f5;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.calendar-view-toggles {
+    display: flex;
+    background: #f1f3f5;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.calendar-view-btn {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+}
+
+.calendar-view-btn.active {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.calendar-events-list {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+/* Guide Modal Styles */
+.guide-modal-content {
+    max-width: 700px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.guide-modal-content h2 {
+    padding: 1.5rem;
+    margin: 0;
+    background: var(--primary-color);
+    color: white;
+}
+
+.guide-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 1rem;
+}
+
+.guide-tab {
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.guide-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.guide-content {
+    display: none;
+    padding: 2rem;
+}
+
+.guide-content.active {
+    display: block;
+}
+
+.guide-content ol {
+    padding-left: 1.5rem;
+    line-height: 1.8;
+}
+
+.guide-content li {
     margin-bottom: 0.5rem;
 }
 
-.routine-reschedule-tip {
-    color: #666;
-    margin-bottom: 1rem;
-}
-
-.routine-reschedule-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.routine-reschedule-item {
-    background: #f8f8f8;
-    border: 1px solid #e2e2e2;
+.guide-note {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #e3f2fd;
     border-radius: 8px;
-    padding: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: grab;
-}
-
-.routine-reschedule-item.dragging {
-    opacity: 0.6;
-}
-
-.routine-reschedule-grip {
-    color: #999;
-}
-
-.routine-reschedule-name {
-    flex: 1;
-    font-weight: 600;
-}
-
-.routine-reschedule-meta {
-    color: #777;
+    color: #0d47a1;
     font-size: 0.9rem;
 }
 
-.routine-reschedule-current {
-    background: #e8f4ff;
-    border-color: #90c2ff;
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .calendar-sidebar {
+        order: 2;
+    }
+    
+    .calendar-main {
+        order: 1;
+        min-height: 500px;
+    }
 }
-
-.routine-reschedule-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
- 
 .settings-form {
     background: #fff;
     border: 1px solid #e0e0e0;
