@@ -97,11 +97,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoStartedToday = {}; // Tracks routines that have auto-started today
     let activeRoutineStartTime = null; // Timestamp of when the current routine began
     let activeRoutineEndTime = null; // Expected end time based on current run
+    let currentTaskStartedAt = null; // Timestamp when the current task started
+    let currentTaskScheduledMinutes = 0; // Planned duration for the current task
 
     function getDefaultTaskMinutes() {
         const cfg = window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {};
         const parsed = parseInt(cfg.defaultTaskMinutes, 10);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+    }
+
+    function getLearnedDuration(taskTitle) {
+        const estimated = window.DurationLearning?.getEstimatedDuration?.(taskTitle);
+        if (Number.isFinite(estimated) && estimated > 0) {
+            return Math.round(estimated);
+        }
+
+        return getDefaultTaskMinutes();
     }
 
     // --- NOTIFICATION & AUTO-START HELPERS ---
@@ -217,14 +228,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
 
+    function recordDurationForTask(task) {
+        if (!task || !window.DurationLearning?.recordTaskDuration) return;
+
+        const now = Date.now();
+        const plannedMinutes = currentTaskScheduledMinutes || task.duration || getDefaultTaskMinutes();
+        const elapsedMinutes = currentTaskStartedAt
+            ? Math.max(1, Math.round((now - currentTaskStartedAt) / 60000))
+            : Math.max(1, Math.round(plannedMinutes));
+
+        window.DurationLearning.recordTaskDuration(task.name || task.title, elapsedMinutes);
+    }
+
     function initQuickTaskCapture() {
         if (!quickTaskForm || !quickTaskTitleInput) return;
 
-        const defaultMinutes = getDefaultTaskMinutes();
-        if (quickTaskDurationInput && defaultMinutes) {
-            quickTaskDurationInput.value = defaultMinutes;
-            quickTaskDurationInput.placeholder = `Default: ${defaultMinutes} min`;
+        const initialDefaultMinutes = getLearnedDuration(quickTaskTitleInput?.value?.trim());
+        if (quickTaskDurationInput && initialDefaultMinutes) {
+            quickTaskDurationInput.value = initialDefaultMinutes;
+            quickTaskDurationInput.placeholder = `Default: ${initialDefaultMinutes} min`;
+
+            quickTaskDurationInput.addEventListener('input', () => {
+                quickTaskDurationInput.dataset.userEdited = 'true';
+            });
         }
+
+        const updateDurationSuggestion = () => {
+            if (!quickTaskDurationInput) return;
+            const suggested = getLearnedDuration(quickTaskTitleInput.value.trim());
+            quickTaskDurationInput.placeholder = `Default: ${suggested} min`;
+            if (!quickTaskDurationInput.dataset.userEdited) {
+                quickTaskDurationInput.value = suggested;
+            }
+        };
 
         const syncSliderValue = (input, display) => {
             if (input && display) {
@@ -243,6 +279,19 @@ document.addEventListener('DOMContentLoaded', () => {
             input.addEventListener('input', () => syncSliderValue(input, display));
         });
 
+        if (quickTaskTitleInput) {
+            quickTaskTitleInput.addEventListener('input', () => {
+                if (quickTaskDurationInput) {
+                    if (!quickTaskDurationInput.dataset.userEdited) {
+                        quickTaskDurationInput.dataset.userEdited = '';
+                    }
+                    updateDurationSuggestion();
+                }
+            });
+        }
+
+        updateDurationSuggestion();
+
         quickTaskForm.addEventListener('submit', (e) => {
             e.preventDefault();
             if (!window.DataManager) return;
@@ -252,7 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const importance = Number(quickTaskImportanceInput?.value ?? 5);
             const urgency = Number(quickTaskUrgencyInput?.value ?? 5);
             const duration = parseInt(quickTaskDurationInput?.value, 10);
-            const durationMinutes = Number.isFinite(duration) ? duration : undefined;
+            const suggestedMinutes = getLearnedDuration(title);
+            const durationMinutes = Number.isFinite(duration) ? duration : suggestedMinutes;
 
             const baseTask = {
                 title,
@@ -272,9 +322,15 @@ document.addEventListener('DOMContentLoaded', () => {
             quickTaskForm.reset();
             if (quickTaskImportanceInput) quickTaskImportanceInput.value = '5';
             if (quickTaskUrgencyInput) quickTaskUrgencyInput.value = '5';
-            if (quickTaskDurationInput && defaultMinutes) quickTaskDurationInput.value = defaultMinutes;
+            if (quickTaskDurationInput) {
+                quickTaskDurationInput.dataset.userEdited = '';
+                const resetMinutes = getLearnedDuration('');
+                quickTaskDurationInput.value = resetMinutes;
+                quickTaskDurationInput.placeholder = `Default: ${resetMinutes} min`;
+            }
             syncSliderValue(quickTaskImportanceInput, quickTaskImportanceValue);
             syncSliderValue(quickTaskUrgencyInput, quickTaskUrgencyValue);
+            updateDurationSuggestion();
         });
     }
 
@@ -676,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="col-time">New</div>
                 <div class="col-name"><input type="text" placeholder="Task Name" id="new-task-name-${index}"></div>
                 <div class="col-start"><input type="time" id="new-task-start-${index}" aria-label="Task start time"></div>
-                <div class="col-duration"><input type="number" value="5" min="1" id="new-task-duration-${index}"></div>
+                <div class="col-duration"><input type="number" min="1" id="new-task-duration-${index}"></div>
                 <div class="col-actions">
                     <button id="save-new-task-${index}" class="btn btn-primary btn-sm">Add</button>
                     <button id="cancel-new-task-${index}" class="btn btn-secondary btn-sm">X</button>
@@ -693,6 +749,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             nameInput.focus();
 
+            const updateSuggested = () => {
+                const suggested = getLearnedDuration(nameInput.value.trim());
+                durationInput.placeholder = `Default: ${suggested} min`;
+                if (!durationInput.dataset.userEdited) {
+                    durationInput.value = suggested;
+                }
+            };
+
+            updateSuggested();
+
+            durationInput.addEventListener('input', () => {
+                durationInput.dataset.userEdited = 'true';
+            });
+
+            nameInput.addEventListener('input', () => {
+                if (!durationInput.dataset.userEdited) {
+                    durationInput.dataset.userEdited = '';
+                }
+                updateSuggested();
+            });
+
             const saveHandler = () => {
                 const name = nameInput.value.trim();
                 const duration = parseInt(durationInput.value, 10);
@@ -701,8 +778,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Please enter a valid start time (HH:MM) or leave blank.');
                     return;
                 }
-                if (name && duration > 0) {
-                    addTaskAt(index, name, duration, startAt || null);
+                const finalDuration = Number.isFinite(duration) && duration > 0 ? duration : getLearnedDuration(name);
+                if (name && finalDuration > 0) {
+                    addTaskAt(index, name, finalDuration, startAt || null);
                 }
             };
 
@@ -1153,6 +1231,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTaskTimer = null;
         }
         activeTaskTimeLeftSeconds = 0; // Reset for next task or completion
+        currentTaskStartedAt = null;
+        currentTaskScheduledMinutes = 0;
 
         // Clear flicker effect
         if (focusModeEl) {
@@ -1207,6 +1287,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentTask = activeRoutine.tasks[currentTaskIndex];
         console.log("Starting task:", currentTask.name, "Duration:", currentTask.duration, "min");
 
+        currentTaskStartedAt = Date.now();
+        currentTaskScheduledMinutes = currentTask.duration;
+
         const remainingTasks = activeRoutine.tasks.slice(currentTaskIndex);
         const totalRemainingMinutes = remainingTasks.reduce((s, t) => s + t.duration, 0) + (selection.delaySeconds || 0) / 60;
         const finishTime = new Date(Date.now() + totalRemainingMinutes * 60000);
@@ -1246,6 +1329,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (autoRunEnabled) {
                     clearInterval(currentTaskTimer);
                     currentTaskTimer = null;
+                    recordDurationForTask(currentTask);
+                    currentTaskStartedAt = null;
+                    currentTaskScheduledMinutes = 0;
                     notify(`Task "${currentTask.name}" finished (Auto Run)`);
                     currentTaskIndex++;
                     startNextTask();
@@ -1257,6 +1343,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (autoRunEnabled) {
                     clearInterval(currentTaskTimer);
                     currentTaskTimer = null;
+                    recordDurationForTask(currentTask);
+                    currentTaskStartedAt = null;
+                    currentTaskScheduledMinutes = 0;
                     notify(`Task "${currentTask.name}" finished (Auto Run)`);
                     currentTaskIndex++;
                     startNextTask();
@@ -1410,6 +1499,9 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
+        recordDurationForTask(finishedTask);
+        currentTaskStartedAt = null;
+        currentTaskScheduledMinutes = 0;
         currentTaskIndex++;
         notify(`Task "${finishedTask.name}" finished`);
         startNextTask();
