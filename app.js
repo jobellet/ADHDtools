@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         'routine': 'routine',
         'focus': 'focus',
         'rewards': 'rewards',
+        'settings': 'settings',
         'about': 'about'
     };
 
@@ -99,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
             'routine': 'Routine Tool',
             'focus': 'Focus Mode',
             'rewards': 'Rewards',
+            'settings': 'Settings',
             'about': 'About'
         };
         document.title = `${titleMap[toolName] || 'Tool'} - ADHD Tools Hub`;

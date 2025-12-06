@@ -1,0 +1,61 @@
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.ConfigManager) return;
+
+  const config = window.ConfigManager.getConfig();
+
+  const fields = {
+    dayStart: document.getElementById('setting-day-start'),
+    dayEnd: document.getElementById('setting-day-end'),
+    icsRefreshSeconds: document.getElementById('setting-ics-refresh'),
+    fixedTag: document.getElementById('setting-fixed-tag'),
+    flexibleTag: document.getElementById('setting-flexible-tag'),
+    defaultTaskMinutes: document.getElementById('setting-default-task-minutes'),
+    enableUnifiedScheduler: document.getElementById('setting-unified-scheduler'),
+  };
+
+  function populateFields(values) {
+    if (fields.dayStart) fields.dayStart.value = values.dayStart;
+    if (fields.dayEnd) fields.dayEnd.value = values.dayEnd;
+    if (fields.icsRefreshSeconds) fields.icsRefreshSeconds.value = values.icsRefreshSeconds;
+    if (fields.fixedTag) fields.fixedTag.value = values.fixedTag;
+    if (fields.flexibleTag) fields.flexibleTag.value = values.flexibleTag;
+    if (fields.defaultTaskMinutes) fields.defaultTaskMinutes.value = values.defaultTaskMinutes;
+    if (fields.enableUnifiedScheduler) fields.enableUnifiedScheduler.checked = values.enableUnifiedScheduler;
+  }
+
+  populateFields(config);
+
+  const form = document.getElementById('settings-form');
+  const status = document.getElementById('settings-status');
+
+  function showStatus(message) {
+    if (!status) return;
+    status.textContent = message;
+    status.classList.add('visible');
+    setTimeout(() => status.classList.remove('visible'), 2500);
+  }
+
+  if (form) {
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const updates = {
+        dayStart: fields.dayStart?.value || window.ConfigManager.DEFAULT_CONFIG.dayStart,
+        dayEnd: fields.dayEnd?.value || window.ConfigManager.DEFAULT_CONFIG.dayEnd,
+        icsRefreshSeconds: Number(fields.icsRefreshSeconds?.value) || window.ConfigManager.DEFAULT_CONFIG.icsRefreshSeconds,
+        fixedTag: fields.fixedTag?.value || window.ConfigManager.DEFAULT_CONFIG.fixedTag,
+        flexibleTag: fields.flexibleTag?.value || window.ConfigManager.DEFAULT_CONFIG.flexibleTag,
+        defaultTaskMinutes: Number(fields.defaultTaskMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.defaultTaskMinutes,
+        enableUnifiedScheduler: fields.enableUnifiedScheduler?.checked || false,
+      };
+
+      const updated = window.ConfigManager.updateConfig(updates);
+      populateFields(updated);
+      showStatus('Settings saved');
+    });
+  }
+
+  window.addEventListener('configUpdated', (event) => {
+    if (!event.detail) return;
+    populateFields(event.detail);
+  });
+});
