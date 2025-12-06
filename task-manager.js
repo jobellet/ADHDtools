@@ -20,9 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const importSelect = document.getElementById('task-import-select');
 
   const DataManager = window.DataManager;
+  const createTask = window.TaskModel?.createTask || ((raw, overrides = {}) => ({ ...raw, ...overrides }));
+  const wrapTask = (task) => createTask(task, task);
 
   // Local cache of tasks from DataManager
-  let tasks = DataManager ? DataManager.getTasks() : [];
+  let tasks = DataManager ? DataManager.getTasks().map(wrapTask) : [];
 
   function sanitizeText(str) {
     return str
@@ -46,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function refreshTasks() {
-    tasks = DataManager.getTasks();
+    tasks = DataManager.getTasks().map(wrapTask);
   }
 
   // Render task list according to filters
@@ -315,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (text) {
       const newTask = DataManager.addTask({ text, originalTool: type === 'breakdown' ? 'TaskBreakdown' : 'EisenhowerMatrix' });
-      window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: newTask }));
+      window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
       renderTasks();
       alert(`Imported task "${text}"`);
     }
@@ -344,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
       notes: t.notes || '',
       subTasks: t.subTasks || []
     });
-    window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: newTask }));
+    window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
     renderTasks();
     alert(`Task '${t.text}' added to Task Manager.`);
   });
@@ -360,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
       priority: prioritySelectEl.value || 'medium',
       category: categorySelectEl.value || 'other'
     });
-    window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: newTask }));
+    window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
     inputEl.value = '';
     prioritySelectEl.value = 'medium';
     categorySelectEl.value = 'other';

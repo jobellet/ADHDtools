@@ -1,9 +1,12 @@
 import { renderDayPlanner } from './renderDay.js';
 import { populateTimeOptions, populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes } from './dayPlannerUtils.js';
+import { createTask } from './core/task-model.js';
 
 let editingTaskId = null;
 let pendingExternalTask = null;
 let currentDate = new Date();
+
+const wrapTask = (task) => createTask(task, task);
 
 let dateDisplay,
     timeBlocksContainer,
@@ -192,7 +195,7 @@ async function autoPlanDay() {
         const events = getCalendarEvents(currentDate);
         events.forEach(ev => {
             const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${ev.start}`;
-            const existing = window.DataManager.getTasks().find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
+            const existing = window.DataManager.getTasks().map(wrapTask).find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
             if (!existing) {
                 const startMins = parseInt(ev.start.slice(0, 2)) * 60 + parseInt(ev.start.slice(3, 5));
                 const endMins = ev.end ? parseInt(ev.end.slice(0, 2)) * 60 + parseInt(ev.end.slice(3, 5)) : startMins + 60;
@@ -362,7 +365,9 @@ function initDayPlanner() {
         clearBtn.addEventListener('click', () => {
             if (!confirm('Clear all events for this day? This will unschedule them from the planner.')) return;
             const plannerDateStr = currentDate.toISOString().slice(0, 10);
-            const todaysTasks = window.DataManager.getTasks().filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
+            const todaysTasks = window.DataManager.getTasks()
+                .map(wrapTask)
+                .filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
             todaysTasks.forEach(task => {
                 window.DataManager.updateTask(task.id, { plannerDate: null });
             });
