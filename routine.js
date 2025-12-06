@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const importance = Number(quickTaskImportanceInput?.value ?? 5);
             const urgency = Number(quickTaskUrgencyInput?.value ?? 5);
             const duration = parseInt(quickTaskDurationInput?.value, 10);
-            const durationMinutes = Number.isFinite(duration) ? duration : undefined;
+            const durationMinutes = Number.isFinite(duration) ? duration : defaultMinutes;
 
             const baseTask = {
                 title,
@@ -263,7 +263,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 durationMinutes,
                 duration: durationMinutes,
                 source: 'routine',
-                originalTool: 'routine'
+                originalTool: 'routine',
+                plannerDate: null,
             };
 
             const task = createTaskModel ? createTaskModel(baseTask) : baseTask;
