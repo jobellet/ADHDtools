@@ -1,4 +1,4 @@
-import { formatTime, getCalendarEvents } from './dayPlannerUtils.js';
+import { formatTime, getCalendarEvents, getDayBounds } from './dayPlannerUtils.js';
 
 export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize }) {
     if (!window.DataManager) return;
@@ -10,9 +10,12 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         day: 'numeric'
     });
     timeBlocksContainer.innerHTML = '';
-    const hourContents = [];
+    const hourContents = new Map();
+    const { startMinutes, endMinutes } = getDayBounds();
+    const startHour = Math.floor(startMinutes / 60);
+    const endHour = Math.ceil(endMinutes / 60);
 
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = startHour; hour < endHour; hour++) {
         const timeBlock = document.createElement('div');
         timeBlock.className = 'time-block';
 
@@ -23,7 +26,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
 
         const eventContent = document.createElement('div');
         eventContent.className = 'event-content';
-        hourContents.push(eventContent);
+        hourContents.set(hour, eventContent);
 
         timeBlock.appendChild(eventContent);
         timeBlocksContainer.appendChild(timeBlock);
@@ -39,7 +42,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
             : start + 60;
         const lastHour = Math.min(23, Math.floor((end - 1) / 60));
         for (let h = Math.floor(start / 60); h <= lastHour; h++) {
-            const hourContent = hourContents[h];
+            const hourContent = hourContents.get(h);
             if (!hourContent) continue;
             const hourStart = h * 60;
             const segStart = Math.max(start, hourStart);
@@ -85,7 +88,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         const end = start + duration;
         const lastHour = Math.min(23, Math.floor((end - 1) / 60));
         for (let h = Math.floor(start / 60); h <= lastHour; h++) {
-            const hourContent = hourContents[h];
+            const hourContent = hourContents.get(h);
             if (!hourContent) continue;
             const hourStart = h * 60;
             const segStart = Math.max(start, hourStart);
@@ -132,7 +135,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         const minutesIntoHour = currentMinutes % 60;
 
         if (currentHour >= 0 && currentHour < 24) {
-            const hourContent = hourContents[currentHour];
+            const hourContent = hourContents.get(currentHour);
             if (hourContent) {
                 const indicator = document.createElement('div');
                 indicator.className = 'current-time-indicator';

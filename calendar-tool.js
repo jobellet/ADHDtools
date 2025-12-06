@@ -15,6 +15,17 @@
   const announcedEarly = new Set();
   const announcedStart = new Set();
 
+  function getConfig() {
+    return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
+  }
+
+  function getIcsRefreshIntervalMs() {
+    const cfg = getConfig();
+    const seconds = parseInt(cfg.icsRefreshSeconds, 10);
+    const validSeconds = Number.isFinite(seconds) && seconds > 0 ? seconds : 30;
+    return validSeconds * 1000;
+  }
+
   function getPlannerEvents() {
     if (!window.DataManager) return [];
     return window.DataManager
@@ -657,9 +668,11 @@
 
     if (icsUrl) {
       handleICSUrl(icsUrl);
+      const refreshMs = getIcsRefreshIntervalMs();
+      console.log(`Refreshing ICS feed every ${refreshMs / 1000} seconds from config`);
       setInterval(() => {
         handleICSUrl(icsUrl);
-      }, 30000);
+      }, refreshMs);
     }
 
     setInterval(checkVoiceAnnouncements, 60000);

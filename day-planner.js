@@ -1,5 +1,5 @@
 import { renderDayPlanner } from './renderDay.js';
-import { populateTimeOptions, populateTaskOptions, getDefaultTime, getCalendarEvents } from './dayPlannerUtils.js';
+import { populateTimeOptions, populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes } from './dayPlannerUtils.js';
 
 let editingTaskId = null;
 let pendingExternalTask = null;
@@ -30,7 +30,7 @@ function openModal(task, presetTime, externalTask) {
         eventModalTitle.textContent = 'Edit Event';
         eventTitleInput.value = task.text;
         eventTimeSelect.value = task.plannerDate.slice(11, 16);
-        eventDurationInput.value = task.duration || 60;
+        eventDurationInput.value = task.duration || getDefaultDurationMinutes();
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = true;
@@ -40,7 +40,7 @@ function openModal(task, presetTime, externalTask) {
         eventModalTitle.textContent = 'Schedule Task';
         eventTitleInput.value = externalTask.text || '';
         eventTimeSelect.value = presetTime || getDefaultTime();
-        eventDurationInput.value = externalTask.duration || 60;
+        eventDurationInput.value = externalTask.duration || getDefaultDurationMinutes();
         eventTitleInput.disabled = true;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = true;
@@ -49,7 +49,7 @@ function openModal(task, presetTime, externalTask) {
         eventModalTitle.textContent = 'Add Event';
         eventTitleInput.value = '';
         eventTimeSelect.value = presetTime || getDefaultTime();
-        eventDurationInput.value = 60;
+        eventDurationInput.value = getDefaultDurationMinutes();
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = false;
@@ -105,7 +105,7 @@ async function handleVoiceCommand(text) {
     window.DataManager.addTask({
         text: parsed.title,
         plannerDate,
-        duration: Number(parsed.duration) || 60,
+        duration: Number(parsed.duration) || getDefaultDurationMinutes(),
         originalTool: 'planner'
     });
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
@@ -114,7 +114,7 @@ async function handleVoiceCommand(text) {
 function startResize(e, task, eventDiv) {
     e.preventDefault();
     const startY = e.clientY;
-    const startDuration = task.duration || 60;
+    const startDuration = task.duration || getDefaultDurationMinutes();
     const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
     function onMove(ev) {
         const diff = ev.clientY - startY;
@@ -140,13 +140,15 @@ function applyZoom() {
 function scrollToCurrent() {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const { startMinutes, endMinutes } = getDayBounds();
     const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
 
     // Center current time in viewport by subtracting half the container height
     const containerHeight = timeBlocksContainer.clientHeight;
-    const scrollPosition = (currentMinutes * minuteHeight) - (containerHeight / 2);
+    const boundedMinutes = Math.min(Math.max(currentMinutes, startMinutes), endMinutes);
+    const scrollPosition = ((boundedMinutes - startMinutes) * minuteHeight) - (containerHeight / 2);
 
-    timeBlocksContainer.scrollTop = Math.max(0, scrollPosition);
+    timeBlocksContainer.scrollTop = Math.max(0, Math.min(timeBlocksContainer.scrollHeight - containerHeight, scrollPosition));
 }
 
 function getBreakdownTasks() {
@@ -236,7 +238,7 @@ async function autoPlanDay() {
         }
         plan.forEach(item => {
             if (!item.time || !item.text) return;
-            const duration = parseInt(item.duration, 10) || 60;
+            const duration = parseInt(item.duration, 10) || getDefaultDurationMinutes();
             const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${item.time}`;
             window.DataManager.addTask({
                 text: item.text,
@@ -295,9 +297,10 @@ function initDayPlanner() {
         if (!(e.target === timeBlocksContainer || cls.contains('time-block') || cls.contains('event-content'))) return;
         const rect = timeBlocksContainer.getBoundingClientRect();
         const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
+        const { startMinutes, endMinutes } = getDayBounds();
         const y = e.clientY - rect.top + timeBlocksContainer.scrollTop;
-        let minutes = Math.round(y / minuteHeight / 5) * 5;
-        minutes = Math.min(1435, Math.max(0, minutes));
+        let minutes = Math.round(y / minuteHeight / 5) * 5 + startMinutes;
+        minutes = Math.min(Math.max(startMinutes, minutes), Math.max(startMinutes, endMinutes - 5));
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
         const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -310,7 +313,7 @@ function initDayPlanner() {
             const task = window.DataManager.getTask(id);
             eventTitleInput.value = task.text;
             eventTitleInput.disabled = true;
-            eventDurationInput.value = task.duration || 60;
+            eventDurationInput.value = task.duration || getDefaultDurationMinutes();
         } else {
             eventTitleInput.disabled = false;
             eventTitleInput.value = '';
@@ -320,7 +323,7 @@ function initDayPlanner() {
     eventForm.addEventListener('submit', e => {
         e.preventDefault();
         const time = eventTimeSelect.value;
-        const duration = parseInt(eventDurationInput.value, 10) || 60;
+        const duration = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
         const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${time}`;
 
         if (editingTaskId) {
