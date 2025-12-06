@@ -1,4 +1,4 @@
-import { formatTime, getCalendarEvents, getDayBounds } from './dayPlannerUtils.js';
+import { formatTime, getCalendarEvents, getDayBounds, getPlannerTasksForDay } from './dayPlannerUtils.js';
 
 export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize }) {
     if (!window.DataManager) return;
@@ -59,26 +59,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         }
     });
 
-    const allTasks = window.DataManager.getTasks();
-    const plannerDateStr = currentDate.toISOString().slice(0, 10);
-    const todaysTasks = allTasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
-
-    const prevDate = new Date(currentDate);
-    prevDate.setDate(currentDate.getDate() - 1);
-    const prevDateStr = prevDate.toISOString().slice(0, 10);
-    allTasks.filter(task => task.plannerDate && task.plannerDate.startsWith(prevDateStr)).forEach(task => {
-        const startMins = parseInt(task.plannerDate.slice(11, 13)) * 60 + parseInt(task.plannerDate.slice(14, 16));
-        const dur = task.duration || 60;
-        if (startMins + dur > 1440) {
-            const remainder = startMins + dur - 1440;
-            todaysTasks.push({
-                ...task,
-                plannerDate: `${plannerDateStr}T00:00`,
-                duration: remainder,
-                _continuation: true
-            });
-        }
-    });
+    const todaysTasks = getPlannerTasksForDay(currentDate);
 
     todaysTasks.forEach(task => {
         const startHour = parseInt(task.plannerDate.slice(11, 13));

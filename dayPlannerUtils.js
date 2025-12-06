@@ -1,9 +1,18 @@
+import { buildSchedule } from './core/scheduler.js';
+
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
 function getConfig() {
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
+}
+
+function minutesToTimeStr(minutes) {
+    const clamped = Math.max(0, Math.min(1439, Math.round(minutes)));
+    const h = Math.floor(clamped / 60);
+    const m = clamped % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 function parseTimeToMinutes(timeStr, fallback) {
@@ -27,6 +36,74 @@ export function getDefaultDurationMinutes() {
     const cfg = getConfig();
     const parsed = parseInt(cfg.defaultTaskMinutes, 10);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+}
+
+export function getPlannerTasksForDay(currentDate) {
+    if (!window.DataManager) return [];
+
+    const cfg = getConfig();
+    const plannerDateStr = currentDate.toISOString().slice(0, 10);
+    const tasks = window.DataManager.getTasks();
+    const defaultDuration = getDefaultDurationMinutes();
+
+    const todaysTasks = tasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
+
+    const prevDate = new Date(currentDate);
+    prevDate.setDate(currentDate.getDate() - 1);
+    const prevDateStr = prevDate.toISOString().slice(0, 10);
+    tasks.filter(task => task.plannerDate && task.plannerDate.startsWith(prevDateStr)).forEach(task => {
+        const startMins = parseInt(task.plannerDate.slice(11, 13)) * 60 + parseInt(task.plannerDate.slice(14, 16));
+        const dur = task.duration || defaultDuration;
+        if (startMins + dur > 1440) {
+            const remainder = startMins + dur - 1440;
+            todaysTasks.push({
+                ...task,
+                plannerDate: `${plannerDateStr}T00:00`,
+                duration: remainder,
+                _continuation: true
+            });
+        }
+    });
+
+    if (!cfg.enableUnifiedScheduler) {
+        return todaysTasks;
+    }
+
+    const schedulerTasks = [];
+    todaysTasks.forEach(task => {
+        schedulerTasks.push({
+            ...task,
+            startTime: task.plannerDate.slice(11, 16),
+            durationMinutes: task.duration || defaultDuration,
+            isFixed: true,
+        });
+    });
+
+    tasks.filter(task => !task.plannerDate || task.plannerDate.startsWith(plannerDateStr)).forEach(task => {
+        if (todaysTasks.includes(task)) return;
+        const priorityScore = task.priority === 'high' ? 8 : task.priority === 'low' ? 4 : 6;
+        schedulerTasks.push({
+            ...task,
+            durationMinutes: task.duration || defaultDuration,
+            importance: task.importance ?? priorityScore,
+            urgency: task.urgency ?? priorityScore,
+        });
+    });
+
+    const schedule = buildSchedule({
+        tasks: schedulerTasks,
+        now: currentDate,
+        config: cfg,
+    }) || [];
+
+    return schedule.map(slot => {
+        const startStr = minutesToTimeStr(slot.scheduledStart);
+        return {
+            ...slot.task,
+            plannerDate: `${plannerDateStr}T${startStr}`,
+            duration: Math.max(5, slot.scheduledEnd - slot.scheduledStart),
+        };
+    });
 }
 
 export function formatTime(h, m) {
