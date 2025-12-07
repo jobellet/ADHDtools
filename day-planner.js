@@ -7,6 +7,22 @@ let pendingExternalTask = null;
 let currentDate = new Date();
 
 const wrapTask = (task) => createTask(task, task);
+const getTaskFromStore = (id) => {
+    if (window.TaskStore?.getTaskByHash) return window.TaskStore.getTaskByHash(id);
+    if (window.DataManager?.getTask) return window.DataManager.getTask(id);
+    return null;
+};
+
+const addTaskToStore = (task) => {
+    if (window.TaskStore?.addTask) return window.TaskStore.addTask(task);
+    return window.DataManager?.addTask ? window.DataManager.addTask(task) : null;
+};
+
+const updateTaskInStore = (id, updates) => {
+    if (window.TaskStore?.updateTaskByHash) return window.TaskStore.updateTaskByHash(id, updates);
+    if (window.DataManager?.updateTask) return window.DataManager.updateTask(id, updates);
+    return null;
+};
 
 let dateDisplay,
     timeBlocksContainer,
@@ -398,10 +414,10 @@ function initDayPlanner() {
     eventTaskSelect.addEventListener('change', () => {
         const id = eventTaskSelect.value;
         if (id) {
-            const task = window.DataManager.getTask(id);
-            eventTitleInput.value = task.text;
+            const task = getTaskFromStore(id);
+            eventTitleInput.value = task?.name || task?.text || '';
             eventTitleInput.disabled = true;
-            eventDurationInput.value = task.duration || getDefaultDurationMinutes();
+            eventDurationInput.value = task?.durationMinutes || task?.duration || getDefaultDurationMinutes();
         } else {
             eventTitleInput.disabled = false;
             eventTitleInput.value = '';
@@ -416,29 +432,39 @@ function initDayPlanner() {
 
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
-            window.DataManager.updateTask(editingTaskId, { text: title, plannerDate: plannerDateTime, duration });
+            updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline: plannerDateTime, durationMinutes: duration, duration });
         } else if (pendingExternalTask) {
             const title = eventTitleInput.value.trim() || pendingExternalTask.text;
-            window.DataManager.addTask({
+            addTaskToStore({
+                name: title,
                 text: title,
                 originalTool: pendingExternalTask.originalTool || 'TaskManager',
                 priority: pendingExternalTask.priority || 'medium',
+                importance: pendingExternalTask.importance,
+                urgency: pendingExternalTask.urgency,
                 category: pendingExternalTask.category || 'other',
                 plannerDate: plannerDateTime,
+                deadline: plannerDateTime,
+                durationMinutes: duration,
                 duration,
+                isFixed: true,
             });
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
-                window.DataManager.updateTask(selectedTaskId, { plannerDate: plannerDateTime, duration });
+                updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline: plannerDateTime, durationMinutes: duration, duration, isFixed: true });
             } else {
                 const title = eventTitleInput.value.trim();
                 if (!title) return;
-                window.DataManager.addTask({
+                addTaskToStore({
+                    name: title,
                     text: title,
                     originalTool: 'DayPlanner',
                     plannerDate: plannerDateTime,
+                    deadline: plannerDateTime,
+                    durationMinutes: duration,
                     duration,
+                    isFixed: true,
                 });
             }
         }
@@ -450,11 +476,11 @@ function initDayPlanner() {
         clearBtn.addEventListener('click', () => {
             if (!confirm('Clear all events for this day? This will unschedule them from the planner.')) return;
             const plannerDateStr = currentDate.toISOString().slice(0, 10);
-            const todaysTasks = window.DataManager.getTasks()
+            const todaysTasks = (window.TaskStore?.getAllTasks ? window.TaskStore.getAllTasks() : window.DataManager.getTasks())
                 .map(wrapTask)
                 .filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
             todaysTasks.forEach(task => {
-                window.DataManager.updateTask(task.id, { plannerDate: null });
+                updateTaskInStore(task.hash || task.id, { plannerDate: null, deadline: task.deadline && !task.deadline.startsWith(plannerDateStr) ? task.deadline : null, isFixed: false });
             });
         });
     }

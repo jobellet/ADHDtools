@@ -9,6 +9,12 @@ function getConfig() {
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
 }
 
+function getUnifiedTasks() {
+    if (window.TaskStore?.getAllTasks) return window.TaskStore.getAllTasks();
+    if (window.DataManager?.getTasks) return window.DataManager.getTasks();
+    return [];
+}
+
 function getTagConfig() {
     const cfg = getConfig();
     return {
@@ -57,11 +63,9 @@ export function getDefaultDurationMinutes() {
 }
 
 export function getPlannerTasksForDay(currentDate) {
-    if (!window.DataManager) return [];
-
     const cfg = getConfig();
     const plannerDateStr = currentDate.toISOString().slice(0, 10);
-    const tasks = window.DataManager.getTasks();
+    const tasks = getUnifiedTasks();
     const defaultDuration = getDefaultDurationMinutes();
 
     const todaysTasks = tasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
@@ -150,11 +154,11 @@ export function populateTimeOptions(select) {
 
 export function populateTaskOptions(select) {
     select.innerHTML = '<option value="">-- New Event --</option>';
-    const tasks = window.DataManager.getTasks().filter(t => !t.plannerDate);
+    const tasks = getUnifiedTasks().filter(t => !t.plannerDate && !t.completed);
     tasks.forEach(t => {
         const opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = t.text;
+        opt.value = t.hash || t.id;
+        opt.textContent = t.name || t.text;
         select.appendChild(opt);
     });
 }

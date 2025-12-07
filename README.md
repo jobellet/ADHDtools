@@ -22,24 +22,34 @@ All tools (Pomodoro, Planner, Focus Mode, Routine, Calendar, Habit Tracker, Rewa
 
 ## 🧩 Core Data Model: The Task Object
 
-Every tool communicates through a unified data structure — the Task.
+Every tool communicates through a unified data structure — the Task. The helper functions live in `core/task-model.js` and generate deterministic identifiers so the same task can flow across tools.
 
 Each task includes:
 
 | Field | Description |
 | --- | --- |
-| user | Owner of the task (default: main user). Can be extended to multiple family members. |
-| name | Short description of the task (e.g. “Laundry”, “Prepare meeting”). |
-| hash | Unique identifier, ensuring distinction between tasks with identical names or recurring routines. |
-| deadline | Date/time by which the task must be completed. Optional but used to calculate urgency. |
-| dependency | (Optional) Hash of another task that must be completed first. |
-| urgency | Dynamic score (1–10). 10 = today, 9 = tomorrow, 1 = 10 days or more. Automatically recalculated as deadlines approach. |
-| importance | Static priority score (1–10) defining how meaningful the task is to the user. |
-| duration | Estimated time required (learned automatically over time). |
-| completed | Boolean flag marking the task as done. |
-| achievements_weight | Contribution to total achievements, calculated as: importance × duration (hours) when completed. |
+| user | Owner of the task (default: `main`). |
+| name | Short description, e.g., “Finish report”. |
+| text | Human-friendly label (alias of `name` for legacy tools). |
+| hash | Deterministic unique identifier derived from user + name + createdAt. Also mirrored to `id` for backwards compatibility. |
+| deadline | ISO datetime string or null. Used to derive urgency and schedule fixed blocks. |
+| plannerDate | Optional ISO datetime for day-planner placements. |
+| dependency | Hash of another task that must be completed first. |
+| urgency | 1–10. Auto-derived from deadline when not provided. |
+| importance | 1–10 priority weight from the user. |
+| durationMinutes | Estimated duration in minutes (positive number). |
+| isFixed | Boolean flag for fixed calendar events/blocks. |
+| completed | Boolean completion flag. |
+| completedAt | ISO string of when the task was finished. |
+| achievementScore | importance × (durationMinutes / 60) when completed. |
 
-When multiple tasks share the same name, the Achievements tool aggregates them into a single category, displaying cumulative progress and total score.
+Utility helpers:
+
+* `createTask(raw, overrides)` – normalize any incoming object into a Task.
+* `updateTask(task, updates)` – merge updates without losing the deterministic hash.
+* `markTaskCompleted(task, completedAt)` – set completion flags and recompute the achievement score.
+* `computeUrgencyFromDeadline(deadline)` – derive urgency once per day from the deadline.
+* `computeAchievementScore(task)` – shared scoring logic for achievements/rewards.
 
 ---
 
@@ -93,6 +103,32 @@ When multiple tasks share the same name, the Achievements tool aggregates them i
 The app should feel like a cognitive prosthesis for people who struggle with task switching or priority overload. Rather than forcing users to plan everything, it helps them see only what matters right now — and rewards consistent progress rather than perfection.
 
 **Note for contributors and AI agents:** Treat this vision and data model as the global north star. When implementing new features or refactors, align them with this roadmap and update this README to reflect progress so future work stays cohesive.
+
+## Current Status
+
+✅ Unified Task model and helper functions in `core/task-model.js` (hashes, urgency, achievement scoring).
+
+✅ Shared task storage via `core/task-store.js`, mirrored through `DataManager` for legacy tools.
+
+✅ Day Planner events and Routine quick tasks persist into the shared store with deadlines/durations.
+
+✅ Basic unified scheduler (`core/scheduler.js`) can return a prioritized schedule and the task to do “right now.”
+
+✅ Achievements and rewards now use completed Task scores instead of a separate points ledger.
+
+🛠️ In progress: deeper Focus Mode integration with the scheduled task of the moment.
+
+🔜 Planned: richer calendar imports, smarter dependency handling, and family profiles.
+
+## Task Storage
+
+All tasks are persisted in the browser under the `adhd-unified-tasks` key (via `core/task-store.js`). The store exposes:
+
+* `getAllTasks()`, `getPendingTasks()`, `getTasksByUser(user)`
+* `addTask(task)`, `updateTaskByHash(hash, updates)`, `getTaskByHash(hash)`
+* `markComplete(hash)`
+
+Legacy modules still calling `DataManager` automatically read/write through this shared store, so new tools should prefer `TaskStore` directly.
 
 ## Features
 

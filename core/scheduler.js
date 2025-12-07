@@ -1,3 +1,6 @@
+import TaskStore from './task-store.js';
+import { computeUrgencyFromDeadline } from './task-model.js';
+
 const DEFAULT_CONFIG = {
   dayStart: '07:00',
   dayEnd: '22:00',
@@ -22,87 +25,104 @@ function getDurationMinutes(task) {
   return 60;
 }
 
-function toFixedTask(task, dayStart, dayEnd) {
-  const startMinutes = parseTimeToMinutes(task.startTime ?? task.plannerDate?.slice(11, 16), null);
-  if (!Number.isFinite(startMinutes)) return null;
-  const duration = getDurationMinutes(task);
-  const boundedStart = Math.max(dayStart, Math.min(startMinutes, dayEnd));
-  const boundedEnd = Math.min(dayEnd, boundedStart + duration);
-  return {
-    ...task,
-    startMinutes: boundedStart,
-    endMinutes: boundedEnd,
-  };
-}
-
-function scoreTask(task) {
-  const importance = Number(task.importance ?? task.priority ?? 5);
-  const urgency = Number(task.urgency ?? 5);
-  const safeImportance = Number.isFinite(importance) ? importance : 5;
-  const safeUrgency = Number.isFinite(urgency) ? urgency : 5;
-  return safeImportance * 2 + safeUrgency;
-}
-
-function scheduleFlexibleTasks(flexibleTasks, schedule, startMinutes, endMinutes) {
-  let cursor = startMinutes;
-  const remaining = [...flexibleTasks];
-  while (remaining.length && cursor < endMinutes) {
-    const task = remaining.shift();
-    const duration = getDurationMinutes(task);
-    if (cursor + duration > endMinutes) break;
-    schedule.push({ task, scheduledStart: cursor, scheduledEnd: cursor + duration });
-    cursor += duration;
+function deriveStartMinutes(task) {
+  if (task.startTime) return parseTimeToMinutes(task.startTime, null);
+  if (task.deadline && task.deadline.includes('T')) {
+    return parseTimeToMinutes(task.deadline.slice(11, 16), null);
   }
-  return { remaining, cursor };
+  if (task.plannerDate) return parseTimeToMinutes(task.plannerDate.slice(11, 16), null);
+  return null;
 }
 
-export function buildSchedule({ tasks = [], now = new Date(), config = {} }) {
-  const mergedConfig = { ...DEFAULT_CONFIG, ...(config || {}) };
-  const dayStart = parseTimeToMinutes(mergedConfig.dayStart, 0);
-  const dayEnd = parseTimeToMinutes(mergedConfig.dayEnd, 24 * 60);
+function isDependencyBlocked(task, taskMap) {
+  if (!task.dependency) return false;
+  const dep = taskMap.get(task.dependency);
+  return dep ? !dep.completed : false;
+}
 
-  const fixedTasks = [];
-  const flexibleTasks = [];
+function computePriority(task) {
+  const importance = Number(task.importance ?? 5);
+  const urgency = Number(task.urgency ?? computeUrgencyFromDeadline(task.deadline));
+  return (Number.isFinite(importance) ? importance : 5) * (Number.isFinite(urgency) ? urgency : 5);
+}
 
-  tasks.forEach((task) => {
-    const fixed = toFixedTask(task, dayStart, dayEnd);
-    if (fixed) {
-      fixedTasks.push(fixed);
+function buildDailySchedule(tasks, config) {
+  const dayStart = parseTimeToMinutes(config.dayStart, 0);
+  const dayEnd = parseTimeToMinutes(config.dayEnd, 24 * 60);
+  const fixed = [];
+  const flexible = [];
+
+  tasks.forEach(task => {
+    const startMinutes = deriveStartMinutes(task);
+    if (task.isFixed || (task.name || '').includes('[FIX]')) {
+      if (Number.isFinite(startMinutes)) {
+        fixed.push({ task, startMinutes, endMinutes: startMinutes + getDurationMinutes(task) });
+        return;
+      }
+    }
+    if (Number.isFinite(startMinutes) && startMinutes >= dayStart && startMinutes < dayEnd) {
+      fixed.push({ task, startMinutes, endMinutes: startMinutes + getDurationMinutes(task) });
       return;
     }
-    flexibleTasks.push(task);
+    flexible.push(task);
   });
 
-  fixedTasks.sort((a, b) => a.startMinutes - b.startMinutes);
-  flexibleTasks.sort((a, b) => scoreTask(b) - scoreTask(a));
+  fixed.sort((a, b) => a.startMinutes - b.startMinutes);
+  flexible.sort((a, b) => computePriority(b) - computePriority(a));
 
   const schedule = [];
   let cursor = dayStart;
 
-  fixedTasks.forEach((task) => {
-    const gapEnd = task.startMinutes;
-    if (cursor < gapEnd && flexibleTasks.length) {
-      const res = scheduleFlexibleTasks(flexibleTasks, schedule, cursor, gapEnd);
-      cursor = res.cursor;
-      flexibleTasks.length = 0;
-      flexibleTasks.push(...res.remaining);
+  fixed.forEach(slot => {
+    const gapEnd = Math.max(dayStart, Math.min(slot.startMinutes, dayEnd));
+    while (flexible.length && cursor + getDurationMinutes(flexible[0]) <= gapEnd) {
+      const task = flexible.shift();
+      const duration = getDurationMinutes(task);
+      schedule.push({ task, startMinutes: cursor, endMinutes: cursor + duration });
+      cursor += duration;
     }
-
-    const start = Math.max(cursor, task.startMinutes);
-    const end = Math.min(dayEnd, Math.max(task.endMinutes, start));
-    schedule.push({ task, scheduledStart: start, scheduledEnd: end });
+    const start = Math.max(cursor, slot.startMinutes);
+    const end = Math.min(dayEnd, Math.max(slot.endMinutes, start));
+    schedule.push({ task: slot.task, startMinutes: start, endMinutes: end });
     cursor = end;
   });
 
-  if (cursor < dayEnd && flexibleTasks.length) {
-    scheduleFlexibleTasks(flexibleTasks, schedule, cursor, dayEnd);
+  while (flexible.length && cursor < dayEnd) {
+    const task = flexible.shift();
+    const duration = getDurationMinutes(task);
+    if (cursor + duration > dayEnd) break;
+    schedule.push({ task, startMinutes: cursor, endMinutes: cursor + duration });
+    cursor += duration;
   }
-
   return schedule;
 }
 
-if (typeof window !== 'undefined') {
-  window.UnifiedScheduler = { buildSchedule };
+export function getTodaySchedule(now = new Date(), overrides = {}) {
+  const cfg = { ...DEFAULT_CONFIG, ...(overrides.config || {}), ...(window.ConfigManager?.getConfig?.() || {}) };
+  const allTasks = TaskStore.getPendingTasks();
+  const taskMap = new Map(allTasks.map(t => [t.hash, t]));
+  const filtered = allTasks.filter(t => !isDependencyBlocked(t, taskMap) && (t.urgency || computeUrgencyFromDeadline(t.deadline)) >= 1);
+  const schedule = buildDailySchedule(filtered, cfg);
+  const todayStr = now.toISOString().slice(0, 10);
+  return schedule.map(slot => {
+    const startTime = new Date(`${todayStr}T00:00:00Z`);
+    startTime.setMinutes(slot.startMinutes);
+    const endTime = new Date(`${todayStr}T00:00:00Z`);
+    endTime.setMinutes(slot.endMinutes);
+    return { ...slot, startTime, endTime };
+  });
 }
 
-export default { buildSchedule };
+export function getCurrentTask(now = new Date(), overrides = {}) {
+  const schedule = getTodaySchedule(now, overrides);
+  return schedule.find(slot => now >= slot.startTime && now < slot.endTime) || null;
+}
+
+const UnifiedScheduler = { getTodaySchedule, getCurrentTask };
+
+if (typeof window !== 'undefined') {
+  window.UnifiedScheduler = UnifiedScheduler;
+  window.TaskScheduler = UnifiedScheduler;
+}
+
+export default UnifiedScheduler;
