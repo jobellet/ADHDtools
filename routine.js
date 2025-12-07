@@ -1861,6 +1861,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const focusAutoRunCheckbox = document.getElementById('focus-auto-run');
     const queuePreviewPanel = document.getElementById('routine-queue-panel');
     const queuePreviewList = document.getElementById('routine-queue-list');
+    const queuePreviewCloseBtn = document.getElementById('routine-queue-close');
     const queueDropIndicator = document.createElement('li');
     queueDropIndicator.className = 'queue-drop-indicator';
     queueDropIndicator.textContent = 'Release to place';
@@ -1868,6 +1869,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let queueDropIndex = null;
     let isQueueDragging = false;
     let queuePreviewLockedOpen = false;
+
+    function isQueueExpanded() {
+        return queuePreviewPanel && (
+            queuePreviewLockedOpen ||
+            queuePreviewPanel.classList.contains('expanded') ||
+            queuePreviewPanel.matches(':hover')
+        );
+    }
 
     function expandQueuePreview() {
         if (!queuePreviewPanel) return;
@@ -1894,6 +1903,32 @@ document.addEventListener('DOMContentLoaded', () => {
             if (queuePreviewLockedOpen) {
                 expandQueuePreview();
             } else {
+                collapseQueuePreview(true);
+            }
+        });
+    }
+
+    if (queuePreviewCloseBtn) {
+        queuePreviewCloseBtn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (isQueueExpanded()) {
+                collapseQueuePreview(true);
+                return;
+            }
+
+            if (typeof exitFocusMode === 'function') {
+                exitFocusMode();
+            }
+        });
+    }
+
+    if (focusModeEl) {
+        focusModeEl.addEventListener('click', (event) => {
+            if (!queuePreviewPanel || !isQueueExpanded()) return;
+            if (queuePreviewPanel.contains(event.target)) return;
+
+            const clickedLeftSide = event.clientX < window.innerWidth / 2;
+            if (clickedLeftSide) {
                 collapseQueuePreview(true);
             }
         });
