@@ -28,9 +28,11 @@ let dateDisplay,
     timeBlocksContainer,
     addEventBtn,
     clearBtn,
+    generateScheduleBtn,
     aiPlanBtn,
     fillDayBtn,
     recordBtn,
+    focusFromPlannerBtn,
     eventModal,
     closeButton,
     eventForm,
@@ -38,6 +40,9 @@ let dateDisplay,
     eventTimeSelect,
     eventTaskSelect,
     eventDurationInput,
+    eventImportanceInput,
+    eventUrgencyInput,
+    eventDeadlineInput,
     eventModalTitle;
 
 function openModal(task, presetTime, externalTask) {
@@ -51,6 +56,9 @@ function openModal(task, presetTime, externalTask) {
         eventTitleInput.value = task.text;
         eventTimeSelect.value = task.plannerDate.slice(11, 16);
         eventDurationInput.value = task.duration || getDefaultDurationMinutes();
+        eventImportanceInput.value = task.importance || 5;
+        eventUrgencyInput.value = task.urgency || 5;
+        eventDeadlineInput.value = task.deadline ? task.deadline.slice(0, 16) : '';
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = true;
@@ -61,6 +69,9 @@ function openModal(task, presetTime, externalTask) {
         eventTitleInput.value = externalTask.text || '';
         eventTimeSelect.value = presetTime || getDefaultTime();
         eventDurationInput.value = externalTask.duration || getDefaultDurationMinutes();
+        eventImportanceInput.value = externalTask.importance || externalTask.priority || 5;
+        eventUrgencyInput.value = externalTask.urgency || externalTask.priority || 5;
+        eventDeadlineInput.value = externalTask.deadline ? externalTask.deadline.slice(0, 16) : '';
         eventTitleInput.disabled = true;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = true;
@@ -70,6 +81,9 @@ function openModal(task, presetTime, externalTask) {
         eventTitleInput.value = '';
         eventTimeSelect.value = presetTime || getDefaultTime();
         eventDurationInput.value = getDefaultDurationMinutes();
+        eventImportanceInput.value = 5;
+        eventUrgencyInput.value = 5;
+        eventDeadlineInput.value = '';
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = false;
@@ -377,6 +391,8 @@ function initDayPlanner() {
     aiPlanBtn = document.getElementById('ai-plan-day-btn');
     fillDayBtn = document.getElementById('fill-day-tasks-btn');
     recordBtn = document.getElementById('record-event-btn');
+    generateScheduleBtn = document.getElementById('generate-schedule-btn');
+    focusFromPlannerBtn = document.getElementById('start-focus-from-planner');
     eventModal = document.getElementById('event-modal');
     closeButton = eventModal.querySelector('.close-button');
     eventForm = document.getElementById('event-form');
@@ -384,6 +400,9 @@ function initDayPlanner() {
     eventTimeSelect = document.getElementById('event-time');
     eventTaskSelect = document.getElementById('event-task');
     eventDurationInput = document.getElementById('event-duration');
+    eventImportanceInput = document.getElementById('event-importance');
+    eventUrgencyInput = document.getElementById('event-urgency');
+    eventDeadlineInput = document.getElementById('event-deadline');
     eventModalTitle = document.getElementById('event-modal-title');
 
     addEventBtn.addEventListener('click', () => openModal(null, getDefaultTime()));
@@ -429,10 +448,14 @@ function initDayPlanner() {
         const time = eventTimeSelect.value;
         const duration = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
         const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${time}`;
+        const importance = parseInt(eventImportanceInput.value, 10) || 5;
+        const urgency = parseInt(eventUrgencyInput.value, 10) || 5;
+        const deadlineVal = eventDeadlineInput.value ? new Date(eventDeadlineInput.value) : null;
+        const deadline = deadlineVal ? new Date(deadlineVal.getTime() - (deadlineVal.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : null;
 
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
-            updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline: plannerDateTime, durationMinutes: duration, duration });
+            updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline: deadline || plannerDateTime, durationMinutes: duration, duration, importance, urgency });
         } else if (pendingExternalTask) {
             const title = eventTitleInput.value.trim() || pendingExternalTask.text;
             addTaskToStore({
@@ -440,11 +463,11 @@ function initDayPlanner() {
                 text: title,
                 originalTool: pendingExternalTask.originalTool || 'TaskManager',
                 priority: pendingExternalTask.priority || 'medium',
-                importance: pendingExternalTask.importance,
-                urgency: pendingExternalTask.urgency,
+                importance: pendingExternalTask.importance ?? importance,
+                urgency: pendingExternalTask.urgency ?? urgency,
                 category: pendingExternalTask.category || 'other',
                 plannerDate: plannerDateTime,
-                deadline: plannerDateTime,
+                deadline: deadline || plannerDateTime,
                 durationMinutes: duration,
                 duration,
                 isFixed: true,
@@ -452,7 +475,7 @@ function initDayPlanner() {
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
-                updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline: plannerDateTime, durationMinutes: duration, duration, isFixed: true });
+                updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline: deadline || plannerDateTime, durationMinutes: duration, duration, isFixed: true, importance, urgency });
             } else {
                 const title = eventTitleInput.value.trim();
                 if (!title) return;
@@ -461,14 +484,17 @@ function initDayPlanner() {
                     text: title,
                     originalTool: 'DayPlanner',
                     plannerDate: plannerDateTime,
-                    deadline: plannerDateTime,
+                    deadline: deadline || plannerDateTime,
                     durationMinutes: duration,
                     duration,
                     isFixed: true,
+                    importance,
+                    urgency,
                 });
             }
         }
 
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
         closeModal();
     });
 
@@ -485,8 +511,47 @@ function initDayPlanner() {
         });
     }
 
+    if (generateScheduleBtn) {
+        generateScheduleBtn.addEventListener('click', () => {
+            const scheduler = window.UnifiedScheduler || window.TaskScheduler;
+            if (!scheduler?.getTodaySchedule) {
+                alert('Scheduler not available yet.');
+                return;
+            }
+            const schedule = scheduler.getTodaySchedule(new Date());
+            const todayStr = currentDate.toISOString().slice(0, 10);
+            schedule.forEach(slot => {
+                const startMinutes = slot.scheduledStart ?? slot.startMinutes;
+                const hours = String(Math.floor(startMinutes / 60)).padStart(2, '0');
+                const minutes = String(startMinutes % 60).padStart(2, '0');
+                const plannerDate = `${todayStr}T${hours}:${minutes}`;
+                const duration = Math.max(5, (slot.scheduledEnd ?? slot.endMinutes) - (slot.scheduledStart ?? slot.startMinutes));
+                const deadline = slot.task.deadline || slot.task.plannerDate || plannerDate;
+                if (slot.task.hash) {
+                    updateTaskInStore(slot.task.hash, { plannerDate, deadline, durationMinutes: duration, duration, isFixed: true });
+                }
+            });
+            window.EventBus?.dispatchEvent(new Event('dataChanged'));
+            renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+        });
+    }
+
     if (aiPlanBtn) {
         aiPlanBtn.addEventListener('click', autoPlanDay);
+    }
+
+    if (focusFromPlannerBtn) {
+        focusFromPlannerBtn.addEventListener('click', () => {
+            const scheduler = window.UnifiedScheduler || window.TaskScheduler;
+            const slot = scheduler?.getCurrentTask ? scheduler.getCurrentTask(new Date()) : null;
+            if (!slot) {
+                alert('No current task to focus on right now.');
+                return;
+            }
+            const goalInput = document.getElementById('focus-goal');
+            if (goalInput) goalInput.value = slot.task.name || slot.task.text || 'Focus task';
+            document.getElementById('enter-focus-mode')?.click();
+        });
     }
 
     applyZoom();

@@ -1,4 +1,4 @@
-import { createTask, updateTask, markTaskCompleted } from './task-model.js';
+import { createTask, updateTask, markTaskCompleted, computeAchievementScore } from './task-model.js';
 
 const STORAGE_KEY = 'adhd-unified-tasks';
 
@@ -94,8 +94,9 @@ function getTaskScoreTotals() {
     if (!acc[name]) {
       acc[name] = { name, count: 0, score: 0 };
     }
+    const score = task.completed ? (task.achievementScore || computeAchievementScore(task) || 0) : 0;
     acc[name].count += task.completed ? 1 : 0;
-    acc[name].score += task.completed ? (task.achievementScore || 0) : 0;
+    acc[name].score += score;
     return acc;
   }, {});
   const groups = Object.values(totals).map(group => ({ ...group, score: Number(group.score.toFixed(2)) }));
