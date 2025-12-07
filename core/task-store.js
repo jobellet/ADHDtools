@@ -139,6 +139,28 @@ function getTaskScoreTotals(user) {
   return { groups, totalScore: Number(totalScore.toFixed(2)) };
 }
 
+function getCategoryStats({ user = null } = {}) {
+  const totals = tasks.reduce((acc, task) => {
+    if (user && task.user !== user) return acc;
+    if (!task.completed) return acc;
+    const name = task.name || 'Task';
+    if (!acc[name]) {
+      acc[name] = { name, count: 0, score: 0, minutes: 0 };
+    }
+    const score = task.achievementScore || computeAchievementScore(task) || 0;
+    acc[name].count += 1;
+    acc[name].score += score;
+    const minutes = Number(task.durationMinutes || task.duration || 0);
+    acc[name].minutes += Number.isFinite(minutes) ? minutes : 0;
+    return acc;
+  }, {});
+  return Object.values(totals).map(cat => ({
+    ...cat,
+    score: Number(cat.score.toFixed(2)),
+    minutes: Math.round(cat.minutes),
+  }));
+}
+
 const TaskStore = {
   getAllTasks,
   getTasksByUser,
@@ -150,6 +172,7 @@ const TaskStore = {
   saveTasks,
   markComplete,
   getTaskScoreTotals,
+  getCategoryStats,
   getActiveUser: () => (window.UserContext?.getActiveUser?.() || null),
 };
 

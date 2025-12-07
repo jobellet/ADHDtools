@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let achievements = JSON.parse(localStorage.getItem('adhd-achievements')) || [];
     const LEDGER_KEY = 'adhd-points-ledger';
     let ledger = {};
+    let showAllUsers = false;
 
     function loadLedger() {
         try {
@@ -146,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getAchievementTotals() {
-        const activeUser = window.UserContext?.getActiveUser?.();
+        const activeUser = showAllUsers ? null : window.UserContext?.getActiveUser?.();
         if (window.TaskStore?.getTaskScoreTotals) return window.TaskStore.getTaskScoreTotals(activeUser);
         const totalScore = achievements.reduce((sum, a) => sum + (a.points || 0), 0);
         return { groups: [], totalScore };
@@ -163,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ledgerEntry = getActiveLedger();
         if (pointsDisplay) pointsDisplay.textContent = getAvailablePoints();
         if (pointsEarnedDisplay) pointsEarnedDisplay.textContent = totals.totalScore.toFixed(2);
-        if (pointsSpentDisplay) pointsSpentDisplay.textContent = ledgerEntry.spent.toFixed(2);
+        if (pointsSpentDisplay) pointsSpentDisplay.textContent = `${ledgerEntry.spent.toFixed(2)} (bonus: ${ledgerEntry.bonus?.toFixed?.(2) || '0.00'})`;
     }
 
     function getRecentStats(days = 1) {
@@ -251,10 +252,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const totals = getAchievementTotals();
         const sortedAchievements = totals.groups.sort((a, b) => b.score - a.score);
 
+        const toggle = document.createElement('button');
+        toggle.className = 'btn btn-secondary btn-small';
+        toggle.textContent = showAllUsers ? 'Showing all users' : 'Showing active user';
+        toggle.addEventListener('click', () => {
+            showAllUsers = !showAllUsers;
+            renderAchievements();
+            renderRewards();
+        });
+
         const header = document.createElement('div');
         header.className = 'achievement-summary';
         const activeUser = window.UserContext?.getActiveUser?.();
-        header.textContent = activeUser ? `Achievements for ${activeUser}` : 'Achievements';
+        header.textContent = showAllUsers ? 'Achievements for all users' : (activeUser ? `Achievements for ${activeUser}` : 'Achievements');
+        header.appendChild(toggle);
         achievementsList.appendChild(header);
 
         sortedAchievements.forEach((achievement) => {
@@ -289,6 +300,30 @@ document.addEventListener('DOMContentLoaded', function() {
         totalsRow.className = 'achievement-item total-achievements';
         totalsRow.textContent = `Total points earned: ${totals.totalScore.toFixed(2)} | Available: ${getAvailablePoints()}`;
         achievementsList.appendChild(totalsRow);
+
+        // Category breakdown with time spent
+        const categoryHeader = document.createElement('div');
+        categoryHeader.className = 'achievement-summary';
+        categoryHeader.textContent = 'Top categories';
+        achievementsList.appendChild(categoryHeader);
+
+        const categories = (window.TaskStore?.getCategoryStats?.({ user: showAllUsers ? null : activeUser }) || [])
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+
+        if (!categories.length) {
+            const empty = document.createElement('div');
+            empty.className = 'achievement-item';
+            empty.textContent = 'No completed tasks yet.';
+            achievementsList.appendChild(empty);
+        } else {
+            categories.forEach(cat => {
+                const row = document.createElement('div');
+                row.className = 'achievement-item';
+                row.innerHTML = `<strong>${cat.name}</strong> — ${cat.count} tasks • ${cat.score.toFixed(2)} pts • ${cat.minutes} mins`;
+                achievementsList.appendChild(row);
+            });
+        }
 
         if (activityBox) {
             const todayStats = getRecentStats(1);
