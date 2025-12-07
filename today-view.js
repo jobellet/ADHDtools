@@ -21,10 +21,11 @@
       if (!sched?.getTodaySchedule) return;
       const now = new Date();
       const schedule = sched.getTodaySchedule(now);
+      const taskMap = new Map((window.TaskStore?.getAllTasks?.() || []).map(t => [t.hash, t]));
       const currentSlot = sched.getCurrentTask(now);
       const blocked = (window.TaskStore?.getPendingTasks?.() || []).filter(task => {
         if (!task.dependency) return false;
-        const dep = window.TaskStore.getTaskByHash(task.dependency);
+        const dep = taskMap.get(task.dependency);
         return dep && !dep.completed;
       });
 
@@ -42,7 +43,9 @@
         .slice(0, 3)
         .forEach(slot => {
           const li = document.createElement('li');
-          li.textContent = `${formatTime(slot.startTime)} – ${slot.task.name || slot.task.text || 'Task'}`;
+          const dep = slot.task?.dependency ? taskMap.get(slot.task.dependency) : null;
+          const blockedBadge = dep && !dep.completed ? ` (Blocked by ${dep.name || dep.text || 'dependency'})` : '';
+          li.textContent = `${formatTime(slot.startTime)} – ${slot.task.name || slot.task.text || 'Task'}${blockedBadge}`;
           nextList.appendChild(li);
         });
 
@@ -87,26 +90,42 @@
       });
     }
 
+    function applySkip(slot) {
+      const choice = prompt('Skip options: end (end of day), tomorrow, or custom date/time (YYYY-MM-DD HH:MM)', 'end');
+      if (!choice) return;
+      const now = new Date();
+      let plannerDate = null;
+      if (choice.toLowerCase().startsWith('end')) {
+        const end = new Date();
+        end.setHours(22, 0, 0, 0);
+        plannerDate = `${end.toISOString().slice(0, 10)}T${end.toISOString().slice(11, 16)}`;
+      } else if (choice.toLowerCase().startsWith('tomorrow')) {
+        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        tomorrow.setHours(slot.startTime.getHours(), slot.startTime.getMinutes(), 0, 0);
+        plannerDate = `${tomorrow.toISOString().slice(0, 10)}T${tomorrow.toISOString().slice(11, 16)}`;
+      } else {
+        const parts = choice.trim().split(' ');
+        if (parts.length === 2 && /^\d{4}-\d{2}-\d{2}$/.test(parts[0]) && /^\d{2}:\d{2}$/.test(parts[1])) {
+          plannerDate = `${parts[0]}T${parts[1]}`;
+        }
+      }
+
+      if (!plannerDate) return alert('Unable to parse new time for skip/reschedule.');
+
+      const ledgerSkip = window.UrgencyHelpers?.incrementSkipCount?.(slot.task.hash) || 0;
+      const bumpedUrgency = Math.min(10, (slot.task.urgency || 5) + 1 + Math.min(ledgerSkip, 2));
+      const urgency = window.UrgencyHelpers?.computeSmoothedUrgency?.({ ...slot.task, urgency: bumpedUrgency }) || bumpedUrgency;
+      window.TaskStore.updateTaskByHash(slot.task.hash, { plannerDate, urgency });
+      window.EventBus?.dispatchEvent(new Event('dataChanged'));
+      updateView();
+    }
+
     if (skipBtn) {
       skipBtn.addEventListener('click', () => {
         const sched = scheduler();
         const slot = sched?.getCurrentTask ? sched.getCurrentTask(new Date()) : null;
         if (!slot || !slot.task?.hash || !window.TaskStore?.updateTaskByHash) return;
-        const rescheduleInput = prompt('Enter new time today (HH:MM) or leave blank to push 90 minutes later:', '');
-        const newUrgency = Math.min(10, Number(slot.task.urgency || 5) + (rescheduleInput ? 1 : 2));
-        let plannerDate;
-        if (rescheduleInput && /^\d{1,2}:\d{2}$/.test(rescheduleInput)) {
-          const [hh, mm] = rescheduleInput.split(':').map(v => parseInt(v, 10));
-          const target = new Date();
-          target.setHours(hh, mm, 0, 0);
-          plannerDate = `${target.toISOString().slice(0, 10)}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-        } else {
-          const newStart = new Date(slot.endTime.getTime() + 90 * 60000);
-          plannerDate = `${newStart.toISOString().slice(0, 10)}T${newStart.toISOString().slice(11, 16)}`;
-        }
-        window.TaskStore.updateTaskByHash(slot.task.hash, { plannerDate, urgency: newUrgency });
-        window.EventBus?.dispatchEvent(new Event('dataChanged'));
-        updateView();
+        applySkip(slot);
       });
     }
 

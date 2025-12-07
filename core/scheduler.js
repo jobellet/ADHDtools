@@ -1,5 +1,6 @@
 import TaskStore from './task-store.js';
 import { computeUrgencyFromDeadline } from './task-model.js';
+import UrgencyHelpers from './urgency-helpers.js';
 
 const DEFAULT_CONFIG = {
   dayStart: '07:00',
@@ -44,7 +45,8 @@ function isDependencyBlocked(task, taskMap) {
 
 function computePriority(task) {
   const importance = Number(task.importance ?? 5);
-  const urgency = Number(task.urgency ?? computeUrgencyFromDeadline(task.deadline));
+  const baseUrgency = Number.isFinite(task.urgency) ? task.urgency : computeUrgencyFromDeadline(task.deadline);
+  const urgency = UrgencyHelpers?.computeSmoothedUrgency?.({ ...task, urgency: baseUrgency }) ?? baseUrgency;
   return (Number.isFinite(importance) ? importance : 5) * (Number.isFinite(urgency) ? urgency : 5);
 }
 
