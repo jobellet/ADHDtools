@@ -17,19 +17,23 @@
     }
 
     function updateView() {
+      const activeUser = window.UserContext?.getActiveUser?.();
       const sched = scheduler();
       if (!sched?.getTodaySchedule) return;
       const now = new Date();
       const schedule = sched.getTodaySchedule(now);
-      const taskMap = new Map((window.TaskStore?.getAllTasks?.() || []).map(t => [t.hash, t]));
+      const allTasks = window.TaskStore?.getAllTasks?.() || [];
+      const visibleTasks = activeUser ? allTasks.filter(t => t.user === activeUser) : allTasks;
+      const taskMap = new Map(visibleTasks.map(t => [t.hash, t]));
       const currentSlot = sched.getCurrentTask(now);
-      const blocked = (window.TaskStore?.getPendingTasks?.() || []).filter(task => {
+      const pendingSource = window.TaskStore?.getPendingTasks?.() || [];
+      const pendingTasks = activeUser ? pendingSource.filter(t => t.user === activeUser) : pendingSource;
+      const blocked = pendingTasks.filter(task => {
         if (!task.dependency) return false;
         const dep = taskMap.get(task.dependency);
         return dep && !dep.completed;
       });
 
-      const pendingTasks = window.TaskStore?.getPendingTasks?.() || [];
       const fallbackSorted = [...pendingTasks]
         .filter(t => !blocked.includes(t))
         .sort((a, b) => ((b.importance || 5) + (b.urgency || 5)) - ((a.importance || 5) + (a.urgency || 5)));
@@ -147,6 +151,7 @@
     }
 
     window.EventBus?.addEventListener('dataChanged', updateView);
+    window.addEventListener('activeUserChanged', updateView);
     setInterval(updateView, 60000);
     updateView();
   });

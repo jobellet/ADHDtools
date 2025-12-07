@@ -12,6 +12,7 @@
     <script src="app.js" defer></script>
     <script src="config.js" defer></script>
     <script src="data-manager.js" defer></script>
+    <script src="core/user-context.js" defer></script>
     <script src="cross-tool-interaction.js" defer></script>
     <script src="gemini.js" defer></script>
     <script src="api-settings.js" defer></script>
@@ -47,6 +48,11 @@
         <div class="container">
             <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i
                     class="fas fa-bars"></i></button>
+            <div class="user-switcher">
+                <label for="active-user-select">User:</label>
+                <select id="active-user-select" aria-label="Select active user"></select>
+                <button id="add-user-btn" class="btn btn-secondary btn-compact" aria-label="Add user">+</button>
+            </div>
             <select id="language-select" aria-label="Select language">
                 <option value="en">English</option>
                 <option value="fr">Français</option>
@@ -535,7 +541,11 @@
                         </div>
                     </div>
 
-                    <div class="points-display">Points: <span id="points-display">0</span></div>
+                    <div class="points-display">
+                        <span>Available: <span id="points-display">0</span></span>
+                        <span class="muted">Earned: <span id="points-earned">0</span></span>
+                        <span class="muted">Spent: <span id="points-spent">0</span></span>
+                    </div>
 
                     <div class="rewards-list">
                         <h3>Your Rewards</h3>
@@ -546,9 +556,8 @@
 
                     <div class="rewards-achievements">
                         <h3>Achievements</h3>
-                        <div class="achievements-grid" id="achievements-list">
-                            <!-- Achievements will be added here by JavaScript -->
-                        </div>
+                        <div class="achievements-grid" id="achievements-list"></div>
+                        <div class="recent-activity" id="recent-activity"></div>
                     </div>
 
                     <div class="celebration-container" id="celebration-container">

@@ -122,8 +122,9 @@ function markComplete(hash, completedAt = new Date().toISOString()) {
   return updateTaskByHash(hash, updated);
 }
 
-function getTaskScoreTotals() {
+function getTaskScoreTotals(user) {
   const totals = tasks.reduce((acc, task) => {
+    if (user && task.user !== user) return acc;
     const name = task.name || 'Task';
     if (!acc[name]) {
       acc[name] = { name, count: 0, score: 0 };
@@ -149,6 +150,7 @@ const TaskStore = {
   saveTasks,
   markComplete,
   getTaskScoreTotals,
+  getActiveUser: () => (window.UserContext?.getActiveUser?.() || null),
 };
 
 if (typeof window !== 'undefined') {

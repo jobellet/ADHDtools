@@ -119,7 +119,8 @@ The app should feel like a cognitive prosthesis for people who struggle with tas
 ✅ Urgency auto-refreshes daily based on deadlines, with skip/reschedule controls raising urgency when tasks slip.
 ✅ Urgency smoothing helper tempers far-away deadlines and accelerates urgency when tasks are repeatedly skipped.
 
-✅ Achievements and rewards now use completed Task scores instead of a separate points ledger.
+✅ Achievements and rewards now use completed Task scores instead of a separate points ledger, with per-user filtering.
+✅ Multi-user selector filters Today View, scheduler output, and achievement/ledger stats to the active profile.
 
 ✅ Day Planner “Add Event” modal restored with dependency/priority fields and scheduler-aware edits.
 
@@ -180,6 +181,8 @@ The Day Planner includes a **Generate schedule for today** action that applies t
   1. Run: `window.TaskStore.addTask({ name: '[FLEX] Write report', importance: 8, urgency: 7, durationMinutes: 45 });`
   2. Generate the schedule. The task should land in the next available slot and can move to later today/tomorrow via the Today View skip action.
 * **Quick/routine tasks surface:** add a quick routine task (Routine tab) and generate the schedule; it should populate on the Day Planner timeline and in the Today View upcoming list.
+* **Multi-user filtering:** create tasks for two users via `window.TaskStore.addTask({ name: 'Main task', user: 'main' }); window.TaskStore.addTask({ name: 'Sibling task', user: 'sibling' });` then switch the user dropdown in the navbar — Today View, the scheduler output, and Rewards/Achievements should show only the active profile.
+* **Rewards ledger:** complete a few tasks (or run `window.TaskStore.markComplete(hash)` for an existing one) and open Rewards. Earned/available points should reflect completed tasks, and claiming a reward should increase the “Spent” total while reducing available points.
 
 The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
 The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing.

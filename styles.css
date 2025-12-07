@@ -2724,15 +2724,27 @@ input:checked + .slider:before {
 .guide-modal-content h2 {
     padding: 1.5rem;
     margin: 0;
-    background: var(--primary-color);
-    color: white;
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+    .calendar-main {
+        order: 1;
+        min-height: 500px;
+    }
 }
 
-.guide-tabs {
+/* User switching */
+.user-switcher {
     display: flex;
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-    padding: 0 1rem;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-compact {
+    padding: 4px 8px;
+    font-size: 0.85rem;
 }
 
 .guide-tab {
@@ -2985,6 +2997,17 @@ input:checked + .slider:before {
 .today-list.muted-list li {
     color: #555;
     font-size: 0.95rem;
+ 
+/* User switching */
+.user-switcher {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-compact {
+    padding: 4px 8px;
+    font-size: 0.85rem;
 }
          c u r s o r :   p o i n t e r ;  
  }  
