@@ -117,6 +117,7 @@ The app should feel like a cognitive prosthesis for people who struggle with tas
 ✅ Scheduler respects task dependencies and FIX/FLEX tags, reordering only flexible tasks and showing blocked items in the Today View.
 
 ✅ Urgency auto-refreshes daily based on deadlines, with skip/reschedule controls raising urgency when tasks slip.
+✅ Urgency smoothing helper tempers far-away deadlines and accelerates urgency when tasks are repeatedly skipped.
 
 ✅ Achievements and rewards now use completed Task scores instead of a separate points ledger.
 
@@ -133,6 +134,8 @@ All tasks are persisted in the browser under the `adhd-unified-tasks` key (via `
 * `markComplete(hash)`
 
 Urgency scores are recalculated once per day from task deadlines, and the duration-learning module updates `durationMinutes` with a rolling average every time a task is marked complete.
+
+Urgency smoothing lives in `core/urgency-helpers.js`. Deadlines more than 48 hours out receive a gentler urgency slope, while tasks that are repeatedly skipped gain urgency faster through a skip ledger (stored locally) so they bubble back into the schedule.
 
 Legacy modules still calling `DataManager` automatically read/write through this shared store, so new tools should prefer `TaskStore` directly.
 
@@ -167,6 +170,7 @@ All data is stored locally in your browser. Nothing is sent to any server, ensur
 The Day Planner includes a **Generate schedule for today** action that applies the scheduler to the timeline, and the **Start Focus Session for Current Task** button boots focus mode with the active slot.
 
 The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
+The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing.
 
 ## Feedback
 

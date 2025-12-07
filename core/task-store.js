@@ -1,4 +1,5 @@
 import { createTask, updateTask, markTaskCompleted, computeAchievementScore, computeUrgencyFromDeadline } from './task-model.js';
+import UrgencyHelpers from './urgency-helpers.js';
 import { recordTaskDuration } from './duration-learning.js';
 
 const STORAGE_KEY = 'adhd-unified-tasks';
@@ -40,7 +41,8 @@ function refreshUrgencyIfStale() {
     let updated = false;
     tasks = tasks.map(task => {
       if (!task.deadline) return task;
-      const nextUrgency = computeUrgencyFromDeadline(task.deadline);
+      const nextUrgency = UrgencyHelpers?.computeSmoothedUrgency?.({ ...task, urgency: computeUrgencyFromDeadline(task.deadline) })
+        ?? computeUrgencyFromDeadline(task.deadline);
       if (nextUrgency !== task.urgency) {
         updated = true;
         return { ...task, urgency: nextUrgency };
