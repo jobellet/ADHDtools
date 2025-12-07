@@ -2,6 +2,7 @@
   const STORAGE_KEY = 'adhd-hub-data';
   const EventBus = new EventTarget();
   window.EventBus = EventBus;
+  const UnifiedTaskStore = () => window.TaskStore;
 
   // Default data structure
   const defaults = {
@@ -28,6 +29,10 @@
       const parsedData = rawData ? JSON.parse(rawData) : {};
       // Merge with defaults to ensure all keys exist
       dataStore = { ...defaults, ...parsedData };
+      // Keep legacy tasks mirrored with the unified store if present
+      if (UnifiedTaskStore()?.getAllTasks) {
+        dataStore.tasks = UnifiedTaskStore().getAllTasks();
+      }
     } catch (error) {
       console.error("Failed to load data from localStorage:", error);
       dataStore = { ...defaults };
@@ -37,6 +42,9 @@
   // Save the entire data store to localStorage
   function saveData() {
     try {
+      if (UnifiedTaskStore()?.getAllTasks) {
+        dataStore.tasks = UnifiedTaskStore().getAllTasks();
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataStore));
       // Announce that data has changed
       EventBus.dispatchEvent(new CustomEvent('dataChanged'));
@@ -55,9 +63,17 @@
   // --- Global DataManager API ---
   const DataManager = {
     // --- Task Management ---
-    getTasks: () => [...dataStore.tasks], // Return a copy
+    getTasks: () => {
+      const store = UnifiedTaskStore();
+      if (store?.getAllTasks) return store.getAllTasks().map(t => ({ ...t }));
+      return [...dataStore.tasks];
+    }, // Return a copy
 
-    getTask: (id) => dataStore.tasks.find(t => t.id === id),
+    getTask: (id) => {
+      const store = UnifiedTaskStore();
+      if (store?.getTaskByHash) return store.getTaskByHash(id);
+      return dataStore.tasks.find(t => t.id === id);
+    },
 
     addTask: (taskData) => {
       if (!taskData.text) {
@@ -91,38 +107,54 @@
         : Number.isFinite(taskData.durationMinutes)
           ? taskData.durationMinutes
           : estimatedMinutes;
-      const newTask = {
+      const rawTask = {
         id: generateId(),
+        hash: taskData.hash,
+        name: title,
         text,
         title,
-        isCompleted: false,
         createdAt: new Date().toISOString(),
-        // Add other properties from the standardized model
         originalTool: taskData.originalTool || taskData.source || 'unknown',
         source: taskData.source || taskData.originalTool || 'unknown',
         priority: taskData.priority || 'medium',
         importance,
         urgency,
         category: taskData.category || 'other',
+        deadline: taskData.deadline || taskData.dueDate || taskData.plannerDate || null,
         dueDate: taskData.dueDate || null,
         duration,
         estimatedMinutes,
         durationMinutes: duration,
         dependsOn: taskData.dependsOn || null,
+        dependency: taskData.dependency || taskData.dependsOn || null,
         notes: taskData.notes || '',
         subTasks: taskData.subTasks || [],
         status: taskData.status || 'pending',
-        // Properties for tool association
         plannerDate: taskData.plannerDate || null,
         eisenhowerQuadrant: taskData.eisenhowerQuadrant || null,
         projectId: taskData.projectId || null,
       };
-      dataStore.tasks.push(newTask);
-      saveData();
-      return newTask;
+
+      const store = UnifiedTaskStore();
+      const created = store?.addTask ? store.addTask(rawTask) : rawTask;
+      if (!store) {
+        dataStore.tasks.push(created);
+        saveData();
+      } else {
+        dataStore.tasks = store.getAllTasks();
+        saveData();
+      }
+      return created;
     },
 
     updateTask: (id, updates) => {
+      const store = UnifiedTaskStore();
+      if (store?.updateTaskByHash) {
+        const updated = store.updateTaskByHash(id, updates);
+        dataStore.tasks = store.getAllTasks();
+        saveData();
+        return Boolean(updated);
+      }
       const taskIndex = dataStore.tasks.findIndex(t => t.id === id);
       if (taskIndex === -1) {
         console.error("Task not found:", id);
@@ -134,6 +166,14 @@
     },
 
     deleteTask: (id) => {
+      const store = UnifiedTaskStore();
+      if (store?.getAllTasks) {
+        const before = store.getAllTasks().length;
+        store.saveTasks(store.getAllTasks().filter(t => t.hash !== id && t.id !== id));
+        dataStore.tasks = store.getAllTasks();
+        saveData();
+        return dataStore.tasks.length < before;
+      }
       const initialLength = dataStore.tasks.length;
       dataStore.tasks = dataStore.tasks.filter(t => t.id !== id);
       if (dataStore.tasks.length < initialLength) {

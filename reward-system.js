@@ -29,8 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load rewards and points from localStorage
     let rewards = JSON.parse(localStorage.getItem('adhd-rewards')) || [];
-    let points = parseInt(localStorage.getItem('adhd-points')) || 0;
+    let spentPoints = parseFloat(localStorage.getItem('adhd-points-spent')) || 0;
     let achievements = JSON.parse(localStorage.getItem('adhd-achievements')) || [];
+    let points = parseFloat(localStorage.getItem('adhd-points')) || 0;
     
     // Initialize confetti
     let confetti = null;
@@ -118,15 +119,26 @@ document.addEventListener('DOMContentLoaded', function() {
         
         confetti.init();
     }
+
+    function getAchievementTotals() {
+        if (window.TaskStore?.getTaskScoreTotals) return window.TaskStore.getTaskScoreTotals();
+        const totalScore = achievements.reduce((sum, a) => sum + (a.points || 0), 0);
+        return { groups: [], totalScore };
+    }
+
+    function getAvailablePoints() {
+        const totals = getAchievementTotals();
+        return Math.max(0, Number((totals.totalScore + points - spentPoints).toFixed(2)));
+    }
     
     // Render rewards list
     function renderRewards() {
         // Clear current list
         rewardsList.innerHTML = '';
-        
+
         // Update points display
         if (pointsDisplay) {
-            pointsDisplay.textContent = points;
+            pointsDisplay.textContent = getAvailablePoints();
         }
         
         // Create reward elements
@@ -162,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const claimBtn = document.createElement('button');
             claimBtn.className = 'claim-btn';
             claimBtn.textContent = 'Claim';
-            claimBtn.disabled = points < reward.points;
+            claimBtn.disabled = getAvailablePoints() < reward.points;
             claimBtn.addEventListener('click', function() {
                 claimReward(index);
             });
@@ -188,48 +200,44 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderAchievements() {
         // Clear current list
         if (!achievementsList) return;
-        
+
         achievementsList.innerHTML = '';
-        
-        // Sort achievements by date (newest first)
-        const sortedAchievements = [...achievements].sort((a, b) => {
-            return new Date(b.date) - new Date(a.date);
-        });
-        
-        // Create achievement elements
+
+        const totals = getAchievementTotals();
+        const sortedAchievements = totals.groups.sort((a, b) => b.score - a.score);
+
         sortedAchievements.forEach((achievement) => {
             const achievementItem = document.createElement('div');
             achievementItem.className = 'achievement-item';
-            
-            // Create achievement icon
+
             const achievementIcon = document.createElement('div');
             achievementIcon.className = 'achievement-icon';
             achievementIcon.innerHTML = '🏆';
-            
-            // Create achievement details
+
             const achievementDetails = document.createElement('div');
             achievementDetails.className = 'achievement-details';
-            
-            // Create achievement name
+
             const achievementName = document.createElement('div');
             achievementName.className = 'achievement-name';
-            achievementName.textContent = achievement.name;
-            
-            // Create achievement date
+            achievementName.textContent = `${achievement.name} – ${achievement.count} completed`;
+
             const achievementDate = document.createElement('div');
             achievementDate.className = 'achievement-date';
-            achievementDate.textContent = new Date(achievement.date).toLocaleDateString();
-            
-            // Assemble achievement details
+            achievementDate.textContent = `${achievement.score.toFixed(2)} pts`;
+
             achievementDetails.appendChild(achievementName);
             achievementDetails.appendChild(achievementDate);
-            
-            // Assemble achievement item
+
             achievementItem.appendChild(achievementIcon);
             achievementItem.appendChild(achievementDetails);
-            
+
             achievementsList.appendChild(achievementItem);
         });
+
+        const totalsRow = document.createElement('div');
+        totalsRow.className = 'achievement-item total-achievements';
+        totalsRow.textContent = `Total points earned: ${totals.totalScore.toFixed(2)} | Available: ${getAvailablePoints()}`;
+        achievementsList.appendChild(totalsRow);
     }
     
     // Add new reward
@@ -278,29 +286,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Claim reward
     function claimReward(index) {
         const reward = rewards[index];
-        
-        if (points < reward.points) {
+
+        if (getAvailablePoints() < reward.points) {
             alert('Not enough points to claim this reward');
             return;
         }
         
         if (confirm(`Are you sure you want to claim "${reward.name}" for ${reward.points} points?`)) {
-            // Deduct points
-            points -= reward.points;
-            
-            // Add to achievements
-            const achievement = {
-                name: `Claimed: ${reward.name}`,
-                date: new Date().toISOString(),
-                type: 'reward'
-            };
-            
-            achievements.push(achievement);
-            
-            // Save changes
-            localStorage.setItem('adhd-points', points);
-            localStorage.setItem('adhd-achievements', JSON.stringify(achievements));
-            
+            spentPoints += reward.points;
+            localStorage.setItem('adhd-points-spent', spentPoints);
+
             // Show celebration
             if (confetti) {
                 confetti.start();
