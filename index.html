@@ -1039,8 +1039,13 @@
 
             <div id="routine-queue-panel" class="routine-queue-preview hidden">
                 <div class="routine-queue-header">
-                    <span class="queue-title">Next Up</span>
-                    <span class="queue-subtitle">Drag to rearrange</span>
+                    <div class="queue-header-text">
+                        <span class="queue-title">Next Up</span>
+                        <span class="queue-subtitle">Drag to rearrange</span>
+                    </div>
+                    <button id="routine-queue-close" class="queue-close-btn" aria-label="Hide Next Up">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 <ul id="routine-queue-list"></ul>
             </div>
