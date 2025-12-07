@@ -1490,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         recordDurationForTask(finishedTask);
         currentTaskIndex++;
-        notify(`Task "${finishedTask.name}" finished`);
+        // notify(`Task "${finishedTask.name}" finished`);
         startNextTask();
     }
 
