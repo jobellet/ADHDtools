@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         'breakdown': 'breakdown',
         'habits': 'habits',
         'routine': 'routine',
+        'family': 'family',
         'focus': 'focus',
         'rewards': 'rewards',
         'settings': 'settings',
@@ -85,6 +86,11 @@ document.addEventListener("DOMContentLoaded", () => {
             link.classList.toggle("active", link.dataset.tool === toolName);
         });
 
+        if (toolName === 'family') {
+            window.FamilyView?.init?.();
+            window.FamilyView?.render?.();
+        }
+
         if (updateHistory) {
             updateUrl(toolName);
         }
@@ -100,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             'breakdown': 'Task Breakdown',
             'habits': 'Habit Tracker',
             'routine': 'Routine Tool',
+            'family': 'Family Routine',
             'focus': 'Focus Mode',
             'rewards': 'Rewards',
             'settings': 'Settings',

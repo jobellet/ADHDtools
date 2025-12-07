@@ -161,6 +161,16 @@ Legacy modules still calling `DataManager` automatically read/write through this
 *   **Unified Scheduler:** Generate a daily schedule across tools using shared TaskStore data and calendar blocks.
 *   **Today View:** A lightweight dashboard that surfaces the current task, upcoming items, and quick actions.
 
+## Family Routine View (Big Screen)
+
+The Family Routine view provides one vertical column per user showing what each person should be doing during the active routine window.
+
+* Use the **Window start** and **Window end** fields to define the current routine window (defaults to 06:00–12:00). Task positions are scaled vertically from the first task time to the last within that window.
+* Toggle **Big-screen display mode** to hide navigation chrome and cast the page to a shared screen (e.g., kitchen TV).
+* Per-user **Can read?** checkboxes let you mark non-readers. When unchecked and an image mapping exists, the task label is hidden in favor of the image.
+* In **Task images**, select a task name and upload an image; mappings are stored locally in the browser. Existing mappings appear with thumbnails and delete controls.
+* Tasks are pulled from the shared TaskStore; FIX/FLEX tags and dependencies influence styling (dashed/blocked borders) while maintaining scheduler expectations.
+
 ## Privacy
 
 All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.
@@ -191,6 +201,11 @@ The Day Planner includes a **Generate schedule for today** action that applies t
 * **Category achievements + toggle:** finish a few tasks for two different users. In Rewards/Achievements, toggle between active user and all users and verify category rows list counts, points, and minutes.
 * **Family overview:** create at least one task per user with planner dates today. The Home view should show a card per user with current/next populated and remain readable on mobile widths.
 * **Habit → achievements:** add a habit, mark today as complete, then open Rewards/Achievements. A new “habit” task for the active user should appear in TaskStore (via console `window.TaskStore.getAllTasks().filter(t => t.category === 'habit')`), and totals/ledger should refresh without switching users.
+* **Family columns render:** create 3–4 users with routine tasks inside a morning window (e.g., 06:00–10:00). Open the Family tab and confirm each user receives a column with vertically spaced tasks.
+* **Window refresh:** change the window start/end fields and click Refresh. Verify task positions update relative to the adjusted window bounds.
+* **Dependency styling:** add an incomplete dependency; the dependent task should display the blocked styling in the Family view.
+* **Images for non-readers:** set `canRead=false` for a child, map their tasks to images, and confirm the column shows image-first tiles.
+* **Display mode:** toggle big-screen display mode to hide navigation chrome and ensure the layout remains readable on large and small screens.
 
 The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
 The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing and guards against violating dependencies.
