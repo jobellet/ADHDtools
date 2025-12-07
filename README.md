@@ -4,6 +4,96 @@
 
 Interactive tools to help manage ADHD symptoms and improve productivity.
 
+---
+
+## 🌍 Vision: What ADHDtools Should Become
+
+ADHDtools is evolving toward a unified personal assistant that organizes your day around what truly matters — not endless to-do lists, but smart tasks that adapt to your context, priorities, and time. The goal is to make it the one dashboard you open in the morning and immediately see what to do now, what comes next, and why.
+
+Once everything is set up, the user should only have to:
+
+1. Add or speak a new task naturally (“Call mom”, “Finish report by Friday”).
+2. Tag its importance if desired (1–10).
+3. Let the app handle everything else — urgency tracking, scheduling, focus timing, and rewarding.
+
+All tools (Pomodoro, Planner, Focus Mode, Routine, Calendar, Habit Tracker, Rewards) will operate on a shared task data format, ensuring every feature reflects the same task universe.
+
+---
+
+## 🧩 Core Data Model: The Task Object
+
+Every tool communicates through a unified data structure — the Task.
+
+Each task includes:
+
+| Field | Description |
+| --- | --- |
+| user | Owner of the task (default: main user). Can be extended to multiple family members. |
+| name | Short description of the task (e.g. “Laundry”, “Prepare meeting”). |
+| hash | Unique identifier, ensuring distinction between tasks with identical names or recurring routines. |
+| deadline | Date/time by which the task must be completed. Optional but used to calculate urgency. |
+| dependency | (Optional) Hash of another task that must be completed first. |
+| urgency | Dynamic score (1–10). 10 = today, 9 = tomorrow, 1 = 10 days or more. Automatically recalculated as deadlines approach. |
+| importance | Static priority score (1–10) defining how meaningful the task is to the user. |
+| duration | Estimated time required (learned automatically over time). |
+| completed | Boolean flag marking the task as done. |
+| achievements_weight | Contribution to total achievements, calculated as: importance × duration (hours) when completed. |
+
+When multiple tasks share the same name, the Achievements tool aggregates them into a single category, displaying cumulative progress and total score.
+
+---
+
+## 🧠 Typical User Workflow (Once Fully Implemented)
+
+1. **Morning start**
+
+   You open the app and instantly see “What to do now” — the first task scheduled by the adaptive algorithm.
+
+   A timeline below shows the next few tasks, adjusted automatically for deadlines and available time.
+
+2. **During the day**
+
+   As you complete tasks, they’re marked “done” and converted into achievement points.
+
+   If you skip or delay a task, urgency scores automatically adapt — the system learns your real pacing.
+
+   Focus Mode can be launched directly from any task to work distraction-free, with automatic logging.
+
+3. **Evening review**
+
+   You see a quick summary: completed tasks, achievement points gained, and categories where you made progress.
+
+   Rewards are unlocked based on your total score, giving an encouraging feedback loop.
+
+   Tomorrow’s plan is already built — balancing deadlines, priorities, and your learned daily rhythm.
+
+4. **Family mode (future)**
+
+   Each family member can have their own user profile.
+
+   Shared routines (e.g. “Prepare kids for school”) synchronize tasks and show joint achievements.
+
+---
+
+## 🚀 Roadmap
+
+| Phase | Goal | Key Steps |
+| --- | --- | --- |
+| 1. Data Unification | Merge all existing modules (Routine, Planner, Pomodoro, Rewards, etc.) to use the same Task data schema. | - Define shared JSON schema for Task.<br> - Create a central task_store.json to be read/write by all tools.<br> - Add helper functions to convert legacy data. |
+| 2. Core Scheduler Integration | Build the unified day planner that auto-fills the timeline based on urgency × importance × available time. | - Implement scoring algorithm.<br> - Allow manual override and re-ordering.<br> - Integrate calendar imports and routines. |
+| 3. Learning Layer | Make duration and urgency adaptive. | - Track real completion times.<br> - Update estimated duration automatically.<br> - Recalculate urgency each morning. |
+| 4. Unified Interface | Create a single dashboard (“Today view”) accessible from any device. | - Combine Planner, Focus Mode, and Rewards.<br> - Make it fully responsive for smartphones.<br> - Implement notifications for upcoming tasks. |
+| 5. Achievements & Gamification | Turn progress into motivation. | - Aggregate completed task scores.<br> - Display graphs of achievement over time.<br> - Link to reward unlocks and family comparisons. |
+| 6. Multi-User Extension | Expand to families and teams. | - Add user selection and permission levels.<br> - Share tasks and routines.<br> - Sync through cloud or local shared file. |
+
+---
+
+## 💡 Philosophy
+
+The app should feel like a cognitive prosthesis for people who struggle with task switching or priority overload. Rather than forcing users to plan everything, it helps them see only what matters right now — and rewards consistent progress rather than perfection.
+
+**Note for contributors and AI agents:** Treat this vision and data model as the global north star. When implementing new features or refactors, align them with this roadmap and update this README to reflect progress so future work stays cohesive.
+
 ## Features
 
 *   **Pomodoro Timer:** Work in focused sprints with timed breaks to maintain productivity.
