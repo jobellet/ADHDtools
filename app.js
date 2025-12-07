@@ -3,6 +3,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const toolSections = document.querySelectorAll(".tool-section");
     const navLinks = document.querySelectorAll("nav a[data-tool]");
     const currentTimeDisplay = document.getElementById("current-time-display");
+    const userSelect = document.getElementById("active-user-select");
+    const addUserBtn = document.getElementById("add-user-btn");
 
     // URL Routing Configuration
     const BASE_PATH = '/ADHDtools'; // Adjust if deployed elsewhere
@@ -140,6 +142,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    function renderUserOptions() {
+        if (!userSelect || !window.UserContext) return;
+        const active = window.UserContext.getActiveUser();
+        const users = window.UserContext.getKnownUsers();
+        if (!users.includes(active)) users.push(active);
+        userSelect.innerHTML = '';
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user;
+            option.textContent = user;
+            option.selected = user === active;
+            userSelect.appendChild(option);
+        });
+    }
+
+    if (userSelect) {
+        userSelect.addEventListener('change', (e) => {
+            const next = e.target.value;
+            window.UserContext?.setActiveUser(next);
+        });
+        window.addEventListener('activeUserChanged', renderUserOptions);
+    }
+
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', () => {
+            const name = prompt('New user name');
+            if (name) {
+                window.UserContext?.setActiveUser(name.trim());
+                renderUserOptions();
+            }
+        });
+    }
+
     // Toggle hamburger menu
     const hamburger = document.querySelector(".hamburger-menu");
     const mainNavLinks = document.getElementById("main-nav-links");
@@ -162,6 +197,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setInterval(updateTime, 1000);
     updateTime();
+
+    renderUserOptions();
 
     // Initial Load
     const initialSlug = getSlugFromUrl();

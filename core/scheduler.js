@@ -141,7 +141,9 @@ function buildDailySchedule(tasks, config, todayStr = new Date().toISOString().s
 export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...(window.ConfigManager?.getConfig?.() || {}), ...(config || {}) };
   const todayStr = now.toISOString().slice(0, 10);
-  const taskList = tasks || TaskStore.getPendingTasks();
+  const activeUser = window.UserContext?.getActiveUser?.();
+  const baseTasks = tasks || TaskStore.getPendingTasks();
+  const taskList = activeUser ? baseTasks.filter(t => t.user === activeUser) : baseTasks;
   const taskMap = new Map(taskList.map(t => [t.hash, t]));
   const filtered = taskList.filter(t => {
     if (t.completed) return false;

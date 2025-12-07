@@ -18,7 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const rewardsList = document.getElementById('rewards-list');
     const achievementsList = document.getElementById('achievements-list');
+    const activityBox = document.getElementById('recent-activity');
     const pointsDisplay = document.getElementById('points-display');
+    const pointsEarnedDisplay = document.getElementById('points-earned');
+    const pointsSpentDisplay = document.getElementById('points-spent');
     const rewardNameInput = document.getElementById('reward-name');
     const rewardDescriptionInput = document.getElementById('reward-description');
     const rewardPointsInput = document.getElementById('reward-points');
@@ -121,7 +124,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getAchievementTotals() {
-        if (window.TaskStore?.getTaskScoreTotals) return window.TaskStore.getTaskScoreTotals();
+        const activeUser = window.UserContext?.getActiveUser?.();
+        if (window.TaskStore?.getTaskScoreTotals) return window.TaskStore.getTaskScoreTotals(activeUser);
         const totalScore = achievements.reduce((sum, a) => sum + (a.points || 0), 0);
         return { groups: [], totalScore };
     }
@@ -130,16 +134,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const totals = getAchievementTotals();
         return Math.max(0, Number((totals.totalScore + points - spentPoints).toFixed(2)));
     }
+
+    function renderLedger() {
+        const totals = getAchievementTotals();
+        if (pointsDisplay) pointsDisplay.textContent = getAvailablePoints();
+        if (pointsEarnedDisplay) pointsEarnedDisplay.textContent = totals.totalScore.toFixed(2);
+        if (pointsSpentDisplay) pointsSpentDisplay.textContent = spentPoints.toFixed(2);
+    }
+
+    function getRecentStats(days = 1) {
+        const tasks = window.TaskStore?.getAllTasks?.() || [];
+        const activeUser = window.UserContext?.getActiveUser?.();
+        const filtered = activeUser ? tasks.filter(t => t.user === activeUser) : tasks;
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+        const completed = filtered.filter(t => t.completed && t.completedAt && new Date(t.completedAt).getTime() >= cutoff);
+        const earned = completed.reduce((sum, task) => {
+            const score = task.achievementScore || window.TaskModel?.computeAchievementScore?.(task) || 0;
+            return sum + score;
+        }, 0);
+        return { count: completed.length, points: Number(earned.toFixed(2)) };
+    }
     
     // Render rewards list
     function renderRewards() {
         // Clear current list
         rewardsList.innerHTML = '';
 
-        // Update points display
-        if (pointsDisplay) {
-            pointsDisplay.textContent = getAvailablePoints();
-        }
+        renderLedger();
         
         // Create reward elements
         rewards.forEach((reward, index) => {
@@ -238,6 +259,14 @@ document.addEventListener('DOMContentLoaded', function() {
         totalsRow.className = 'achievement-item total-achievements';
         totalsRow.textContent = `Total points earned: ${totals.totalScore.toFixed(2)} | Available: ${getAvailablePoints()}`;
         achievementsList.appendChild(totalsRow);
+
+        if (activityBox) {
+            const todayStats = getRecentStats(1);
+            const weekStats = getRecentStats(7);
+            activityBox.innerHTML = `Recent activity — Today: ${todayStats.count} tasks, ${todayStats.points} pts. Last 7 days: ${weekStats.count} tasks, ${weekStats.points} pts.`;
+        }
+
+        renderLedger();
     }
     
     // Add new reward
@@ -473,6 +502,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial render
     renderRewards();
     renderAchievements();
+
+    window.addEventListener('activeUserChanged', () => {
+        renderRewards();
+        renderAchievements();
+    });
     
     // Check for points to award on page load
     checkForPointsToAward();
