@@ -8,7 +8,7 @@
     fixedTag: "[FIX]",
     flexibleTag: "[FLEX]",
     defaultTaskMinutes: 25,
-    enableUnifiedScheduler: false,
+    enableUnifiedScheduler: true,
     includeCalendarInSchedule: true,
 
     // Default duration for focus sessions (in minutes). Used by the focus-mode

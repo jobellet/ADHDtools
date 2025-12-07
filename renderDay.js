@@ -91,7 +91,12 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
                 del.textContent = '×';
                 del.addEventListener('click', e => {
                     e.stopPropagation();
-                    window.DataManager.updateTask(task.id, { plannerDate: null });
+                    if (window.TaskStore?.updateTaskByHash) {
+                        window.TaskStore.updateTaskByHash(task.hash || task.id, { plannerDate: null, isFixed: false });
+                    } else {
+                        window.DataManager.updateTask(task.id, { plannerDate: null });
+                    }
+                    window.EventBus?.dispatchEvent(new Event('dataChanged'));
                 });
                 eventDiv.appendChild(del);
 

@@ -110,9 +110,9 @@ The app should feel like a cognitive prosthesis for people who struggle with tas
 
 ✅ Shared task storage via `core/task-store.js`, mirrored through `DataManager` for legacy tools.
 
-✅ Day Planner events and Routine quick tasks persist into the shared store with deadlines/durations.
+✅ Day Planner events and Routine quick tasks persist into the shared store with deadlines/durations, and the **Generate schedule for today** button now stamps planner times directly from the scheduler output.
 
-✅ Basic unified scheduler (`core/scheduler.js`) can return a prioritized schedule and the task to do “right now.”
+✅ Unified scheduler (`core/scheduler.js`) now feeds both the Day Planner timeline and Today View, keeping current/upcoming items in sync after generation.
 
 ✅ Scheduler respects task dependencies and FIX/FLEX tags, reordering only flexible tasks and showing blocked items in the Today View.
 
@@ -120,6 +120,8 @@ The app should feel like a cognitive prosthesis for people who struggle with tas
 ✅ Urgency smoothing helper tempers far-away deadlines and accelerates urgency when tasks are repeatedly skipped.
 
 ✅ Achievements and rewards now use completed Task scores instead of a separate points ledger.
+
+✅ Day Planner “Add Event” modal restored with dependency/priority fields and scheduler-aware edits.
 
 🛠️ In progress: deeper Focus Mode integration with the scheduled task of the moment.
 
@@ -168,6 +170,16 @@ All data is stored locally in your browser. Nothing is sent to any server, ensur
 * scores tasks with `importance × urgency`, then fills open time in priority order.
 
 The Day Planner includes a **Generate schedule for today** action that applies the scheduler to the timeline, and the **Start Focus Session for Current Task** button boots focus mode with the active slot.
+
+### Manual Test Cases
+
+* **[FIX] stays pinned:**
+  1. Run in console: `window.TaskStore.addTask({ name: '[FIX] Standup', plannerDate: new Date().toISOString().slice(0,16), durationMinutes: 30, isFixed: true });`
+  2. Click **Generate schedule for today** in Day Planner. The block should remain at its set time and appear in Today View as current/upcoming; skipping should keep it on today.
+* **[FLEX] reschedules:**
+  1. Run: `window.TaskStore.addTask({ name: '[FLEX] Write report', importance: 8, urgency: 7, durationMinutes: 45 });`
+  2. Generate the schedule. The task should land in the next available slot and can move to later today/tomorrow via the Today View skip action.
+* **Quick/routine tasks surface:** add a quick routine task (Routine tab) and generate the schedule; it should populate on the Day Planner timeline and in the Today View upcoming list.
 
 The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
 The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing.

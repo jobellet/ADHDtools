@@ -29,23 +29,40 @@
         return dep && !dep.completed;
       });
 
+      const pendingTasks = window.TaskStore?.getPendingTasks?.() || [];
+      const fallbackSorted = [...pendingTasks]
+        .filter(t => !blocked.includes(t))
+        .sort((a, b) => ((b.importance || 5) + (b.urgency || 5)) - ((a.importance || 5) + (a.urgency || 5)));
+
       if (currentSlot) {
         currentEl.textContent = `${currentSlot.task.name || currentSlot.task.text || 'Task'} (${formatTime(currentSlot.startTime)} - ${formatTime(currentSlot.endTime)})`;
         currentEl.dataset.hash = currentSlot.task.hash || '';
+      } else if (schedule.length) {
+        currentEl.textContent = 'No active task right now.';
+        currentEl.dataset.hash = '';
+      } else if (fallbackSorted.length) {
+        const first = fallbackSorted[0];
+        currentEl.textContent = `Next up: ${first.name || first.text}`;
+        currentEl.dataset.hash = first.hash || '';
       } else {
         currentEl.textContent = 'No active task right now.';
         currentEl.dataset.hash = '';
       }
 
       nextList.innerHTML = '';
-      schedule
-        .filter(slot => slot.startTime > now)
+      const futureSlots = schedule.filter(slot => slot.startTime > now);
+      const upcoming = futureSlots.length ? futureSlots : fallbackSorted.slice(0, 3).map(task => ({
+        task,
+        startTime: task.plannerDate ? new Date(task.plannerDate) : null,
+      }));
+      upcoming
         .slice(0, 3)
         .forEach(slot => {
           const li = document.createElement('li');
           const dep = slot.task?.dependency ? taskMap.get(slot.task.dependency) : null;
           const blockedBadge = dep && !dep.completed ? ` (Blocked by ${dep.name || dep.text || 'dependency'})` : '';
-          li.textContent = `${formatTime(slot.startTime)} – ${slot.task.name || slot.task.text || 'Task'}${blockedBadge}`;
+          const timeLabel = slot.startTime ? formatTime(slot.startTime) + ' – ' : '';
+          li.textContent = `${timeLabel}${slot.task.name || slot.task.text || 'Task'}${blockedBadge}`;
           nextList.appendChild(li);
         });
 
