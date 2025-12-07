@@ -4,6 +4,7 @@
     const nextList = document.getElementById('today-next-list');
     const blockedList = document.getElementById('today-blocked-list');
     const blockedContainer = document.getElementById('today-blocked');
+    const familyContainer = document.getElementById('family-overview');
     const startBtn = document.getElementById('today-start-focus');
     const doneBtn = document.getElementById('today-mark-done');
     const skipBtn = document.getElementById('today-skip');
@@ -84,6 +85,28 @@
           });
         }
       }
+
+      if (familyContainer) {
+        familyContainer.innerHTML = '<h3>Family Overview</h3>';
+        const users = window.UserContext?.getKnownUsers?.() || [];
+        const pending = window.TaskStore?.getPendingTasks?.() || [];
+        if (!users.length) {
+          familyContainer.innerHTML += '<p class="muted">No other profiles yet.</p>';
+        } else {
+          users.forEach(user => {
+            const userTasks = pending.filter(t => t.user === user);
+            const nowIso = new Date().toISOString().slice(0, 10);
+            const current = userTasks.find(t => t.plannerDate && t.plannerDate.startsWith(nowIso));
+            const upcoming = userTasks
+              .filter(t => !t.completed)
+              .sort((a, b) => ((b.importance || 5) + (b.urgency || 5)) - ((a.importance || 5) + (a.urgency || 5)))[0];
+            const card = document.createElement('div');
+            card.className = 'family-card';
+            card.innerHTML = `<strong>${user}</strong><br>Current: ${current?.name || 'None'}<br>Next: ${upcoming?.name || 'None'}`;
+            familyContainer.appendChild(card);
+          });
+        }
+      }
     }
 
     function startFocus(taskName, taskHash, durationMinutes) {
@@ -113,7 +136,7 @@
     }
 
     function applySkip(slot) {
-      const choice = prompt('Skip options: "end" (end of day), "tomorrow", or custom date/time (YYYY-MM-DD HH:MM)', 'end');
+      const choice = prompt('Skip options: "end" (end of day), "tomorrow", "custom" (YYYY-MM-DD HH:MM)', 'end');
       if (!choice) return;
       const now = new Date();
       let plannerDate = null;
@@ -141,8 +164,10 @@
         if (dep && !dep.completed) {
           const depDate = dep.plannerDate ? new Date(dep.plannerDate) : dep.deadline ? new Date(dep.deadline) : null;
           if (depDate && depDate > new Date(plannerDate)) {
-            alert('Cannot reschedule before dependency. Complete or move the dependency first.');
-            return;
+            const moveDep = confirm('This would schedule before its dependency. Move dependency earlier as well?');
+            if (!moveDep) return;
+            const depPlanner = `${plannerDate.slice(0, 10)}T${(depDate.toISOString().slice(11,16) || '08:00')}`;
+            window.TaskStore.updateTaskByHash(dep.hash, { plannerDate: depPlanner, deadline: dep.deadline || depPlanner });
           }
         }
       }
@@ -153,6 +178,7 @@
       window.TaskStore.updateTaskByHash(slot.task.hash, { plannerDate, deadline: plannerDate, urgency });
       window.EventBus?.dispatchEvent(new Event('dataChanged'));
       updateView();
+      window.dispatchEvent(new Event('scheduleNeedsRefresh'));
     }
 
     if (skipBtn) {
