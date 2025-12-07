@@ -86,9 +86,10 @@
       }
     }
 
-    function startFocus(taskName) {
+    function startFocus(taskName, taskHash, durationMinutes) {
       const goalInput = document.getElementById('focus-goal');
       if (goalInput) goalInput.value = taskName;
+      window.FocusTaskContext = { taskHash, startedAt: Date.now(), durationMinutes };
       document.getElementById('enter-focus-mode')?.click();
     }
 
@@ -97,7 +98,7 @@
         const sched = scheduler();
         const slot = sched?.getCurrentTask ? sched.getCurrentTask(new Date()) : null;
         if (!slot) return alert('No current task to focus on.');
-        startFocus(slot.task.name || slot.task.text || 'Focus');
+        startFocus(slot.task.name || slot.task.text || 'Focus', slot.task.hash, slot.task.durationMinutes);
       });
     }
 
@@ -112,7 +113,7 @@
     }
 
     function applySkip(slot) {
-      const choice = prompt('Skip options: end (end of day), tomorrow, or custom date/time (YYYY-MM-DD HH:MM)', 'end');
+      const choice = prompt('Skip options: "end" (end of day), "tomorrow", or custom date/time (YYYY-MM-DD HH:MM)', 'end');
       if (!choice) return;
       const now = new Date();
       let plannerDate = null;
@@ -121,8 +122,9 @@
         end.setHours(22, 0, 0, 0);
         plannerDate = `${end.toISOString().slice(0, 10)}T${end.toISOString().slice(11, 16)}`;
       } else if (choice.toLowerCase().startsWith('tomorrow')) {
-        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-        tomorrow.setHours(slot.startTime.getHours(), slot.startTime.getMinutes(), 0, 0);
+        const base = slot.startTime || now;
+        const tomorrow = new Date(base.getTime() + 24 * 60 * 60 * 1000);
+        tomorrow.setHours(base.getHours(), base.getMinutes(), 0, 0);
         plannerDate = `${tomorrow.toISOString().slice(0, 10)}T${tomorrow.toISOString().slice(11, 16)}`;
       } else {
         const parts = choice.trim().split(' ');
@@ -133,10 +135,22 @@
 
       if (!plannerDate) return alert('Unable to parse new time for skip/reschedule.');
 
+      // Dependency safety: don't move before dependency deadline/planner
+      if (slot.task.dependency) {
+        const dep = window.TaskStore?.getTaskByHash?.(slot.task.dependency);
+        if (dep && !dep.completed) {
+          const depDate = dep.plannerDate ? new Date(dep.plannerDate) : dep.deadline ? new Date(dep.deadline) : null;
+          if (depDate && depDate > new Date(plannerDate)) {
+            alert('Cannot reschedule before dependency. Complete or move the dependency first.');
+            return;
+          }
+        }
+      }
+
       const ledgerSkip = window.UrgencyHelpers?.incrementSkipCount?.(slot.task.hash) || 0;
       const bumpedUrgency = Math.min(10, (slot.task.urgency || 5) + 1 + Math.min(ledgerSkip, 2));
       const urgency = window.UrgencyHelpers?.computeSmoothedUrgency?.({ ...slot.task, urgency: bumpedUrgency }) || bumpedUrgency;
-      window.TaskStore.updateTaskByHash(slot.task.hash, { plannerDate, urgency });
+      window.TaskStore.updateTaskByHash(slot.task.hash, { plannerDate, deadline: plannerDate, urgency });
       window.EventBus?.dispatchEvent(new Event('dataChanged'));
       updateView();
     }
