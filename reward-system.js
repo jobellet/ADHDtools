@@ -32,9 +32,31 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load rewards and points from localStorage
     let rewards = JSON.parse(localStorage.getItem('adhd-rewards')) || [];
-    let spentPoints = parseFloat(localStorage.getItem('adhd-points-spent')) || 0;
     let achievements = JSON.parse(localStorage.getItem('adhd-achievements')) || [];
-    let points = parseFloat(localStorage.getItem('adhd-points')) || 0;
+    const LEDGER_KEY = 'adhd-points-ledger';
+    let ledger = {};
+
+    function loadLedger() {
+        try {
+            const saved = localStorage.getItem(LEDGER_KEY);
+            ledger = saved ? JSON.parse(saved) : {};
+        } catch (err) {
+            console.warn('Unable to load ledger', err);
+            ledger = {};
+        }
+    }
+
+    function saveLedger() {
+        localStorage.setItem(LEDGER_KEY, JSON.stringify(ledger));
+    }
+
+    function getActiveLedger() {
+        const user = window.UserContext?.getActiveUser?.() || 'main';
+        if (!ledger[user]) ledger[user] = { bonus: 0, spent: 0 };
+        return ledger[user];
+    }
+
+    loadLedger();
     
     // Initialize confetti
     let confetti = null;
@@ -132,14 +154,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getAvailablePoints() {
         const totals = getAchievementTotals();
-        return Math.max(0, Number((totals.totalScore + points - spentPoints).toFixed(2)));
+        const ledgerEntry = getActiveLedger();
+        return Math.max(0, Number((totals.totalScore + ledgerEntry.bonus - ledgerEntry.spent).toFixed(2)));
     }
 
     function renderLedger() {
         const totals = getAchievementTotals();
+        const ledgerEntry = getActiveLedger();
         if (pointsDisplay) pointsDisplay.textContent = getAvailablePoints();
         if (pointsEarnedDisplay) pointsEarnedDisplay.textContent = totals.totalScore.toFixed(2);
-        if (pointsSpentDisplay) pointsSpentDisplay.textContent = spentPoints.toFixed(2);
+        if (pointsSpentDisplay) pointsSpentDisplay.textContent = ledgerEntry.spent.toFixed(2);
     }
 
     function getRecentStats(days = 1) {
@@ -226,6 +250,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const totals = getAchievementTotals();
         const sortedAchievements = totals.groups.sort((a, b) => b.score - a.score);
+
+        const header = document.createElement('div');
+        header.className = 'achievement-summary';
+        const activeUser = window.UserContext?.getActiveUser?.();
+        header.textContent = activeUser ? `Achievements for ${activeUser}` : 'Achievements';
+        achievementsList.appendChild(header);
 
         sortedAchievements.forEach((achievement) => {
             const achievementItem = document.createElement('div');
@@ -322,8 +352,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (confirm(`Are you sure you want to claim "${reward.name}" for ${reward.points} points?`)) {
-            spentPoints += reward.points;
-            localStorage.setItem('adhd-points-spent', spentPoints);
+            const ledgerEntry = getActiveLedger();
+            ledgerEntry.spent += reward.points;
+            ledger[window.UserContext?.getActiveUser?.() || 'main'] = ledgerEntry;
+            saveLedger();
 
             // Show celebration
             if (confetti) {
@@ -338,11 +370,13 @@ document.addEventListener('DOMContentLoaded', function() {
             renderAchievements();
         }
     }
-    
+
     // Add points (for testing or manual addition)
     function addPoints(amount) {
-        points += amount;
-        localStorage.setItem('adhd-points', points);
+        const ledgerEntry = getActiveLedger();
+        ledgerEntry.bonus += amount;
+        ledger[window.UserContext?.getActiveUser?.() || 'main'] = ledgerEntry;
+        saveLedger();
         renderRewards();
     }
     
@@ -480,10 +514,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update points and achievements if any were earned
         if (newPoints > 0) {
-            points += newPoints;
+            const ledgerEntry = getActiveLedger();
+            ledgerEntry.bonus += newPoints;
+            ledger[window.UserContext?.getActiveUser?.() || 'main'] = ledgerEntry;
+            saveLedger();
             achievements = achievements.concat(newAchievements);
-            
-            localStorage.setItem('adhd-points', points);
+
             localStorage.setItem('adhd-achievements', JSON.stringify(achievements));
             localStorage.setItem('last-points-check', new Date().toISOString());
             

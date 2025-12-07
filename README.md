@@ -183,9 +183,10 @@ The Day Planner includes a **Generate schedule for today** action that applies t
 * **Quick/routine tasks surface:** add a quick routine task (Routine tab) and generate the schedule; it should populate on the Day Planner timeline and in the Today View upcoming list.
 * **Multi-user filtering:** create tasks for two users via `window.TaskStore.addTask({ name: 'Main task', user: 'main' }); window.TaskStore.addTask({ name: 'Sibling task', user: 'sibling' });` then switch the user dropdown in the navbar — Today View, the scheduler output, and Rewards/Achievements should show only the active profile.
 * **Rewards ledger:** complete a few tasks (or run `window.TaskStore.markComplete(hash)` for an existing one) and open Rewards. Earned/available points should reflect completed tasks, and claiming a reward should increase the “Spent” total while reducing available points.
+* **Focus mode completion:** start focus from Today View, let the timer finish, and choose to complete the task. The task should flip to completed, and the learned duration should reflect the session length.
 
 The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
-The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing.
+The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing and guards against violating dependencies.
 
 ## Feedback
 

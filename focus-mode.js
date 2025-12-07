@@ -233,6 +233,22 @@ if (window.__focusModeLoaded) {
       totalFocusSessionSeconds = 0; // Reset total duration
       // No popup at the end of the session
       if (pauseBtn) pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+
+      // Allow marking the focused task as complete and record duration learning
+      if (completed && window.FocusTaskContext?.taskHash && window.TaskStore?.markComplete) {
+        const ctx = window.FocusTaskContext;
+        const elapsedMinutes = ctx.startedAt ? Math.max(1, Math.round((Date.now() - ctx.startedAt) / 60000)) : null;
+        const durationMinutes = elapsedMinutes || ctx.durationMinutes;
+        const task = window.TaskStore.getTaskByHash(ctx.taskHash);
+        if (task) {
+          if (durationMinutes && window.DurationLearning?.recordTaskDuration) {
+            window.DurationLearning.recordTaskDuration(task.name, durationMinutes);
+          }
+          window.TaskStore.markComplete(ctx.taskHash);
+          window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        }
+      }
+      window.FocusTaskContext = null;
     }
 
     function resumeSession() {
