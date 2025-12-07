@@ -26,17 +26,23 @@ function normalizeName(name) {
 export function recordTaskDuration(taskName, minutes) {
     const normalized = normalizeName(taskName);
     const duration = Number(minutes);
-    if (!normalized || !Number.isFinite(duration) || duration <= 0) return;
+    if (!normalized || !Number.isFinite(duration) || duration <= 0) return null;
 
     const data = loadDurations();
-    const existing = data[normalized] || { total: 0, count: 0 };
+    const existing = data[normalized] || { average: duration, count: 0 };
+    const smoothing = 0.3;
+    const nextAverage = existing.count === 0
+        ? duration
+        : (existing.average * (1 - smoothing)) + (duration * smoothing);
+
     const updated = {
-        total: existing.total + duration,
+        average: nextAverage,
         count: existing.count + 1,
     };
 
     data[normalized] = updated;
     saveDurations(data);
+    return Math.round(nextAverage);
 }
 
 export function getEstimatedDuration(taskName) {
@@ -47,7 +53,7 @@ export function getEstimatedDuration(taskName) {
     const entry = data[normalized];
     if (!entry || !entry.count) return null;
 
-    return Math.round(entry.total / entry.count);
+    return Math.round(entry.average);
 }
 
 if (typeof window !== 'undefined') {

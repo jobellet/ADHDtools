@@ -1,6 +1,8 @@
-import { createTask, updateTask, markTaskCompleted, computeAchievementScore } from './task-model.js';
+import { createTask, updateTask, markTaskCompleted, computeAchievementScore, computeUrgencyFromDeadline } from './task-model.js';
+import { recordTaskDuration } from './duration-learning.js';
 
 const STORAGE_KEY = 'adhd-unified-tasks';
+const URGENCY_REFRESH_KEY = 'adhd-urgency-refresh-date';
 
 function readLegacyTasks() {
   try {
@@ -29,6 +31,30 @@ function loadTasks() {
 }
 
 let tasks = loadTasks();
+
+function refreshUrgencyIfStale() {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const lastRun = localStorage.getItem(URGENCY_REFRESH_KEY);
+    if (lastRun === today) return;
+    let updated = false;
+    tasks = tasks.map(task => {
+      if (!task.deadline) return task;
+      const nextUrgency = computeUrgencyFromDeadline(task.deadline);
+      if (nextUrgency !== task.urgency) {
+        updated = true;
+        return { ...task, urgency: nextUrgency };
+      }
+      return task;
+    });
+    if (updated) persist();
+    localStorage.setItem(URGENCY_REFRESH_KEY, today);
+  } catch (err) {
+    console.warn('Failed to refresh urgency', err);
+  }
+}
+
+refreshUrgencyIfStale();
 
 function persist() {
   try {
@@ -85,6 +111,12 @@ function markComplete(hash, completedAt = new Date().toISOString()) {
   const task = getTaskByHash(hash);
   if (!task) return null;
   const updated = markTaskCompleted(task, completedAt);
+  if (task.name && task.durationMinutes) {
+    const learned = recordTaskDuration(task.name, task.durationMinutes);
+    if (learned) {
+      updated.durationMinutes = learned;
+    }
+  }
   return updateTaskByHash(hash, updated);
 }
 

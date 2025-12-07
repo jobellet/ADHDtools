@@ -2972,6 +2972,20 @@ input:checked + .slider:before {
     }
 }
  
+
+/* Today View enhancements */
+.today-blocked {
+    margin-top: 10px;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: #fff4e5;
+    border: 1px solid #f5c97a;
+}
+
+.today-list.muted-list li {
+    color: #555;
+    font-size: 0.95rem;
+}
          c u r s o r :   p o i n t e r ;  
  }  
   

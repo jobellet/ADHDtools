@@ -4,6 +4,8 @@ import { computeUrgencyFromDeadline } from './task-model.js';
 const DEFAULT_CONFIG = {
   dayStart: '07:00',
   dayEnd: '22:00',
+  fixedTag: '[FIX]',
+  flexibleTag: '[FLEX]',
 };
 
 function parseTimeToMinutes(timeStr, fallback = 0) {
@@ -87,8 +89,9 @@ function buildDailySchedule(tasks, config, todayStr = new Date().toISOString().s
   const flexible = [];
 
   tasks.forEach(task => {
-    const startMinutes = deriveStartMinutes(task);
-    if (task.isFixed || (task.name || '').includes('[FIX]')) {
+    const isFlexTagged = (task.name || '').includes(config.flexibleTag || '[FLEX]');
+    const startMinutes = isFlexTagged ? null : deriveStartMinutes(task);
+    if (task.isFixed || (task.name || '').includes(config.fixedTag || '[FIX]')) {
       if (Number.isFinite(startMinutes)) {
         fixed.push({ task, startMinutes, endMinutes: startMinutes + getDurationMinutes(task) });
         return;
