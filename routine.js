@@ -1070,18 +1070,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         localStorage.setItem(ROUTINE_RUN_REQUEST_KEY, JSON.stringify(pendingRun));
 
-        const newTabUrl = buildRoutineRunUrl();
-        const openedTab = window.open(newTabUrl, '_blank', 'noopener');
+        const desiredUrl = new URL(buildRoutineRunUrl());
+        const currentUrl = new URL(window.location.href);
 
-        if (!openedTab) {
-            alert('Popup blocked. Starting routine in this tab instead.');
-            updateRoutineView(true);
-            activateRoutine(selectedRoutineId);
-            localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
-            return;
+        if (currentUrl.toString() !== desiredUrl.toString()) {
+            window.history.replaceState({}, '', desiredUrl);
         }
 
-        notify('Routine will run in a new tab.');
+        updateRoutineView(true);
+        activateRoutine(selectedRoutineId);
+        localStorage.removeItem(ROUTINE_RUN_REQUEST_KEY);
     }
 
     // --- PIE CHART FUNCTION ---
@@ -1869,6 +1867,37 @@ document.addEventListener('DOMContentLoaded', () => {
     let queueDragIndex = null;
     let queueDropIndex = null;
     let isQueueDragging = false;
+    let queuePreviewLockedOpen = false;
+
+    function expandQueuePreview() {
+        if (!queuePreviewPanel) return;
+        queuePreviewPanel.classList.add('expanded');
+    }
+
+    function collapseQueuePreview(force = false) {
+        if (!queuePreviewPanel) return;
+        if (force) {
+            queuePreviewLockedOpen = false;
+        }
+        if (!queuePreviewLockedOpen) {
+            queuePreviewPanel.classList.remove('expanded');
+        }
+    }
+
+    if (queuePreviewPanel) {
+        queuePreviewPanel.addEventListener('mouseenter', expandQueuePreview);
+        queuePreviewPanel.addEventListener('mouseleave', () => collapseQueuePreview(false));
+        queuePreviewPanel.addEventListener('click', (event) => {
+            // Toggle a locked open state for touch users without hover
+            if (event.target.closest('button')) return; // don't toggle from button clicks if added later
+            queuePreviewLockedOpen = !queuePreviewLockedOpen;
+            if (queuePreviewLockedOpen) {
+                expandQueuePreview();
+            } else {
+                collapseQueuePreview(true);
+            }
+        });
+    }
 
     function enterFocusMode() {
         if (!focusModeEl) return;
@@ -1952,6 +1981,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activeRoutine || currentTaskIndex < 0 || !activeRoutine.tasks.length) {
             queuePreviewPanel.classList.add('hidden');
             queuePreviewList.innerHTML = '';
+            collapseQueuePreview(true);
             return;
         }
 
