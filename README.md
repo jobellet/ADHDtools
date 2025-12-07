@@ -142,10 +142,25 @@ Legacy modules still calling `DataManager` automatically read/write through this
 *   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
 *   **Calendar Tool:** Import events from ICS files and integrate them with other tools.
+*   **Unified Scheduler:** Generate a daily schedule across tools using shared TaskStore data and calendar blocks.
+*   **Today View:** A lightweight dashboard that surfaces the current task, upcoming items, and quick actions.
 
 ## Privacy
 
 All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.
+
+## Unified Scheduler & TaskStore
+
+`core/scheduler.js` exposes `getTodaySchedule()` and `getCurrentTask()` to produce a prioritized plan for the current day. The scheduler:
+
+* reads tasks from the shared **TaskStore** (including routines, planner items, and calendar imports),
+* excludes completed or dependency-blocked tasks,
+* blocks out fixed calendar events and `[FIX]`-tagged items,
+* scores tasks with `importance × urgency`, then fills open time in priority order.
+
+The Day Planner includes a **Generate schedule for today** action that applies the scheduler to the timeline, and the **Start Focus Session for Current Task** button boots focus mode with the active slot.
+
+The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
 
 ## Feedback
 
@@ -201,6 +216,8 @@ The Calendar tool can load `.ics` files exported from other apps like Google Cal
    - In **Google Calendar** open **Settings → Import & export** and choose **Export** to download a ZIP containing your calendars. Extract the `.ics` file from it.
 2. Open the **Calendar** tool and click **Import ICS**.
 3. Select the `.ics` file and the events will appear in the list and be stored locally.
+
+Imported calendar events are converted into TaskStore entries using deterministic hashes based on the ICS UID and start time. `[FIX]` and `[FLEX]` tags set whether the scheduler treats them as fixed or flexible blocks.
 
 Only simple events are supported and nothing is uploaded anywhere.
 

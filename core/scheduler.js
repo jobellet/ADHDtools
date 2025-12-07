@@ -46,7 +46,41 @@ function computePriority(task) {
   return (Number.isFinite(importance) ? importance : 5) * (Number.isFinite(urgency) ? urgency : 5);
 }
 
-function buildDailySchedule(tasks, config) {
+function loadCalendarBlocks(todayStr, config) {
+  try {
+    const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
+    const fixedTag = config?.fixedTag || '[FIX]';
+    return events
+      .filter(ev => ev.start && ev.start.startsWith(todayStr))
+      .map(ev => {
+        const startMinutes = deriveStartMinutes({ startTime: ev.start.slice(11, 16) });
+        const endMinutes = ev.end ? deriveStartMinutes({ startTime: ev.end.slice(11, 16) }) : null;
+        const duration = Number.isFinite(endMinutes) ? endMinutes - startMinutes : getDurationMinutes(ev);
+        const name = ev.title || ev.rawTitle || 'Calendar Block';
+        const isFixed = (ev.isFixed ?? true) || name.includes(fixedTag);
+        return {
+          task: {
+            name,
+            text: name,
+            isFixed,
+            source: 'calendar',
+            hash: ev.calendarInstanceId || ev.id || `cal-${ev.start}`,
+            startTime: ev.start?.slice(11, 16) || null,
+            durationMinutes: duration,
+            deadline: ev.end || null,
+          },
+          startMinutes: startMinutes ?? 0,
+          endMinutes: (startMinutes ?? 0) + duration,
+        };
+      })
+      .filter(slot => slot.task.startTime && slot.task.isFixed);
+  } catch (err) {
+    console.warn('Failed to load calendar blocks for scheduler', err);
+    return [];
+  }
+}
+
+function buildDailySchedule(tasks, config, todayStr = new Date().toISOString().slice(0, 10)) {
   const dayStart = parseTimeToMinutes(config.dayStart, 0);
   const dayEnd = parseTimeToMinutes(config.dayEnd, 24 * 60);
   const fixed = [];
@@ -66,6 +100,8 @@ function buildDailySchedule(tasks, config) {
     }
     flexible.push(task);
   });
+
+  fixed.push(...loadCalendarBlocks(todayStr, config));
 
   fixed.sort((a, b) => a.startMinutes - b.startMinutes);
   flexible.sort((a, b) => computePriority(b) - computePriority(a));
@@ -97,18 +133,27 @@ function buildDailySchedule(tasks, config) {
   return schedule;
 }
 
-export function getTodaySchedule(now = new Date(), overrides = {}) {
-  const cfg = { ...DEFAULT_CONFIG, ...(overrides.config || {}), ...(window.ConfigManager?.getConfig?.() || {}) };
-  const allTasks = TaskStore.getPendingTasks();
-  const taskMap = new Map(allTasks.map(t => [t.hash, t]));
-  const filtered = allTasks.filter(t => !isDependencyBlocked(t, taskMap) && (t.urgency || computeUrgencyFromDeadline(t.deadline)) >= 1);
-  const schedule = buildDailySchedule(filtered, cfg);
+export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
+  const cfg = { ...DEFAULT_CONFIG, ...(window.ConfigManager?.getConfig?.() || {}), ...(config || {}) };
   const todayStr = now.toISOString().slice(0, 10);
+  const taskList = tasks || TaskStore.getPendingTasks();
+  const taskMap = new Map(taskList.map(t => [t.hash, t]));
+  const filtered = taskList.filter(t => !t.completed && !isDependencyBlocked(t, taskMap));
+  return buildDailySchedule(filtered, cfg, todayStr).map(slot => ({
+    ...slot,
+    scheduledStart: slot.startMinutes,
+    scheduledEnd: slot.endMinutes,
+  }));
+}
+
+export function getTodaySchedule(now = new Date(), overrides = {}) {
+  const todayStr = now.toISOString().slice(0, 10);
+  const schedule = buildSchedule({ now, config: overrides.config });
   return schedule.map(slot => {
     const startTime = new Date(`${todayStr}T00:00:00Z`);
-    startTime.setMinutes(slot.startMinutes);
+    startTime.setMinutes(slot.scheduledStart);
     const endTime = new Date(`${todayStr}T00:00:00Z`);
-    endTime.setMinutes(slot.endMinutes);
+    endTime.setMinutes(slot.scheduledEnd);
     return { ...slot, startTime, endTime };
   });
 }
@@ -118,7 +163,7 @@ export function getCurrentTask(now = new Date(), overrides = {}) {
   return schedule.find(slot => now >= slot.startTime && now < slot.endTime) || null;
 }
 
-const UnifiedScheduler = { getTodaySchedule, getCurrentTask };
+const UnifiedScheduler = { getTodaySchedule, getCurrentTask, buildSchedule };
 
 if (typeof window !== 'undefined') {
   window.UnifiedScheduler = UnifiedScheduler;

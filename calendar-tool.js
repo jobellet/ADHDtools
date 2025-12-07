@@ -558,6 +558,7 @@
         }));
         events = mergeEventsPreserveOverrides(events, normalized);
         saveEvents(events);
+        convertEventsToTasks(normalized);
         render();
         alert(`Imported ${parsed.length} events.`);
       } catch (err) {
@@ -594,6 +595,7 @@
         }));
         events = mergeEventsPreserveOverrides(events, normalized);
         saveEvents(events);
+        convertEventsToTasks(normalized);
         render();
         return;
       } catch (err) {
@@ -602,6 +604,42 @@
     }
 
     alert('Failed to load calendar. Please check the URL and try again.');
+  }
+
+  function convertEventsToTasks(importedEvents) {
+    if (!window.TaskStore?.upsertTaskByHash) return;
+    const cfg = window.ConfigManager?.getConfig?.() || {};
+    const fixedTag = cfg.fixedTag || '[FIX]';
+    const flexibleTag = cfg.flexibleTag || '[FLEX]';
+
+    importedEvents.forEach(ev => {
+      const start = ev.start || ev.instanceStart;
+      if (!start) return;
+      const end = ev.end || ev.instanceEnd;
+      const startDate = new Date(start);
+      const endDate = end ? new Date(end) : null;
+      const durationMinutes = endDate && !isNaN(endDate) && !isNaN(startDate)
+        ? Math.max(5, Math.round((endDate - startDate) / 60000))
+        : parseInt(cfg.defaultTaskMinutes || 60, 10) || 60;
+      const rawTitle = ev.title || ev.rawTitle || ev.summary || 'Calendar Task';
+      const isFixed = rawTitle.includes(fixedTag) || (!rawTitle.includes(flexibleTag));
+      const cleanedTitle = rawTitle.replace(fixedTag, '').replace(flexibleTag, '').trim();
+      const hashSeed = `${ev.uid || cleanedTitle}-${start}`;
+      const hash = window.TaskModel?.DEFAULT_USER ? `task-${btoa(hashSeed).replace(/=/g, '')}` : `task-${hashSeed}`;
+      const task = {
+        name: cleanedTitle || rawTitle,
+        text: cleanedTitle || rawTitle,
+        plannerDate: start.slice(0, 16),
+        deadline: end ? end.slice(0, 16) : null,
+        durationMinutes,
+        isFixed,
+        source: 'calendar-import',
+        originalTool: 'calendar',
+        hash,
+      };
+      window.TaskStore.upsertTaskByHash(hash, task);
+    });
+    window.EventBus?.dispatchEvent(new Event('dataChanged'));
   }
 
   document.addEventListener('DOMContentLoaded', () => {

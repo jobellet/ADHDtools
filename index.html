@@ -24,6 +24,7 @@
     <script src="habit-tracker.js" defer></script>
     <script src="focus-mode.js" defer></script>
     <script src="reward-system.js" defer></script>
+    <script src="today-view.js" defer></script>
     <script src="calendar-tool.js" defer></script>
     <script src="calendar-settings.js" defer></script>
     <script src="calendar-integration.js" defer></script>
@@ -84,6 +85,22 @@
                 <h2 data-i18n="home-heading">Welcome to ADHD Tools Hub</h2>
                 <p data-i18n="home-text">This website provides a collection of interactive tools designed specifically
                     to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
+
+                <div id="today-view" class="today-view">
+                    <div class="today-current">
+                        <h3>Current Task</h3>
+                        <div id="today-current-task" class="today-card">No active task yet.</div>
+                        <div class="today-actions">
+                            <button id="today-start-focus" class="btn btn-primary"><i class="fas fa-play"></i> Start Focus Session</button>
+                            <button id="today-mark-done" class="btn btn-secondary"><i class="fas fa-check"></i> Mark Done</button>
+                            <button id="today-skip" class="btn btn-outline"><i class="fas fa-forward"></i> Skip / Reschedule</button>
+                        </div>
+                    </div>
+                    <div class="today-next">
+                        <h3>Up Next</h3>
+                        <ul id="today-next-list" class="today-list"></ul>
+                    </div>
+                </div>
 
                 <div class="tools-grid">
                     <div class="tool-card" data-tool="pomodoro">
@@ -191,6 +208,9 @@
                             <button id="clear-events-btn" class="btn btn-secondary">
                                 <i class="fas fa-trash"></i> <span class="btn-text">Clear All</span>
                             </button>
+                            <button id="generate-schedule-btn" class="btn btn-secondary">
+                                <i class="fas fa-calendar-check"></i> <span class="btn-text">Generate schedule for today</span>
+                            </button>
                             <button id="ai-plan-day-btn" class="btn btn-secondary">
                                 <i class="fas fa-magic"></i> <span class="btn-text">AI Plan</span>
                             </button>
@@ -199,6 +219,9 @@
                             </button>
                             <button id="record-event-btn" class="btn btn-secondary">
                                 <i class="fas fa-microphone"></i> <span class="btn-text">Record</span>
+                            </button>
+                            <button id="start-focus-from-planner" class="btn btn-primary">
+                                <i class="fas fa-play"></i> <span class="btn-text">Start Focus Session for Current Task</span>
                             </button>
                         </div>
                     </div>
@@ -224,6 +247,12 @@
                             <select id="event-time"></select>
                             <label for="event-duration">Duration (minutes):</label>
                             <input type="number" id="event-duration" min="5" step="5" value="60" required>
+                            <label for="event-importance">Importance (1-10):</label>
+                            <input type="number" id="event-importance" min="1" max="10" step="1" value="5">
+                            <label for="event-urgency">Urgency (1-10):</label>
+                            <input type="number" id="event-urgency" min="1" max="10" step="1" value="5">
+                            <label for="event-deadline">Deadline:</label>
+                            <input type="datetime-local" id="event-deadline">
                             <button type="submit" class="btn">Save Event</button>
                         </form>
                     </div>
