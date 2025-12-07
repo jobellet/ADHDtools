@@ -143,7 +143,14 @@ export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
   const todayStr = now.toISOString().slice(0, 10);
   const taskList = tasks || TaskStore.getPendingTasks();
   const taskMap = new Map(taskList.map(t => [t.hash, t]));
-  const filtered = taskList.filter(t => !t.completed && !isDependencyBlocked(t, taskMap));
+  const filtered = taskList.filter(t => {
+    if (t.completed) return false;
+    if (isDependencyBlocked(t, taskMap)) return false;
+    const plannerDateStr = typeof t.plannerDate === 'string' ? t.plannerDate.slice(0, 10) : null;
+    // Respect rescheduled tasks: only schedule items for today or unscheduled ones.
+    if (plannerDateStr && plannerDateStr !== todayStr) return false;
+    return true;
+  });
   return buildDailySchedule(filtered, cfg, todayStr).map(slot => ({
     ...slot,
     scheduledStart: slot.startMinutes,
