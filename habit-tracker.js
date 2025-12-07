@@ -307,6 +307,40 @@ document.addEventListener('DOMContentLoaded', function () {
         renderHabits(); // Update streak counters
     }, 100);
 
+    function syncHabitToTasks(habitId, habitName, dateStr, completed) {
+        const store = window.TaskStore;
+        if (!store?.upsertTaskByHash) return;
+        const user = window.UserContext?.getActiveUser?.() || 'main';
+        const hash = `habit-${habitId}-${dateStr}`;
+        const completedAt = new Date(`${dateStr}T12:00:00`).toISOString();
+        const payload = {
+            hash,
+            name: habitName,
+            user,
+            category: 'habit',
+            durationMinutes: window.ConfigManager?.getConfig?.().defaultHabitMinutes || 10,
+            importance: 4,
+            urgency: 4,
+            completed,
+            completedAt: completed ? completedAt : null,
+            achievementScore: undefined,
+            source: 'habit-tracker',
+            originalTool: 'habit-tracker',
+        };
+
+        if (completed) {
+            store.upsertTaskByHash(hash, payload);
+        } else if (store.getTaskByHash(hash)) {
+            store.updateTaskByHash(hash, payload);
+        }
+
+        if (window.EventBus) {
+            window.EventBus.dispatchEvent(new CustomEvent('taskCompleted', {
+                detail: { id: hash, completed }
+            }));
+        }
+    }
+
     function toggleHabitCompletion(habitId, dateStr) {
         // Initialize habit logs for this habit if not exists
         if (!habitLogs[habitId]) {
@@ -323,13 +357,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         saveHabitLogs();
 
+        const habitName = habits.find(h => h.id === habitId)?.name || 'Habit';
+        const completed = Boolean(habitLogs[habitId][dateStr]);
+        syncHabitToTasks(habitId, habitName, dateStr, completed);
+
         // Dispatch event
         if (window.EventBus) {
             window.EventBus.dispatchEvent(new CustomEvent('habitToggled', {
                 detail: {
                     habitId: habitId,
                     dateStr: dateStr,
-                    completed: habitLogs[habitId][dateStr]
+                    completed: completed
                 }
             }));
         }

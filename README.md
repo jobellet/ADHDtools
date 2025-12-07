@@ -126,6 +126,7 @@ The app should feel like a cognitive prosthesis for people who struggle with tas
 
 🆕 Achievements can be grouped by task category with time-spent rollups, and toggles let you view either the active user or all profiles.
 🆕 Family overview cards surface each user’s current and next tasks directly in Today View, with mobile-friendly layout tweaks.
+🆕 Habit Tracker check-ins now create completed “habit” tasks in the shared TaskStore for the active user, so Rewards/Achievements and category stats reflect streaks automatically.
 
 🛠️ In progress: deeper Focus Mode integration with the scheduled task of the moment.
 
@@ -189,6 +190,7 @@ The Day Planner includes a **Generate schedule for today** action that applies t
 * **Focus mode completion:** start focus from Today View, let the timer finish, and choose to complete the task. The task should flip to completed, and the learned duration should reflect the session length.
 * **Category achievements + toggle:** finish a few tasks for two different users. In Rewards/Achievements, toggle between active user and all users and verify category rows list counts, points, and minutes.
 * **Family overview:** create at least one task per user with planner dates today. The Home view should show a card per user with current/next populated and remain readable on mobile widths.
+* **Habit → achievements:** add a habit, mark today as complete, then open Rewards/Achievements. A new “habit” task for the active user should appear in TaskStore (via console `window.TaskStore.getAllTasks().filter(t => t.category === 'habit')`), and totals/ledger should refresh without switching users.
 
 The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
 The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing and guards against violating dependencies.

@@ -578,6 +578,17 @@ document.addEventListener('DOMContentLoaded', function() {
         renderRewards();
         renderAchievements();
     });
+
+    if (window.EventBus) {
+        window.EventBus.addEventListener('taskCompleted', () => {
+            renderRewards();
+            renderAchievements();
+        });
+        window.EventBus.addEventListener('dataChanged', () => {
+            renderRewards();
+            renderAchievements();
+        });
+    }
     
     // Check for points to award on page load
     checkForPointsToAward();
