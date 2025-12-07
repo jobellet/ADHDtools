@@ -114,6 +114,10 @@ The app should feel like a cognitive prosthesis for people who struggle with tas
 
 ✅ Basic unified scheduler (`core/scheduler.js`) can return a prioritized schedule and the task to do “right now.”
 
+✅ Scheduler respects task dependencies and FIX/FLEX tags, reordering only flexible tasks and showing blocked items in the Today View.
+
+✅ Urgency auto-refreshes daily based on deadlines, with skip/reschedule controls raising urgency when tasks slip.
+
 ✅ Achievements and rewards now use completed Task scores instead of a separate points ledger.
 
 🛠️ In progress: deeper Focus Mode integration with the scheduled task of the moment.
@@ -127,6 +131,8 @@ All tasks are persisted in the browser under the `adhd-unified-tasks` key (via `
 * `getAllTasks()`, `getPendingTasks()`, `getTasksByUser(user)`
 * `addTask(task)`, `updateTaskByHash(hash, updates)`, `getTaskByHash(hash)`
 * `markComplete(hash)`
+
+Urgency scores are recalculated once per day from task deadlines, and the duration-learning module updates `durationMinutes` with a rolling average every time a task is marked complete.
 
 Legacy modules still calling `DataManager` automatically read/write through this shared store, so new tools should prefer `TaskStore` directly.
 
