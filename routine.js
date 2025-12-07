@@ -253,6 +253,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function initQuickTaskCapture() {
         if (!quickTaskForm || !quickTaskTitleInput) return;
 
+        let quickTaskFeedbackTimeout = null;
+        const getQuickTaskFeedbackBox = () => {
+            let box = quickTaskForm.querySelector('.quick-task-feedback');
+            if (!box) {
+                box = document.createElement('div');
+                box.className = 'quick-task-feedback';
+                box.style.marginTop = '0.5rem';
+                box.style.fontSize = '0.9rem';
+                box.style.padding = '0.5rem 0.75rem';
+                box.style.borderRadius = '6px';
+                box.style.display = 'none';
+                quickTaskForm.appendChild(box);
+            }
+            return box;
+        };
+
+        const showQuickTaskFeedback = (message, type = 'success') => {
+            const box = getQuickTaskFeedbackBox();
+            if (!box) return;
+            box.textContent = message;
+            box.style.display = 'block';
+            box.style.backgroundColor = type === 'error' ? '#fdecea' : '#e8f5e9';
+            box.style.color = type === 'error' ? '#c62828' : '#1b5e20';
+            box.style.border = type === 'error' ? '1px solid #f44336' : '1px solid #4caf50';
+            if (quickTaskFeedbackTimeout) clearTimeout(quickTaskFeedbackTimeout);
+            quickTaskFeedbackTimeout = setTimeout(() => {
+                box.style.display = 'none';
+            }, 4000);
+        };
+
         const defaultMinutes = getDefaultTaskMinutes();
         if (quickTaskDurationInput && defaultMinutes) {
             quickTaskDurationInput.value = defaultMinutes;
@@ -284,9 +314,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const importance = Number(quickTaskImportanceInput?.value ?? 5);
             const urgency = Number(quickTaskUrgencyInput?.value ?? 5);
-            const duration = parseInt(quickTaskDurationInput?.value, 10);
+            const rawDuration = (quickTaskDurationInput?.value || '').trim();
+            const parsedDuration = rawDuration === '' ? NaN : parseInt(rawDuration, 10);
+            const hasInvalidDuration = rawDuration !== '' && (!Number.isFinite(parsedDuration) || parsedDuration <= 0);
+            if (hasInvalidDuration) {
+                showQuickTaskFeedback('Please enter a positive duration in minutes.', 'error');
+                quickTaskDurationInput?.focus?.();
+                return;
+            }
+
             const learnedDuration = getLearnedDurationMinutes(title);
-            const durationMinutes = Number.isFinite(duration) ? duration : (learnedDuration ?? defaultMinutes);
+            const durationMinutes = Number.isFinite(parsedDuration)
+                ? parsedDuration
+                : (learnedDuration ?? defaultMinutes);
 
             const baseTask = {
                 title,
@@ -310,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (quickTaskDurationInput && defaultMinutes) quickTaskDurationInput.value = defaultMinutes;
             syncSliderValue(quickTaskImportanceInput, quickTaskImportanceValue);
             syncSliderValue(quickTaskUrgencyInput, quickTaskUrgencyValue);
+            showQuickTaskFeedback('Quick task saved for today and ready to schedule.', 'success');
         });
     }
 
