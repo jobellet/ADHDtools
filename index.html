@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADHD Tools Hub</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="family.css">
     <link rel="stylesheet" href="routine-focus.css">
+    <link rel="stylesheet" href="styles-routine-settings.css">
     <script src="timestamp-storage.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="app.js" defer></script>
@@ -32,7 +32,6 @@
     <script src="calendar-settings.js" defer></script>
     <script src="calendar-integration.js" defer></script>
     <script src="routine.js" defer></script>
-    <script src="family.js" defer></script>
     <script src="script-loader.js" defer></script>
     <script src="i18n.js" defer></script>
 </head>
@@ -76,11 +75,6 @@
                         Tracker</a></li>
                 <li><a href="#" data-tool="routine" data-i18n="nav-routine"><i class="fas fa-tasks-alt"></i> Routine
                         Tool</a></li>
-                <li>
-                    <a href="#" data-tool="family" data-i18n="nav-family">
-                        <i class="fas fa-users"></i> Family Routine
-                    </a>
-                </li>
                 <li><a href="#" data-tool="focus" data-i18n="nav-focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
                 <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a>
                 </li>
@@ -118,7 +112,6 @@
                             <ul id="today-blocked-list" class="today-list muted-list"></ul>
                         </div>
                     </div>
-                    <div id="family-overview" class="today-family" aria-live="polite"></div>
                 </div>
 
                 <div class="tools-grid">
@@ -839,11 +832,61 @@
                         <!-- Routine Settings Panel -->
                         <div class="settings-panel">
                             <details class="settings-toggle">
-                                <summary>Routine</summary>
+                                <summary>Routine Management</summary>
                                 <div class="settings-content">
                                     <div class="setting-group checkbox-group">
                                         <input type="checkbox" id="setting-routine-auto-run">
                                         <label for="setting-routine-auto-run">Enable auto-run by default</label>
+                                    </div>
+
+                                    <hr class="settings-divider">
+
+                                    <div class="routine-management-area">
+                                        <div class="setting-group">
+                                            <label for="setting-routine-select">Select Routine</label>
+                                            <div class="flex-row gap-sm">
+                                                <select id="setting-routine-select" class="flex-grow"></select>
+                                                <button type="button" id="setting-create-routine-btn" class="btn btn-secondary" title="Create New"><i class="fas fa-plus"></i></button>
+                                                <button type="button" id="setting-delete-routine-btn" class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+
+                                        <div id="setting-routine-editor" class="routine-editor hidden">
+                                            <div class="setting-group">
+                                                <label for="setting-routine-name">Routine Name</label>
+                                                <input type="text" id="setting-routine-name">
+                                            </div>
+
+                                            <div class="setting-group">
+                                                <label for="setting-routine-start-time">Preferred Start Time</label>
+                                                <input type="time" id="setting-routine-start-time">
+                                            </div>
+
+                                            <div class="setting-group">
+                                                <label>Preferred Week Days</label>
+                                                <div class="week-days-selector" id="setting-routine-weekdays">
+                                                    <label><input type="checkbox" value="1"> Mon</label>
+                                                    <label><input type="checkbox" value="2"> Tue</label>
+                                                    <label><input type="checkbox" value="3"> Wed</label>
+                                                    <label><input type="checkbox" value="4"> Thu</label>
+                                                    <label><input type="checkbox" value="5"> Fri</label>
+                                                    <label><input type="checkbox" value="6"> Sat</label>
+                                                    <label><input type="checkbox" value="0"> Sun</label>
+                                                </div>
+                                            </div>
+
+                                            <div class="setting-group">
+                                                <label>Tasks</label>
+                                                <div id="setting-routine-tasks-list" class="routine-tasks-editor-list"></div>
+                                                <button type="button" id="setting-add-task-btn" class="btn btn-outline btn-sm btn-block" style="margin-top: 0.5rem;">
+                                                    <i class="fas fa-plus"></i> Add Task
+                                                </button>
+                                            </div>
+
+                                            <div class="setting-group">
+                                                <button type="button" id="setting-save-routine-btn" class="btn btn-success btn-block">Save Routine</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </details>
@@ -924,109 +967,7 @@
                 <h2 data-i18n="routine-heading">Routine Tool</h2>
                 <p data-i18n="routine-text">Create, manage, and run daily routines with timed tasks.</p>
 
-                <div class="routine-view-controls">
-                    <button id="routine-show-player-btn" class="btn btn-primary active" aria-pressed="true"
-                        title="Run your routine" data-i18n="routine-run-btn">Run Routine</button>
-                    <button id="routine-show-setup-btn" class="btn btn-secondary" aria-pressed="false"
-                        title="Manage your routines" data-i18n="routine-manage-btn">Manage Routines</button>
-                    <button id="start-selected-routine-btn" class="btn btn-success" title="Start the selected routine"
-                        data-i18n="routine-start-btn" style="margin-left: auto;"><i class="fas fa-play"></i> Start
-                        Selected Routine</button>
-                </div>
-
                 <div class="routine-container routine-layout">
-                    <div class="routine-quick-add card">
-                        <h4 data-i18n="routine-quick-add-heading">Quick task for today</h4>
-                        <p class="routine-quick-add-hint" data-i18n="routine-quick-add-hint">Capture a flexible task. We'll rank it by importance/urgency and let the scheduler fit it into your day.</p>
-                        <form id="routine-quick-task-form" class="routine-quick-task-form">
-                            <label for="routine-quick-task-title" data-i18n="routine-quick-task-title">Task title</label>
-                            <input id="routine-quick-task-title" type="text" placeholder="Capture a task for later" required>
-
-                            <div class="routine-slider-group">
-                                <label for="routine-quick-task-importance" data-i18n="routine-quick-task-importance">Importance: <span id="routine-importance-value">5</span></label>
-                                <input id="routine-quick-task-importance" type="range" min="0" max="10" value="5">
-                            </div>
-
-                            <div class="routine-slider-group">
-                                <label for="routine-quick-task-urgency" data-i18n="routine-quick-task-urgency">Urgency: <span id="routine-urgency-value">5</span></label>
-                                <input id="routine-quick-task-urgency" type="range" min="0" max="10" value="5">
-                            </div>
-
-                            <label for="routine-quick-task-duration" data-i18n="routine-quick-task-duration">Duration (minutes, optional)</label>
-                            <input id="routine-quick-task-duration" type="number" min="1" step="1" inputmode="numeric" placeholder="Use default">
-
-                            <button type="submit" class="btn btn-primary" data-i18n="routine-quick-task-submit">Add task</button>
-                        </form>
-                    </div>
-                    <div class="routine-setup routine-section-hidden">
-                        <h3 data-i18n="routine-manage-heading">Create & Manage Routines</h3>
-
-                        <!-- Consolidated Controls -->
-                        <div class="routine-management-controls"
-                            style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
-                            <div class="input-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
-                                <label for="routine-select" data-i18n="routine-select-label"
-                                    style="display: block; margin-bottom: 0.5rem;">Select Routine:</label>
-                                <div class="routine-select-row" style="display: flex; gap: 0.5rem;">
-                                    <select id="routine-select" style="flex: 1;"></select>
-                                    <button id="delete-routine-btn" class="btn btn-danger"
-                                        title="Delete current routine">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="routine-actions-row" style="display: flex; gap: 0.5rem;">
-                                <button id="import-routine-btn" class="btn btn-secondary"
-                                    title="Import routine from CSV">
-                                    <i class="fas fa-file-import"></i> Import
-                                </button>
-                                <button id="export-routine-btn" class="btn btn-secondary"
-                                    title="Export selected routine to CSV">
-                                    <i class="fas fa-file-export"></i> Export
-                                </button>
-                                <input type="file" id="routine-file-input" accept=".csv" style="display: none;">
-                            </div>
-                        </div>
-
-                        <div class="input-group" style="margin-bottom: 1.5rem;">
-                            <label for="routine-name" data-i18n="routine-name-label">Create New Routine:</label>
-                            <div class="routine-name-row" style="display: flex; gap: 0.5rem;">
-                                <input type="text" id="routine-name" placeholder="e.g., Morning Prep" style="flex: 1;">
-                                <button id="create-routine-btn" class="btn" title="Create a new routine"
-                                    data-i18n="routine-create-btn">
-                                    <i class="fas fa-plus"></i> Create
-                                </button>
-                            </div>
-                        </div>
-
-                        <h4 id="current-routine-name" data-i18n="routine-none-active">No routine selected</h4>
-
-                        <div class="routine-editor-table">
-                            <div class="routine-table-header">
-                                <div class="col-grip"></div>
-                                <div class="col-time">Time</div>
-                                <div class="col-name">Task Name</div>
-                                <div class="col-duration">Duration (min)</div>
-                                <div class="col-actions">Actions</div>
-                            </div>
-                            <div id="current-routine-tasks" class="routine-task-list-container"></div>
-                        </div>
-
-                        <div class="routine-footer-stats">
-                            <p>Total Duration: <span id="manage-total-duration">0</span> min</p>
-                        </div>
-
-                        <div class="input-group"
-                            style="margin-top: 1rem; border-top: 1px solid #eee; padding-top: 1rem;">
-                            <label for="routine-start-time" data-i18n="routine-start-time-label">Set Auto Start Time
-                                (optional):</label>
-                            <input type="time" id="routine-start-time">
-                            <button id="set-start-time-btn" class="btn" title="Set automatic start time"
-                                data-i18n="routine-set-time-btn">Set Time</button>
-                        </div>
-                    </div>
-
                     <div class="routine-player">
                         <h3 data-i18n="routine-active-heading">Active Routine</h3>
                         <div id="active-routine-display">
