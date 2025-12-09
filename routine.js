@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingRoutineTasksList = document.getElementById('setting-routine-tasks-list');
     const settingAddTaskBtn = document.getElementById('setting-add-task-btn');
     const settingSaveRoutineBtn = document.getElementById('setting-save-routine-btn');
+    const settingExportRoutineBtn = document.getElementById('setting-export-routine-btn');
+    const settingImportRoutineBtn = document.getElementById('setting-import-routine-btn');
+    const settingImportRoutineFile = document.getElementById('setting-import-routine-file');
 
 
     // --- Data Storage ---
@@ -201,6 +204,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         settingSaveRoutineBtn.addEventListener('click', saveRoutineFromEditor);
         settingAddTaskBtn.addEventListener('click', addTaskInEditor);
+
+        if (settingExportRoutineBtn) {
+            settingExportRoutineBtn.addEventListener('click', exportRoutineToCSV);
+        }
+        if (settingImportRoutineBtn) {
+            settingImportRoutineBtn.addEventListener('click', () => {
+                settingImportRoutineFile.click();
+            });
+        }
+        if (settingImportRoutineFile) {
+            settingImportRoutineFile.addEventListener('change', importRoutineFromCSV);
+        }
     }
 
     function updateSettingsRoutineSelect() {
@@ -245,15 +260,32 @@ document.addEventListener('DOMContentLoaded', () => {
         tasks.forEach((task, index) => {
             const div = document.createElement('div');
             div.className = 'routine-task-item';
-            div.innerHTML = `
-                <input type="text" class="task-name" value="${task.name}" placeholder="Task Name">
-                <input type="number" class="task-duration" value="${task.duration}" min="1" placeholder="Min">
-                <button type="button" class="btn-remove-task" title="Remove">&times;</button>
-            `;
 
-            div.querySelector('.btn-remove-task').addEventListener('click', () => {
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'task-name';
+            nameInput.value = task.name;
+            nameInput.placeholder = 'Task Name';
+
+            const durationInput = document.createElement('input');
+            durationInput.type = 'number';
+            durationInput.className = 'task-duration';
+            durationInput.value = task.duration;
+            durationInput.min = '1';
+            durationInput.placeholder = 'Min';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-remove-task';
+            removeBtn.title = 'Remove';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.addEventListener('click', () => {
                 div.remove();
             });
+
+            div.appendChild(nameInput);
+            div.appendChild(durationInput);
+            div.appendChild(removeBtn);
 
             settingRoutineTasksList.appendChild(div);
         });
@@ -262,18 +294,35 @@ document.addEventListener('DOMContentLoaded', () => {
     function addTaskInEditor() {
         const div = document.createElement('div');
         div.className = 'routine-task-item';
-        div.innerHTML = `
-            <input type="text" class="task-name" value="" placeholder="New Task">
-            <input type="number" class="task-duration" value="5" min="1" placeholder="Min">
-            <button type="button" class="btn-remove-task" title="Remove">&times;</button>
-        `;
 
-        div.querySelector('.btn-remove-task').addEventListener('click', () => {
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'task-name';
+        nameInput.value = '';
+        nameInput.placeholder = 'New Task';
+
+        const durationInput = document.createElement('input');
+        durationInput.type = 'number';
+        durationInput.className = 'task-duration';
+        durationInput.value = '5';
+        durationInput.min = '1';
+        durationInput.placeholder = 'Min';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn-remove-task';
+        removeBtn.title = 'Remove';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.addEventListener('click', () => {
             div.remove();
         });
 
+        div.appendChild(nameInput);
+        div.appendChild(durationInput);
+        div.appendChild(removeBtn);
+
         settingRoutineTasksList.appendChild(div);
-        div.querySelector('.task-name').focus();
+        nameInput.focus();
     }
 
     function saveRoutineFromEditor() {
@@ -314,6 +363,147 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const best = findBestRoutineForNow();
         showReadyToStart(best);
+    }
+
+    function exportRoutineToCSV() {
+        if (!selectedRoutineId) {
+            alert("Please select a routine to export.");
+            return;
+        }
+        const routine = routines.find(r => r.id === selectedRoutineId);
+        if (!routine) return;
+
+        // CSV Header
+        let csvContent = "Task Name,Duration (min)\n";
+
+        // Add Routine Metadata as comments or special rows?
+        // For simplicity, let's just export tasks, but maybe the user wants the routine name too.
+        // Let's prepend routine name and start time as comments or a header section.
+        csvContent += `# Routine Name: ${routine.name}\n`;
+        csvContent += `# Start Time: ${routine.startTime}\n`;
+        csvContent += `# Week Days: ${routine.weekDays.join(',')}\n`;
+
+        routine.tasks.forEach(task => {
+            // Escape double quotes by doubling them, then wrap in quotes if contains comma or quote
+            let safeName = task.name.replace(/"/g, '""');
+            if (safeName.includes(',') || safeName.includes('"') || safeName.includes('\n')) {
+                safeName = `"${safeName}"`;
+            }
+            csvContent += `${safeName},${task.duration}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `${routine.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function importRoutineFromCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!selectedRoutineId) {
+            alert("Please select (or create) a routine to import tasks into.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split('\n');
+            const newTasks = [];
+
+            // Simple CSV parser
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                if (line.startsWith('#')) return; // Metadata or comments
+                if (line.toLowerCase().startsWith('task name')) return; // Header
+
+                // Handle quoted strings for task names
+                let taskName = "";
+                let durationStr = "0";
+
+                // Regex for CSV parsing: matches quoted fields (handling escaped quotes) or unquoted fields
+                // This regex captures:
+                // 1. Quoted string: "..." (with "" for escaped quote)
+                // 2. Unquoted string: anything until comma
+                const regex = /(?:^|,)(?:"((?:[^"]|"")*)"|([^,]*))/g;
+                let matches = [];
+                let match;
+                while ((match = regex.exec(line)) !== null) {
+                    // match[1] is quoted content, match[2] is unquoted
+                    let val = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+                    matches.push(val);
+                }
+
+                if (matches.length >= 1) {
+                    taskName = matches[0];
+                    if (matches.length >= 2) durationStr = matches[1];
+                }
+
+                if (taskName) {
+                    const duration = parseInt(durationStr) || 5;
+                    newTasks.push({
+                        id: generateId(),
+                        name: taskName.trim(),
+                        duration: duration,
+                        startAt: null
+                    });
+                }
+            });
+
+            if (newTasks.length > 0) {
+                if (confirm(`Found ${newTasks.length} tasks. Append them to current routine?`)) {
+                    // We append to the DOM directly to allow user to save/cancel
+                    newTasks.forEach(task => {
+                        const div = document.createElement('div');
+                        div.className = 'routine-task-item';
+
+                        const nameInput = document.createElement('input');
+                        nameInput.type = 'text';
+                        nameInput.className = 'task-name';
+                        nameInput.value = task.name;
+                        nameInput.placeholder = 'Task Name';
+
+                        const durationInput = document.createElement('input');
+                        durationInput.type = 'number';
+                        durationInput.className = 'task-duration';
+                        durationInput.value = task.duration;
+                        durationInput.min = '1';
+                        durationInput.placeholder = 'Min';
+
+                        const removeBtn = document.createElement('button');
+                        removeBtn.type = 'button';
+                        removeBtn.className = 'btn-remove-task';
+                        removeBtn.title = 'Remove';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.addEventListener('click', () => {
+                            div.remove();
+                        });
+
+                        div.appendChild(nameInput);
+                        div.appendChild(durationInput);
+                        div.appendChild(removeBtn);
+
+                        settingRoutineTasksList.appendChild(div);
+                    });
+
+                    alert("Tasks imported! Click 'Save Routine' to persist changes.");
+                }
+            } else {
+                alert("No valid tasks found in CSV.");
+            }
+
+            // Reset file input
+            event.target.value = '';
+        };
+        reader.readAsText(file);
     }
 
 
