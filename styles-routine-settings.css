@@ -1,0 +1,104 @@
+
+/* Routine Management in Settings */
+.settings-divider {
+    border: 0;
+    height: 1px;
+    background: #e0e0e0;
+    margin: 1.5rem 0;
+}
+
+.routine-management-area {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.flex-row {
+    display: flex;
+    align-items: center;
+}
+
+.gap-sm {
+    gap: 0.5rem;
+}
+
+.flex-grow {
+    flex-grow: 1;
+}
+
+.week-days-selector {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.week-days-selector label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    background: #fff;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.week-days-selector label:hover {
+    background: #f0f0f0;
+}
+
+.week-days-selector input[type="checkbox"] {
+    width: auto;
+    height: auto;
+    margin: 0;
+}
+
+.routine-editor {
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.routine-tasks-editor-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.routine-task-item {
+    display: grid;
+    grid-template-columns: 1fr 60px auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.25rem;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.routine-task-item input {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+.routine-task-item .btn-remove-task {
+    color: #d32f2f;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0.5rem;
+}
+
+.routine-task-item .btn-remove-task:hover {
+    background: #ffebee;
+    border-radius: 4px;
+}

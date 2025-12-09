@@ -575,6 +575,7 @@
 
     const proxyCandidates = [
       url,
+      `https://corsproxy.io/?${encodeURIComponent(url)}`,
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://cors.isomorphic-git.org/${encodeURIComponent(url)}`
     ];
