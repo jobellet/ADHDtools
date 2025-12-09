@@ -852,6 +852,12 @@
                                         </div>
 
                                         <div id="setting-routine-editor" class="routine-editor hidden">
+                                            <div class="setting-group flex-row gap-sm" style="justify-content: flex-end; margin-bottom: 1rem;">
+                                                <button type="button" id="setting-export-routine-btn" class="btn btn-secondary btn-sm" title="Export to CSV"><i class="fas fa-file-export"></i> Export CSV</button>
+                                                <button type="button" id="setting-import-routine-btn" class="btn btn-secondary btn-sm" title="Import from CSV"><i class="fas fa-file-import"></i> Import CSV</button>
+                                                <input type="file" id="setting-import-routine-file" accept=".csv" style="display:none">
+                                            </div>
+
                                             <div class="setting-group">
                                                 <label for="setting-routine-name">Routine Name</label>
                                                 <input type="text" id="setting-routine-name">
