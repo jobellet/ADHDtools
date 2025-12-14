@@ -30,6 +30,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePieChartCanvas = document.getElementById('routine-pie-chart');
     const routineAutoRunCheckbox = document.getElementById('routine-auto-run');
 
+    // Focus mode elements
+    const focusModeEl = document.getElementById('routine-focus-mode');
+    const focusRoutineName = document.getElementById('focus-routine-name');
+    const focusTaskNumber = document.getElementById('focus-task-number');
+    const focusFinishTime = document.getElementById('focus-finish-time');
+    const focusCurrentTaskName = document.getElementById('focus-current-task-name');
+    const focusTimeRemaining = document.getElementById('focus-time-remaining');
+    const focusProgressFill = document.getElementById('routine-focus-progress');
+    const focusUpcomingTasks = document.getElementById('focus-upcoming-tasks');
+    const focusTimerCircle = document.getElementById('focus-timer-circle');
+    const focusCompleteTaskBtn = document.getElementById('focus-complete-task-btn');
+    const focusSkipTaskBtn = document.getElementById('focus-skip-task-btn');
+    const focusAutoRunToggle = document.getElementById('focus-auto-run');
+    const exitFocusBtn = document.getElementById('exit-routine-focus');
+
     const currentTaskNameDisplay = document.getElementById('current-task-name');
     const currentTaskTimeLeftDisplay = document.getElementById('current-task-time-left');
 
@@ -62,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTaskIndex = -1;
     let currentTaskTimer = null;
     let activeTaskTimeLeftSeconds = 0;
+    let activeTaskTotalDurationSeconds = 0;
     let currentTaskStartTimestamp = null;
     let autoStartCheckTimer = null;
     const autoStartedToday = {};
@@ -79,12 +95,28 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Unable to read routineAutoRunDefault from ConfigManager', err);
     }
 
+    function syncAutoRunToggles() {
+        if (routineAutoRunCheckbox) routineAutoRunCheckbox.checked = autoRunEnabled;
+        if (focusAutoRunToggle) focusAutoRunToggle.checked = autoRunEnabled;
+    }
+
     if (routineAutoRunCheckbox) {
         routineAutoRunCheckbox.checked = autoRunEnabled;
         routineAutoRunCheckbox.addEventListener('change', () => {
             autoRunEnabled = routineAutoRunCheckbox.checked;
+            syncAutoRunToggles();
         });
     }
+
+    if (focusAutoRunToggle) {
+        focusAutoRunToggle.checked = autoRunEnabled;
+        focusAutoRunToggle.addEventListener('change', () => {
+            autoRunEnabled = focusAutoRunToggle.checked;
+            syncAutoRunToggles();
+        });
+    }
+
+    syncAutoRunToggles();
 
     // --- Utility Functions ---
     function generateId() {
@@ -635,7 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTaskNameDisplay.textContent = task.name;
 
         activeTaskTimeLeftSeconds = task.duration * 60;
-        const totalDuration = activeTaskTimeLeftSeconds;
+        activeTaskTotalDurationSeconds = activeTaskTimeLeftSeconds;
 
         currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
 
@@ -649,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeTaskTimeLeftSeconds--;
             currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
 
-            const pct = Math.max(0, activeTaskTimeLeftSeconds / totalDuration);
+            const pct = Math.max(0, activeTaskTimeLeftSeconds / activeTaskTotalDurationSeconds);
             drawPieChart(pct, activeTaskTimeLeftSeconds < 0);
 
             updateExpectedFinishTime();
@@ -663,8 +695,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateFocusUI();
         }, 1000);
 
-        updateFocusUI();
         updateExpectedFinishTime();
+        updateFocusUI();
     }
 
     function formatTimeLeft(seconds) {
@@ -938,7 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Focus Mode Integration ---
     // Minimal placeholder implementation if focus-mode.js is not handling this completely
-    const focusModeEl = document.getElementById('routine-focus-mode');
     function enterFocusMode() {
         if(focusModeEl) focusModeEl.classList.remove('hidden');
         updateFocusUI();
@@ -950,27 +981,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activeRoutine || !focusModeEl) return;
 
         const task = activeRoutine.tasks[currentTaskIndex];
-        const nameEl = document.getElementById('focus-current-task-name');
-        const timeEl = document.getElementById('focus-time-remaining');
-
-        if(nameEl) nameEl.textContent = task ? task.name : 'Finished';
-        if(timeEl) timeEl.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
+        if (focusRoutineName) focusRoutineName.textContent = activeRoutine.name;
+        if (focusCurrentTaskName) focusCurrentTaskName.textContent = task ? task.name : 'Finished';
+        if (focusTimeRemaining) focusTimeRemaining.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
+        if (focusTaskNumber) {
+            const totalTasks = activeRoutine.tasks.length;
+            const currentNumber = Math.min(currentTaskIndex + 1, totalTasks);
+            focusTaskNumber.textContent = `Task ${currentNumber} of ${totalTasks}`;
+        }
+        if (focusFinishTime) {
+            const finishTime = activeRoutineEndTime ? formatClockTime(activeRoutineEndTime) : '-';
+            focusFinishTime.textContent = `Finish by ${finishTime}`;
+        }
 
         // Progress bar
-        const progressFill = document.getElementById('routine-focus-progress');
-        if (progressFill) {
-            const pct = (currentTaskIndex / activeRoutine.tasks.length) * 100;
-            progressFill.style.width = `${pct}%`;
+        if (focusProgressFill) {
+            const pct = Math.min(100, Math.max(0, (currentTaskIndex / activeRoutine.tasks.length) * 100));
+            focusProgressFill.style.width = `${pct}%`;
+        }
+
+        // Circular timer progress
+        if (focusTimerCircle && activeTaskTotalDurationSeconds > 0) {
+            const radius = 90;
+            const circumference = 2 * Math.PI * radius;
+            focusTimerCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+            const pct = Math.max(0, Math.min(1, activeTaskTimeLeftSeconds / activeTaskTotalDurationSeconds));
+            focusTimerCircle.style.strokeDashoffset = `${circumference * (1 - pct)}`;
         }
 
         // Queue preview (minimal for now)
-        const queueList = document.getElementById('focus-upcoming-tasks');
-        if (queueList) {
-            queueList.innerHTML = '';
+        if (focusUpcomingTasks) {
+            focusUpcomingTasks.innerHTML = '';
             activeRoutine.tasks.slice(currentTaskIndex + 1).forEach(t => {
                 const li = document.createElement('li');
                 li.textContent = `${t.name} (${t.duration}m)`;
-                queueList.appendChild(li);
+                focusUpcomingTasks.appendChild(li);
             });
         }
     }
@@ -1002,4 +1047,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rescheduleCancelBtn) rescheduleCancelBtn.addEventListener('click', () => closeRescheduleModal(true));
     if (rescheduleCloseBtn) rescheduleCloseBtn.addEventListener('click', () => closeRescheduleModal(true));
     if (rescheduleList) rescheduleList.addEventListener('dragover', handleRescheduleDragOver);
+    if (focusCompleteTaskBtn) focusCompleteTaskBtn.addEventListener('click', manualAdvanceTask);
+    if (focusSkipTaskBtn) focusSkipTaskBtn.addEventListener('click', skipCurrentTask);
+    if (exitFocusBtn) exitFocusBtn.addEventListener('click', exitFocusMode);
 });
