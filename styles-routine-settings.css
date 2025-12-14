@@ -102,3 +102,13 @@
     background: #ffebee;
     border-radius: 4px;
 }
+
+.routine-task-list .active-task {
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.routine-task-list .completed-task {
+    color: #6b7280;
+    text-decoration: line-through;
+}
