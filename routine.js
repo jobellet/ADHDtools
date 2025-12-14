@@ -106,6 +106,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
+    function updateExpectedFinishTime() {
+        if (!expectedFinishTimeDisplay) return;
+
+        if (!activeRoutine || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) {
+            expectedFinishTimeDisplay.textContent = '-';
+            activeRoutineEndTime = null;
+            return;
+        }
+
+        let remainingSeconds = Math.max(0, activeTaskTimeLeftSeconds || 0);
+
+        for (let i = currentTaskIndex + 1; i < activeRoutine.tasks.length; i++) {
+            const task = activeRoutine.tasks[i];
+            remainingSeconds += (parseInt(task.duration, 10) || 0) * 60;
+        }
+
+        const finishTime = new Date(Date.now() + remainingSeconds * 1000);
+        expectedFinishTimeDisplay.textContent = formatClockTime(finishTime);
+        activeRoutineEndTime = finishTime;
+    }
+
     function saveRoutines() {
         localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(routines));
     }
@@ -513,6 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!routine) {
             playerRoutineNameDisplay.textContent = "No routine scheduled for now.";
             playerRoutineTasksList.innerHTML = "";
+            if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
             return;
         }
 
@@ -554,6 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         originalRoutineSnapshot = JSON.parse(JSON.stringify(originalRoutine));
 
         currentTaskIndex = 0;
+        activeRoutineStartTime = new Date();
 
         if (activeRoutineDisplay) {
              playerRoutineNameDisplay.style.display = 'none';
@@ -603,6 +626,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const pct = Math.max(0, activeTaskTimeLeftSeconds / totalDuration);
             drawPieChart(pct, activeTaskTimeLeftSeconds < 0);
 
+            updateExpectedFinishTime();
+
             if (activeTaskTimeLeftSeconds <= 0) {
                  if (autoRunEnabled) {
                      manualAdvanceTask();
@@ -613,6 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
 
         updateFocusUI();
+        updateExpectedFinishTime();
     }
 
     function formatTimeLeft(seconds) {
@@ -648,6 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playerRoutineNameDisplay.textContent = "Routine Finished!";
         playerRoutineTasksList.innerHTML = '';
         playerRoutineTasksList.style.display = 'block';
+        if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
 
         exitFocusMode();
 
