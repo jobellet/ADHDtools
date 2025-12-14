@@ -79,6 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Unable to read routineAutoRunDefault from ConfigManager', err);
     }
 
+    if (routineAutoRunCheckbox) {
+        routineAutoRunCheckbox.checked = autoRunEnabled;
+        routineAutoRunCheckbox.addEventListener('change', () => {
+            autoRunEnabled = routineAutoRunCheckbox.checked;
+        });
+    }
+
     // --- Utility Functions ---
     function generateId() {
         return crypto.randomUUID ? crypto.randomUUID() : 'routine-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
@@ -575,13 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
         activeRoutine = JSON.parse(JSON.stringify(originalRoutine));
         originalRoutineSnapshot = JSON.parse(JSON.stringify(originalRoutine));
 
+        if (!Array.isArray(activeRoutine.tasks) || activeRoutine.tasks.length === 0) {
+            alert("This routine has no tasks yet. Add at least one task before starting.");
+            activeRoutine = null;
+            return;
+        }
+
         currentTaskIndex = 0;
         activeRoutineStartTime = new Date();
-
-        if (activeRoutineDisplay) {
-             playerRoutineNameDisplay.style.display = 'none';
-             playerRoutineTasksList.style.display = 'none';
-        }
 
         if (currentTaskDisplay) currentTaskDisplay.style.display = '';
         if (pieChartContainer) pieChartContainer.style.display = '';
@@ -589,9 +597,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         playerRoutineNameDisplay.textContent = `Running: ${activeRoutine.name}`;
         playerRoutineNameDisplay.style.display = 'block';
+        renderActiveRoutineTaskList();
 
         startNextTask();
         enterFocusMode();
+    }
+
+    function renderActiveRoutineTaskList() {
+        if (!playerRoutineTasksList || !activeRoutine) return;
+
+        playerRoutineTasksList.innerHTML = '';
+        activeRoutine.tasks.forEach((task, index) => {
+            const li = document.createElement('li');
+            li.textContent = `${task.name} (${task.duration} min)`;
+            if (index < currentTaskIndex) li.classList.add('completed-task');
+            if (index === currentTaskIndex) li.classList.add('active-task');
+            playerRoutineTasksList.appendChild(li);
+        });
+
+        playerRoutineTasksList.style.display = 'block';
     }
 
     function startNextTask() {
@@ -618,6 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
         drawPieChart(1, false);
 
         currentTaskStartTimestamp = Date.now();
+
+        renderActiveRoutineTaskList();
 
         currentTaskTimer = setInterval(() => {
             activeTaskTimeLeftSeconds--;
