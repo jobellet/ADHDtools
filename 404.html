@@ -8,6 +8,7 @@
         // This allows the SPA to handle the route on GitHub Pages.
         
         const path = window.location.pathname;
+        // Adjust this if deployed to a custom domain or different path
         const repoName = '/ADHDtools'; 
         
         // Check if we are on the correct path
@@ -15,13 +16,17 @@
             // Extract the sub-path (e.g., /pomodoro)
             // If path is /ADHDtools/pomodoro, route is /pomodoro
             let route = path.substring(repoName.length);
+
+            // Also capture query parameters and hash
+            const search = window.location.search;
+            const hash = window.location.hash;
             
             // If route is empty or just slash, no need to redirect (but 404 shouldn't trigger then)
             // If 404 triggered, it means it's a file/folder that doesn't exist.
             
-            // Redirect to /ADHDtools/?redirect=/pomodoro
+            // Redirect to /ADHDtools/?redirect=/pomodoro?q=...#...
             // We use window.location.replace to avoid adding this intermediate step to history
-            window.location.replace(repoName + '/?redirect=' + encodeURIComponent(route));
+            window.location.replace(repoName + '/?redirect=' + encodeURIComponent(route + search + hash));
         } else {
             // Fallback
             window.location.replace(repoName + '/');

@@ -7,13 +7,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const addUserBtn = document.getElementById("add-user-btn");
 
     // URL Routing Configuration
+    // NOTE: This must match the `repoName` variable in `404.html` to ensure correct redirection.
     const BASE_PATH = '/ADHDtools'; // Adjust if deployed elsewhere
 
     // Handle Redirect from 404.html (GitHub Pages SPA Hack)
+    // This allows the SPA to handle routes like /pomodoro on GitHub Pages by:
+    // 1. 404.html catching the request
+    // 2. Redirecting to index.html with the original path/query/hash in the 'redirect' param
+    // 3. This script restoring the original state
     const urlParams = new URLSearchParams(window.location.search);
     const redirectPath = urlParams.get('redirect');
     if (redirectPath) {
-        // Reconstruct the original URL
+        // Reconstruct the original URL (path + search + hash)
+        // redirectPath contains the decoded full path from 404.html
         const newPath = BASE_PATH + redirectPath;
         // Update the URL in the browser without reloading
         window.history.replaceState(null, '', newPath);
