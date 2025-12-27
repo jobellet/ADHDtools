@@ -499,6 +499,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 while ((match = regex.exec(line)) !== null) {
                     // match[1] is quoted content, match[2] is unquoted
                     let val = match[1] !== undefined ? match[1].replace(/""/g, '"') : match[2];
+                    // Fix: The regex matches empty string at the end of line sometimes or between commas
+                    if (match[0] === '' && match.index === line.length) break;
                     matches.push(val);
                 }
 
