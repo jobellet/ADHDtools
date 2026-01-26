@@ -93,13 +93,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateAppIcon(toolName) {
         const iconName = TOOL_ICON_MAP[toolName] || 'home.svg';
-        const iconPath = `icons/${iconName}`;
+        const pngName = iconName.replace('.svg', '.png');
+
+        const iconPathSvg = `icons/${iconName}`;
+        const iconPathPng = `icons/${pngName}`;
 
         const favicon = document.getElementById('favicon');
         const appleIcon = document.getElementById('apple-touch-icon');
 
-        if (favicon) favicon.href = iconPath;
-        if (appleIcon) appleIcon.href = iconPath;
+        if (favicon) favicon.href = iconPathSvg;
+        if (appleIcon) appleIcon.href = iconPathPng;
     }
 
     function switchTool(toolName, updateHistory = true) {
