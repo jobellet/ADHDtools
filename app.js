@@ -42,6 +42,23 @@ document.addEventListener("DOMContentLoaded", () => {
         'about': 'about'
     };
 
+    const TOOL_ICON_MAP = {
+        'home': 'home.svg',
+        'pomodoro': 'pomodoro.svg',
+        'eisenhower': 'eisenhower.svg',
+        'planner': 'planner.svg',
+        'calendar': 'calendar.svg',
+        'tasks': 'task-manager.svg',
+        'breakdown': 'task-breakdown.svg',
+        'habits': 'habit-tracker.svg',
+        'routine': 'routine.svg',
+        'family': 'routine.svg',
+        'focus': 'focus-mode.svg',
+        'rewards': 'rewards.svg',
+        'settings': 'settings.svg',
+        'about': 'about.svg'
+    };
+
     // Reverse map for lookup
     const SLUG_TOOL_MAP = Object.entries(TOOL_SLUG_MAP).reduce((acc, [tool, slug]) => {
         acc[slug.toLowerCase()] = tool;
@@ -74,6 +91,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function updateAppIcon(toolName) {
+        const iconName = TOOL_ICON_MAP[toolName] || 'home.svg';
+        const iconPath = `icons/${iconName}`;
+
+        const favicon = document.getElementById('favicon');
+        const appleIcon = document.getElementById('apple-touch-icon');
+
+        if (favicon) favicon.href = iconPath;
+        if (appleIcon) appleIcon.href = iconPath;
+    }
+
     function switchTool(toolName, updateHistory = true) {
         // Fallback to home if tool not found
         if (!document.getElementById(toolName)) {
@@ -96,6 +124,8 @@ document.addEventListener("DOMContentLoaded", () => {
             window.FamilyView?.init?.();
             window.FamilyView?.render?.();
         }
+
+        updateAppIcon(toolName);
 
         if (updateHistory) {
             updateUrl(toolName);
