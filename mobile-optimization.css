@@ -1,0 +1,374 @@
+/* Mobile Optimization for ADHD Tools Hub */
+@media (max-width: 768px) {
+    /* Global layout constraint to fit screen without scrolling the body */
+    html, body {
+        height: 100vh; /* Use 100dvh if supported, but vh is safer for compatibility */
+        height: 100dvh;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Compact Header */
+    header {
+        flex: 0 0 auto;
+        padding: 0.5rem 0;
+        background-color: var(--primary-color);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        z-index: 200;
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+        margin: 0;
+    }
+
+    /* Hide tagline to save space */
+    header p[data-i18n="tagline"] {
+        display: none;
+    }
+
+    .current-time {
+        font-size: 0.8rem;
+        margin-top: 0;
+    }
+
+    /* Nav */
+    nav {
+        flex: 0 0 auto;
+        position: relative; /* Ensure it stays in flow or sticky if needed */
+        z-index: 100;
+    }
+
+    /* Main Container */
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Prevent body scroll */
+        padding: 0;
+    }
+
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 0 10px;
+        width: 100%;
+    }
+
+    /* Footer */
+    footer {
+        display: none;
+    }
+
+    /* Tool Sections */
+    .tool-section {
+        height: 100%;
+        /* display: none; inherited from styles.css */
+        flex-direction: column;
+        padding: 10px 5px;
+        border-radius: 0;
+        box-shadow: none;
+        overflow-y: auto; /* Default to scrollable for simple tools (Settings, About, etc.) */
+    }
+
+    .tool-section.active {
+        display: flex; /* Override default block and make visible */
+    }
+
+    /* Complex tools manage their own internal scrolling */
+    #pomodoro, #planner, #routine, #calendar {
+        overflow-y: hidden;
+    }
+
+    .tool-section h2 {
+        flex: 0 0 auto;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    /* Hide descriptions */
+    .tool-section p[data-i18n$="-text"],
+    .tool-section > p {
+        display: none;
+    }
+
+    /* --- Pomodoro Optimization --- */
+    #pomodoro .pomodoro-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        align-items: center;
+        overflow-y: auto;
+        padding-bottom: 1rem;
+    }
+
+    #pomodoro .timer-circle {
+        width: min(70vw, 280px);
+        height: min(70vw, 280px);
+        margin: 1rem auto;
+    }
+
+    #pomodoro .time {
+        font-size: 3.5rem;
+    }
+
+    #pomodoro .timer-controls {
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    #pomodoro .timer-controls button {
+        padding: 1rem 1.5rem;
+        font-size: 1.2rem;
+        flex: 1;
+        max-width: 120px;
+    }
+
+    /* Make settings less prominent */
+    #pomodoro details.pomodoro-settings-collapsible {
+        margin-top: auto;
+        width: 100%;
+        opacity: 0.8;
+    }
+
+    /* --- Day Planner Optimization --- */
+    #planner .day-planner-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    #planner .planner-header {
+        flex: 0 0 auto;
+        padding: 0.5rem;
+        background: var(--surface);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    #planner h3#current-date {
+        font-size: 1.1rem;
+        margin: 0;
+        text-align: center;
+    }
+
+    #planner .planner-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    /* Hide less important buttons text */
+    #planner .planner-controls .btn-text {
+        display: none;
+    }
+
+    #planner .planner-controls button {
+        padding: 0.5rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Important: Add Event floating button */
+    #add-event-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        z-index: 500;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #add-event-btn i {
+        font-size: 1.5rem;
+    }
+
+    #planner .time-blocks-container {
+        flex: 1;
+        overflow-y: auto;
+        height: auto;
+        max-height: none;
+        padding-bottom: 80px; /* Space for FAB */
+    }
+
+    /* --- Routine Tool Optimization --- */
+    #routine .routine-container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        gap: 0;
+    }
+
+    #routine .routine-player {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 0.5rem;
+        overflow-y: auto;
+    }
+
+    /* Reorder items to put controls at bottom */
+    #routine .routine-player > * {
+        order: 1;
+    }
+
+    #routine .routine-player-controls {
+        order: 10; /* Bottom */
+        margin-top: auto;
+        padding: 1rem 0;
+        position: sticky;
+        bottom: 0;
+        background: var(--surface);
+        border-top: 1px solid #eee;
+        z-index: 10;
+    }
+
+    #current-task-display {
+        flex: 2; /* Take more space */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    #current-task-name {
+        font-size: 2rem;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+    }
+
+    #current-task-time-left {
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .pie-chart-container {
+        max-height: 150px;
+        margin: 0 auto;
+    }
+
+    #routine .routine-player-controls button {
+        padding: 1rem;
+        flex: 1;
+    }
+
+    /* Hide instructions */
+    .instructions {
+        display: none;
+    }
+
+    /* --- Calendar Optimization --- */
+    #calendar .calendar-layout {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        gap: 0;
+    }
+
+    /* Hide Sidebar/Settings on mobile by default */
+    #calendar .calendar-sidebar {
+        display: none;
+    }
+
+    #calendar .calendar-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-radius: 0;
+    }
+
+    #calendar .calendar-toolbar {
+        flex: 0 0 auto;
+        padding: 0.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    #calendar-header {
+        font-size: 1rem;
+        min-width: auto;
+    }
+
+    #calendar .calendar-view-toggles {
+        flex: 1;
+        justify-content: center;
+    }
+
+    #calendar .calendar-view-toggles button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        flex: 1;
+    }
+
+    #calendar-view {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    /* --- Home / Today View --- */
+    #home {
+        overflow-y: auto; /* Home allows scrolling because grid needs space */
+    }
+
+    #home .tools-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    #today-view {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .today-current {
+        order: 1;
+    }
+
+    .today-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    #today-start-focus {
+        grid-column: 1 / -1; /* Full width */
+        padding: 1rem;
+        font-size: 1.1rem;
+    }
+
+    /* Common Elements */
+    button, .btn {
+        min-height: 48px; /* Touch target */
+        touch-action: manipulation;
+    }
+}
