@@ -570,7 +570,7 @@
   }
 
 
-  async function handleICSUrl(url) {
+  async function handleICSUrl(url, silent = false) {
     if (!url) return;
 
     const proxyCandidates = [
@@ -604,7 +604,11 @@
       }
     }
 
-    alert('Failed to load calendar. Please check the URL and try again.');
+    if (!silent) {
+      alert('Failed to load calendar. Please check the URL and try again.');
+    } else {
+      console.warn('Failed to load calendar from background refresh.');
+    }
   }
 
   function convertEventsToTasks(importedEvents) {
@@ -785,11 +789,11 @@
     }
 
     if (icsUrl) {
-      handleICSUrl(icsUrl);
+      handleICSUrl(icsUrl, true);
       const refreshMs = getIcsRefreshIntervalMs();
       console.log(`Refreshing ICS feed every ${refreshMs / 1000} seconds from config`);
       setInterval(() => {
-        handleICSUrl(icsUrl);
+        handleICSUrl(icsUrl, true);
       }, refreshMs);
     }
 
