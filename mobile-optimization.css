@@ -285,6 +285,33 @@
         display: none;
     }
 
+    /* Reorder Routine content to put Start button at top */
+    #active-routine-display {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #player-current-routine-name {
+        order: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    #start-best-match-btn {
+        order: 2;
+        margin-bottom: 1rem;
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.2rem;
+    }
+
+    #player-routine-tasks {
+        order: 3;
+    }
+
+    #active-routine-display > p {
+        order: 4;
+    }
+
     /* --- Calendar Optimization --- */
     #calendar .calendar-layout {
         display: flex;
