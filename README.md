@@ -4,6 +4,8 @@
 
 Interactive tools to help manage ADHD symptoms and improve productivity.
 
+[**Transition Plan**](transition_plan.md): Learn about our roadmap to transition the system to a context-aware dashboard that automatically displays the appropriate tool based on the time of day and user habits, removing cognitive and tool-search burden.
+
 ---
 
 ## 🌍 Vision: What ADHDtools Should Become
@@ -101,6 +103,8 @@ Utility helpers:
 ## 💡 Philosophy
 
 The app should feel like a cognitive prosthesis for people who struggle with task switching or priority overload. Rather than forcing users to plan everything, it helps them see only what matters right now — and rewards consistent progress rather than perfection.
+
+The end goal is for the user not to have to search for the right tool to use at a given time but for the system to remove cognitive and tool-search burden. For instance, at a certain time of the day the only thing to do is to display a given routine. When it is time to cook, the system just displays the recipe of the day, when it is work time, the system only displays the day plan and pomodoro, etc. Read more in our [**Transition Plan**](transition_plan.md).
 
 **Note for contributors and AI agents:** Treat this vision and data model as the global north star. When implementing new features or refactors, align them with this roadmap and update this README to reflect progress so future work stays cohesive.
 
