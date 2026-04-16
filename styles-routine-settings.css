@@ -84,6 +84,10 @@
     border-radius: 4px;
 }
 
+.routine-task-item .task-name {
+    min-width: 0;
+}
+
 .routine-task-item input {
     padding: 0.25rem 0.5rem;
     font-size: 0.9rem;
@@ -101,6 +105,33 @@
 .routine-task-item .btn-remove-task:hover {
     background: #ffebee;
     border-radius: 4px;
+}
+
+@media (max-width: 600px) {
+    .routine-task-item {
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "name name"
+            "duration remove";
+        align-items: stretch;
+        gap: 0.35rem;
+    }
+
+    .routine-task-item .task-name {
+        grid-area: name;
+        width: 100%;
+    }
+
+    .routine-task-item .task-duration {
+        grid-area: duration;
+        width: 100%;
+    }
+
+    .routine-task-item .btn-remove-task {
+        grid-area: remove;
+        justify-self: end;
+        align-self: center;
+    }
 }
 
 .routine-task-list .active-task {
