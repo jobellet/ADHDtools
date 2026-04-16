@@ -279,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSettingsRoutineSelect() {
+        if (!settingRoutineSelect) return;
         settingRoutineSelect.innerHTML = '<option value="">-- Select Routine --</option>';
         routines.forEach(r => {
             const option = document.createElement('option');
@@ -618,6 +619,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!Array.isArray(activeRoutine.tasks) || activeRoutine.tasks.length === 0) {
             alert("This routine has no tasks yet. Add at least one task before starting.");
+            if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
+            if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
             activeRoutine = null;
             return;
         }
@@ -711,9 +714,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function finishRoutine() {
         if (currentTaskTimer) clearInterval(currentTaskTimer);
-        currentTaskDisplay.style.display = 'none';
-        pieChartContainer.style.display = 'none';
-        routineControls.style.display = 'none';
+        if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
+        if (pieChartContainer) pieChartContainer.style.display = 'none';
+        if (routineControls) routineControls.style.display = 'none';
 
         const hasChanges = JSON.stringify(activeRoutine.tasks.map(t => ({n:t.name, d:t.duration}))) !==
                            JSON.stringify(originalRoutineSnapshot.tasks.map(t => ({n:t.name, d:t.duration})));
@@ -732,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         activeRoutine = null;
         playerRoutineNameDisplay.textContent = "Routine Finished!";
+        if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = "Routine Finished!";
         playerRoutineTasksList.innerHTML = '';
         playerRoutineTasksList.style.display = 'block';
         if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
@@ -930,6 +934,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // Desktop accessibility: let a click advance tasks as a quick interaction.
+        routinePieChartCanvas.addEventListener('click', () => {
+            if (activeRoutine) {
+                manualAdvanceTask();
+            }
+        });
     }
 
     // --- Chart ---
@@ -1034,8 +1045,101 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSpacebarHandler();
     setupTouchHandler();
 
+    function getRoutineToEdit() {
+        if (!routines.length) return null;
+        if (selectedRoutineId) {
+            return routines.find(r => r.id === selectedRoutineId) || routines[0];
+        }
+        return routines[0];
+    }
+
+    function initializeRoutines() {
+        if (currentTaskTimer) {
+            clearInterval(currentTaskTimer);
+            currentTaskTimer = null;
+        }
+        activeRoutine = null;
+        currentTaskIndex = -1;
+        if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
+        if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
+
+        loadRoutines();
+        selectedRoutineId = routines[0]?.id || null;
+        updateSettingsRoutineSelect();
+        const best = findBestRoutineForNow();
+        showReadyToStart(best);
+    }
+
+    function createRoutineHandler() {
+        const legacyNameInput = document.getElementById('routine-name');
+        const name = (legacyNameInput?.value || '').trim();
+        if (!name) return;
+
+        const newRoutine = {
+            id: generateId(),
+            name,
+            startTime: "08:00",
+            weekDays: [1, 2, 3, 4, 5],
+            tasks: [],
+            totalDuration: 0
+        };
+        routines.push(newRoutine);
+        selectedRoutineId = newRoutine.id;
+        saveRoutines();
+        updateSettingsRoutineSelect();
+    }
+
+    function addTaskAt(index, name, duration) {
+        const routine = getRoutineToEdit();
+        const taskName = (name || '').trim();
+        const taskDuration = parseInt(duration, 10);
+        if (!routine || !taskName || !Number.isInteger(taskDuration) || taskDuration <= 0) return;
+
+        const task = { id: generateId(), name: taskName, duration: taskDuration, startAt: null };
+        const insertAt = Number.isInteger(index) ? Math.max(0, Math.min(index, routine.tasks.length)) : routine.tasks.length;
+        routine.tasks.splice(insertAt, 0, task);
+        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
+        saveRoutines();
+    }
+
+    function editTaskInRoutine(taskId, newName, newDuration) {
+        const name = (newName || '').trim();
+        const duration = parseInt(newDuration, 10);
+        if (!taskId || !name || !Number.isInteger(duration) || duration <= 0) return;
+
+        for (const routine of routines) {
+            const task = routine.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.name = name;
+                task.duration = duration;
+                routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
+                saveRoutines();
+                return;
+            }
+        }
+    }
+
+    function deleteTaskFromRoutine(taskId) {
+        if (!taskId) return;
+        for (const routine of routines) {
+            const before = routine.tasks.length;
+            routine.tasks = routine.tasks.filter(t => t.id !== taskId);
+            if (routine.tasks.length !== before) {
+                routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
+                saveRoutines();
+                return;
+            }
+        }
+    }
+
     // Export global functions if needed
     window.activateRoutine = activateRoutine;
+    window.manualAdvanceTask = manualAdvanceTask;
+    window.initializeRoutines = initializeRoutines;
+    window.createRoutineHandler = createRoutineHandler;
+    window.addTaskAt = addTaskAt;
+    window.editTaskInRoutine = editTaskInRoutine;
+    window.deleteTaskFromRoutine = deleteTaskFromRoutine;
 
     // Allow start button if present in DOM (for old bindings)
     if (startSelectedRoutineBtn) {
