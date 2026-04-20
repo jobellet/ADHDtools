@@ -22,8 +22,8 @@
     <script src="api-settings.js" defer></script>
     <script src="settings.js" defer></script>
     <script src="pomodoro.js" defer></script>
-    <script src="core/duration-learning.js" defer></script>
-    <script src="core/urgency-helpers.js" defer></script>
+    <script type="module" src="core/duration-learning.js"></script>
+    <script type="module" src="core/urgency-helpers.js"></script>
     <script type="module" src="core/task-model.js"></script>
     <script type="module" src="day-planner.js"></script>
     <script src="task-breakdown.js" defer></script>
@@ -78,6 +78,7 @@
                         Tracker</a></li>
                 <li><a href="#" data-tool="routine" data-i18n="nav-routine"><i class="fas fa-tasks-alt"></i> Routine
                         Tool</a></li>
+                <li><a href="#" data-tool="family" data-i18n="nav-family"><i class="fas fa-users"></i> Family Routine</a></li>
                 <li><a href="#" data-tool="focus" data-i18n="nav-focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
                 <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a>
                 </li>
@@ -146,6 +147,11 @@
                     <div class="tool-card" data-tool="routine">
                         <div class="tool-icon"><i class="fas fa-tasks-alt"></i></div>
                         <h3 data-i18n="card-routine">Routine Tool</h3>
+                    </div>
+
+                    <div class="tool-card" data-tool="family">
+                        <div class="tool-icon"><i class="fas fa-users"></i></div>
+                        <h3 data-i18n="card-family">Family Routine</h3>
                     </div>
 
                     <div class="tool-card" data-tool="focus">

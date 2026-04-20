@@ -115,7 +115,7 @@ if (typeof window !== 'undefined') {
   };
 }
 
-export default {
+export {
   createTask,
   updateTask,
   markTaskCompleted,
