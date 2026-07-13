@@ -832,75 +832,6 @@
                             </details>
                         </div>
 
-                        <!-- Routine Settings Panel -->
-                        <div class="settings-panel">
-                            <details class="settings-toggle">
-                                <summary>Routine Management</summary>
-                                <div class="settings-content">
-                                    <div class="setting-group checkbox-group">
-                                        <input type="checkbox" id="setting-routine-auto-run">
-                                        <label for="setting-routine-auto-run">Enable auto-run by default</label>
-                                    </div>
-
-                                    <hr class="settings-divider">
-
-                                    <div class="routine-management-area">
-                                        <div class="setting-group">
-                                            <label for="setting-routine-select">Select Routine</label>
-                                            <div class="flex-row gap-sm">
-                                                <select id="setting-routine-select" class="flex-grow"></select>
-                                                <button type="button" id="setting-create-routine-btn" class="btn btn-secondary" title="Create New"><i class="fas fa-plus"></i></button>
-                                                <button type="button" id="setting-delete-routine-btn" class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
-                                            </div>
-                                        </div>
-
-                                        <div id="setting-routine-editor" class="routine-editor hidden">
-                                            <div class="setting-group flex-row gap-sm" style="justify-content: flex-end; margin-bottom: 1rem;">
-                                                <button type="button" id="setting-export-routine-btn" class="btn btn-secondary btn-sm" title="Export to CSV"><i class="fas fa-file-export"></i> Export CSV</button>
-                                                <button type="button" id="setting-import-routine-btn" class="btn btn-secondary btn-sm" title="Import from CSV"><i class="fas fa-file-import"></i> Import CSV</button>
-                                                <input type="file" id="setting-import-routine-file" accept=".csv" style="display:none">
-                                            </div>
-
-                                            <div class="setting-group">
-                                                <label for="setting-routine-name">Routine Name</label>
-                                                <input type="text" id="setting-routine-name">
-                                            </div>
-
-                                            <div class="setting-group">
-                                                <label for="setting-routine-start-time">Preferred Start Time</label>
-                                                <input type="time" id="setting-routine-start-time">
-                                            </div>
-
-                                            <div class="setting-group">
-                                                <label>Preferred Week Days</label>
-                                                <div class="week-days-selector" id="setting-routine-weekdays">
-                                                    <label><input type="checkbox" value="1"> Mon</label>
-                                                    <label><input type="checkbox" value="2"> Tue</label>
-                                                    <label><input type="checkbox" value="3"> Wed</label>
-                                                    <label><input type="checkbox" value="4"> Thu</label>
-                                                    <label><input type="checkbox" value="5"> Fri</label>
-                                                    <label><input type="checkbox" value="6"> Sat</label>
-                                                    <label><input type="checkbox" value="0"> Sun</label>
-                                                </div>
-                                            </div>
-
-                                            <div class="setting-group">
-                                                <label>Tasks</label>
-                                                <div id="setting-routine-tasks-list" class="routine-tasks-editor-list"></div>
-                                                <button type="button" id="setting-add-task-btn" class="btn btn-outline btn-sm btn-block" style="margin-top: 0.5rem;">
-                                                    <i class="fas fa-plus"></i> Add Task
-                                                </button>
-                                            </div>
-
-                                            <div class="setting-group">
-                                                <button type="button" id="setting-save-routine-btn" class="btn btn-success btn-block">Save Routine</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </details>
-                        </div>
-
                         <!-- Calendar Imports Panel -->
                         <div class="settings-panel">
                             <details class="settings-toggle">
@@ -1019,6 +950,72 @@
                         </div>
                         <p class="instructions" data-i18n="routine-instruction">Tap the screen or press SPACEBAR to mark
                             the current task as done.</p>
+                    </div>
+
+                    <div class="routine-management-panel" style="margin-top: 2rem; background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <h3 style="margin-top: 0; margin-bottom: 1rem;">Routine Management</h3>
+                        <div class="settings-content">
+                            <div class="setting-group checkbox-group">
+                                <input type="checkbox" id="setting-routine-auto-run">
+                                <label for="setting-routine-auto-run">Enable auto-run by default</label>
+                            </div>
+
+                            <hr class="settings-divider">
+
+                            <div class="routine-management-area">
+                                <div class="setting-group">
+                                    <label for="setting-routine-select">Select Routine</label>
+                                    <div class="flex-row gap-sm">
+                                        <select id="setting-routine-select" class="flex-grow"></select>
+                                        <button type="button" id="setting-create-routine-btn" class="btn btn-secondary" title="Create New"><i class="fas fa-plus"></i></button>
+                                        <button type="button" id="setting-delete-routine-btn" class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </div>
+
+                                <div id="setting-routine-editor" class="routine-editor hidden">
+                                    <div class="setting-group flex-row gap-sm" style="justify-content: flex-end; margin-bottom: 1rem;">
+                                        <button type="button" id="setting-export-routine-btn" class="btn btn-secondary btn-sm" title="Export to CSV"><i class="fas fa-file-export"></i> Export CSV</button>
+                                        <button type="button" id="setting-import-routine-btn" class="btn btn-secondary btn-sm" title="Import from CSV"><i class="fas fa-file-import"></i> Import CSV</button>
+                                        <input type="file" id="setting-import-routine-file" accept=".csv" style="display:none">
+                                    </div>
+
+                                    <div class="setting-group">
+                                        <label for="setting-routine-name">Routine Name</label>
+                                        <input type="text" id="setting-routine-name">
+                                    </div>
+
+                                    <div class="setting-group">
+                                        <label for="setting-routine-start-time">Preferred Start Time</label>
+                                        <input type="time" id="setting-routine-start-time">
+                                    </div>
+
+                                    <div class="setting-group">
+                                        <label>Preferred Week Days</label>
+                                        <div class="week-days-selector" id="setting-routine-weekdays">
+                                            <label><input type="checkbox" value="1"> Mon</label>
+                                            <label><input type="checkbox" value="2"> Tue</label>
+                                            <label><input type="checkbox" value="3"> Wed</label>
+                                            <label><input type="checkbox" value="4"> Thu</label>
+                                            <label><input type="checkbox" value="5"> Fri</label>
+                                            <label><input type="checkbox" value="6"> Sat</label>
+                                            <label><input type="checkbox" value="0"> Sun</label>
+                                        </div>
+                                    </div>
+
+                                    <div class="setting-group">
+                                        <label>Tasks</label>
+                                        <div id="setting-routine-tasks-list" class="routine-tasks-editor-list"></div>
+                                        <button type="button" id="setting-add-task-btn" class="btn btn-outline btn-sm btn-block" style="margin-top: 0.5rem;">
+                                            <i class="fas fa-plus"></i> Add Task
+                                        </button>
+                                    </div>
+
+                                    <div class="setting-group">
+                                        <button type="button" id="setting-save-routine-btn" class="btn btn-success btn-block">Save Routine</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
