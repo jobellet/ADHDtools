@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "adhdtools-static",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8422"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": [".claude/static-server.js"],
       "port": 8422
     }
   ]

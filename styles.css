@@ -1048,6 +1048,7 @@ footer {
     nav .container {
         flex-direction: column;
         align-items: stretch;
+        flex-wrap: nowrap;
         gap: 0.5rem;
     }
 
@@ -1057,11 +1058,10 @@ footer {
     }
 
     .hamburger-menu {
-        align-self: flex-end;
-    }
-
-    .hamburger-menu {
         display: block;
+        position: static;
+        transform: none;
+        align-self: flex-end;
         background-color: var(--surface);
         width: 44px;
         height: 44px;
@@ -1139,6 +1139,17 @@ footer {
 
     .habit-tracker-container.new-layout {
         grid-template-columns: 1fr;
+    }
+
+    .habit-list-panel,
+    .habit-calendar-panel {
+        min-width: 0;
+        padding: 1rem;
+    }
+
+    #habit-calendar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
