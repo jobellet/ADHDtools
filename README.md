@@ -132,6 +132,14 @@ The end goal is for the user not to have to search for the right tool to use at 
 🆕 Family overview cards surface each user’s current and next tasks directly in Today View, with mobile-friendly layout tweaks.
 🆕 Habit Tracker check-ins now create completed “habit” tasks in the shared TaskStore for the active user, so Rewards/Achievements and category stats reflect streaks automatically.
 
+🆕 **Natural-language quick capture** on the Home view: type or speak “Call mom tomorrow at 5pm for 20 min !7” and it becomes a fully-tagged Task (deadline, duration, importance). Works completely offline via a heuristic parser (`core/task-parser.js`) and gets smarter automatically when an AI provider is configured.
+
+🆕 **Context-aware Home dashboard** (`core/context-engine.js`, first step of the [Transition Plan](transition_plan.md)): the Home view now shows a single suggestion banner for *right now* — the open routine window, the currently scheduled task (one-tap focus), the morning planning phase, or the evening review — with an optional setting to auto-open the routine player when a routine window starts.
+
+🆕 **Provider-agnostic AI assistance** (`core/ai-provider.js`): every AI feature (quick-capture parsing, AI task breakdown, AI day planning, voice capture, encouragement summaries) now works with OpenAI/ChatGPT, Google Gemini, Anthropic Claude, Mistral, Groq, OpenRouter, or any local OpenAI-compatible server (Ollama, LM Studio). AI remains strictly optional — with provider “None”, every tool still works.
+
+🆕 **Daily progress card**: tasks completed today, achievement points, and focused minutes at a glance on the Home view — plus an optional AI encouragement note.
+
 🛠️ In progress: deeper Focus Mode integration with the scheduled task of the moment.
 
 🔜 Planned: richer calendar imports, smarter dependency handling, and family profiles.
@@ -164,6 +172,9 @@ Legacy modules still calling `DataManager` automatically read/write through this
 *   **Calendar Tool:** Import events from ICS files and integrate them with other tools.
 *   **Unified Scheduler:** Generate a daily schedule across tools using shared TaskStore data and calendar blocks.
 *   **Today View:** A lightweight dashboard that surfaces the current task, upcoming items, and quick actions.
+*   **Quick Capture:** Add or speak tasks in natural language ("Finish report by Friday !8"); works offline, enhanced by AI when configured.
+*   **Context Banner:** The Home view suggests the right tool for right now — routine window, scheduled task, morning planning, or evening review.
+*   **AI Assistance (optional):** Bring your own provider — OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model.
 
 ## Family Routine View (Big Screen)
 
@@ -218,25 +229,34 @@ The skip flow now offers "end of day", "tomorrow", or a custom date/time while r
 
 If you have suggestions or feedback, please let me know!
 
-## Gemini API Setup
-Some tools in this application can use the Google Gemini API to provide intelligent suggestions, such as breaking down tasks or categorizing items. Using the API may consume your quota and could incur charges beyond the free tier. See [Google's pricing page](https://ai.google.dev/pricing) for details and keep your key private.
+## Optional AI Assistance (Any Provider)
 
-### 1. Obtain Your API Key from Google AI Studio
-First, get an API key from Google AI Studio.
+ADHD Tools works **fully offline with no AI at all** — the schedule generator, natural-language quick capture, routines, rewards, and every other tool have non-LLM implementations. Configuring an AI provider is optional and unlocks:
 
-**Go to Google AI Studio:** Open [aistudio.google.com](https://aistudio.google.com) and sign in with your Google account.
+* Smarter natural-language task capture (typed or spoken) — better date/duration/priority understanding than the offline parser.
+* ✨ AI Breakdown in the Task Breakdown tool (sub-tasks with duration estimates).
+* AI Plan in the Day Planner (schedules loose tasks around existing events).
+* A short AI encouragement note in the daily progress card.
 
-**Create a Project and Key:** Create a new project (for example `ADHD-Tools-Project`) and generate an API key. Copy this key and store it somewhere safe.
+### Supported providers
 
-### 2. Add the API Key in the App
-On the ADHD Tools website, scroll to the **About** section and find the **Gemini API Key** box. Paste your key into the field and click **Save**. The key is stored only in your browser's `localStorage`. You can remove it at any time by clicking **Clear**.
+Open **Settings → AI Assistance (optional — any provider)** and pick one:
 
-That's it! The Gemini-powered features in ADHD Tools should now be enabled.
+| Provider | Default model | Where to get a key |
+| --- | --- | --- |
+| OpenAI (ChatGPT) | `gpt-4o-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| Google Gemini | `gemini-2.5-flash` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
+| Anthropic (Claude) | `claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com) |
+| Mistral | `mistral-small-latest` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
+| Groq | `llama-3.3-70b-versatile` | [console.groq.com/keys](https://console.groq.com/keys) |
+| OpenRouter | `openai/gpt-4o-mini` | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| Custom / Local | any | Any OpenAI-compatible endpoint: Ollama, LM Studio, vLLM… (no key needed for most local servers) |
 
-### Troubleshooting
-**No key saved:** If the tools say the key is missing, return to the **Gemini API Key** box and re-enter your key. Clearing your browser data will remove the saved key.
+Paste your key, optionally override the model, click **Test connection**, then **Save**. Keys are stored only in your browser's `localStorage` and requests go directly from your browser to the provider — there is no middleman server. Using an API may incur charges with your provider; keep your key private and use the **Clear** button to remove it at any time.
 
-**API errors:** Ensure your key is correct and has not been revoked in Google AI Studio.
+Existing users with a saved Gemini key are migrated automatically.
+
+**Developers:** the shared layer lives in `core/ai-provider.js` (`window.AIAssistant.complete/completeJSON/isEnabled`). New features should call it (never a specific provider) and must always offer a non-AI fallback path.
 
 ## Optional Google Calendar Integration
 

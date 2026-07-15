@@ -140,28 +140,23 @@ function startVoiceRecognition() {
 }
 
 async function handleVoiceCommand(text) {
-    if (!window.callGemini) {
-        console.warn('Gemini API not available');
+    // Works offline via the heuristic parser; upgrades to the configured AI provider automatically.
+    if (!window.TaskParser) {
+        console.warn('TaskParser not available');
+        return;
+    }
+    const parsed = await window.TaskParser.parseSmart(text);
+    if (!parsed || !parsed.name) {
+        alert('Could not understand that. Try e.g. "Team meeting tomorrow at 10am for 45 minutes".');
         return;
     }
     const todayStr = currentDate.toISOString().slice(0, 10);
-    const prompt = `Today is ${todayStr}. From the following text: "${text}", extract the event title, date, start time, and duration in minutes. Return JSON with keys: title, date (YYYY-MM-DD), time (HH:MM), duration.`;
-    const response = await window.callGemini(prompt);
-    if (!response) return;
-    let parsed;
-    try {
-        parsed = JSON.parse(response);
-    } catch (err) {
-        console.error('Failed to parse Gemini response:', response);
-        return;
-    }
-    if (!parsed.title || !parsed.time) return;
-    const datePart = parsed.date || todayStr;
-    const plannerDate = `${datePart}T${parsed.time}`;
+    const plannerDate = parsed.plannerDate || parsed.deadline || `${todayStr}T09:00`;
     window.DataManager.addTask({
-        text: parsed.title,
+        text: parsed.name,
         plannerDate,
-        duration: Number(parsed.duration) || getDefaultDurationMinutes(),
+        duration: parsed.durationMinutes || getDefaultDurationMinutes(),
+        importance: parsed.importance || undefined,
         originalTool: 'planner'
     });
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
@@ -273,23 +268,19 @@ async function autoPlanDay() {
         tasks.forEach(t => { prompt += `\n- ${t}`; });
         prompt += `\nReturn a JSON array of objects with time (HH:MM 24h), text, and duration in minutes.`;
 
-        const aiText = await window.callGemini(prompt);
-        if (!aiText) {
-            alert('Gemini did not return a plan.');
+        if (!window.AIAssistant?.isEnabled?.()) {
+            alert('AI Plan needs an AI provider. Open Settings → AI Assistance to configure one, or use "Generate schedule for today" which works offline.');
             return;
         }
-        let jsonText = aiText;
-        const match = aiText.match(/```(?:json)?([\s\S]*?)```/);
-        if (match) jsonText = match[1];
         let plan;
         try {
-            plan = JSON.parse(jsonText);
+            plan = await window.AIAssistant.completeJSON(prompt, { maxTokens: 1200 });
         } catch (err) {
-            alert('Failed to parse Gemini response.');
+            alert(`AI planning failed: ${err.message}`);
             return;
         }
         if (!Array.isArray(plan)) {
-            alert('Gemini response was not an array.');
+            alert('The AI response was not a plan (expected a JSON array).');
             return;
         }
         plan.forEach(item => {

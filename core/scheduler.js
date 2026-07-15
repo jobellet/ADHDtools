@@ -84,7 +84,7 @@ function loadCalendarBlocks(todayStr, config) {
   }
 }
 
-function buildDailySchedule(tasks, config, todayStr = new Date().toISOString().slice(0, 10)) {
+function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()), nowMinutes = null) {
   const dayStart = parseTimeToMinutes(config.dayStart, 0);
   const dayEnd = parseTimeToMinutes(config.dayEnd, 24 * 60);
   const fixed = [];
@@ -111,10 +111,21 @@ function buildDailySchedule(tasks, config, todayStr = new Date().toISOString().s
   fixed.sort((a, b) => a.startMinutes - b.startMinutes);
   flexible.sort((a, b) => computePriority(b) - computePriority(a));
 
-  const schedule = [];
-  let cursor = dayStart;
+  // Fill flexible tasks starting from "now" (never in the past) so the current
+  // slot reflects what the user should actually be doing at this moment.
+  const startCursor = nowMinutes === null
+    ? dayStart
+    : Math.max(dayStart, Math.min(nowMinutes, dayEnd));
+  let cursor = startCursor;
 
-  fixed.forEach(slot => {
+  // Fixed blocks that already ended keep their original times instead of being
+  // squeezed against the cursor.
+  const pastFixed = fixed.filter(slot => slot.endMinutes <= startCursor);
+  const upcomingFixed = fixed.filter(slot => slot.endMinutes > startCursor);
+
+  const schedule = [...pastFixed];
+
+  upcomingFixed.forEach(slot => {
     const gapEnd = Math.max(dayStart, Math.min(slot.startMinutes, dayEnd));
     while (flexible.length && cursor + getDurationMinutes(flexible[0]) <= gapEnd) {
       const task = flexible.shift();
@@ -138,9 +149,14 @@ function buildDailySchedule(tasks, config, todayStr = new Date().toISOString().s
   return schedule;
 }
 
+function localDateString(date) {
+  const pad = num => String(num).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...(window.ConfigManager?.getConfig?.() || {}), ...(config || {}) };
-  const todayStr = now.toISOString().slice(0, 10);
+  const todayStr = localDateString(now);
   const activeUser = window.UserContext?.getActiveUser?.();
   const baseTasks = tasks || TaskStore.getPendingTasks();
   const taskList = activeUser ? baseTasks.filter(t => t.user === activeUser) : baseTasks;
@@ -153,7 +169,8 @@ export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
     if (plannerDateStr && plannerDateStr !== todayStr) return false;
     return true;
   });
-  return buildDailySchedule(filtered, cfg, todayStr).map(slot => ({
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  return buildDailySchedule(filtered, cfg, todayStr, nowMinutes).map(slot => ({
     ...slot,
     scheduledStart: slot.startMinutes,
     scheduledEnd: slot.endMinutes,
@@ -161,12 +178,14 @@ export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
 }
 
 export function getTodaySchedule(now = new Date(), overrides = {}) {
-  const todayStr = now.toISOString().slice(0, 10);
   const schedule = buildSchedule({ now, config: overrides.config });
   return schedule.map(slot => {
-    const startTime = new Date(`${todayStr}T00:00:00Z`);
+    // Slot times are minutes-of-day in *local* time.
+    const startTime = new Date(now);
+    startTime.setHours(0, 0, 0, 0);
     startTime.setMinutes(slot.scheduledStart);
-    const endTime = new Date(`${todayStr}T00:00:00Z`);
+    const endTime = new Date(now);
+    endTime.setHours(0, 0, 0, 0);
     endTime.setMinutes(slot.scheduledEnd);
     return { ...slot, startTime, endTime };
   });

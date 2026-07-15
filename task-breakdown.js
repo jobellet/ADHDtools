@@ -279,25 +279,33 @@ document.addEventListener('DOMContentLoaded', () => {
   addMainBtn.addEventListener('click', addMain);
   mainInput.addEventListener('keypress', e => { if (e.key === 'Enter') addMain(); });
 
-  // AI breakdown generation
+  // AI breakdown generation (optional feature — requires an AI provider in Settings)
   aiBtn.addEventListener('click', async () => {
     const task = mainInput.value.trim();
     if (!task) return;
+    if (!window.AIAssistant?.isEnabled?.()) {
+      alert('AI breakdown needs an AI provider. Open Settings → AI Assistance to configure one (OpenAI, Gemini, Claude, Mistral, a local model…). You can still break tasks down manually.');
+      return;
+    }
     aiBtn.disabled = true;
     const originalText = aiBtn.textContent;
     aiBtn.textContent = 'Generating...';
     try {
-      const prompt = `Break down the task '${task}' into a list of simple sub-tasks. Put each sub-task on a new line.`;
-      const aiText = await callGemini(prompt);
-      if (!aiText) throw new Error('No response');
-      const steps = aiText.split('\n').map(t => t.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
+      const prompt = `Break down the task "${task}" into 3-8 small, concrete sub-tasks that someone with ADHD can start immediately. Return a JSON array of objects with keys "text" (short imperative step) and "duration" (estimated minutes, integer).`;
+      const result = await window.AIAssistant.completeJSON(prompt, { maxTokens: 600 });
+      const steps = (Array.isArray(result) ? result : [])
+        .map(item => ({
+          text: String(item.text || '').trim(),
+          duration: Math.max(1, parseInt(item.duration, 10) || 5),
+        }))
+        .filter(item => item.text);
+      if (!steps.length) throw new Error('The AI did not return any sub-tasks.');
 
-      // Create new node with subtasks. Subtasks get 5 min default.
-      // Parent duration will be calculated.
+      // Create new node with subtasks. Parent duration will be calculated.
       const newNode = {
         text: task,
         completed: false,
-        subtasks: steps.map(s => ({ text: s, completed: false, subtasks: [], duration: 5 })),
+        subtasks: steps.map(s => ({ text: s.text, completed: false, subtasks: [], duration: s.duration })),
         duration: 0 // Will be recalculated
       };
 

@@ -21,6 +21,10 @@
     // exposed in the Settings panel and used by routine.js to initialize the auto-run
     // checkbox. Users can override it per-session in the routine player itself.
     routineAutoRunDefault: false,
+
+    // Context-aware mode: when a routine window opens, automatically switch to the
+    // routine player instead of only showing a suggestion banner on the Home view.
+    contextAutoSwitch: false,
   };
 
   function getConfig() {

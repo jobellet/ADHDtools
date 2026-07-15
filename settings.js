@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     enableUnifiedScheduler: document.getElementById('setting-unified-scheduler'),
     includeCalendarInSchedule: document.getElementById('setting-include-calendar'),
     routineAutoRunDefault: document.getElementById('setting-routine-auto-run'),
+    contextAutoSwitch: document.getElementById('setting-context-autoswitch'),
 
     // Default focus session duration in minutes. Defined in the Settings panel as
     // "focus-duration-setting". This mirrors ConfigManager.focusDefaultMinutes.
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.enableUnifiedScheduler) fields.enableUnifiedScheduler.checked = values.enableUnifiedScheduler;
     if (fields.includeCalendarInSchedule) fields.includeCalendarInSchedule.checked = values.includeCalendarInSchedule;
     if (fields.routineAutoRunDefault) fields.routineAutoRunDefault.checked = values.routineAutoRunDefault;
+    if (fields.contextAutoSwitch) fields.contextAutoSwitch.checked = values.contextAutoSwitch;
 
     // Populate focus session duration if the field exists
     if (fields.focusDefaultMinutes) fields.focusDefaultMinutes.value = values.focusDefaultMinutes ?? window.ConfigManager.DEFAULT_CONFIG.focusDefaultMinutes;
@@ -99,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         enableUnifiedScheduler: fields.enableUnifiedScheduler?.checked || false,
         includeCalendarInSchedule: fields.includeCalendarInSchedule?.checked || false,
         routineAutoRunDefault: fields.routineAutoRunDefault?.checked || false,
+        contextAutoSwitch: fields.contextAutoSwitch?.checked || false,
 
         // Persist the default focus session duration from the Settings panel
         focusDefaultMinutes: Number(fields.focusDefaultMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.focusDefaultMinutes,

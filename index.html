@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="routine-focus.css">
     <link rel="stylesheet" href="styles-routine-settings.css">
     <link rel="stylesheet" href="mobile-optimization.css">
+    <link rel="stylesheet" href="styles-assistant.css">
     <script src="timestamp-storage.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="app.js" defer></script>
@@ -18,19 +19,24 @@
     <script src="data-manager.js" defer></script>
     <script src="core/user-context.js" defer></script>
     <script src="cross-tool-interaction.js" defer></script>
-    <script src="gemini.js" defer></script>
+    <script src="core/ai-provider.js" defer></script>
+    <script src="core/task-parser.js" defer></script>
+    <script src="core/context-engine.js" defer></script>
     <script src="api-settings.js" defer></script>
     <script src="settings.js" defer></script>
     <script src="pomodoro.js" defer></script>
-    <script src="core/duration-learning.js" defer></script>
-    <script src="core/urgency-helpers.js" defer></script>
+    <script type="module" src="core/duration-learning.js"></script>
+    <script type="module" src="core/urgency-helpers.js"></script>
     <script type="module" src="core/task-model.js"></script>
+    <script type="module" src="core/task-store.js"></script>
+    <script type="module" src="core/scheduler.js"></script>
     <script type="module" src="day-planner.js"></script>
     <script src="task-breakdown.js" defer></script>
     <script src="habit-tracker.js" defer></script>
     <script src="focus-mode.js" defer></script>
     <script src="reward-system.js" defer></script>
     <script src="today-view.js" defer></script>
+    <script src="assistant-dashboard.js" defer></script>
     <script src="calendar-tool.js" defer></script>
     <script src="calendar-settings.js" defer></script>
     <script src="calendar-integration.js" defer></script>
@@ -97,6 +103,22 @@
                 <p data-i18n="home-text">This website provides a collection of interactive tools designed specifically
                     to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
 
+                <!-- Context banner: what should I be doing right now? -->
+                <div id="context-banner" class="context-banner" style="display:none"></div>
+
+                <!-- Quick capture: add or speak a task naturally -->
+                <div class="quick-capture">
+                    <form id="quick-capture-form" class="quick-capture-form">
+                        <input type="text" id="quick-capture-input"
+                            placeholder="Add a task naturally… e.g. “Call mom tomorrow at 5pm for 20 min !7”"
+                            aria-label="Add a task in natural language" autocomplete="off">
+                        <button type="button" id="quick-capture-voice" class="btn btn-secondary" title="Speak a task"
+                            aria-label="Speak a task"><i class="fas fa-microphone"></i></button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add</button>
+                    </form>
+                    <p id="quick-capture-status" class="quick-capture-status" aria-live="polite"></p>
+                </div>
+
                 <div id="today-view" class="today-view">
                     <div class="today-current">
                         <h3>Current Task</h3>
@@ -116,6 +138,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Daily progress summary (evening review) -->
+                <div id="daily-progress" class="daily-progress"></div>
 
                 <div class="tools-grid">
                     <div class="tool-card" data-tool="pomodoro">
@@ -701,6 +726,10 @@
                                         <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
                                         <label for="setting-include-calendar">Include calendar events in unified scheduler</label>
                                     </div>
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-context-autoswitch" name="contextAutoSwitch">
+                                        <label for="setting-context-autoswitch">Auto-open the routine player when a routine window starts (context-aware mode)</label>
+                                    </div>
                                     <p class="coming-soon">More experimental features coming soon.</p>
                                 </div>
                             </details>
@@ -825,7 +854,7 @@
                         <!-- API / AI Settings Panel -->
                         <div class="settings-panel">
                             <details class="settings-toggle">
-                                <summary>API / AI</summary>
+                                <summary>AI Assistance (optional — any provider)</summary>
                                 <div class="settings-content">
                                     <div id="api-settings"></div>
                                 </div>

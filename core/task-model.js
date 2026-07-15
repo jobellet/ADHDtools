@@ -1,4 +1,4 @@
-const DEFAULT_USER = 'main';
+export const DEFAULT_USER = 'main';
 
 function getConfig() {
   if (typeof window !== 'undefined') {
@@ -13,7 +13,7 @@ function normalizeNumber(val, fallback) {
   return Number.isFinite(num) ? num : fallback;
 }
 
-function computeUrgencyFromDeadline(deadline) {
+export function computeUrgencyFromDeadline(deadline) {
   if (!deadline) return 5;
   const now = new Date();
   const due = new Date(deadline);
@@ -41,14 +41,14 @@ function generateHash({ user, name, createdAt, seed }) {
   return baseHash(basis);
 }
 
-function computeAchievementScore(task) {
+export function computeAchievementScore(task) {
   const durationHours = normalizeNumber(task.durationMinutes, 0) / 60;
   const importance = normalizeNumber(task.importance, 0);
   const score = importance * durationHours;
   return Number.isFinite(score) ? Number(score.toFixed(2)) : 0;
 }
 
-function createTask(raw = {}, overrides = {}) {
+export function createTask(raw = {}, overrides = {}) {
   const cfg = getConfig();
   const createdAt = raw.createdAt || new Date().toISOString();
   const user = raw.user || DEFAULT_USER;
@@ -95,11 +95,11 @@ function createTask(raw = {}, overrides = {}) {
   return merged;
 }
 
-function updateTask(task, updates) {
+export function updateTask(task, updates) {
   return createTask({ ...task, ...updates, createdAt: task.createdAt || new Date().toISOString(), hash: task.hash, id: task.id }, {});
 }
 
-function markTaskCompleted(task, completedAt = new Date().toISOString()) {
+export function markTaskCompleted(task, completedAt = new Date().toISOString()) {
   const updated = updateTask(task, { completed: true, completedAt });
   return { ...updated, achievementScore: computeAchievementScore(updated) };
 }

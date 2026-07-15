@@ -1,0 +1,196 @@
+/* Assistant layer: context banner, quick capture, daily progress, AI settings */
+
+/* --- Context banner --- */
+.context-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--surface);
+    border-left: 5px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.context-banner-icon {
+    font-size: 1.6rem;
+    color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.context-banner-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.context-banner-body strong {
+    display: block;
+    font-size: 1.05rem;
+}
+
+.context-banner-body p {
+    margin: 0.15rem 0 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+.context-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.context-routine { border-left-color: #ff9800; }
+.context-routine .context-banner-icon { color: #ff9800; }
+.context-task { border-left-color: var(--primary-color); }
+.context-review { border-left-color: #5c6bc0; }
+.context-review .context-banner-icon { color: #5c6bc0; }
+.context-plan { border-left-color: #fbc02d; }
+.context-plan .context-banner-icon { color: #fbc02d; }
+
+/* --- Quick capture --- */
+.quick-capture {
+    margin-bottom: 1.25rem;
+}
+
+.quick-capture-form {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.quick-capture-form input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+}
+
+.quick-capture-form input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.quick-capture-status {
+    margin: 0.35rem 0 0;
+    font-size: 0.85rem;
+    opacity: 0.85;
+    min-height: 1.2em;
+}
+
+.quick-capture-status.error {
+    color: var(--error);
+}
+
+#quick-capture-voice.listening {
+    background: var(--error);
+    color: var(--on-error);
+    animation: quick-capture-pulse 1s infinite;
+}
+
+@keyframes quick-capture-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* --- Daily progress --- */
+.daily-progress {
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.daily-progress h3 {
+    margin-bottom: 0.75rem;
+}
+
+.daily-progress-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.daily-progress-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 90px;
+}
+
+.daily-progress-stat .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.daily-progress-stat .stat-label {
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.daily-progress-coach {
+    margin: 0.6rem 0 0;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* --- AI settings panel --- */
+.ai-settings .setting-group {
+    margin-bottom: 0.85rem;
+}
+
+.ai-settings input,
+.ai-settings select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+}
+
+.ai-settings-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ai-settings .status {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.ai-settings .status.error {
+    color: var(--error);
+}
+
+/* --- Mobile --- */
+@media (max-width: 600px) {
+    .context-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+
+    .context-banner-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .quick-capture-form {
+        flex-wrap: wrap;
+    }
+
+    .quick-capture-form input[type="text"] {
+        flex-basis: 100%;
+    }
+
+    .daily-progress-stats {
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+}
