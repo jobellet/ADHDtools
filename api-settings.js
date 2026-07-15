@@ -17,6 +17,47 @@ document.addEventListener('DOMContentLoaded', () => {
         AI task breakdown, AI day planning, and encouragement summaries.
         Your key is stored only in this browser and requests go directly to the provider.
       </p>
+
+      <details class="settings-toggle" style="margin-bottom: 1rem; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px;">
+        <summary style="font-weight: 500; cursor: pointer;">How to get an API Key</summary>
+        <div class="settings-content" style="padding-top: 0.5rem; font-size: 0.9em;">
+          <p><strong>Google Gemini (Recommended, has Free Tier):</strong></p>
+          <ol style="margin-top: 0.25rem; margin-bottom: 0.5rem; padding-left: 1.5rem;">
+            <li>Go to <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a> and sign in.</li>
+            <li>Click "Create API key".</li>
+            <li>Copy the key and paste it below. (The free tier is generous but rate-limited).</li>
+          </ol>
+
+          <p><strong>OpenAI (ChatGPT):</strong></p>
+          <ol style="margin-top: 0.25rem; margin-bottom: 0.5rem; padding-left: 1.5rem;">
+            <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">OpenAI API keys</a> (requires a funded developer account).</li>
+            <li>Click "Create new secret key".</li>
+            <li>Copy the key and paste it below.</li>
+          </ol>
+
+          <p><strong>Anthropic (Claude):</strong></p>
+          <ol style="margin-top: 0.25rem; margin-bottom: 0.5rem; padding-left: 1.5rem;">
+            <li>Go to <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">Anthropic Console</a> (requires a funded developer account).</li>
+            <li>Click "Create Key".</li>
+            <li>Copy the key and paste it below.</li>
+          </ol>
+
+          <p><strong>Mistral AI:</strong></p>
+          <ol style="margin-top: 0.25rem; margin-bottom: 0.5rem; padding-left: 1.5rem;">
+            <li>Go to <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener noreferrer">Mistral Console</a>.</li>
+            <li>Click "Create new key".</li>
+            <li>Copy the key and paste it below.</li>
+          </ol>
+
+          <p><strong>Groq (Fast, limited free tier):</strong></p>
+          <ol style="margin-top: 0.25rem; margin-bottom: 0.5rem; padding-left: 1.5rem;">
+            <li>Go to <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">Groq Console</a>.</li>
+            <li>Click "Create API Key".</li>
+            <li>Copy the key and paste it below.</li>
+          </ol>
+        </div>
+      </details>
+
       <div class="setting-group">
         <label for="ai-provider-select">AI provider</label>
         <select id="ai-provider-select"></select>
