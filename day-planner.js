@@ -601,7 +601,6 @@ function initDayPlanner() {
         const prev = timeBlocksContainer.scrollTop;
         renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
         timeBlocksContainer.scrollTop = prev;
-        updateSlider();
     });
 
     window.EventBus.addEventListener('calendarEventsUpdated', () => {
