@@ -13,10 +13,30 @@ const mime = {
 };
 
 http.createServer((req, res) => {
-  let filePath = path.join(root, decodeURIComponent(req.url.split('?')[0]));
+  // Mirror GitHub Pages: the app lives under /ADHDtools there, so strip
+  // that base path locally (assets on deep-linked pages resolve under it).
+  let urlPath = decodeURIComponent(req.url.split('?')[0]);
+  if (urlPath === '/ADHDtools' || urlPath.startsWith('/ADHDtools/')) {
+    urlPath = urlPath.slice('/ADHDtools'.length) || '/';
+  }
+  let filePath = path.join(root, urlPath);
   if (filePath.endsWith('/')) filePath = path.join(filePath, 'index.html');
   fs.readFile(filePath, (err, data) => {
     if (err) {
+      // SPA fallback: the app router uses paths like /ADHDtools/settings
+      // (GitHub Pages base path); serve index.html for extension-less paths.
+      if (!path.extname(filePath)) {
+        fs.readFile(path.join(root, 'index.html'), (err2, indexData) => {
+          if (err2) {
+            res.writeHead(404);
+            res.end('Not found');
+            return;
+          }
+          res.writeHead(200, { 'Content-Type': 'text/html' });
+          res.end(indexData);
+        });
+        return;
+      }
       res.writeHead(404);
       res.end('Not found');
       return;

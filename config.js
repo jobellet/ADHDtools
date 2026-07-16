@@ -11,6 +11,10 @@
     enableUnifiedScheduler: true,
     includeCalendarInSchedule: true,
 
+    // Google Calendar private sync window (days before/after today).
+    gcalPastDays: 7,
+    gcalFutureDays: 30,
+
     // Default duration for focus sessions (in minutes). Used by the focus-mode
     // module. Users can set this via the Settings panel. When launching a new
     // focus mode session, the app will use this duration unless the user

@@ -1,309 +1,47 @@
 # ADHD Tools Hub
 
-[View Live Website](https://jobellet.github.io/ADHDtools/)
+[**▶ Open the Live App**](https://jobellet.github.io/ADHDtools/)
 
-Interactive tools to help manage ADHD symptoms and improve productivity.
+Interactive tools to help manage ADHD symptoms and improve productivity. Everything runs in your browser — your data stays on your device unless *you* connect a sync option.
 
-[**Transition Plan**](transition_plan.md): Learn about our roadmap to transition the system to a context-aware dashboard that automatically displays the appropriate tool based on the time of day and user habits, removing cognitive and tool-search burden.
+The long-term goal: a unified personal assistant where you just add or speak a task ("Call mom tomorrow at 5pm !7") and the app handles urgency, scheduling, focus timing and rewards. Read the full [vision, roadmap & current status](docs/vision-roadmap.md) and the [Transition Plan](transition_plan.md).
 
----
+## 📚 Guides & Tutorials
 
-## 🌍 Vision: What ADHDtools Should Become
-
-ADHDtools is evolving toward a unified personal assistant that organizes your day around what truly matters — not endless to-do lists, but smart tasks that adapt to your context, priorities, and time. The goal is to make it the one dashboard you open in the morning and immediately see what to do now, what comes next, and why.
-
-Once everything is set up, the user should only have to:
-
-1. Add or speak a new task naturally (“Call mom”, “Finish report by Friday”).
-2. Tag its importance if desired (1–10).
-3. Let the app handle everything else — urgency tracking, scheduling, focus timing, and rewarding.
-
-All tools (Pomodoro, Planner, Focus Mode, Routine, Calendar, Habit Tracker, Rewards) will operate on a shared task data format, ensuring every feature reflects the same task universe.
-
----
-
-## 🧩 Core Data Model: The Task Object
-
-Every tool communicates through a unified data structure — the Task. The helper functions live in `core/task-model.js` and generate deterministic identifiers so the same task can flow across tools.
-
-Each task includes:
-
-| Field | Description |
+| Guide | What you'll learn |
 | --- | --- |
-| user | Owner of the task (default: `main`). |
-| name | Short description, e.g., “Finish report”. |
-| text | Human-friendly label (alias of `name` for legacy tools). |
-| hash | Deterministic unique identifier derived from user + name + createdAt. Also mirrored to `id` for backwards compatibility. |
-| deadline | ISO datetime string or null. Used to derive urgency and schedule fixed blocks. |
-| plannerDate | Optional ISO datetime for day-planner placements. |
-| dependency | Hash of another task that must be completed first. |
-| urgency | 1–10. Auto-derived from deadline when not provided. |
-| importance | 1–10 priority weight from the user. |
-| durationMinutes | Estimated duration in minutes (positive number). |
-| isFixed | Boolean flag for fixed calendar events/blocks. |
-| completed | Boolean completion flag. |
-| completedAt | ISO string of when the task was finished. |
-| achievementScore | importance × (durationMinutes / 60) when completed. |
+| [**Sync your data across devices**](docs/sync-across-devices.md) | Google Drive backup/restore, file export/import via any cloud folder, email — with conflict-safe merging. |
+| [**Google Calendar sync**](docs/google-calendar-sync.md) | Private OAuth sync (recommended — no public link!), `.ics` file import, or a public ICS URL. Full Google Cloud setup tutorial included. |
+| [**Optional AI assistance**](docs/ai-providers.md) | Bring your own provider — OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model. Every feature also works without AI. |
+| [**Vision, roadmap & status**](docs/vision-roadmap.md) | Where the project is heading and what already works. |
+| [**Data model & scheduler**](docs/task-model.md) | The unified Task object, TaskStore, and how the scheduler prioritizes your day. |
+| [**Family routine view**](docs/family-view.md) | One column per family member on a shared big screen. |
+| [**Manual test cases**](docs/testing.md) | Scenarios to verify behavior after changes. |
+| [**Contributing**](docs/contributing.md) | How to set up locally and submit changes. |
 
-Utility helpers:
+## 🧰 Features
 
-* `createTask(raw, overrides)` – normalize any incoming object into a Task.
-* `updateTask(task, updates)` – merge updates without losing the deterministic hash.
-* `markTaskCompleted(task, completedAt)` – set completion flags and recompute the achievement score.
-* `computeUrgencyFromDeadline(deadline)` – derive urgency once per day from the deadline.
-* `computeAchievementScore(task)` – shared scoring logic for achievements/rewards.
-
----
-
-## 🧠 Typical User Workflow (Once Fully Implemented)
-
-1. **Morning start**
-
-   You open the app and instantly see “What to do now” — the first task scheduled by the adaptive algorithm.
-
-   A timeline below shows the next few tasks, adjusted automatically for deadlines and available time.
-
-2. **During the day**
-
-   As you complete tasks, they’re marked “done” and converted into achievement points.
-
-   If you skip or delay a task, urgency scores automatically adapt — the system learns your real pacing.
-
-   Focus Mode can be launched directly from any task to work distraction-free, with automatic logging.
-
-3. **Evening review**
-
-   You see a quick summary: completed tasks, achievement points gained, and categories where you made progress.
-
-   Rewards are unlocked based on your total score, giving an encouraging feedback loop.
-
-   Tomorrow’s plan is already built — balancing deadlines, priorities, and your learned daily rhythm.
-
-4. **Family mode (future)**
-
-   Each family member can have their own user profile.
-
-   Shared routines (e.g. “Prepare kids for school”) synchronize tasks and show joint achievements.
-
----
-
-## 🚀 Roadmap
-
-| Phase | Goal | Key Steps |
-| --- | --- | --- |
-| 1. Data Unification | Merge all existing modules (Routine, Planner, Pomodoro, Rewards, etc.) to use the same Task data schema. | - Define shared JSON schema for Task.<br> - Create a central task_store.json to be read/write by all tools.<br> - Add helper functions to convert legacy data. |
-| 2. Core Scheduler Integration | Build the unified day planner that auto-fills the timeline based on urgency × importance × available time. | - Implement scoring algorithm.<br> - Allow manual override and re-ordering.<br> - Integrate calendar imports and routines. |
-| 3. Learning Layer | Make duration and urgency adaptive. | - Track real completion times.<br> - Update estimated duration automatically.<br> - Recalculate urgency each morning. |
-| 4. Unified Interface | Create a single dashboard (“Today view”) accessible from any device. | - Combine Planner, Focus Mode, and Rewards.<br> - Make it fully responsive for smartphones.<br> - Implement notifications for upcoming tasks. |
-| 5. Achievements & Gamification | Turn progress into motivation. | - Aggregate completed task scores.<br> - Display graphs of achievement over time.<br> - Link to reward unlocks and family comparisons. |
-| 6. Multi-User Extension | Expand to families and teams. | - Add user selection and permission levels.<br> - Share tasks and routines.<br> - Sync through cloud or local shared file. |
-
----
-
-## 💡 Philosophy
-
-The app should feel like a cognitive prosthesis for people who struggle with task switching or priority overload. Rather than forcing users to plan everything, it helps them see only what matters right now — and rewards consistent progress rather than perfection.
-
-The end goal is for the user not to have to search for the right tool to use at a given time but for the system to remove cognitive and tool-search burden. For instance, at a certain time of the day the only thing to do is to display a given routine. When it is time to cook, the system just displays the recipe of the day, when it is work time, the system only displays the day plan and pomodoro, etc. Read more in our [**Transition Plan**](transition_plan.md).
-
-**Note for contributors and AI agents:** Treat this vision and data model as the global north star. When implementing new features or refactors, align them with this roadmap and update this README to reflect progress so future work stays cohesive.
-
-## Current Status
-
-✅ Unified Task model and helper functions in `core/task-model.js` (hashes, urgency, achievement scoring).
-
-✅ Shared task storage via `core/task-store.js`, mirrored through `DataManager` for legacy tools.
-
-✅ Day Planner events and Routine quick tasks persist into the shared store with deadlines/durations, and the **Generate schedule for today** button now stamps planner times directly from the scheduler output.
-
-✅ Unified scheduler (`core/scheduler.js`) now feeds both the Day Planner timeline and Today View, keeping current/upcoming items in sync after generation.
-
-✅ Scheduler respects task dependencies and FIX/FLEX tags, reordering only flexible tasks and showing blocked items in the Today View.
-
-✅ Urgency auto-refreshes daily based on deadlines, with skip/reschedule controls raising urgency when tasks slip.
-✅ Urgency smoothing helper tempers far-away deadlines and accelerates urgency when tasks are repeatedly skipped.
-
-✅ Achievements and rewards now use completed Task scores instead of a separate points ledger, with per-user filtering.
-✅ Multi-user selector filters Today View, scheduler output, and achievement/ledger stats to the active profile.
-
-✅ Day Planner “Add Event” modal restored with dependency/priority fields and scheduler-aware edits.
-
-🆕 Achievements can be grouped by task category with time-spent rollups, and toggles let you view either the active user or all profiles.
-🆕 Family overview cards surface each user’s current and next tasks directly in Today View, with mobile-friendly layout tweaks.
-🆕 Habit Tracker check-ins now create completed “habit” tasks in the shared TaskStore for the active user, so Rewards/Achievements and category stats reflect streaks automatically.
-
-🆕 **Natural-language quick capture** on the Home view: type or speak “Call mom tomorrow at 5pm for 20 min !7” and it becomes a fully-tagged Task (deadline, duration, importance). Works completely offline via a heuristic parser (`core/task-parser.js`) and gets smarter automatically when an AI provider is configured.
-
-🆕 **Context-aware Home dashboard** (`core/context-engine.js`, first step of the [Transition Plan](transition_plan.md)): the Home view now shows a single suggestion banner for *right now* — the open routine window, the currently scheduled task (one-tap focus), the morning planning phase, or the evening review — with an optional setting to auto-open the routine player when a routine window starts.
-
-🆕 **Provider-agnostic AI assistance** (`core/ai-provider.js`): every AI feature (quick-capture parsing, AI task breakdown, AI day planning, voice capture, encouragement summaries) now works with OpenAI/ChatGPT, Google Gemini, Anthropic Claude, Mistral, Groq, OpenRouter, or any local OpenAI-compatible server (Ollama, LM Studio). AI remains strictly optional — with provider “None”, every tool still works.
-
-🆕 **Daily progress card**: tasks completed today, achievement points, and focused minutes at a glance on the Home view — plus an optional AI encouragement note.
-
-🛠️ In progress: deeper Focus Mode integration with the scheduled task of the moment.
-
-🔜 Planned: richer calendar imports, smarter dependency handling, and family profiles.
-
-## Task Storage
-
-All tasks are persisted in the browser under the `adhd-unified-tasks` key (via `core/task-store.js`). The store exposes:
-
-* `getAllTasks()`, `getPendingTasks()`, `getTasksByUser(user)`
-* `addTask(task)`, `updateTaskByHash(hash, updates)`, `getTaskByHash(hash)`
-* `markComplete(hash)`
-
-Urgency scores are recalculated once per day from task deadlines, and the duration-learning module updates `durationMinutes` with a rolling average every time a task is marked complete.
-
-Urgency smoothing lives in `core/urgency-helpers.js`. Deadlines more than 48 hours out receive a gentler urgency slope, while tasks that are repeatedly skipped gain urgency faster through a skip ledger (stored locally) so they bubble back into the schedule.
-
-Legacy modules still calling `DataManager` automatically read/write through this shared store, so new tools should prefer `TaskStore` directly.
-
-## Features
-
-*   **Pomodoro Timer:** Work in focused sprints with timed breaks to maintain productivity.
+*   **Pomodoro Timer:** Work in focused sprints with timed breaks.
 *   **Eisenhower Matrix:** Prioritize tasks based on importance and urgency.
-*   **Day Planner:** Visualize your day with time blocks for better time management.
-*   **Task Manager:** Keep track of your to-do list with priorities and categories.
-*   **Task Breakdown:** Break complex tasks into smaller, manageable steps.
+*   **Day Planner:** Visualize your day with time blocks.
+*   **Task Manager & Breakdown:** Track to-dos and split complex tasks into manageable steps.
 *   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
 *   **Routine Tool:** Create and run daily routines with timed tasks.
 *   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
-*   **Calendar Tool:** Import events from ICS files and integrate them with other tools.
-*   **Unified Scheduler:** Generate a daily schedule across tools using shared TaskStore data and calendar blocks.
-*   **Today View:** A lightweight dashboard that surfaces the current task, upcoming items, and quick actions.
-*   **Quick Capture:** Add or speak tasks in natural language ("Finish report by Friday !8"); works offline, enhanced by AI when configured.
-*   **Context Banner:** The Home view suggests the right tool for right now — routine window, scheduled task, morning planning, or evening review.
-*   **AI Assistance (optional):** Bring your own provider — OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model.
+*   **Calendar:** Sync privately with [Google Calendar](docs/google-calendar-sync.md) or import ICS files.
+*   **Unified Scheduler & Today View:** One prioritized plan across all tools, surfacing the current task and what's next.
+*   **Quick Capture:** Add or speak tasks in natural language — works offline, enhanced by [AI](docs/ai-providers.md) when configured.
+*   **Context Banner:** The Home view suggests the right tool for right now.
+*   **Cross-device sync:** [Back up to Google Drive or move a file](docs/sync-across-devices.md) — you choose.
 
-## Family Routine View (Big Screen)
+## 🔒 Privacy
 
-The Family Routine view provides one vertical column per user showing what each person should be doing during the active routine window.
+All data is stored locally in your browser. Nothing is sent to any server unless you explicitly enable an integration (Google sync goes directly from your browser to Google; AI requests go directly to the provider you configured). There is no middleman server.
 
-* Use the **Window start** and **Window end** fields to define the current routine window (defaults to 06:00–12:00). Task positions are scaled vertically from the first task time to the last within that window.
-* Toggle **Big-screen display mode** to hide navigation chrome and cast the page to a shared screen (e.g., kitchen TV).
-* Per-user **Can read?** checkboxes let you mark non-readers. When unchecked and an image mapping exists, the task label is hidden in favor of the image.
-* In **Task images**, select a task name and upload an image; mappings are stored locally in the browser. Existing mappings appear with thumbnails and delete controls.
-* Tasks are pulled from the shared TaskStore; FIX/FLEX tags and dependencies influence styling (dashed/blocked borders) while maintaining scheduler expectations.
+## 💬 Feedback
 
-## Privacy
-
-All data is stored locally in your browser. Nothing is sent to any server, ensuring your information remains private.
-
-## Unified Scheduler & TaskStore
-
-`core/scheduler.js` exposes `getTodaySchedule()` and `getCurrentTask()` to produce a prioritized plan for the current day. The scheduler:
-
-* reads tasks from the shared **TaskStore** (including routines, planner items, and calendar imports),
-* excludes completed or dependency-blocked tasks,
-* blocks out fixed calendar events and `[FIX]`-tagged items,
-* scores tasks with `importance × urgency`, then fills open time in priority order.
-
-The Day Planner includes a **Generate schedule for today** action that applies the scheduler to the timeline, and the **Start Focus Session for Current Task** button boots focus mode with the active slot.
-
-### Manual Test Cases
-
-* **[FIX] stays pinned:**
-  1. Run in console: `window.TaskStore.addTask({ name: '[FIX] Standup', plannerDate: new Date().toISOString().slice(0,16), durationMinutes: 30, isFixed: true });`
-  2. Click **Generate schedule for today** in Day Planner. The block should remain at its set time and appear in Today View as current/upcoming; skipping should keep it on today.
-* **[FLEX] reschedules:**
-  1. Run: `window.TaskStore.addTask({ name: '[FLEX] Write report', importance: 8, urgency: 7, durationMinutes: 45 });`
-  2. Generate the schedule. The task should land in the next available slot and can move to later today/tomorrow via the Today View skip action.
-* **Quick/routine tasks surface:** add a quick routine task (Routine tab) and generate the schedule; it should populate on the Day Planner timeline and in the Today View upcoming list.
-* **Multi-user filtering:** create tasks for two users via `window.TaskStore.addTask({ name: 'Main task', user: 'main' }); window.TaskStore.addTask({ name: 'Sibling task', user: 'sibling' });` then switch the user dropdown in the navbar — Today View, the scheduler output, and Rewards/Achievements should show only the active profile.
-* **Rewards ledger:** complete a few tasks (or run `window.TaskStore.markComplete(hash)` for an existing one) and open Rewards. Earned/available points should reflect completed tasks, and claiming a reward should increase the “Spent” total while reducing available points.
-* **Focus mode completion:** start focus from Today View, let the timer finish, and choose to complete the task. The task should flip to completed, and the learned duration should reflect the session length.
-* **Category achievements + toggle:** finish a few tasks for two different users. In Rewards/Achievements, toggle between active user and all users and verify category rows list counts, points, and minutes.
-* **Family overview:** create at least one task per user with planner dates today. The Home view should show a card per user with current/next populated and remain readable on mobile widths.
-* **Habit → achievements:** add a habit, mark today as complete, then open Rewards/Achievements. A new “habit” task for the active user should appear in TaskStore (via console `window.TaskStore.getAllTasks().filter(t => t.category === 'habit')`), and totals/ledger should refresh without switching users.
-* **Family columns render:** create 3–4 users with routine tasks inside a morning window (e.g., 06:00–10:00). Open the Family tab and confirm each user receives a column with vertically spaced tasks.
-* **Window refresh:** change the window start/end fields and click Refresh. Verify task positions update relative to the adjusted window bounds.
-* **Dependency styling:** add an incomplete dependency; the dependent task should display the blocked styling in the Family view.
-* **Images for non-readers:** set `canRead=false` for a child, map their tasks to images, and confirm the column shows image-first tiles.
-* **Display mode:** toggle big-screen display mode to hide navigation chrome and ensure the layout remains readable on large and small screens.
-
-The **Today View** (on the Home tab) highlights the current task, the next three items, and quick actions to start focus, mark done (updates TaskStore), or skip/reschedule with higher urgency.
-The skip flow now offers "end of day", "tomorrow", or a custom date/time while recording a skip count that feeds into urgency smoothing and guards against violating dependencies.
-
-## Feedback
-
-If you have suggestions or feedback, please let me know!
-
-## Optional AI Assistance (Any Provider)
-
-ADHD Tools works **fully offline with no AI at all** — the schedule generator, natural-language quick capture, routines, rewards, and every other tool have non-LLM implementations. Configuring an AI provider is optional and unlocks:
-
-* Smarter natural-language task capture (typed or spoken) — better date/duration/priority understanding than the offline parser.
-* ✨ AI Breakdown in the Task Breakdown tool (sub-tasks with duration estimates).
-* AI Plan in the Day Planner (schedules loose tasks around existing events).
-* A short AI encouragement note in the daily progress card.
-
-### Supported providers
-
-Open **Settings → AI Assistance (optional — any provider)** and pick one:
-
-| Provider | Default model | Where to get a key |
-| --- | --- | --- |
-| OpenAI (ChatGPT) | `gpt-4o-mini` | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| Google Gemini | `gemini-2.5-flash` | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) |
-| Anthropic (Claude) | `claude-haiku-4-5-20251001` | [console.anthropic.com](https://console.anthropic.com) |
-| Mistral | `mistral-small-latest` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
-| Groq | `llama-3.3-70b-versatile` | [console.groq.com/keys](https://console.groq.com/keys) |
-| OpenRouter | `openai/gpt-4o-mini` | [openrouter.ai/keys](https://openrouter.ai/keys) |
-| Custom / Local | any | Any OpenAI-compatible endpoint: Ollama, LM Studio, vLLM… (no key needed for most local servers) |
-
-Paste your key, optionally override the model, click **Test connection**, then **Save**. Keys are stored only in your browser's `localStorage` and requests go directly from your browser to the provider — there is no middleman server. Using an API may incur charges with your provider; keep your key private and use the **Clear** button to remove it at any time.
-
-Existing users with a saved Gemini key are migrated automatically.
-
-**Developers:** the shared layer lives in `core/ai-provider.js` (`window.AIAssistant.complete/completeJSON/isEnabled`). New features should call it (never a specific provider) and must always offer a non-AI fallback path.
-
-## Optional Google Calendar Integration
-
-To connect the Day Planner to your Google Calendar:
-
-1. **Create API credentials** – In the [Google Cloud Console](https://console.cloud.google.com/), enable the *Google Calendar API* and create an **API key** and an **OAuth client ID** (type Web application).
-2. **Enter credentials in the Calendar tool** – Open the Calendar page and use the **Google Calendar API** box at the top to save your Client ID and API key.
-3. **Connect your calendar** – After saving, click **Connect Google Calendar** in the Day Planner or Task Manager and authorize access. Events from the current day in your primary calendar are saved locally and shown automatically.
-
-Your credentials remain in your browser only. Use the **Clear** button in the Calendar settings to remove them at any time.
-
-
-## Contributing
-
-If you'd like to contribute, please follow these steps:
-
-1.  **Fork the repository:** Create your own copy of the project.
-2.  **Create a new branch:** Make a new branch for your changes (e.g., `feature/new-tool` or `bugfix/timer-issue`).
-3.  **Make your changes:** Implement your new feature or bug fix.
-4.  **Test your changes:** Ensure your changes work as expected and don't break existing functionality.
-5.  **Commit your changes:** Write clear and concise commit messages.
-6.  **Submit a pull request:** Push your changes to your fork and open a pull request to the main repository.
-
-## Importing ICS Files
-
-The Calendar tool can load `.ics` files exported from other apps like Google Calendar or Outlook.
-
-1. Export your calendar as an `.ics` file.
-   - In **Google Calendar** open **Settings → Import & export** and choose **Export** to download a ZIP containing your calendars. Extract the `.ics` file from it.
-2. Open the **Calendar** tool and click **Import ICS**.
-3. Select the `.ics` file and the events will appear in the list and be stored locally.
-
-Imported calendar events are converted into TaskStore entries using deterministic hashes based on the ICS UID and start time. `[FIX]` and `[FLEX]` tags set whether the scheduler treats them as fixed or flexible blocks.
-
-Only simple events are supported and nothing is uploaded anywhere.
-
-### Loading a Public Google Calendar
-
-Instead of manually exporting files, you can fetch events directly from a public link:
-
-1. In **Google Calendar** open **Settings** and choose your calendar under **Settings for my calendars**.
-2. Under **Access permissions for events** check **Make available to public** (Google warns that everything will be visible to anyone with the link).
-3. Go to **Integrate calendar** and copy the **Public address in iCal format**.
-4. In the Calendar tool paste this link into the **Load ICS URL** field and click **Load ICS URL**. Events will refresh automatically every 30 seconds.
-
-**Privacy Risks:** anyone who has this link can view your calendar details. Share it carefully. To change the link later, disable public sharing (uncheck **Make available to public**) and enable it again to generate a new address or use **Reset private URLs** under **Integrate calendar**.
-
+If you have suggestions or feedback, please open an issue — or just let me know!
 
 ## License
 

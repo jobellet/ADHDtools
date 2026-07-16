@@ -485,30 +485,33 @@
     setTimeout(() => location.reload(), 1500);
   }
 
+  // Shared import entry point: used by file import and cloud restore alike.
+  function importDataFromObject(imported) {
+    if (!imported || !imported.metadata || imported.metadata.app !== APP_NAME) {
+      throw new Error('Invalid data file');
+    }
+
+    const { collisions, updates } = detectCollisions(imported);
+
+    if (collisions.length === 0) {
+      // No collisions, just apply updates
+      Object.keys(updates).forEach(key => {
+        const val = updates[key];
+        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+      });
+      showNotification('Data imported successfully. Reloading...', 'success');
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      showCollisionModal(collisions, updates, applyResolutions);
+    }
+  }
+
   function importDataFromFile(file) {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = event => {
       try {
-        const imported = JSON.parse(event.target.result);
-        if (!imported.metadata || imported.metadata.app !== APP_NAME) {
-          throw new Error('Invalid data file');
-        }
-
-        const { collisions, updates } = detectCollisions(imported);
-
-        if (collisions.length === 0) {
-          // No collisions, just apply updates
-          Object.keys(updates).forEach(key => {
-            const val = updates[key];
-            localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
-          });
-          showNotification('Data imported successfully. Reloading...', 'success');
-          setTimeout(() => location.reload(), 1500);
-        } else {
-          showCollisionModal(collisions, updates, applyResolutions);
-        }
-
+        importDataFromObject(JSON.parse(event.target.result));
       } catch (err) {
         console.error(err);
         showNotification(`Import failed: ${err.message}`, 'error');
@@ -565,6 +568,9 @@
   // Expose helpers
   DataManager.exportDataToFile = exportDataToFile;
   DataManager.importDataFromFile = importDataFromFile;
+  DataManager.importDataFromObject = importDataFromObject;
+  DataManager.collectAllData = collectAllData;
+  DataManager.showNotification = showNotification;
 
   // Initial load
   loadData();

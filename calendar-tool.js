@@ -643,6 +643,20 @@
     window.EventBus?.dispatchEvent(new Event('dataChanged'));
   }
 
+  // Public API so other modules (e.g. Google Calendar OAuth sync) can feed
+  // events through the same normalize/merge/task pipeline as ICS imports.
+  window.CalendarTool = {
+    ingestExternalEvents(rawEvents) {
+      if (!Array.isArray(rawEvents) || rawEvents.length === 0) return 0;
+      const normalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
+      events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
+      saveEvents(events);
+      convertEventsToTasks(normalized);
+      render();
+      return normalized.length;
+    },
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
     // Guide Modal Logic
     const guideBtn = document.getElementById('show-calendar-guide-btn');

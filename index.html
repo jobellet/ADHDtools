@@ -17,6 +17,8 @@
     <script src="app.js" defer></script>
     <script src="config.js" defer></script>
     <script src="data-manager.js" defer></script>
+    <script src="google-auth.js" defer></script>
+    <script src="drive-sync.js" defer></script>
     <script src="core/user-context.js" defer></script>
     <script src="cross-tool-interaction.js" defer></script>
     <script src="core/ai-provider.js" defer></script>
@@ -808,7 +810,7 @@
                         <!-- Calendar Notifications & Google Calendar Panel -->
                         <div class="settings-panel">
                             <details class="settings-toggle">
-                                <summary>Calendar Notifications</summary>
+                                <summary>Calendar Notifications &amp; Google Sync</summary>
                                 <div class="settings-content">
                                     <div class="voice-options">
                                         <label class="checkbox-label">
@@ -821,6 +823,7 @@
                                         </div>
                                     </div>
                                     <div id="gcal-settings-container"></div>
+                                    <div id="gcal-sync-container"></div>
                                 </div>
                             </details>
                         </div>
