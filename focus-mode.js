@@ -241,14 +241,20 @@ if (window.__focusModeLoaded) {
         const durationMinutes = elapsedMinutes || ctx.durationMinutes;
         const task = window.TaskStore.getTaskByHash(ctx.taskHash);
         if (task) {
-          if (durationMinutes && window.DurationLearning?.recordTaskDuration) {
-            window.DurationLearning.recordTaskDuration(task.name, durationMinutes);
+          const userConfirmed = confirm(`Did you complete "${task.name || 'this task'}"?`);
+          if (userConfirmed) {
+            if (durationMinutes && window.DurationLearning?.recordTaskDuration) {
+              window.DurationLearning.recordTaskDuration(task.name, durationMinutes);
+            }
+            window.TaskStore.markComplete(ctx.taskHash);
+            window.EventBus?.dispatchEvent(new Event('dataChanged'));
           }
-          window.TaskStore.markComplete(ctx.taskHash);
-          window.EventBus?.dispatchEvent(new Event('dataChanged'));
         }
       }
       window.FocusTaskContext = null;
+      if (completed && window.switchTool) {
+          window.switchTool('home');
+      }
     }
 
     function resumeSession() {

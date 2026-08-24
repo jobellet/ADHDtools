@@ -39,18 +39,28 @@
         .filter(t => !blocked.includes(t))
         .sort((a, b) => ((b.importance || 5) + (b.urgency || 5)) - ((a.importance || 5) + (a.urgency || 5)));
 
+      const renderTaskContent = (task, startTime, endTime) => {
+        let content = `<strong>${task.name || task.text || 'Task'}</strong>`;
+        let meta = [];
+        if (task.durationMinutes) meta.push(`${task.durationMinutes} min`);
+        if (task.urgency) meta.push(`Urgency: ${task.urgency}/10`);
+        if (startTime && endTime) meta.push(`(${formatTime(startTime)} - ${formatTime(endTime)})`);
+        if (meta.length) content += `<div class="task-meta" style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">${meta.join(' | ')}</div>`;
+        return content;
+      };
+
       if (currentSlot) {
-        currentEl.textContent = `${currentSlot.task.name || currentSlot.task.text || 'Task'} (${formatTime(currentSlot.startTime)} - ${formatTime(currentSlot.endTime)})`;
+        currentEl.innerHTML = renderTaskContent(currentSlot.task, currentSlot.startTime, currentSlot.endTime);
         currentEl.dataset.hash = currentSlot.task.hash || '';
       } else if (schedule.length) {
-        currentEl.textContent = 'No active task right now.';
+        currentEl.innerHTML = '<em>No active task right now.</em>';
         currentEl.dataset.hash = '';
       } else if (fallbackSorted.length) {
         const first = fallbackSorted[0];
-        currentEl.textContent = `Next up: ${first.name || first.text}`;
+        currentEl.innerHTML = `<div>Next up:</div>` + renderTaskContent(first, null, null);
         currentEl.dataset.hash = first.hash || '';
       } else {
-        currentEl.textContent = 'No active task right now.';
+        currentEl.innerHTML = '<em>No active task right now.</em>';
         currentEl.dataset.hash = '';
       }
 

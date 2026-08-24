@@ -20,12 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const dependencySelectEl = document.getElementById('task-dependency');
   const importSelect = document.getElementById('task-import-select');
 
-  const DataManager = window.DataManager;
+  const TaskStore = window.TaskStore;
   const createTask = window.TaskModel?.createTask || ((raw, overrides = {}) => ({ ...raw, ...overrides }));
   const wrapTask = (task) => createTask(task, task);
 
-  // Local cache of tasks from DataManager
-  let tasks = DataManager ? DataManager.getTasks().map(wrapTask) : [];
+  // Local cache of tasks
+  let tasks = TaskStore ? TaskStore.getAllTasks().map(wrapTask) : [];
 
   function sanitizeText(str) {
     return str
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function refreshTasks() {
-    tasks = DataManager.getTasks().map(wrapTask);
+    tasks = TaskStore.getAllTasks().map(wrapTask);
   }
 
   function populateDependencySelect() {
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
         }
-        DataManager.updateTask(task.id, { isCompleted: checkbox.checked });
+        TaskStore.updateTaskByHash(task.id, { completed: checkbox.checked });
         window.EventBus.dispatchEvent(new CustomEvent('taskCompleted', { detail: { id: task.id, isCompleted: checkbox.checked } }));
         renderTasks();
       });
@@ -193,11 +193,12 @@ document.addEventListener('DOMContentLoaded', () => {
             task.priority = prioritySelect.value;
             task.category = categorySelect.value;
             task.dependsOn = dependencySelect.value || null;
-            DataManager.updateTask(task.id, {
+            TaskStore.updateTaskByHash(task.id, {
+              name: newText,
               text: newText,
               priority: prioritySelect.value,
               category: categorySelect.value,
-              dependsOn: dependencySelect.value || null
+              dependency: dependencySelect.value || null
             });
             renderTasks(); // This will re-render the entire list
           } else {
@@ -229,7 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
       deleteBtn.addEventListener('click', () => {
         if (confirm('Delete this task?')) {
-          DataManager.deleteTask(task.id);
+          // Soft delete or hide task
+          TaskStore.updateTaskByHash(task.id, { completed: true });
           renderTasks();
         }
       });
@@ -371,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (found) text = found.text;
     }
     if (text) {
-      const newTask = DataManager.addTask({ text, originalTool: type === 'breakdown' ? 'TaskBreakdown' : 'EisenhowerMatrix' });
+      const newTask = TaskStore.addTask({ name: text, text, originalTool: type === 'breakdown' ? 'TaskBreakdown' : 'EisenhowerMatrix' });
       window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
       renderTasks();
       alert(`Imported task "${text}"`);
@@ -391,15 +393,14 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Task Manager received invalid task:', t);
       return;
     }
-    const newTask = DataManager.addTask({
+    const newTask = TaskStore.addTask({
+      name: t.text,
       text: t.text,
       originalTool: t.originalTool || 'unknown',
       priority: t.priority || 'medium',
       category: t.category || 'other',
-      dueDate: t.dueDate || null,
-      duration: t.duration || null,
-      notes: t.notes || '',
-      subTasks: t.subTasks || []
+      deadline: t.dueDate || null,
+      durationMinutes: t.duration || null,
     });
     window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
     renderTasks();
@@ -411,12 +412,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = sanitizeText(inputEl.value);
     if (!text) return;
 
-    const newTask = DataManager.addTask({
+    const newTask = TaskStore.addTask({
+      name: text,
       text,
       originalTool: 'TaskManager',
       priority: prioritySelectEl.value || 'medium',
       category: categorySelectEl.value || 'other',
-      dependsOn: dependencySelectEl?.value || null
+      dependency: dependencySelectEl?.value || null
     });
     window.EventBus.dispatchEvent(new CustomEvent('taskAdded', { detail: wrapTask(newTask) }));
     inputEl.value = '';
