@@ -42,6 +42,15 @@
         z-index: 100;
     }
 
+    .hamburger-menu {
+        z-index: 300;
+        min-height: 48px;
+        min-width: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* Main Container */
     main {
         flex: 1;
@@ -379,16 +388,29 @@
 
     .today-current {
         order: 1;
+        width: 100%;
+    }
+
+    #today-current-task {
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .today-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: column;
         gap: 0.5rem;
+        width: 100%;
+    }
+
+    .today-actions button {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
     }
 
     #today-start-focus {
-        grid-column: 1 / -1; /* Full width */
+        /* Already full width via flex column, keep large padding */
         padding: 1rem;
         font-size: 1.1rem;
     }

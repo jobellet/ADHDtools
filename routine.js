@@ -168,6 +168,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveRoutines() {
         localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(routines));
+        if (window.TaskStore && window.TaskStore.upsertTaskByHash) {
+            routines.forEach(routine => {
+                routine.tasks.forEach((task, index) => {
+                    const taskName = `${routine.name} - ${task.name || 'Task ' + (index + 1)}`;
+                    const hashSeed = `routine-${routine.id}-task-${task.id || index}`;
+                    const hash = `task-${btoa(hashSeed).replace(/=/g, '')}`;
+
+                    window.TaskStore.upsertTaskByHash(hash, {
+                        name: taskName,
+                        durationMinutes: parseInt(task.duration, 10) || 5,
+                        importance: 5,
+                        urgency: 5,
+                        source: 'routine',
+                        originalTool: 'RoutineTool',
+                        isFixed: true // Routine tasks are generally considered fixed time slots when activated
+                    });
+                });
+            });
+        }
     }
 
     function loadRoutines() {

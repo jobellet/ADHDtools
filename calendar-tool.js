@@ -67,9 +67,9 @@
   }
 
   function getPlannerEvents() {
-    if (!window.DataManager) return [];
-    return window.DataManager
-      .getTasks()
+    if (!window.TaskStore) return [];
+    return window.TaskStore
+      .getAllTasks()
       .map(wrapTask)
       .filter(t => t.plannerDate)
       .map(t => {
@@ -695,8 +695,8 @@
     icsUrl = loadIcsUrl();
     loadVoiceSettings();
     render();
-    if (window.DataManager && window.DataManager.EventBus) {
-      window.DataManager.EventBus.addEventListener('dataChanged', render);
+    if (window.EventBus) {
+      window.EventBus.addEventListener('dataChanged', render);
     }
     if (window.EventBus) {
       window.EventBus.addEventListener('calendarEventsUpdated', () => {
