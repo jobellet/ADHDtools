@@ -1,4 +1,4 @@
-import { formatTime, getCalendarEvents, getDayBounds, getPlannerTasksForDay } from './dayPlannerUtils.js';
+import { formatTime, getCalendarEvents, getDayBounds, getPlannerTasksForDay, localDateString } from './dayPlannerUtils.js';
 
 export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize }) {
     if (!window.DataManager) return;
@@ -100,10 +100,13 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
                 });
                 eventDiv.appendChild(del);
 
-                const handle = document.createElement('div');
-                handle.className = 'resize-handle';
-                handle.addEventListener('mousedown', e => startResize(e, task, eventDiv));
-                eventDiv.appendChild(handle);
+                const resizer = document.createElement('div');
+                resizer.className = 'event-resizer';
+                resizer.addEventListener('mousedown', e => {
+                    e.stopPropagation();
+                    startResize(e, task, eventDiv);
+                });
+                eventDiv.appendChild(resizer);
             }
 
             hourContent.appendChild(eventDiv);
@@ -112,8 +115,8 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
 
     // Add current time indicator
     const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-    const currentDateStr = currentDate.toISOString().slice(0, 10);
+    const todayStr = localDateString(now);
+    const currentDateStr = localDateString(currentDate);
 
     if (todayStr === currentDateStr) {
         const currentMinutes = now.getHours() * 60 + now.getMinutes();

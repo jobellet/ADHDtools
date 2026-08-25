@@ -238,6 +238,7 @@
     // ----- Wiring -----
 
     window.EventBus?.addEventListener('dataChanged', () => { renderBanner(); renderProgress(); });
+    window.EventBus?.addEventListener('calendarEventsUpdated', () => { renderBanner(); renderProgress(); });
     window.addEventListener('activeUserChanged', () => { renderBanner(); renderProgress(); });
     window.addEventListener('aiSettingsChanged', renderProgress);
     setInterval(renderBanner, 60000);

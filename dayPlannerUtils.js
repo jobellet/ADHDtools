@@ -1,6 +1,12 @@
 import { buildSchedule } from './core/scheduler.js';
 import { createTask as createTaskModel } from './core/task-model.js';
 
+export function localDateString(date = new Date()) {
+    const d = date instanceof Date ? date : new Date(date);
+    const pad = num => String(num).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
@@ -64,7 +70,7 @@ export function getDefaultDurationMinutes() {
 
 export function getPlannerTasksForDay(currentDate) {
     const cfg = getConfig();
-    const plannerDateStr = currentDate.toISOString().slice(0, 10);
+    const plannerDateStr = localDateString(currentDate);
     const tasks = getUnifiedTasks();
     const defaultDuration = getDefaultDurationMinutes();
 
@@ -72,7 +78,7 @@ export function getPlannerTasksForDay(currentDate) {
 
     const prevDate = new Date(currentDate);
     prevDate.setDate(currentDate.getDate() - 1);
-    const prevDateStr = prevDate.toISOString().slice(0, 10);
+    const prevDateStr = localDateString(prevDate);
     tasks.filter(task => task.plannerDate && task.plannerDate.startsWith(prevDateStr)).forEach(task => {
         const startMins = parseInt(task.plannerDate.slice(11, 13)) * 60 + parseInt(task.plannerDate.slice(14, 16));
         const dur = task.duration || defaultDuration;
@@ -177,7 +183,7 @@ export function getDefaultTime() {
 
 export function getCalendarEvents(currentDate) {
     const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
-    const dayStr = currentDate.toISOString().slice(0, 10);
+    const dayStr = localDateString(currentDate);
     return events
         .filter(ev => ev.start && ev.start.startsWith(dayStr))
         .map(ev => normalizeCalendarEvent(ev))
@@ -208,7 +214,7 @@ function normalizeCalendarEvent(rawEvent) {
 
 function getCalendarTasksForDay(currentDate, defaultDuration) {
     const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
-    const dayStr = currentDate.toISOString().slice(0, 10);
+    const dayStr = localDateString(currentDate);
     return events
         .filter(ev => ev.start && ev.start.startsWith(dayStr))
         .map(ev => normalizeCalendarEvent(ev))

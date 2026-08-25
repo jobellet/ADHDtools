@@ -1,5 +1,5 @@
 import { renderDayPlanner } from './renderDay.js';
-import { populateTimeOptions, populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes } from './dayPlannerUtils.js';
+import { populateTimeOptions, populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './dayPlannerUtils.js';
 import { createTask } from './core/task-model.js';
 
 let editingTaskId = null;
@@ -150,7 +150,7 @@ async function handleVoiceCommand(text) {
         alert('Could not understand that. Try e.g. "Team meeting tomorrow at 10am for 45 minutes".');
         return;
     }
-    const todayStr = currentDate.toISOString().slice(0, 10);
+    const todayStr = localDateString(currentDate);
     const plannerDate = parsed.plannerDate || parsed.deadline || `${todayStr}T09:00`;
     window.DataManager.addTask({
         text: parsed.name,
@@ -242,7 +242,7 @@ async function autoPlanDay() {
         }
         const events = getCalendarEvents(currentDate);
         events.forEach(ev => {
-            const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${ev.start}`;
+            const plannerDateTime = `${localDateString(currentDate)}T${ev.start}`;
             const existing = window.DataManager.getTasks().map(wrapTask).find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
             if (!existing) {
                 const startMins = parseInt(ev.start.slice(0, 2)) * 60 + parseInt(ev.start.slice(3, 5));
@@ -286,7 +286,7 @@ async function autoPlanDay() {
         plan.forEach(item => {
             if (!item.time || !item.text) return;
             const duration = parseInt(item.duration, 10) || getDefaultDurationMinutes();
-            const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${item.time}`;
+            const plannerDateTime = `${localDateString(currentDate)}T${item.time}`;
             window.DataManager.addTask({
                 text: item.text,
                 plannerDate: plannerDateTime,
@@ -317,7 +317,7 @@ function fillDayFromCalendarAndTasks() {
     if (!window.DataManager) return;
     const defaultDuration = getDefaultDurationMinutes();
     const { startMinutes, endMinutes } = getDayBounds();
-    const dayStr = currentDate.toISOString().slice(0, 10);
+    const dayStr = localDateString(currentDate);
 
     const busyBlocks = getCalendarEvents(currentDate)
         .map(ev => {
@@ -466,7 +466,7 @@ function initDayPlanner() {
         e.preventDefault();
         const time = eventTimeSelect.value;
         const duration = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
-        const plannerDateTime = `${currentDate.toISOString().slice(0, 10)}T${time}`;
+        const plannerDateTime = `${localDateString(currentDate)}T${time}`;
         const importance = parseInt(eventImportanceInput.value, 10) || 5;
         const urgency = parseInt(eventUrgencyInput.value, 10) || 5;
         const deadlineVal = eventDeadlineInput.value ? new Date(eventDeadlineInput.value) : null;
@@ -523,7 +523,7 @@ function initDayPlanner() {
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
             if (!confirm('Clear all events for this day? This will unschedule them from the planner.')) return;
-            const plannerDateStr = currentDate.toISOString().slice(0, 10);
+            const plannerDateStr = localDateString(currentDate);
             const todaysTasks = (window.TaskStore?.getAllTasks ? window.TaskStore.getAllTasks() : window.DataManager.getTasks())
                 .map(wrapTask)
                 .filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
@@ -541,7 +541,7 @@ function initDayPlanner() {
                 return;
             }
             const schedule = scheduler.getTodaySchedule(new Date());
-            const todayStr = currentDate.toISOString().slice(0, 10);
+            const todayStr = localDateString(currentDate);
             const cfg = window.ConfigManager?.getConfig?.() || {};
             const fixedTag = cfg.fixedTag || '[FIX]';
             const flexTag = cfg.flexibleTag || '[FLEX]';

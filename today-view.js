@@ -201,6 +201,7 @@
     }
 
     window.EventBus?.addEventListener('dataChanged', updateView);
+    window.EventBus?.addEventListener('calendarEventsUpdated', updateView);
     window.addEventListener('activeUserChanged', updateView);
     window.addEventListener('scheduleNeedsRefresh', updateView);
     setInterval(updateView, 60000);
