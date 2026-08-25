@@ -120,14 +120,16 @@ if (window.__focusModeLoaded) {
         // End any existing session without alerts
         endFocus(false);
       }
-      const duration = parseInt(durationInput.value, 10);
+      let duration = parseInt(durationInput?.value, 10);
+      if (window.FocusTaskContext?.durationMinutes) {
+        duration = window.FocusTaskContext.durationMinutes;
+      }
       if (isNaN(duration) || duration <= 0 || duration > 240) {
-        alert('Please enter a valid duration (1-240 minutes)');
-        return;
+        duration = 25;
       }
       remainingSeconds = duration * 60;
       updatePreview();
-      const goal = goalInput.value.trim();
+      const goal = (goalInput?.value || '').trim();
 
       fullscreenGoal.textContent = goal || '';
       fullscreenTimer.textContent = formatTime(remainingSeconds);
@@ -153,7 +155,7 @@ if (window.__focusModeLoaded) {
 
       // Enter fullscreen
       if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(console.error);
+        document.documentElement.requestFullscreen().catch(() => {});
       }
 
       // If triggered from Today View or has a task context, show Complete Task button
@@ -162,18 +164,20 @@ if (window.__focusModeLoaded) {
       }
 
       // Apply background and start sound
-      applyBackground(backgroundSelect.value);
-      startAudio(soundSelect.value);
-      if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = backgroundSelect.value;
-      if (fullscreenSoundSelect) fullscreenSoundSelect.value = soundSelect.value;
+      const bg = backgroundSelect?.value || 'solid';
+      const snd = soundSelect?.value || 'none';
+      applyBackground(bg);
+      startAudio(snd);
+      if (fullscreenBackgroundSelect) fullscreenBackgroundSelect.value = bg;
+      if (fullscreenSoundSelect) fullscreenSoundSelect.value = snd;
       if (pauseBtn) pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
 
       // Persist session data
       localStorage.setItem('focus-session', JSON.stringify({
         goal,
         duration,
-        background: backgroundSelect.value,
-        sound: soundSelect.value,
+        background: bg,
+        sound: snd,
         start: Date.now(),
         endTime
       }));

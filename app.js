@@ -7,8 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const addUserBtn = document.getElementById("add-user-btn");
 
     // URL Routing Configuration
-    // NOTE: This must match the `repoName` variable in `404.html` to ensure correct redirection.
-    const BASE_PATH = '/ADHDtools'; // Adjust if deployed elsewhere
+    // Dynamically support both GitHub Pages (/ADHDtools) and local development (/)
+    const BASE_PATH = window.location.pathname.startsWith('/ADHDtools') ? '/ADHDtools' : '';
 
     // Handle Redirect from 404.html (GitHub Pages SPA Hack)
     // This allows the SPA to handle routes like /pomodoro on GitHub Pages by:

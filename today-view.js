@@ -120,8 +120,17 @@
       startBtn.addEventListener('click', () => {
         const sched = scheduler();
         const slot = sched?.getCurrentTask ? sched.getCurrentTask(new Date()) : null;
-        if (!slot) return alert('No current task to focus on.');
-        startFocus(slot.task.name || slot.task.text || 'Focus', slot.task.hash, slot.task.durationMinutes);
+        if (slot && slot.task) {
+          startFocus(slot.task.name || slot.task.text || 'Focus', slot.task.hash, slot.task.durationMinutes || 25);
+        } else {
+          const pending = window.TaskStore?.getPendingTasks?.() || [];
+          if (pending.length > 0) {
+            const first = pending[0];
+            startFocus(first.name || first.text || 'Focus', first.hash, first.durationMinutes || 25);
+          } else {
+            startFocus('Deep Focus', null, 25);
+          }
+        }
       });
     }
 

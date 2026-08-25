@@ -495,51 +495,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div id="fullscreen-focus-mode" class="fullscreen-focus hidden">
-                    <div class="fullscreen-content">
-                        <div id="focus-mode-progress-container" class="fullscreen-progress-container">
-                            <div id="focus-mode-progress-bar" class="progress-bar-fill"></div>
-                        </div>
-                        <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
-                        <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
-                        
-                        <div class="focus-mode-actions" style="display: flex; gap: 1rem; justify-content: center; margin: 1.5rem 0;">
-                            <button id="pause-focus-mode" class="btn btn-secondary"><i class="fas fa-pause"></i>
-                                Pause</button>
-                            <button id="complete-focus-mode" class="btn btn-primary" style="display: none;"><i class="fas fa-check"></i>
-                                Complete Task</button>
-                        </div>
-                        <div class="fullscreen-settings">
-                            <div class="setting-group">
-                                <label for="focus-background-fullscreen">Background:</label>
-                                <select id="focus-background-fullscreen">
-                                    <option value="solid" title="Simple solid color background">Solid Color</option>
-                                    <option value="gradient" title="Soft gradient background">Gradient</option>
-                                    <option value="nature" title="Calming nature scene">Nature</option>
-                                    <option value="minimal" title="Low‑distraction minimal theme">Minimal</option>
-                                </select>
-                            </div>
-                            <div class="setting-group">
-                                <label for="focus-sound-fullscreen">Background Sound:</label>
-                                <select id="focus-sound-fullscreen">
-                                    <option value="none">None</option>
-                                    <option value="white-noise">White Noise</option>
-                                    <option value="rain">Rain</option>
-                                    <option value="cafe">Cafe Ambience</option>
-                                    <option value="forest">Forest</option>
-                                </select>
-                                <!-- Preview Sound button removed from fullscreen focus mode -->
-                            </div>
-                        </div>
-                        <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>
-                        <div class="focus-text-actions">
-                            <button id="download-focus-text" class="btn btn-secondary">Download Notes</button>
-                        </div>
-                        <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus
-                            Mode</button>
-                    </div>
-                </div>
             </section>
 
             <section id="family" class="tool-section">
@@ -1149,6 +1104,48 @@
                     </button>
                 </div>
                 <ul id="routine-queue-list"></ul>
+            </div>
+
+            <!-- Fullscreen Focus Mode Overlay (Top-level across all tools) -->
+            <div id="fullscreen-focus-mode" class="fullscreen-focus hidden">
+                <div class="fullscreen-content">
+                    <div id="focus-mode-progress-container" class="fullscreen-progress-container">
+                        <div id="focus-mode-progress-bar" class="progress-bar-fill"></div>
+                    </div>
+                    <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
+                    <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
+                    
+                    <div class="focus-mode-actions" style="display: flex; gap: 1rem; justify-content: center; margin: 1.5rem 0;">
+                        <button id="pause-focus-mode" class="btn btn-secondary"><i class="fas fa-pause"></i> Pause</button>
+                        <button id="complete-focus-mode" class="btn btn-primary" style="display: none;"><i class="fas fa-check"></i> Complete Task</button>
+                    </div>
+                    <div class="fullscreen-settings">
+                        <div class="setting-group">
+                            <label for="focus-background-fullscreen">Background:</label>
+                            <select id="focus-background-fullscreen">
+                                <option value="solid" title="Simple solid color background">Solid Color</option>
+                                <option value="gradient" title="Soft gradient background">Gradient</option>
+                                <option value="nature" title="Calming nature scene">Nature</option>
+                                <option value="minimal" title="Low‑distraction minimal theme">Minimal</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label for="focus-sound-fullscreen">Background Sound:</label>
+                            <select id="focus-sound-fullscreen">
+                                <option value="none">None</option>
+                                <option value="white-noise">White Noise</option>
+                                <option value="rain">Rain</option>
+                                <option value="cafe">Cafe Ambience</option>
+                                <option value="forest">Forest</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea id="focus-text" class="focus-textarea" placeholder="Write notes here..."></textarea>
+                    <div class="focus-text-actions">
+                        <button id="download-focus-text" class="btn btn-secondary">Download Notes</button>
+                    </div>
+                    <button id="exit-focus-mode" class="btn btn-outline"><i class="fas fa-compress"></i> Exit Focus Mode</button>
+                </div>
             </div>
         </div>
     </main>
