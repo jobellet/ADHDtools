@@ -273,6 +273,14 @@
     .pie-chart-container {
         max-height: 150px;
         margin: 0 auto;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .pie-chart-container canvas {
+        max-width: 100%;
+        height: auto !important;
     }
 
     #routine .routine-player-controls button {
@@ -383,7 +391,7 @@
 
     .today-actions {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
         gap: 0.5rem;
     }
 

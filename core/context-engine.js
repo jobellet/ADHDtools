@@ -15,12 +15,12 @@
   }
 
   function getConfig() {
-    return window.ConfigManager?.getConfig?.() || { dayStart: '07:00', dayEnd: '22:00' };
+    return (typeof window !== "undefined" ? window.ConfigManager : null)?.getConfig?.() || { dayStart: '07:00', dayEnd: '22:00' };
   }
 
   function loadRoutines() {
     try {
-      const raw = localStorage.getItem(ROUTINE_STORAGE_KEY);
+      const raw = (typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)(ROUTINE_STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch (err) {
@@ -52,7 +52,7 @@
 
   function getCurrentSlot(now) {
     try {
-      const scheduler = window.UnifiedScheduler || window.TaskScheduler;
+      const scheduler = ((typeof window !== "undefined" ? window.UnifiedScheduler : null) || (typeof window !== "undefined" ? window.TaskScheduler : null));
       return scheduler?.getCurrentTask ? scheduler.getCurrentTask(now) : null;
     } catch (err) {
       return null;
@@ -60,8 +60,8 @@
   }
 
   function countPendingToday() {
-    const activeUser = window.UserContext?.getActiveUser?.();
-    const pending = window.TaskStore?.getPendingTasks?.() || [];
+    const activeUser = (typeof window !== "undefined" ? window.UserContext : null)?.getActiveUser?.();
+    const pending = (typeof window !== "undefined" ? window.TaskStore : null)?.getPendingTasks?.() || [];
     return (activeUser ? pending.filter(t => t.user === activeUser) : pending).length;
   }
 
@@ -147,7 +147,7 @@
 
   function isDismissed(contextId) {
     try {
-      const raw = sessionStorage.getItem(DISMISS_KEY);
+      const raw = (typeof sessionStorage !== "undefined" ? sessionStorage.getItem.bind(sessionStorage) : () => null)(DISMISS_KEY);
       const list = raw ? JSON.parse(raw) : [];
       return Array.isArray(list) && list.includes(contextId);
     } catch (err) {
@@ -157,12 +157,12 @@
 
   function dismiss(contextId) {
     try {
-      const raw = sessionStorage.getItem(DISMISS_KEY);
+      const raw = (typeof sessionStorage !== "undefined" ? sessionStorage.getItem.bind(sessionStorage) : () => null)(DISMISS_KEY);
       const list = raw ? JSON.parse(raw) : [];
       if (!list.includes(contextId)) list.push(contextId);
-      sessionStorage.setItem(DISMISS_KEY, JSON.stringify(list));
+      (typeof sessionStorage !== "undefined" ? sessionStorage.setItem.bind(sessionStorage) : () => {})(DISMISS_KEY, JSON.stringify(list));
     } catch (err) { /* session storage unavailable */ }
   }
 
-  window.ContextEngine = { getContext, isDismissed, dismiss, findActiveRoutine };
+  if (typeof window !== "undefined") window.ContextEngine = { getContext, isDismissed, dismiss, findActiveRoutine };
 })();

@@ -4,7 +4,7 @@ const SKIP_LEDGER_KEY = 'adhd-task-skip-ledger';
 
 function readLedger() {
   try {
-    const raw = localStorage.getItem(SKIP_LEDGER_KEY);
+    const raw = (typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)(SKIP_LEDGER_KEY);
     const parsed = raw ? JSON.parse(raw) : {};
     return parsed && typeof parsed === 'object' ? parsed : {};
   } catch (err) {
@@ -15,7 +15,7 @@ function readLedger() {
 
 function writeLedger(ledger) {
   try {
-    localStorage.setItem(SKIP_LEDGER_KEY, JSON.stringify(ledger));
+    (typeof localStorage !== "undefined" ? localStorage.setItem.bind(localStorage) : () => {})(SKIP_LEDGER_KEY, JSON.stringify(ledger));
   } catch (err) {
     console.warn('Failed to persist skip ledger', err);
   }
@@ -67,7 +67,7 @@ const UrgencyHelpers = {
 };
 
 if (typeof window !== 'undefined') {
-  window.UrgencyHelpers = UrgencyHelpers;
+  if (typeof window !== "undefined") window.UrgencyHelpers = UrgencyHelpers;
 }
 
 export default UrgencyHelpers;

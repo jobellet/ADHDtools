@@ -237,10 +237,25 @@
     setTimeout(() => note.remove(), 4000);
   }
 
+  function isSensitiveKey(key) {
+    if (!key) return false;
+    const lowerKey = key.toLowerCase();
+    return (
+      lowerKey.includes('apikey') ||
+      lowerKey.includes('clientid') ||
+      lowerKey.startsWith('api-settings') ||
+      lowerKey.startsWith('adhd-ai-') ||
+      lowerKey === 'geminiapikey' ||
+      lowerKey === 'gcalclientid'
+    );
+  }
+
   function collectAllData() {
     const data = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
+      if (isSensitiveKey(key)) continue;
+      
       try {
         data[key] = JSON.parse(localStorage.getItem(key));
       } catch {
@@ -277,7 +292,7 @@
     const updates = {}; // Key -> New Value (for non-collisions)
 
     Object.keys(importedData).forEach(key => {
-      if (key === 'metadata') return;
+      if (key === 'metadata' || isSensitiveKey(key)) return;
 
       const importedVal = importedData[key];
       const existingValStr = localStorage.getItem(key);
@@ -525,7 +540,7 @@
     container.className = 'data-management-container';
     container.innerHTML = `
       <h3>Data Management</h3>
-      <p class="data-management-note">Exports include every saved item in your browser storage, including API keys and parameters.</p>
+      <p class="data-management-note">Exports and Drive backups exclude API keys and OAuth secrets for your privacy and security.</p>
       <button id="export-data-btn" class="btn btn-primary">
         <i class="fas fa-download"></i> Export Data
       </button>

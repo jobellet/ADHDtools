@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         AI assistance is <strong>optional</strong>: every tool works without it.
         With a provider configured you get smarter natural-language task capture,
         AI task breakdown, AI day planning, and encouragement summaries.
-        Your key is stored only in this browser and requests go directly to the provider.
+        Your key is stored only in this browser and requests go directly to the provider. 
+        For your privacy and security, API keys are automatically excluded from data exports and Drive backups.
       </p>
 
       <details class="settings-toggle" style="margin-bottom: 1rem; border: 1px solid #ddd; padding: 0.5rem; border-radius: 4px;">

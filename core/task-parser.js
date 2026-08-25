@@ -182,7 +182,7 @@
 
   async function parseSmart(text, { now = new Date() } = {}) {
     const heuristic = parse(text, { now });
-    if (!window.AIAssistant?.isEnabled?.()) return heuristic;
+    if (!(typeof window !== "undefined" ? window.AIAssistant : null)?.isEnabled?.()) return heuristic;
 
     try {
       const prompt = [
@@ -196,7 +196,7 @@
         'importance (1-10 or null; only if the user implies priority),',
         'isFixed (true only for appointment-like items at a specific time).',
       ].join('\n');
-      const parsed = await window.AIAssistant.completeJSON(prompt, { maxTokens: 300 });
+      const parsed = await (typeof window !== "undefined" ? window.AIAssistant : null).completeJSON(prompt, { maxTokens: 300 });
       if (!parsed || typeof parsed !== 'object' || !parsed.name) return heuristic;
 
       const stampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
@@ -218,5 +218,5 @@
     }
   }
 
-  window.TaskParser = { parse, parseSmart, toLocalStamp };
+  if (typeof window !== "undefined") window.TaskParser = { parse, parseSmart, toLocalStamp };
 })();

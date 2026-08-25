@@ -21,6 +21,7 @@ if (window.__focusModeLoaded) {
     const fullscreenGoal = document.getElementById('focus-mode-goal');
     const focusProgressBar = document.getElementById('focus-mode-progress-bar'); // Added
     const pauseBtn = document.getElementById('pause-focus-mode');
+    const completeBtn = document.getElementById('complete-focus-mode');
     const textArea = document.getElementById('focus-text');
     const downloadBtn = document.getElementById('download-focus-text');
     const previewSoundBtn = document.getElementById('focus-sound-preview');
@@ -155,6 +156,11 @@ if (window.__focusModeLoaded) {
         document.documentElement.requestFullscreen().catch(console.error);
       }
 
+      // If triggered from Today View or has a task context, show Complete Task button
+      if (completeBtn) {
+        completeBtn.style.display = window.FocusTaskContext?.taskHash ? 'inline-block' : 'none';
+      }
+
       // Apply background and start sound
       applyBackground(backgroundSelect.value);
       startAudio(soundSelect.value);
@@ -246,6 +252,7 @@ if (window.__focusModeLoaded) {
           }
           window.TaskStore.markComplete(ctx.taskHash);
           window.EventBus?.dispatchEvent(new Event('dataChanged'));
+          window.dispatchEvent(new Event('scheduleNeedsRefresh'));
         }
       }
       window.FocusTaskContext = null;
@@ -273,8 +280,9 @@ if (window.__focusModeLoaded) {
       endTime = Date.now() + remainingSeconds * 1000;
     }
 
-    if (enterBtn) enterBtn.addEventListener('click', startFocus);
+    if (enterBtn) enterBtn.addEventListener('click', () => startFocus(false));
     if (exitBtn) exitBtn.addEventListener('click', () => endFocus(false));
+    if (completeBtn) completeBtn.addEventListener('click', () => endFocus(true));
     if (pauseBtn) pauseBtn.addEventListener('click', () => {
       if (timerId) {
         pauseFocus();

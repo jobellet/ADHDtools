@@ -456,8 +456,8 @@
     }
 
     .task-timer-container {
-        width: 250px;
-        height: 250px;
+        width: min(70vw, 250px);
+        height: min(70vw, 250px);
     }
 
     .time-large {

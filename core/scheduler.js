@@ -52,7 +52,7 @@ function computePriority(task) {
 
 function loadCalendarBlocks(todayStr, config) {
   try {
-    const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
+    const events = JSON.parse((typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)('adhd-calendar-events')) || [];
     const fixedTag = config?.fixedTag || '[FIX]';
     return events
       .filter(ev => ev.start && ev.start.startsWith(todayStr))
@@ -155,9 +155,9 @@ function localDateString(date) {
 }
 
 export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
-  const cfg = { ...DEFAULT_CONFIG, ...(window.ConfigManager?.getConfig?.() || {}), ...(config || {}) };
+  const cfg = { ...DEFAULT_CONFIG, ...((typeof window !== "undefined" ? window.ConfigManager : null)?.getConfig?.() || {}), ...(config || {}) };
   const todayStr = localDateString(now);
-  const activeUser = window.UserContext?.getActiveUser?.();
+  const activeUser = (typeof window !== "undefined" ? window.UserContext : null)?.getActiveUser?.();
   const baseTasks = tasks || TaskStore.getPendingTasks();
   const taskList = activeUser ? baseTasks.filter(t => t.user === activeUser) : baseTasks;
   const taskMap = new Map(taskList.map(t => [t.hash, t]));
@@ -199,8 +199,8 @@ export function getCurrentTask(now = new Date(), overrides = {}) {
 const UnifiedScheduler = { getTodaySchedule, getCurrentTask, buildSchedule };
 
 if (typeof window !== 'undefined') {
-  window.UnifiedScheduler = UnifiedScheduler;
-  window.TaskScheduler = UnifiedScheduler;
+  if (typeof window !== "undefined") window.UnifiedScheduler = UnifiedScheduler;
+  if (typeof window !== "undefined") window.TaskScheduler = UnifiedScheduler;
 }
 
 export default UnifiedScheduler;

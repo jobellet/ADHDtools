@@ -131,6 +131,7 @@
         if (!hash || !window.TaskStore?.markComplete) return;
         window.TaskStore.markComplete(hash);
         window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
         updateView();
       });
     }
@@ -192,6 +193,7 @@
 
     window.EventBus?.addEventListener('dataChanged', updateView);
     window.addEventListener('activeUserChanged', updateView);
+    window.addEventListener('scheduleNeedsRefresh', updateView);
     setInterval(updateView, 60000);
     updateView();
   });

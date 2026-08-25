@@ -2,7 +2,7 @@ export const DEFAULT_USER = 'main';
 
 function getConfig() {
   if (typeof window !== 'undefined') {
-    const cfg = window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG;
+    const cfg = (typeof window !== "undefined" ? window.ConfigManager : null)?.getConfig?.() || (typeof window !== "undefined" ? window.ConfigManager : null)?.DEFAULT_CONFIG;
     if (cfg) return cfg;
   }
   return { defaultTaskMinutes: 25 };
@@ -105,7 +105,7 @@ export function markTaskCompleted(task, completedAt = new Date().toISOString()) 
 }
 
 if (typeof window !== 'undefined') {
-  window.TaskModel = {
+  if (typeof window !== "undefined") window.TaskModel = {
     createTask,
     updateTask,
     markTaskCompleted,

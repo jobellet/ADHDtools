@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <link rel="icon" type="image/svg+xml" href="icons/home.svg" id="favicon">
     <link rel="apple-touch-icon" href="icons/home.svg" id="apple-touch-icon">
     <title>ADHD Tools Hub</title>
@@ -123,17 +123,17 @@
 
                 <div id="today-view" class="today-view">
                     <div class="today-current">
-                        <h3>Current Task</h3>
+                        <h3 style="color: var(--primary-color); font-size: 1.5rem; margin-bottom: 1rem;">NOW</h3>
                         <div id="today-current-task" class="today-card">No active task yet.</div>
                         <div class="today-actions">
-                            <button id="today-start-focus" class="btn btn-primary"><i class="fas fa-play"></i> Start Focus Session</button>
-                            <button id="today-mark-done" class="btn btn-secondary"><i class="fas fa-check"></i> Mark Done</button>
-                            <button id="today-skip" class="btn btn-outline"><i class="fas fa-forward"></i> Skip / Reschedule</button>
+                            <button id="today-start-focus" class="btn btn-primary btn-large" style="flex: 1; justify-content: center; font-size: 1.1rem; padding: 12px;"><i class="fas fa-play"></i> Start Focus</button>
+                            <button id="today-mark-done" class="btn btn-secondary btn-large" style="flex: 1; justify-content: center; font-size: 1.1rem; padding: 12px;"><i class="fas fa-check"></i> Complete</button>
+                            <button id="today-skip" class="btn btn-outline btn-large" style="flex: 1; justify-content: center; font-size: 1.1rem; padding: 12px;"><i class="fas fa-forward"></i> Skip</button>
                         </div>
                     </div>
                     <div class="today-next">
-                        <h3>Up Next</h3>
-                        <ul id="today-next-list" class="today-list"></ul>
+                        <h3 style="color: var(--text-color); font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">NEXT UP</h3>
+                        <ul id="today-next-list" class="today-list" style="margin-top: 1rem;"></ul>
                         <div id="today-blocked" class="today-blocked" style="display:none;">
                             <h4>Blocked Tasks</h4>
                             <ul id="today-blocked-list" class="today-list muted-list"></ul>
@@ -276,7 +276,7 @@
                 <!-- Modal for Adding/Editing an Event -->
                 <div id="event-modal" class="modal">
                     <div class="modal-content">
-                        <span class="close-button">&times;</span>
+                        <button class="close-button" aria-label="Close modal">&times;</button>
                         <h3 id="event-modal-title">Add Event</h3>
                         <form id="event-form">
                             <label for="event-task">Import Task:</label>
@@ -331,10 +331,10 @@
                     <div class="calendar-main">
                         <div class="calendar-toolbar">
                             <div class="calendar-nav">
-                                <button id="calendar-prev-btn" class="btn btn-icon"><i
+                                <button id="calendar-prev-btn" class="btn btn-icon" aria-label="Previous"><i
                                         class="fas fa-chevron-left"></i></button>
                                 <h3 id="calendar-header" class="calendar-header-title"></h3>
-                                <button id="calendar-next-btn" class="btn btn-icon"><i
+                                <button id="calendar-next-btn" class="btn btn-icon" aria-label="Next"><i
                                         class="fas fa-chevron-right"></i></button>
                             </div>
                             <div class="calendar-view-toggles">
@@ -350,7 +350,7 @@
                 <!-- How to Guide Modal -->
                 <div id="calendar-guide-modal" class="modal">
                     <div class="modal-content guide-modal-content">
-                        <span class="close-button">&times;</span>
+                        <button class="close-button" aria-label="Close modal">&times;</button>
                         <h2>How to Link Your Calendar</h2>
                         <div class="guide-tabs">
                             <button class="guide-tab active" data-target="guide-google">Google Calendar</button>
@@ -503,8 +503,13 @@
                         </div>
                         <div class="fullscreen-timer" id="focus-mode-timer">25:00</div>
                         <div class="fullscreen-goal" id="focus-mode-goal">Your goal will appear here</div>
-                        <button id="pause-focus-mode" class="btn btn-secondary"><i class="fas fa-pause"></i>
-                            Pause</button>
+                        
+                        <div class="focus-mode-actions" style="display: flex; gap: 1rem; justify-content: center; margin: 1.5rem 0;">
+                            <button id="pause-focus-mode" class="btn btn-secondary"><i class="fas fa-pause"></i>
+                                Pause</button>
+                            <button id="complete-focus-mode" class="btn btn-primary" style="display: none;"><i class="fas fa-check"></i>
+                                Complete Task</button>
+                        </div>
                         <div class="fullscreen-settings">
                             <div class="setting-group">
                                 <label for="focus-background-fullscreen">Background:</label>
@@ -999,8 +1004,8 @@
                                     <label for="setting-routine-select">Select Routine</label>
                                     <div class="flex-row gap-sm">
                                         <select id="setting-routine-select" class="flex-grow"></select>
-                                        <button type="button" id="setting-create-routine-btn" class="btn btn-secondary" title="Create New"><i class="fas fa-plus"></i></button>
-                                        <button type="button" id="setting-delete-routine-btn" class="btn btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                        <button type="button" id="setting-create-routine-btn" class="btn btn-secondary" title="Create New" aria-label="Create New Routine"><i class="fas fa-plus"></i></button>
+                                        <button type="button" id="setting-delete-routine-btn" class="btn btn-danger" title="Delete" aria-label="Delete Routine"><i class="fas fa-trash"></i></button>
                                     </div>
                                 </div>
 
@@ -1072,7 +1077,7 @@
 
             <!-- Fullscreen Routine Focus Mode -->
             <div id="routine-focus-mode" class="routine-focus-mode hidden">
-                <button id="exit-routine-focus" class="exit-focus-btn" title="Exit Focus Mode">
+                <button id="exit-routine-focus" class="exit-focus-btn" title="Exit Focus Mode" aria-label="Exit Focus Mode">
                     <i class="fas fa-times"></i>
                 </button>
 

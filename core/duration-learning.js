@@ -3,7 +3,7 @@ const STORAGE_KEY = 'adhd-duration-learning';
 function loadDurations() {
     if (typeof localStorage === 'undefined') return {};
     try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        return JSON.parse((typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)(STORAGE_KEY)) || {};
     } catch (err) {
         console.warn('Failed to parse duration data', err);
         return {};
@@ -13,7 +13,7 @@ function loadDurations() {
 function saveDurations(data) {
     if (typeof localStorage === 'undefined') return;
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        (typeof localStorage !== "undefined" ? localStorage.setItem.bind(localStorage) : () => {})(STORAGE_KEY, JSON.stringify(data));
     } catch (err) {
         console.warn('Failed to save duration data', err);
     }
@@ -57,7 +57,7 @@ export function getEstimatedDuration(taskName) {
 }
 
 if (typeof window !== 'undefined') {
-    window.DurationLearning = {
+    if (typeof window !== "undefined") window.DurationLearning = {
         recordTaskDuration,
         getEstimatedDuration,
     };

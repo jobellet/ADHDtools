@@ -7,7 +7,7 @@ const URGENCY_REFRESH_KEY = 'adhd-urgency-refresh-date';
 
 function readLegacyTasks() {
   try {
-    const raw = localStorage.getItem('adhd-hub-data');
+    const raw = (typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)('adhd-hub-data');
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed?.tasks) ? parsed.tasks : [];
@@ -19,7 +19,7 @@ function readLegacyTasks() {
 
 function loadTasks() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = (typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)(STORAGE_KEY);
     if (!stored) {
       return readLegacyTasks().map(t => createTask(t, { hash: t.id || t.hash }));
     }
@@ -36,7 +36,7 @@ let tasks = loadTasks();
 function refreshUrgencyIfStale() {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const lastRun = localStorage.getItem(URGENCY_REFRESH_KEY);
+    const lastRun = (typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)(URGENCY_REFRESH_KEY);
     if (lastRun === today) return;
     let updated = false;
     tasks = tasks.map(task => {
@@ -50,7 +50,7 @@ function refreshUrgencyIfStale() {
       return task;
     });
     if (updated) persist();
-    localStorage.setItem(URGENCY_REFRESH_KEY, today);
+    (typeof localStorage !== "undefined" ? localStorage.setItem.bind(localStorage) : () => {})(URGENCY_REFRESH_KEY, today);
   } catch (err) {
     console.warn('Failed to refresh urgency', err);
   }
@@ -60,7 +60,7 @@ refreshUrgencyIfStale();
 
 function persist() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    (typeof localStorage !== "undefined" ? localStorage.setItem.bind(localStorage) : () => {})(STORAGE_KEY, JSON.stringify(tasks));
   } catch (err) {
     console.error('Failed to save unified tasks', err);
   }
@@ -173,11 +173,11 @@ const TaskStore = {
   markComplete,
   getTaskScoreTotals,
   getCategoryStats,
-  getActiveUser: () => (window.UserContext?.getActiveUser?.() || null),
+  getActiveUser: () => ((typeof window !== "undefined" ? window.UserContext : null)?.getActiveUser?.() || null),
 };
 
 if (typeof window !== 'undefined') {
-  window.TaskStore = TaskStore;
+  if (typeof window !== "undefined") window.TaskStore = TaskStore;
 }
 
 export default TaskStore;
