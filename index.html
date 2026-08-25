@@ -45,6 +45,7 @@
     <script src="routine.js" defer></script>
     <script src="script-loader.js" defer></script>
     <script src="i18n.js" defer></script>
+    <script src="credentials-sync.js" defer></script>
 </head>
 
 <body>
@@ -840,6 +841,16 @@
                                         <input type="url" id="ics-url" placeholder="Paste ics URL…">
                                         <button id="load-ics-url-btn" class="btn btn-secondary" type="button">Load</button>
                                     </div>
+                                </div>
+                            </details>
+                        </div>
+
+                        <!-- Credentials Sync Panel -->
+                        <div class="settings-panel settings-panel--full">
+                            <details class="settings-toggle">
+                                <summary><i class="fas fa-shield-alt"></i> Credentials Sync (cross-device)</summary>
+                                <div class="settings-content">
+                                    <div id="credentials-sync-container"></div>
                                 </div>
                             </details>
                         </div>

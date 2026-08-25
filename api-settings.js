@@ -151,6 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       showStatus('Saved. AI assistance is off.');
     }
+    // Refresh the Credentials Sync panel so the new key appears in the export list
+    window.CredentialsSync?.refresh();
   });
 
   container.querySelector('#ai-test-btn').addEventListener('click', async () => {
