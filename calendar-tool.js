@@ -604,7 +604,11 @@
       }
     }
 
-    alert('Failed to load calendar. Please check the URL and try again.');
+    console.warn('Failed to load calendar. Removing invalid URL.');
+    icsUrl = '';
+    saveIcsUrl('');
+    const urlInput = document.getElementById('ics-url');
+    if (urlInput) urlInput.value = '';
   }
 
   function convertEventsToTasks(importedEvents) {
