@@ -49,20 +49,17 @@
 </head>
 
 <body>
-    <header>
-        <div class="container">
-            <h1 id="site-title" data-i18n="site-title"><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
-            <p data-i18n="tagline">Interactive tools to help manage ADHD symptoms and improve productivity</p>
-            <span id="current-time-display" class="current-time"></span>
-        </div>
-    </header>
-
-    <nav>
-        <div class="container">
-            <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i
-                    class="fas fa-bars"></i></button>
+    <div id="top-preferences-drawer" style="display: none; background-color: var(--primary-color);">
+        <header style="padding-bottom: 0;">
+            <div class="container">
+                <h1 id="site-title" data-i18n="site-title"><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
+                <p data-i18n="tagline">Interactive tools to help manage ADHD symptoms and improve productivity</p>
+                <span id="current-time-display" class="current-time"></span>
+            </div>
+        </header>
+        <div class="container preferences-container" style="display: flex; justify-content: center; gap: 1rem; padding: 1rem 0; flex-wrap: wrap;">
             <div class="user-switcher">
-                <label for="active-user-select">User:</label>
+                <label for="active-user-select" style="color: var(--on-primary);">User:</label>
                 <select id="active-user-select" aria-label="Select active user"></select>
                 <button id="add-user-btn" class="btn btn-secondary btn-compact" aria-label="Add user">+</button>
             </div>
@@ -72,6 +69,16 @@
                 <option value="de">Deutsch</option>
                 <option value="es">Español</option>
             </select>
+        </div>
+    </div>
+
+    <nav>
+        <div class="container" style="justify-content: flex-start; gap: 1rem;">
+            <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i
+                    class="fas fa-bars"></i></button>
+            <button id="prefs-toggle-btn" aria-label="Toggle preferences">
+                <i class="fas fa-sliders-h"></i>
+            </button>
             <ul id="main-nav-links">
                 <li><a href="#" class="active" data-tool="home" data-i18n="nav-home"><i class="fas fa-home"></i>
                         Home</a></li>

@@ -223,6 +223,19 @@ nav a.active {
     /* Ensure it's above other elements */
 }
 
+/* Prefs Toggle Button */
+#prefs-toggle-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--primary-color);
+    padding: 8px;
+}
+
 /* Main content */
 main {
     padding: 2rem 0;
@@ -1084,6 +1097,19 @@ footer {
     }
 
     .hamburger-menu {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: static;
+        transform: none;
+        align-self: center;
+        background-color: var(--surface);
+        width: 44px;
+        height: 44px;
+        border-radius: 4px;
+    }
+
+    #prefs-toggle-btn {
         display: flex;
         justify-content: center;
         align-items: center;

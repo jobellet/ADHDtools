@@ -229,6 +229,19 @@ document.addEventListener("DOMContentLoaded", () => {
         // Don't switch to home on menu toggle, just toggle menu
     });
 
+    // Toggle preferences drawer
+    const prefsToggleBtn = document.getElementById("prefs-toggle-btn");
+    const topPreferencesDrawer = document.getElementById("top-preferences-drawer");
+    if (prefsToggleBtn && topPreferencesDrawer) {
+        prefsToggleBtn.addEventListener("click", () => {
+            if (topPreferencesDrawer.style.display === "none") {
+                topPreferencesDrawer.style.display = "block";
+            } else {
+                topPreferencesDrawer.style.display = "none";
+            }
+        });
+    }
+
     // Update time display every second
     function updateTime() {
         const now = new Date();
