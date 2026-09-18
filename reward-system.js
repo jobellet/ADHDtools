@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeUser = window.UserContext?.getActiveUser?.();
         const filtered = activeUser ? tasks.filter(t => t.user === activeUser) : tasks;
         const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
-        const completed = filtered.filter(t => t.completed && t.completedAt && new Date(t.completedAt).getTime() >= cutoff);
+        const completed = filtered.filter(t => t.completed && t.completedAt && new Date(t.completedAt).getTime() >= cutoff && t.isCalendarEvent !== true && t.isActionable !== false && t.type !== 'event');
         const earned = completed.reduce((sum, task) => {
             const score = task.achievementScore || window.TaskModel?.computeAchievementScore?.(task) || 0;
             return sum + score;
@@ -448,6 +448,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    window.RewardSystem = window.RewardSystem || {};
+    window.RewardSystem.completeTask = function(task) {
+        if (task.isCalendarEvent === true || task.isActionable === false || task.type === 'event') {
+            return;
+        }
+
+        let taskPoints = 0;
+        switch (task.priority) {
+            case 'high': taskPoints = 5; break;
+            case 'medium': taskPoints = 3; break;
+            case 'low': taskPoints = 1; break;
+            default: taskPoints = 2;
+        }
+
+        const ledgerEntry = getActiveLedger();
+        ledgerEntry.bonus += taskPoints;
+        ledger[window.UserContext?.getActiveUser?.() || 'main'] = ledgerEntry;
+        saveLedger();
+
+        const newAchievement = {
+            name: `Completed task: ${task.text || task.name}`,
+            date: task.completedAt || new Date().toISOString(),
+            type: 'task',
+            points: taskPoints
+        };
+        achievements.push(newAchievement);
+        localStorage.setItem('adhd-achievements', JSON.stringify(achievements));
+
+        renderRewards();
+        renderAchievements();
+
+        if (confetti) {
+            confetti.start();
+        }
+    };
+
     // Check for completed tasks and pomodoros to award points
     function checkForPointsToAward() {
         // Check for completed tasks
@@ -459,6 +495,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Award points for tasks completed since last check
         tasks.forEach(task => {
+            if (task.isCalendarEvent === true || task.isActionable === false || task.type === 'event') {
+                return;
+            }
             if (task.completed && new Date(task.completedAt) > new Date(lastPointsCheck)) {
                 // Award points based on priority
                 let taskPoints = 0;
