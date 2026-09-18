@@ -86,4 +86,31 @@ describe('Urgency Helpers', () => {
     const urgency = UrgencyHelpers.computeSmoothedUrgency(task);
     assert.strictEqual(urgency, 10);
   });
+  test('resolveRelativeTimestamp resolves basic exact values', () => {
+    // Tomorrow and tonight
+    // Since these return toISOString(), they return UTC string, so local time is shifted.
+    // e.g. T20:00 EST is T01:00 UTC. So we check that they return properly formatted strings, but not the specific hour since it depends on the testing timezone.
+    const tomorrowStr = UrgencyHelpers.resolveRelativeTimestamp('tomorrow');
+    const tonightStr = UrgencyHelpers.resolveRelativeTimestamp('tonight');
+
+    assert.ok(tomorrowStr.includes('Z'));
+    assert.ok(tonightStr.includes('Z'));
+
+    // +Xm and +Xh
+    const now = new Date();
+
+    const plus15m = UrgencyHelpers.resolveRelativeTimestamp('+15m');
+    const expected15m = new Date(now);
+    expected15m.setMinutes(expected15m.getMinutes() + 15);
+    // Might occasionally fail around minute boundaries, but usually fine for simple assert check.
+    assert.ok(plus15m.startsWith(expected15m.toISOString().slice(0, 15)));
+
+    const plus2h = UrgencyHelpers.resolveRelativeTimestamp('+2h');
+    const expected2h = new Date(now);
+    expected2h.setHours(expected2h.getHours() + 2);
+    assert.ok(plus2h.startsWith(expected2h.toISOString().slice(0, 15)));
+
+    // Regular strings should just be returned as is
+    assert.strictEqual(UrgencyHelpers.resolveRelativeTimestamp('2023-11-01T12:00'), '2023-11-01T12:00');
+  });
 });

@@ -35,14 +35,49 @@ function getSkipCount(hash) {
   return ledger[hash] || 0;
 }
 
+function resolveRelativeTimestamp(deadline) {
+  if (!deadline) return deadline;
+
+  const working = String(deadline).trim().toLowerCase();
+
+  let match = working.match(/^\+(\d+)([mh])$/);
+  if (match) {
+    const amount = parseInt(match[1], 10);
+    const unit = match[2];
+    const targetDate = new Date();
+    if (unit === 'h') {
+      targetDate.setHours(targetDate.getHours() + amount);
+    } else {
+      targetDate.setMinutes(targetDate.getMinutes() + amount);
+    }
+    return targetDate.toISOString();
+  }
+
+  if (working === 'tomorrow') {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + 1);
+    targetDate.setHours(18, 0, 0, 0); // Default to end of working day
+    return targetDate.toISOString();
+  }
+
+  if (working === 'tonight') {
+    const targetDate = new Date();
+    targetDate.setHours(20, 0, 0, 0); // Default to tonight time
+    return targetDate.toISOString();
+  }
+
+  return deadline;
+}
+
 function computeSmoothedUrgency(task = {}) {
+  const resolvedDeadline = resolveRelativeTimestamp(task.deadline);
   const base = Number.isFinite(task.urgency)
     ? task.urgency
-    : computeUrgencyFromDeadline(task.deadline);
+    : computeUrgencyFromDeadline(resolvedDeadline);
   let urgency = Number.isFinite(base) ? base : 5;
 
-  if (task.deadline) {
-    const deadlineDate = new Date(task.deadline);
+  if (resolvedDeadline) {
+    const deadlineDate = new Date(resolvedDeadline);
     if (!Number.isNaN(deadlineDate.getTime())) {
       const diffHours = (deadlineDate.getTime() - Date.now()) / 3_600_000;
       if (diffHours > 48) {
@@ -64,6 +99,7 @@ const UrgencyHelpers = {
   computeSmoothedUrgency,
   incrementSkipCount,
   getSkipCount,
+  resolveRelativeTimestamp,
 };
 
 if (typeof window !== 'undefined') {

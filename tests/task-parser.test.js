@@ -65,6 +65,13 @@ describe('Task Parser', () => {
 
     const nextWeek = parse('Plan trip next week', { now });
     assert.ok(nextWeek.plannerDate.startsWith('2023-10-22T09:00'));
+
+    const plusMinutes = parse('Quick task due +15m', { now });
+    assert.ok(plusMinutes.deadline.startsWith('2023-10-15T12:15'));
+    assert.strictEqual(plusMinutes.plannerDate, null);
+
+    const plusHours = parse('Call +2h', { now });
+    assert.ok(plusHours.plannerDate.startsWith('2023-10-15T14:00'));
   });
 
   test('parses specific time', () => {
