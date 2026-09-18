@@ -194,6 +194,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         location: ev.location || '',
                         start: toLocalNaive(ev.start),
                         end: toLocalNaive(ev.end),
+                        isAllDay: !!ev.start?.date,
+                        isCalendarEvent: true,
+                        isActionable: false,
+                        points: 0,
+                        type: 'event'
                     }));
                 if (window.CalendarTool?.ingestExternalEvents) {
                     total += window.CalendarTool.ingestExternalEvents(mapped);

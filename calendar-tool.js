@@ -659,6 +659,9 @@
       const cleanedTitle = rawTitle.replace(fixedTag, '').replace(flexibleTag, '').trim();
       const hashSeed = `${cleanedTitle}-${start}-${end || ''}`;
       const hash = window.TaskModel?.DEFAULT_USER ? `task-${btoa(hashSeed).replace(/=/g, '')}` : `task-${hashSeed}`;
+
+      const isAllDay = ev.isAllDay !== undefined ? !!ev.isAllDay : (start && start.length === 10);
+
       const task = {
         name: cleanedTitle || rawTitle,
         text: cleanedTitle || rawTitle,
@@ -669,6 +672,11 @@
         source: 'calendar-import',
         originalTool: 'calendar',
         hash,
+        isCalendarEvent: ev.isCalendarEvent !== undefined ? ev.isCalendarEvent : true,
+        isActionable: ev.isActionable !== undefined ? ev.isActionable : false,
+        points: ev.points !== undefined ? ev.points : 0,
+        type: ev.type || 'event',
+        isAllDay
       };
       window.TaskStore.upsertTaskByHash(hash, task);
     });
@@ -678,6 +686,9 @@
   // Public API so other modules (e.g. Google Calendar OAuth sync) can feed
   // events through the same normalize/merge/task pipeline as ICS imports.
   window.CalendarTool = {
+    isPassiveEvent(task) {
+      return !!(task && task.isCalendarEvent && task.isActionable === false);
+    },
     ingestExternalEvents(rawEvents) {
       if (!Array.isArray(rawEvents) || rawEvents.length === 0) return 0;
       const normalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
