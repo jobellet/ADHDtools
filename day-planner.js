@@ -194,11 +194,12 @@ function scrollToCurrent() {
     const { startMinutes, endMinutes } = getDayBounds();
     const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
 
-    // Center current time in viewport by subtracting half the container height
-    const containerHeight = timeBlocksContainer.clientHeight;
+    // Align current time near the top of the viewport with some padding (e.g., 15 mins)
+    const paddingMinutes = 15;
     const boundedMinutes = Math.min(Math.max(currentMinutes, startMinutes), endMinutes);
-    const scrollPosition = ((boundedMinutes - startMinutes) * minuteHeight) - (containerHeight / 2);
+    const scrollPosition = ((boundedMinutes - startMinutes) * minuteHeight) - (paddingMinutes * minuteHeight);
 
+    const containerHeight = timeBlocksContainer.clientHeight;
     timeBlocksContainer.scrollTop = Math.max(0, Math.min(timeBlocksContainer.scrollHeight - containerHeight, scrollPosition));
 }
 
