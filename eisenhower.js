@@ -54,12 +54,106 @@ document.addEventListener('DOMContentLoaded', () => {
       <option value="q2">Schedule (Important & Not Urgent)</option>
       <option value="q3">Delegate (Not Important & Urgent)</option>
       <option value="q4">Eliminate (Not Important & Not Urgent)</option>
+      <option value="unclassified">Unclassified (Rapid Triage)</option>
     `;
     addTaskButton.parentNode.insertBefore(quadrantSelect, addTaskButton);
   }
 
   const quadrantSelect = document.getElementById('quadrant-select');
   const importSelect = document.getElementById('import-task-eisenhower');
+
+
+  // --- Rapid Triage UI ---
+  let triageContainer = document.getElementById('rapid-triage-container');
+  if (!triageContainer) {
+    const controlsDiv = document.querySelector('.matrix-controls') || addTaskButton.parentNode.parentNode;
+
+    // Triage toggle button
+    const toggleTriageBtn = document.createElement('button');
+    toggleTriageBtn.id = 'toggle-triage-btn';
+    toggleTriageBtn.textContent = 'Start Rapid Triage';
+    toggleTriageBtn.style.marginLeft = '1rem';
+    toggleTriageBtn.className = 'btn-primary';
+    addTaskButton.parentNode.appendChild(toggleTriageBtn);
+
+    // Triage container
+    triageContainer = document.createElement('div');
+    triageContainer.id = 'rapid-triage-container';
+    triageContainer.style.display = 'none';
+    triageContainer.style.marginTop = '1rem';
+    triageContainer.style.padding = '1rem';
+    triageContainer.style.background = 'var(--surface)';
+    triageContainer.style.borderRadius = 'var(--border-radius)';
+    triageContainer.style.textAlign = 'center';
+    triageContainer.style.border = '2px solid var(--primary-color)';
+    controlsDiv.appendChild(triageContainer);
+
+    const triageTaskText = document.createElement('h3');
+    triageTaskText.id = 'triage-task-text';
+    triageTaskText.style.marginBottom = '1.5rem';
+    triageTaskText.style.fontSize = '1.5rem';
+    triageContainer.appendChild(triageTaskText);
+
+    const triageButtonsDiv = document.createElement('div');
+    triageButtonsDiv.style.display = 'grid';
+    triageButtonsDiv.style.gridTemplateColumns = '1fr 1fr';
+    triageButtonsDiv.style.gap = '1rem';
+
+    const triageButtons = [
+      { id: 'q1', text: 'Do First', color: '#ff4444' },
+      { id: 'q2', text: 'Schedule', color: '#33b5e5' },
+      { id: 'q3', text: 'Delegate', color: '#ffbb33' },
+      { id: 'q4', text: 'Drop', color: '#00C851' }
+    ];
+
+    triageButtons.forEach(btnInfo => {
+      const btn = document.createElement('button');
+      btn.textContent = btnInfo.text;
+      btn.style.padding = '1rem';
+      btn.style.fontSize = '1.2rem';
+      btn.style.background = btnInfo.color;
+      btn.style.color = 'white';
+      btn.style.border = 'none';
+      btn.style.borderRadius = 'var(--border-radius)';
+      btn.style.cursor = 'pointer';
+
+      btn.addEventListener('click', () => {
+        if (tasks.unclassified && tasks.unclassified.length > 0) {
+          const currentTask = tasks.unclassified.shift();
+          tasks[btnInfo.id].push(currentTask);
+          saveTasks();
+          renderTasks();
+          renderTriage();
+        }
+      });
+      triageButtonsDiv.appendChild(btn);
+    });
+
+    triageContainer.appendChild(triageButtonsDiv);
+
+    toggleTriageBtn.addEventListener('click', () => {
+      if (triageContainer.style.display === 'none') {
+        triageContainer.style.display = 'block';
+        toggleTriageBtn.textContent = 'Close Rapid Triage';
+        renderTriage();
+      } else {
+        triageContainer.style.display = 'none';
+        toggleTriageBtn.textContent = 'Start Rapid Triage';
+      }
+    });
+  }
+
+  function renderTriage() {
+    const triageContainer = document.getElementById('rapid-triage-container');
+    const triageTaskText = document.getElementById('triage-task-text');
+    if (!triageContainer || triageContainer.style.display === 'none') return;
+
+    if (tasks.unclassified && tasks.unclassified.length > 0) {
+      triageTaskText.textContent = tasks.unclassified[0].text;
+    } else {
+      triageTaskText.textContent = 'No unclassified tasks! Great job.';
+    }
+  }
 
   // Quadrant containers
   const quadrants = {
@@ -72,7 +166,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const STORAGE_KEY = 'eisenhowerTasks';
   let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY));
   if (!tasks || typeof tasks !== 'object') {
-    tasks = { q1: [], q2: [], q3: [], q4: [] };
+    tasks = { q1: [], q2: [], q3: [], q4: [], unclassified: [] };
+  } else if (!tasks.unclassified) {
+    tasks.unclassified = [];
   }
 
   function saveTasks() {
@@ -206,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.EventBus?.dispatchEvent(new CustomEvent('eisenhowerTaskAdded', {
       detail: { id, text, quadrant }
     }));
+    if(typeof renderTriage === 'function') renderTriage();
   }
 
   function toggleComplete(id, q) {
@@ -297,4 +394,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial render
   renderTasks();
+  if(typeof renderTriage === 'function') renderTriage();
 });
