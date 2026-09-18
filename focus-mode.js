@@ -345,6 +345,53 @@ if (window.__focusModeLoaded) {
       }
     });
 
+    function pickRandomTask(taskList) {
+      if (!taskList || taskList.length === 0) return null;
+      const actionableTasks = taskList.filter(t => !t.completed && !t.isCalendarEvent);
+      if (actionableTasks.length === 0) return null;
+      const randomIndex = Math.floor(Math.random() * actionableTasks.length);
+      return actionableTasks[randomIndex];
+    }
+
+    // Dynamic Random Task UI
+    const focusSettingsContainer = document.querySelector('.focus-settings');
+    if (focusSettingsContainer && window.TaskStore) {
+      const randomBtnWrapper = document.createElement('div');
+      randomBtnWrapper.className = 'setting-group random-task-wrapper';
+      randomBtnWrapper.style.marginTop = '1rem';
+      randomBtnWrapper.style.textAlign = 'center';
+
+      const randomBtn = document.createElement('button');
+      randomBtn.className = 'btn btn-secondary';
+      randomBtn.innerHTML = '<i class="fas fa-random"></i> Pick Random Task';
+      randomBtn.style.width = '100%';
+
+      randomBtn.addEventListener('click', () => {
+        const tasks = window.TaskStore.getAllTasks();
+        const task = pickRandomTask(tasks);
+        if (task) {
+          if (goalInput) goalInput.value = task.name;
+          window.FocusTaskContext = {
+            taskHash: task.hash || task.id,
+            startedAt: Date.now(),
+            durationMinutes: task.durationMinutes || task.duration || 25
+          };
+          updatePreview();
+
+          if (timerId) {
+            // Already in session, update live
+            if (fullscreenGoal) fullscreenGoal.textContent = task.name;
+            if (completeBtn) completeBtn.style.display = 'inline-block';
+          }
+        } else {
+          alert('No actionable tasks available!');
+        }
+      });
+
+      randomBtnWrapper.appendChild(randomBtn);
+      focusSettingsContainer.appendChild(randomBtnWrapper);
+    }
+
     // Resume any in-progress session
     updatePreview();
     resumeSession();
