@@ -5,10 +5,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const container = document.querySelector('.task-breakdown-container');
   if (!container) return;
 
-  const mainInput = document.getElementById('project-input');
-  const addMainBtn = document.getElementById('add-project');
+  const selectTaskBtn = document.getElementById('select-task-btn');
   const aiBtn = document.getElementById('ai-breakdown');
   const listContainer = document.getElementById('project-list');
+  const taskSelectModal = document.getElementById('task-select-modal');
+  const taskSearchInput = document.getElementById('task-select-search');
+  const taskSortSelect = document.getElementById('task-select-sort');
+  const taskSelectList = document.getElementById('task-select-list');
+
+  let isAiMode = false;
   const progressBar = document.getElementById('progress-bar');
   const progressText = document.getElementById('progress-percentage');
   const STORAGE_KEY = 'adhd-breakdown-tasks';
@@ -249,15 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, null);
   }
 
-  function addMain() {
-    const val = mainInput.value.trim();
-    if (!val) return;
-    // Main task default 5 min (will increase if subtasks added)
-    tree.push({ text: val, completed: false, subtasks: [], duration: 5 });
-    mainInput.value = '';
-    saveTree();
-    renderTree();
-  }
 
   function importToPlanner(node) {
     if (!window.CrossTool) {
@@ -275,52 +271,146 @@ document.addEventListener('DOMContentLoaded', () => {
     window.CrossTool.sendTaskToTool(taskData, 'DayPlanner', { openTool: true });
   }
 
-  // Bind main add
-  addMainBtn.addEventListener('click', addMain);
-  mainInput.addEventListener('keypress', e => { if (e.key === 'Enter') addMain(); });
+  // Task selection logic
+  selectTaskBtn.addEventListener('click', () => {
+    isAiMode = false;
+    openTaskSelectModal();
+  });
 
-  // AI breakdown generation (optional feature — requires an AI provider in Settings)
-  aiBtn.addEventListener('click', async () => {
-    const task = mainInput.value.trim();
-    if (!task) return;
+  // AI breakdown generation
+  aiBtn.addEventListener('click', () => {
     if (!window.AIAssistant?.isEnabled?.()) {
       alert('AI breakdown needs an AI provider. Open Settings → AI Assistance to configure one (OpenAI, Gemini, Claude, Mistral, a local model…). You can still break tasks down manually.');
       return;
     }
-    aiBtn.disabled = true;
-    const originalText = aiBtn.textContent;
-    aiBtn.textContent = 'Generating...';
-    try {
-      const prompt = `Break down the task "${task}" into 3-8 small, concrete sub-tasks that someone with ADHD can start immediately. Return a JSON array of objects with keys "text" (short imperative step) and "duration" (estimated minutes, integer).`;
-      const result = await window.AIAssistant.completeJSON(prompt, { maxTokens: 600 });
-      const steps = (Array.isArray(result) ? result : [])
-        .map(item => ({
-          text: String(item.text || '').trim(),
-          duration: Math.max(1, parseInt(item.duration, 10) || 5),
-        }))
-        .filter(item => item.text);
-      if (!steps.length) throw new Error('The AI did not return any sub-tasks.');
-
-      // Create new node with subtasks. Parent duration will be calculated.
-      const newNode = {
-        text: task,
-        completed: false,
-        subtasks: steps.map(s => ({ text: s.text, completed: false, subtasks: [], duration: s.duration })),
-        duration: 0 // Will be recalculated
-      };
-
-      tree.push(newNode);
-      recalculateDurations();
-      saveTree();
-      renderTree();
-      mainInput.value = '';
-    } catch (err) {
-      alert(err.message);
-    } finally {
-      aiBtn.disabled = false;
-      aiBtn.textContent = originalText;
-    }
+    isAiMode = true;
+    openTaskSelectModal();
   });
+
+  if (taskSelectModal) {
+    const closeBtn = taskSelectModal.querySelector('.close-button');
+    if (closeBtn) closeBtn.addEventListener('click', () => taskSelectModal.classList.remove('active'));
+
+    // Close modal on outside click
+    taskSelectModal.addEventListener('click', (e) => {
+      if (e.target === taskSelectModal) {
+        taskSelectModal.classList.remove('active');
+      }
+    });
+
+    taskSearchInput.addEventListener('input', renderTaskSelectList);
+    taskSortSelect.addEventListener('change', renderTaskSelectList);
+  }
+
+  function openTaskSelectModal() {
+    taskSearchInput.value = '';
+    renderTaskSelectList();
+    taskSelectModal.classList.add('active');
+  }
+
+  function renderTaskSelectList() {
+    if (!taskSelectList || !window.TaskStore) return;
+    taskSelectList.innerHTML = '';
+
+    const filterText = (taskSearchInput.value || '').toLowerCase();
+    const sortVal = taskSortSelect.value;
+
+    // Fetch pending tasks from TaskStore
+    let tasks = window.TaskStore.getPendingTasks();
+
+    // Search
+    if (filterText) {
+      tasks = tasks.filter(t => t.text && t.text.toLowerCase().includes(filterText));
+    }
+
+    // Sort
+    if (sortVal === 'deadline') {
+      tasks.sort((a, b) => {
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline) - new Date(b.deadline);
+      });
+    } else if (sortVal === 'duration') {
+      tasks.sort((a, b) => (b.durationMinutes || 0) - (a.durationMinutes || 0));
+    } else if (sortVal === 'scheduled') {
+      tasks.sort((a, b) => {
+        if (!a.plannerDate) return 1;
+        if (!b.plannerDate) return -1;
+        return new Date(a.plannerDate) - new Date(b.plannerDate);
+      });
+    }
+
+    if (tasks.length === 0) {
+      taskSelectList.innerHTML = '<div style="padding: 1rem; color: #666; text-align: center;">No tasks found.</div>';
+      return;
+    }
+
+    tasks.forEach(task => {
+      const item = document.createElement('div');
+      item.className = 'task-select-item';
+
+      const content = document.createElement('div');
+
+      const title = document.createElement('div');
+      title.className = 'task-select-item-title';
+      title.textContent = task.text;
+
+      const meta = document.createElement('div');
+      meta.className = 'task-select-item-meta';
+      const metaParts = [];
+      if (task.durationMinutes) metaParts.push(`${task.durationMinutes} min`);
+      if (task.deadline) metaParts.push(`Due: ${task.deadline}`);
+      meta.textContent = metaParts.join(' • ');
+
+      content.appendChild(title);
+      content.appendChild(meta);
+      item.appendChild(content);
+
+      item.addEventListener('click', async () => {
+        taskSelectModal.classList.remove('active');
+
+        if (isAiMode) {
+            aiBtn.disabled = true;
+            const originalText = aiBtn.textContent;
+            aiBtn.textContent = 'Generating...';
+            try {
+              const prompt = `Break down the task "${task.text}" into 3-8 small, concrete sub-tasks that someone with ADHD can start immediately. Return a JSON array of objects with keys "text" (short imperative step) and "duration" (estimated minutes, integer).`;
+              const result = await window.AIAssistant.completeJSON(prompt, { maxTokens: 600 });
+              const steps = (Array.isArray(result) ? result : [])
+                .map(item => ({
+                  text: String(item.text || '').trim(),
+                  duration: Math.max(1, parseInt(item.duration, 10) || 5),
+                }))
+                .filter(item => item.text);
+              if (!steps.length) throw new Error('The AI did not return any sub-tasks.');
+
+              const newNode = {
+                text: task.text,
+                completed: false,
+                subtasks: steps.map(s => ({ text: s.text, completed: false, subtasks: [], duration: s.duration })),
+                duration: 0
+              };
+
+              tree.push(newNode);
+              recalculateDurations();
+              saveTree();
+              renderTree();
+            } catch (err) {
+              alert(err.message);
+            } finally {
+              aiBtn.disabled = false;
+              aiBtn.textContent = originalText;
+            }
+        } else {
+            tree.push({ text: task.text, completed: false, subtasks: [], duration: task.durationMinutes || 5 });
+            saveTree();
+            renderTree();
+        }
+      });
+
+      taskSelectList.appendChild(item);
+    });
+  }
 
   // Initial render
   renderTree();

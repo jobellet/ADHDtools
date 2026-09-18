@@ -424,8 +424,7 @@
 
                 <div class="task-breakdown-container">
                     <div class="project-input">
-                        <input type="text" id="project-input" placeholder="New task or project name...">
-                        <button id="add-project" class="btn">Add Task</button>
+                        <button id="select-task-btn" class="btn">Select Task</button>
                         <button id="ai-breakdown" class="btn">✨ AI Breakdown</button>
                     </div>
 
@@ -1174,6 +1173,25 @@
                 in your browser.</p>
         </div>
     </footer>
+
+    <!-- Task Selection Modal for Task Breakdown -->
+    <div id="task-select-modal" class="modal">
+        <div class="modal-content task-select-modal-content">
+            <button class="close-button" aria-label="Close modal">&times;</button>
+            <h3>Select a Task</h3>
+            <div class="task-select-controls">
+                <input type="text" id="task-select-search" placeholder="Search tasks...">
+                <select id="task-select-sort">
+                    <option value="deadline">Sort by Deadline</option>
+                    <option value="duration">Sort by Duration</option>
+                    <option value="scheduled">Sort by Scheduled Time</option>
+                </select>
+            </div>
+            <div id="task-select-list" class="task-select-list">
+                <!-- Tasks will be injected here -->
+            </div>
+        </div>
+    </div>
 
 </body>
 

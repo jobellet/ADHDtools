@@ -1834,6 +1834,64 @@ button {
     }
 }
 
+/* Task Breakdown - Task Selection Modal */
+.task-select-modal-content {
+    max-width: 600px;
+}
+
+.task-select-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.task-select-controls input,
+.task-select-controls select {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+}
+
+.task-select-controls input {
+    flex: 1;
+}
+
+.task-select-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.task-select-item {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-select-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.task-select-item-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.task-select-item-meta {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
 /* Task Breakdown - Modern Design */
 .task-breakdown-container {
     background: white;
