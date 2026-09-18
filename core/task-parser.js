@@ -192,9 +192,10 @@
         'name (short imperative label, no dates in it),',
         'deadline (local "YYYY-MM-DDTHH:MM" or null; when the user says by/before/due),',
         'plannerDate (local "YYYY-MM-DDTHH:MM" or null; when the user names a specific slot to do it),',
-        'durationMinutes (number or null),',
+        'durationMinutes (number or null; if not specified by the user, estimate it based on the task name),',
         'importance (1-10 or null; only if the user implies priority),',
-        'isFixed (true only for appointment-like items at a specific time).',
+        'isFixed (true only for appointment-like items at a specific time),',
+        'needsBreakdown (boolean; true if the task is complex enough that breaking it down into smaller steps would be helpful for someone with ADHD).',
       ].join('\n');
       const parsed = await (typeof window !== "undefined" ? window.AIAssistant : null).completeJSON(prompt, { maxTokens: 300 });
       if (!parsed || typeof parsed !== 'object' || !parsed.name) return heuristic;
@@ -209,6 +210,7 @@
         durationMinutes: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : heuristic.durationMinutes,
         importance: Number.isFinite(importance) ? Math.max(1, Math.min(10, Math.round(importance))) : heuristic.importance,
         isFixed: typeof parsed.isFixed === 'boolean' ? parsed.isFixed : heuristic.isFixed,
+        needsBreakdown: typeof parsed.needsBreakdown === 'boolean' ? parsed.needsBreakdown : false,
         source: 'ai',
         matched: heuristic.matched,
       };
