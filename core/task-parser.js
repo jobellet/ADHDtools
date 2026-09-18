@@ -59,7 +59,34 @@
       return ' ';
     });
 
+    // Deadline vs. schedule intent: "by/before/due <when>" sets a deadline,
+    // a plain date/time schedules the task (plannerDate).
+    let isDeadline = false;
+    let targetDate = null;
+    let hasExactTime = false;
+
+    working = working.replace(/\b(by|before|due(?:\s+on)?|until)\s+/i, () => {
+      isDeadline = true;
+      matched.push('deadline-word');
+      return ' ';
+    });
+
+    // Relative precise offset.
+    working = working.replace(/(?:^|\s)\+(\d+)([mh])\b/i, (m, val, unit) => {
+      targetDate = new Date(now);
+      const amount = parseInt(val, 10);
+      if (unit.toLowerCase() === 'h') {
+        targetDate.setHours(targetDate.getHours() + amount);
+      } else {
+        targetDate.setMinutes(targetDate.getMinutes() + amount);
+      }
+      hasExactTime = true;
+      matched.push('date');
+      return ' ';
+    });
+
     // Duration: "for 30 min", "~45m", "30 minutes", "1.5h", "for 2 hours".
+    // We match duration *after* relative time offsets to prevent "+15m" from being parsed as duration.
     working = working.replace(/(?:\bfor\s+|~\s*)?(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i, (m, val) => {
       result.durationMinutes = Math.round(parseFloat(val) * 60);
       matched.push('duration');
@@ -90,23 +117,14 @@
       });
     }
 
-    // Deadline vs. schedule intent: "by/before/due <when>" sets a deadline,
-    // a plain date/time schedules the task (plannerDate).
-    let isDeadline = false;
-    let targetDate = null;
-
-    working = working.replace(/\b(by|before|due(?:\s+on)?|until)\s+/i, () => {
-      isDeadline = true;
-      matched.push('deadline-word');
-      return ' ';
-    });
-
     // Explicit ISO date.
-    working = working.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/, (m, y, mo, d) => {
-      targetDate = new Date(parseInt(y, 10), parseInt(mo, 10) - 1, parseInt(d, 10));
-      matched.push('date');
-      return ' ';
-    });
+    if (!targetDate) {
+      working = working.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/, (m, y, mo, d) => {
+        targetDate = new Date(parseInt(y, 10), parseInt(mo, 10) - 1, parseInt(d, 10));
+        matched.push('date');
+        return ' ';
+      });
+    }
 
     // Relative day words.
     if (!targetDate) {
@@ -160,7 +178,7 @@
     if (targetDate) {
       if (timeParts) {
         targetDate.setHours(timeParts.hours, timeParts.minutes, 0, 0);
-      } else {
+      } else if (!hasExactTime) {
         // Deadlines default to end of working day, schedules to 09:00.
         targetDate.setHours(isDeadline ? 18 : 9, 0, 0, 0);
       }
