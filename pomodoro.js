@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let sessionCount = parseInt(localStorage.getItem('pomodoroSessionsCompleted'), 10) || 0;
     let currentSessionTotalSeconds = 0; // For progress bar calculation
 
+    // Interval Chime variables
+    let nextChimeSeconds = null;
+
     // Audio elements
     const bellAudio = new Audio('https://soundbible.com/mp3/service-bell_daniel_simion.mp3');
     const chimeAudio = new Audio('https://soundbible.com/mp3/wind-chimes-daniel_simon.mp3');
@@ -66,6 +69,63 @@ document.addEventListener('DOMContentLoaded', function () {
     sessionsBeforeLongBreakInput.value = settings.sessionsBeforeLongBreak;
     audioNotificationSelect.value = settings.audioNotification;
 
+    // --- Inject Interval Chime UI ---
+    const timerControls = document.querySelector('.timer-controls');
+    const chimeContainer = document.createElement('div');
+    chimeContainer.className = 'interval-chime-controls';
+    chimeContainer.style.marginTop = '15px';
+    chimeContainer.style.display = 'flex';
+    chimeContainer.style.alignItems = 'center';
+    chimeContainer.style.justifyContent = 'center';
+    chimeContainer.style.gap = '10px';
+
+    const chimeCheckbox = document.createElement('input');
+    chimeCheckbox.type = 'checkbox';
+    chimeCheckbox.id = 'interval-chime-toggle';
+
+    const chimeLabel = document.createElement('label');
+    chimeLabel.htmlFor = 'interval-chime-toggle';
+    chimeLabel.textContent = 'Interval Chime:';
+    chimeLabel.style.margin = '0';
+
+    const chimeSelect = document.createElement('select');
+    chimeSelect.id = 'interval-chime-select';
+    [5, 10, 15].forEach(min => {
+        const option = document.createElement('option');
+        option.value = min;
+        option.textContent = `Every ${min} min`;
+        chimeSelect.appendChild(option);
+    });
+
+    chimeContainer.appendChild(chimeCheckbox);
+    chimeContainer.appendChild(chimeLabel);
+    chimeContainer.appendChild(chimeSelect);
+    timerControls.parentNode.insertBefore(chimeContainer, timerControls.nextSibling);
+
+    // Load interval chime settings
+    const chimeSettings = JSON.parse(localStorage.getItem('pomodoroIntervalChime')) || {
+        enabled: false,
+        interval: 5
+    };
+    chimeCheckbox.checked = chimeSettings.enabled;
+    chimeSelect.value = chimeSettings.interval;
+
+    chimeCheckbox.addEventListener('change', () => {
+        saveChimeSettings();
+        if (isRunning && !isPaused) recalculateNextChime();
+    });
+    chimeSelect.addEventListener('change', () => {
+        saveChimeSettings();
+        if (isRunning && !isPaused) recalculateNextChime();
+    });
+
+    function saveChimeSettings() {
+        localStorage.setItem('pomodoroIntervalChime', JSON.stringify({
+            enabled: chimeCheckbox.checked,
+            interval: parseInt(chimeSelect.value, 10)
+        }));
+    }
+
     // Initialize timer display
     updateTimerDisplay(settings.focusDuration, 0);
     sessionCountDisplay.textContent = sessionCount;
@@ -81,6 +141,30 @@ document.addEventListener('DOMContentLoaded', function () {
     if (testSoundButton) testSoundButton.addEventListener('click', testSelectedSound);
 
     // Functions
+    function recalculateNextChime() {
+        if (currentMode !== 'focus' || !chimeCheckbox.checked) {
+            nextChimeSeconds = null;
+            return;
+        }
+
+        const intervalSeconds = parseInt(chimeSelect.value, 10) * 60;
+        const totalDuration = settings.focusDuration * 60;
+
+        // Calculate how much time has passed in the current session
+        const remainingTimeSeconds = minutes * 60 + seconds;
+        const elapsedSeconds = totalDuration - remainingTimeSeconds;
+
+        // Calculate the next threshold
+        const nextThreshold = Math.floor(elapsedSeconds / intervalSeconds) * intervalSeconds + intervalSeconds;
+
+        // Only set next chime if it falls within the session duration
+        if (nextThreshold < totalDuration) {
+            nextChimeSeconds = nextThreshold;
+        } else {
+            nextChimeSeconds = null;
+        }
+    }
+
     function startTimer() {
         if (isRunning && !isPaused) return;
 
@@ -120,6 +204,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const remaining = minutes * 60 + seconds;
             endTime = Date.now() + remaining * 1000;
 
+            recalculateNextChime();
+
             timer = setInterval(updateTimer, 1000);
         }
     }
@@ -143,6 +229,7 @@ document.addEventListener('DOMContentLoaded', function () {
         isRunning = false;
         isPaused = false;
         endTime = null;
+        nextChimeSeconds = null;
         currentMode = 'focus';
         minutes = settings.focusDuration;
         seconds = 0;
@@ -161,6 +248,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const remainingTotal = Math.max(0, Math.round((endTime - Date.now()) / 1000));
         minutes = Math.floor(remainingTotal / 60);
         seconds = remainingTotal % 60;
+
+        if (currentMode === 'focus' && nextChimeSeconds !== null) {
+            const elapsed = (settings.focusDuration * 60) - remainingTotal;
+            if (elapsed >= nextChimeSeconds) {
+                playIntervalChime();
+                recalculateNextChime();
+            }
+        }
 
         if (remainingTotal <= 0) {
             // Timer completed
@@ -243,6 +338,47 @@ document.addEventListener('DOMContentLoaded', function () {
         } else if (pomodoroProgressBar && !isRunning && !isPaused) {
             // Ensure bar is at 0 if timer is reset and not just paused
             pomodoroProgressBar.style.width = '0%';
+        }
+    }
+
+    let audioContext = null;
+
+    function playIntervalChime() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const duration = 2.0; // Seconds
+
+            // Soft master volume
+            const masterGain = audioContext.createGain();
+            masterGain.gain.setValueAtTime(0, audioContext.currentTime);
+            masterGain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.1); // Soft attack
+            masterGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration); // Long fade
+            masterGain.connect(audioContext.destination);
+
+            // First oscillator (Base tone, e.g., Tibetan bowl fundamental)
+            const osc1 = audioContext.createOscillator();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(432, audioContext.currentTime); // Relaxing frequency
+            osc1.connect(masterGain);
+
+            // Second oscillator (Slightly detuned for richness/chorus effect)
+            const osc2 = audioContext.createOscillator();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(436, audioContext.currentTime);
+            osc2.connect(masterGain);
+
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioContext.currentTime + duration);
+            osc2.stop(audioContext.currentTime + duration);
+        } catch (e) {
+            console.error('Interval chime playback failed:', e);
         }
     }
 
