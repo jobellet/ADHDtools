@@ -76,6 +76,7 @@ export function createTask(raw = {}, overrides = {}) {
     completedAt: raw.completedAt || null,
     achievementScore: normalizeNumber(raw.achievementScore, 0),
     isFixed: raw.isFixed ?? false,
+    needsBreakdown: typeof raw.needsBreakdown === 'boolean' ? raw.needsBreakdown : false,
     source: raw.source || raw.originalTool || 'manual',
     originalTool: raw.originalTool || raw.source || 'manual',
   };

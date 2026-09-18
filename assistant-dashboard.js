@@ -134,6 +134,24 @@
       if (parsed.importance) raw.importance = parsed.importance;
       const task = window.TaskStore.addTask(raw);
       showCaptureStatus(`Added “${task.name}” — ${describeParsed(parsed)}`);
+
+      if (parsed.needsBreakdown) {
+        const breakBtn = document.createElement('button');
+        breakBtn.className = 'btn btn-outline btn-compact';
+        breakBtn.style.marginLeft = '10px';
+        breakBtn.innerHTML = '<i class="fas fa-project-diagram"></i> Break it down';
+        breakBtn.title = 'This task seems complex. Click here to break it down.';
+        breakBtn.addEventListener('click', () => {
+          if (window.EventBus) {
+            window.EventBus.dispatchEvent(new CustomEvent('ef-receiveTaskFor-TaskBreakdown', {
+              detail: { text: task.name, id: task.hash }
+            }));
+            window.switchTool?.('breakdown');
+          }
+        });
+        captureStatus.appendChild(breakBtn);
+      }
+
       window.EventBus?.dispatchEvent(new Event('dataChanged'));
       window.dispatchEvent(new Event('scheduleNeedsRefresh'));
       renderBanner();
