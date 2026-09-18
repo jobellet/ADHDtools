@@ -329,7 +329,7 @@
   function removeDuplicateEvents(evts) {
     const seen = new Set();
     return evts.filter(ev => {
-      const key = ev.calendarInstanceId || ev.calendarUid || ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
+      const key = `${ev.title}|${ev.start}|${ev.end}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -338,7 +338,7 @@
 
   function mergeEventsPreserveOverrides(existing, incoming) {
     const merged = new Map();
-    const getKey = (ev) => ev.calendarInstanceId || ev.calendarUid || ev.uid || `${ev.title}|${ev.start}|${ev.end}`;
+    const getKey = (ev) => `${ev.title}|${ev.start}|${ev.end}`;
 
     existing.forEach(ev => merged.set(getKey(ev), ev));
 
@@ -357,6 +357,34 @@
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = document.documentElement.lang || 'en';
     window.speechSynthesis.speak(utter);
+  }
+
+  function backgroundDeduplicateEvents() {
+    let changed = false;
+    const deduplicated = new Map();
+
+    events.forEach(ev => {
+      const key = `${ev.title}|${ev.start}|${ev.end}`;
+      const existing = deduplicated.get(key);
+
+      if (!existing) {
+        deduplicated.set(key, ev);
+      } else {
+        changed = true;
+        // Prioritize localOverride, then presence of a UID, then fall back to the existing one.
+        if (ev.localOverride && !existing.localOverride) {
+          deduplicated.set(key, ev);
+        } else if (ev.uid && !existing.uid && !existing.localOverride) {
+          deduplicated.set(key, ev);
+        }
+      }
+    });
+
+    if (changed) {
+      events = Array.from(deduplicated.values());
+      saveEvents(events);
+      render();
+    }
   }
 
   function checkVoiceAnnouncements() {
@@ -629,7 +657,7 @@
       const rawTitle = ev.title || ev.rawTitle || ev.summary || 'Calendar Task';
       const isFixed = rawTitle.includes(fixedTag) || (!rawTitle.includes(flexibleTag));
       const cleanedTitle = rawTitle.replace(fixedTag, '').replace(flexibleTag, '').trim();
-      const hashSeed = `${ev.uid || cleanedTitle}-${start}`;
+      const hashSeed = `${cleanedTitle}-${start}-${end || ''}`;
       const hash = window.TaskModel?.DEFAULT_USER ? `task-${btoa(hashSeed).replace(/=/g, '')}` : `task-${hashSeed}`;
       const task = {
         name: cleanedTitle || rawTitle,
@@ -812,5 +840,8 @@
     }
 
     setInterval(checkVoiceAnnouncements, 60000);
+
+    backgroundDeduplicateEvents();
+    setInterval(backgroundDeduplicateEvents, 60000);
   });
 })();
