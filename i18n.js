@@ -16,6 +16,40 @@ const translations = {
     'nav-rewards': 'Rewards',
     'nav-settings': 'Settings',
     'nav-about': 'About',
+        'user-label': 'User:',
+    'add-btn-compact': '+',
+    'add-event-btn': 'Add Event',
+    'clear-all-btn': 'Clear All',
+    'generate-schedule-btn': 'Generate schedule for today',
+    'ai-plan-btn': 'AI Plan',
+    'record-btn': 'Record',
+    'start-focus-session-btn': 'Start Focus Session for Current Task',
+    'now-heading': 'NOW',
+    'start-focus-btn': 'Start Focus',
+    'complete-btn': 'Complete',
+    'skip-btn': 'Skip',
+    'next-up-heading': 'NEXT UP',
+    'blocked-tasks-heading': 'Blocked Tasks',
+    'start-btn': 'Start',
+    'reset-btn': 'Reset',
+    'add-event-heading': 'Add Event',
+    'settings-heading': 'Settings',
+    'pause-btn': 'Pause',
+    'fill-tasks-btn': 'Fill from Calendar & Tasks',
+    'event-import-task-label': 'Import Task:',
+    'event-new-option': '-- New Event --',
+    'event-title-label': 'Title:',
+    'event-time-label': 'Start Time:',
+    'event-duration-label': 'Duration (minutes):',
+    'event-importance-label': 'Importance (1-10):',
+    'event-urgency-label': 'Urgency (1-10):',
+    'event-deadline-label': 'Deadline:',
+    'event-dependency-label': 'Dependency:',
+    'event-no-dependency-option': 'No dependency',
+    'calendar-settings-moved-text': 'Calendar notifications and Google Calendar API settings are now managed in the global <span class="settings-link-icon">⚙️</span> Settings tab.',
+    'today-no-task': 'No active task yet.',
+    'save-event-btn': 'Save Event',
+    'todays-date': 'Today\'s Date',
     'home-heading': 'Welcome to ADHD Tools Hub',
     'home-text': 'This website provides a collection of interactive tools designed specifically to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.',
     'card-pomodoro': 'Pomodoro Timer',
@@ -119,6 +153,40 @@ const translations = {
     'nav-rewards': 'Récompenses',
     'nav-settings': 'Paramètres',
     'nav-about': 'À propos',
+        'user-label': 'Utilisateur :',
+    'add-btn-compact': '+',
+    'add-event-btn': 'Ajouter événement',
+    'clear-all-btn': 'Tout effacer',
+    'generate-schedule-btn': 'Générer le programme du jour',
+    'ai-plan-btn': 'Plan IA',
+    'record-btn': 'Enregistrer',
+    'start-focus-session-btn': 'Démarrer session de concentration pour la tâche',
+    'now-heading': 'MAINTENANT',
+    'start-focus-btn': 'Démarrer concentration',
+    'complete-btn': 'Terminer',
+    'skip-btn': 'Passer',
+    'next-up-heading': 'À SUIVRE',
+    'blocked-tasks-heading': 'Tâches bloquées',
+    'start-btn': 'Démarrer',
+    'reset-btn': 'Réinitialiser',
+    'add-event-heading': 'Ajouter événement',
+    'settings-heading': 'Paramètres',
+    'pause-btn': 'Pause',
+    'fill-tasks-btn': 'Remplir depuis Calendrier & Tâches',
+    'event-import-task-label': 'Importer tâche :',
+    'event-new-option': '-- Nouvel événement --',
+    'event-title-label': 'Titre :',
+    'event-time-label': 'Heure de début :',
+    'event-duration-label': 'Durée (minutes) :',
+    'event-importance-label': 'Importance (1-10) :',
+    'event-urgency-label': 'Urgence (1-10) :',
+    'event-deadline-label': 'Date limite :',
+    'event-dependency-label': 'Dépendance :',
+    'event-no-dependency-option': 'Aucune dépendance',
+    'calendar-settings-moved-text': 'Les notifications de calendrier et les paramètres API de Google Calendar sont désormais gérés dans l\'onglet <span class="settings-link-icon">⚙️</span> Paramètres.',
+    'today-no-task': 'Aucune tâche active.',
+    'save-event-btn': 'Enregistrer l\'événement',
+    'todays-date': 'Date du jour',
     'home-heading': 'Bienvenue sur le Centre d\'outils TDAH',
     'home-text': "Ce site propose une collection d'outils interactifs conçus pour aider les personnes ayant un TDAH à gérer leurs symptômes, améliorer leur productivité et renforcer leur concentration.",
     'card-pomodoro': 'Minuteur Pomodoro',
@@ -222,6 +290,40 @@ const translations = {
     'nav-rewards': 'Belohnungen',
     'nav-settings': 'Einstellungen',
     'nav-about': 'Über',
+        'user-label': 'Benutzer:',
+    'add-btn-compact': '+',
+    'add-event-btn': 'Ereignis hinzufügen',
+    'clear-all-btn': 'Alles löschen',
+    'generate-schedule-btn': 'Zeitplan für heute generieren',
+    'ai-plan-btn': 'KI-Plan',
+    'record-btn': 'Aufnehmen',
+    'start-focus-session-btn': 'Fokus-Sitzung für aktuelle Aufgabe starten',
+    'now-heading': 'JETZT',
+    'start-focus-btn': 'Fokus starten',
+    'complete-btn': 'Abschließen',
+    'skip-btn': 'Überspringen',
+    'next-up-heading': 'ALS NÄCHSTES',
+    'blocked-tasks-heading': 'Blockierte Aufgaben',
+    'start-btn': 'Start',
+    'reset-btn': 'Zurücksetzen',
+    'add-event-heading': 'Ereignis hinzufügen',
+    'settings-heading': 'Einstellungen',
+    'pause-btn': 'Pause',
+    'fill-tasks-btn': 'Aus Kalender & Aufgaben füllen',
+    'event-import-task-label': 'Aufgabe importieren:',
+    'event-new-option': '-- Neues Ereignis --',
+    'event-title-label': 'Titel:',
+    'event-time-label': 'Startzeit:',
+    'event-duration-label': 'Dauer (Minuten):',
+    'event-importance-label': 'Wichtigkeit (1-10):',
+    'event-urgency-label': 'Dringlichkeit (1-10):',
+    'event-deadline-label': 'Frist:',
+    'event-dependency-label': 'Abhängigkeit:',
+    'event-no-dependency-option': 'Keine Abhängigkeit',
+    'calendar-settings-moved-text': 'Kalenderbenachrichtigungen und Google Calendar API-Einstellungen werden nun im globalen Tab <span class="settings-link-icon">⚙️</span> Einstellungen verwaltet.',
+    'today-no-task': 'Noch keine aktive Aufgabe.',
+    'save-event-btn': 'Ereignis speichern',
+    'todays-date': 'Heutiges Datum',
     'home-heading': 'Willkommen beim ADHS Werkzeugkasten',
     'home-text': 'Diese Website bietet interaktive Werkzeuge, die Menschen mit ADHS helfen sollen, ihre Symptome zu managen, die Produktivität zu steigern und den Fokus zu verbessern.',
     'card-pomodoro': 'Pomodoro-Timer',
@@ -325,6 +427,40 @@ const translations = {
     'nav-rewards': 'Recompensas',
     'nav-settings': 'Ajustes',
     'nav-about': 'Acerca de',
+        'user-label': 'Usuario:',
+    'add-btn-compact': '+',
+    'add-event-btn': 'Añadir evento',
+    'clear-all-btn': 'Borrar todo',
+    'generate-schedule-btn': 'Generar horario de hoy',
+    'ai-plan-btn': 'Plan IA',
+    'record-btn': 'Grabar',
+    'start-focus-session-btn': 'Iniciar sesión de enfoque para la tarea actual',
+    'now-heading': 'AHORA',
+    'start-focus-btn': 'Iniciar enfoque',
+    'complete-btn': 'Completar',
+    'skip-btn': 'Omitir',
+    'next-up-heading': 'SIGUIENTE',
+    'blocked-tasks-heading': 'Tareas bloqueadas',
+    'start-btn': 'Iniciar',
+    'reset-btn': 'Reiniciar',
+    'add-event-heading': 'Añadir evento',
+    'settings-heading': 'Ajustes',
+    'pause-btn': 'Pausa',
+    'fill-tasks-btn': 'Llenar desde Calendario y Tareas',
+    'event-import-task-label': 'Importar tarea:',
+    'event-new-option': '-- Nuevo evento --',
+    'event-title-label': 'Título:',
+    'event-time-label': 'Hora de inicio:',
+    'event-duration-label': 'Duración (minutos):',
+    'event-importance-label': 'Importancia (1-10):',
+    'event-urgency-label': 'Urgencia (1-10):',
+    'event-deadline-label': 'Fecha límite:',
+    'event-dependency-label': 'Dependencia:',
+    'event-no-dependency-option': 'Sin dependencia',
+    'calendar-settings-moved-text': 'Las notificaciones de calendario y la configuración de la API de Google Calendar ahora se administran en la pestaña global de <span class="settings-link-icon">⚙️</span> Ajustes.',
+    'today-no-task': 'Aún no hay tarea activa.',
+    'save-event-btn': 'Guardar evento',
+    'todays-date': 'Fecha de hoy',
     'home-heading': 'Bienvenido a Herramientas TDAH',
     'home-text': 'Este sitio ofrece herramientas interactivas para ayudar a las personas con TDAH a gestionar sus síntomas, mejorar la productividad y aumentar el enfoque.',
     'card-pomodoro': 'Temporizador Pomodoro',
@@ -431,14 +567,30 @@ function applyTranslations(lang) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const select = document.getElementById('language-select');
-  if (!select) return;
+  const flagsContainer = document.getElementById('language-flags');
+  if (!flagsContainer) return;
   const saved = localStorage.getItem('adhd-lang') || 'en';
-  select.value = saved;
+
+  const updateActiveFlag = (lang) => {
+    document.querySelectorAll('.lang-flag').forEach(btn => {
+      if (btn.dataset.lang === lang) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  };
+
+  updateActiveFlag(saved);
   applyTranslations(saved);
-  select.addEventListener('change', () => {
-    const lang = select.value;
-    localStorage.setItem('adhd-lang', lang);
-    applyTranslations(lang);
+
+  document.querySelectorAll('.lang-flag').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const lang = e.currentTarget.dataset.lang;
+      localStorage.setItem('adhd-lang', lang);
+      applyTranslations(lang);
+      updateActiveFlag(lang);
+    });
   });
+});
 });
