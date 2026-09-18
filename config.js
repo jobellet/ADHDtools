@@ -2,7 +2,7 @@
   const CONFIG_STORAGE_KEY = 'adhd-tools-config';
 
   const DEFAULT_CONFIG = {
-    dayStart: "07:00",
+    dayStart: "00:00",
     dayEnd: "22:00",
     icsRefreshSeconds: 30,
     fixedTag: "[FIX]",
