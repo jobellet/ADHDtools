@@ -67,6 +67,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingImportRoutineFile = document.getElementById('setting-import-routine-file');
 
 
+
+    const routineTemplates = {
+        "morning-launch": {
+            name: "Morning Launch",
+            startTime: "08:00",
+            weekDays: [1, 2, 3, 4, 5],
+            tasks: [
+                { name: "Drink water", duration: 2 },
+                { name: "Take medications", duration: 3 },
+                { name: "Review top 3 tasks", duration: 5 }
+            ]
+        },
+        "evening-shutdown": {
+            name: "Evening Shutdown",
+            startTime: "17:00",
+            weekDays: [1, 2, 3, 4, 5],
+            tasks: [
+                { name: "Clear desk", duration: 5 },
+                { name: "Log wins", duration: 5 },
+                { name: "Set tomorrow's anchor task", duration: 5 }
+            ]
+        }
+    };
+
     // --- Data Storage ---
     const ROUTINE_STORAGE_KEY = 'adhd-tool-routines';
     const ROUTINE_RUN_REQUEST_KEY = 'adhd-tool-pending-routine-run';
@@ -197,6 +221,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 routine.totalDuration += task.duration;
             });
         });
+    }
+
+
+    function loadTemplate(templateId) {
+        const template = routineTemplates[templateId];
+        if (!template) {
+            console.error(`Template "${templateId}" not found.`);
+            return;
+        }
+
+        const newRoutine = {
+            id: generateId(),
+            name: template.name,
+            startTime: template.startTime,
+            weekDays: [...template.weekDays],
+            tasks: template.tasks.map(t => ({
+                id: generateId(),
+                name: t.name,
+                duration: t.duration,
+                startAt: null
+            })),
+            totalDuration: template.tasks.reduce((sum, t) => sum + (t.duration || 0), 0)
+        };
+
+        routines.push(newRoutine);
+        saveRoutines();
+        if (typeof updateSettingsRoutineSelect === 'function') {
+            updateSettingsRoutineSelect();
+        }
+        return newRoutine;
     }
 
     // --- Routine Selection Logic ---
@@ -1133,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Export global functions if needed
+    window.loadTemplate = loadTemplate;
     window.activateRoutine = activateRoutine;
     window.manualAdvanceTask = manualAdvanceTask;
     window.initializeRoutines = initializeRoutines;
