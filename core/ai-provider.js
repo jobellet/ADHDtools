@@ -238,6 +238,29 @@
     return parsed;
   }
 
+  async function decomposeTask(taskTitle, taskDescription, detailLevel = 3) {
+    const prompt = `Task: ${taskTitle}\nDescription: ${taskDescription || 'None'}\nDetail Level: ${detailLevel}`;
+    const system = `You are an expert productivity assistant. Break down the given task into 3 to 5 micro-steps.
+Each step MUST start with an action verb.
+Each step MUST include an estimated duration in minutes, which MUST be strictly under 15 minutes.
+Return the result strictly as a JSON array of objects where each object has:
+- "title" (string, the step description starting with an action verb)
+- "estimatedMinutes" (number, < 15)
+- "completed" (boolean, exactly false)`;
+
+    const result = await completeJSON(prompt, { system, temperature: 0.3 });
+
+    if (!Array.isArray(result)) {
+      throw new Error('AI did not return a JSON array of micro-steps.');
+    }
+
+    return result.map(step => ({
+      title: String(step.title || 'Action step'),
+      estimatedMinutes: typeof step.estimatedMinutes === 'number' ? step.estimatedMinutes : 5,
+      completed: false
+    }));
+  }
+
   async function testConnection(settings) {
     const text = await complete('Reply with the single word: OK', {
       settings,
@@ -257,6 +280,7 @@
     completeJSON,
     extractJSON,
     testConnection,
+    decomposeTask,
     getActiveLabel() {
       const cfg = resolve();
       return isEnabled(cfg) ? `${cfg.providerDef.label} · ${cfg.model}` : null;
