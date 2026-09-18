@@ -4,11 +4,11 @@
   "description": "[View Live Website](https://jobellet.github.io/ADHDtools/)",
   "main": "api-settings.js",
   "scripts": {
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "jsdom": "^26.1.0"

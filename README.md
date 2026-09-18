@@ -4,6 +4,17 @@
 
 Interactive tools to help manage ADHD symptoms and improve productivity. Everything runs in your browser — your data stays on your device unless *you* connect a sync option.
 
+## Quick demo
+
+The offline quick-capture flow works without an AI provider:
+
+```text
+Input:  Call mom tomorrow at 5pm for 20 min !7
+Result: [FIX] Call mom — scheduled tomorrow at 17:00 · 20 min · importance 7
+```
+
+The task is stored locally as a fixed, scheduled task with its duration and importance preserved. This is the same flow covered by the browser smoke test, with no AI provider configured.
+
 The long-term goal: a unified personal assistant where you just add or speak a task ("Call mom tomorrow at 5pm !7") and the app handles urgency, scheduling, focus timing and rewards. Read the full [vision, roadmap & current status](docs/vision-roadmap.md) and the [Transition Plan](transition_plan.md).
 
 ## 📚 Guides & Tutorials
