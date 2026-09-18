@@ -67,11 +67,11 @@ function persist() {
 }
 
 function getAllTasks() {
-  return [...tasks];
+  return tasks.filter(t => !t.isArchived);
 }
 
 function getTasksByUser(user) {
-  return tasks.filter(t => t.user === user);
+  return tasks.filter(t => t.user === user && !t.isArchived);
 }
 
 function getTaskByHash(hash) {
@@ -79,7 +79,15 @@ function getTaskByHash(hash) {
 }
 
 function getPendingTasks() {
-  return tasks.filter(t => !t.completed);
+  return tasks.filter(t => !t.completed && !t.isArchived);
+}
+
+function getActiveTasks() {
+  return tasks.filter(t => !t.isArchived);
+}
+
+function getArchivedTasks() {
+  return tasks.filter(t => t.isArchived);
 }
 
 function addTask(rawTask) {
@@ -107,6 +115,37 @@ function upsertTaskByHash(hash, rawTask) {
 function saveTasks(nextTasks) {
   tasks = nextTasks.map(t => createTask(t, t));
   persist();
+}
+
+function restoreTask(hash) {
+  return updateTaskByHash(hash, { isArchived: false, archivedReason: null });
+}
+
+function archiveStaleTasks(daysThreshold = 7) {
+  let updated = false;
+  const now = new Date();
+
+  tasks = tasks.map(task => {
+    if (task.completed || task.isArchived) return task;
+
+    // We compare against updatedAt if it exists, otherwise createdAt
+    const timestamp = task.updatedAt || task.createdAt;
+    if (!timestamp) return task;
+
+    const taskDate = new Date(timestamp);
+    if (isNaN(taskDate.getTime())) return task;
+
+    const diffDays = (now - taskDate) / (1000 * 60 * 60 * 24);
+    if (diffDays > daysThreshold) {
+      updated = true;
+      return { ...task, isArchived: true, archivedReason: 'stale' };
+    }
+    return task;
+  });
+
+  if (updated) {
+    persist();
+  }
 }
 
 function markComplete(hash, completedAt = new Date().toISOString()) {
@@ -163,11 +202,15 @@ function getCategoryStats({ user = null } = {}) {
 
 const TaskStore = {
   getAllTasks,
+  getActiveTasks,
+  getArchivedTasks,
   getTasksByUser,
   getTaskByHash,
   getPendingTasks,
   addTask,
   updateTaskByHash,
+  restoreTask,
+  archiveStaleTasks,
   upsertTaskByHash,
   saveTasks,
   markComplete,
