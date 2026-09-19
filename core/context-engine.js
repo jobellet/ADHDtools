@@ -124,24 +124,40 @@
       };
     }
 
-    if (countPendingToday()) {
+    const hour = now.getHours();
+
+    // Morning phase (05:00 - 10:59)
+    if (hour >= 5 && hour < 11) {
       return {
-        id: `idle-${dateStr}`,
-        type: 'idle',
-        icon: 'fa-compass',
-        title: 'Nothing scheduled right now',
-        message: 'You have pending tasks. Generate a schedule and the app will pick the next one for you.',
-        action: { label: 'Generate schedule', tool: 'planner', generate: true },
+        id: `phase-morning-${dateStr}`,
+        type: 'morning',
+        icon: 'fa-sun',
+        title: 'Morning Phase',
+        message: 'Highlight Morning Routine',
+        action: { label: 'Go to Routine', tool: 'routine' },
       };
     }
 
+    // Midday phase (11:00 - 17:59)
+    if (hour >= 11 && hour < 18) {
+      return {
+        id: `phase-midday-${dateStr}`,
+        type: 'midday',
+        icon: 'fa-bullseye',
+        title: 'Midday / Work Phase',
+        message: 'Highlight Next Actionable Task / Focus Mode',
+        action: { label: 'Go to Focus Mode', tool: 'focus' },
+      };
+    }
+
+    // Evening phase (18:00 - 04:59)
     return {
-      id: `empty-${dateStr}`,
-      type: 'empty',
-      icon: 'fa-feather',
-      title: 'All clear',
-      message: 'No pending tasks. Add one below — type or speak it naturally.',
-      action: null,
+      id: `phase-evening-${dateStr}`,
+      type: 'evening',
+      icon: 'fa-moon',
+      title: 'Evening Phase',
+      message: 'Highlight Evening Review & Rewards',
+      action: { label: 'Go to Rewards', tool: 'rewards' },
     };
   }
 
