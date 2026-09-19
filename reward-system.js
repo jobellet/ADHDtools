@@ -249,6 +249,123 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Render Evening Review (Past Uncompleted Tasks)
+    function renderPastTasksReview() {
+        const pastTasksList = document.getElementById('past-tasks-list');
+        const pastTasksSection = document.getElementById('rewards-past-tasks-section');
+        if (!pastTasksList || !pastTasksSection) return;
+
+        pastTasksList.innerHTML = '';
+        const now = new Date();
+        const activeUser = window.UserContext?.getActiveUser?.() || 'main';
+
+        const allTasks = window.TaskStore?.getAllTasks?.() || window.DataManager?.getTasks?.() || [];
+
+        const pastTasks = allTasks.filter(task => {
+            if (task.completed || task.isCompleted || task.isArchived) return false;
+            if (task.isCalendarEvent || task.isActionable === false || task.type === 'event') return false;
+            if (task.user && task.user !== activeUser && activeUser !== 'main') return false;
+            if (!task.plannerDate) return false;
+
+            const taskDate = new Date(task.plannerDate);
+            return taskDate < now;
+        });
+
+        if (pastTasks.length === 0) {
+            pastTasksSection.style.display = 'none';
+            return;
+        }
+
+        pastTasksSection.style.display = 'block';
+
+        pastTasks.forEach(task => {
+            const item = document.createElement('div');
+            item.className = 'past-task-item';
+
+            const info = document.createElement('div');
+            info.className = 'past-task-info';
+
+            const title = document.createElement('div');
+            title.className = 'past-task-name';
+            title.textContent = task.name || task.text || 'Unnamed Task';
+
+            const meta = document.createElement('div');
+            meta.className = 'past-task-meta';
+            const dateStr = new Date(task.plannerDate).toLocaleString(undefined, {
+                weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+            });
+            meta.textContent = `Scheduled for: ${dateStr} | ${task.duration || task.durationMinutes || 0} min`;
+
+            info.appendChild(title);
+            info.appendChild(meta);
+
+            const actions = document.createElement('div');
+            actions.className = 'past-task-actions';
+
+            const claimBtn = document.createElement('button');
+            claimBtn.className = 'btn btn-primary';
+            claimBtn.innerHTML = '<i class="fas fa-check"></i> Claim';
+            claimBtn.title = "Mark complete and earn points";
+            claimBtn.onclick = () => {
+                if (window.TaskStore?.markComplete) {
+                    window.TaskStore.markComplete(task.hash || task.id);
+                } else if (window.DataManager?.updateTask) {
+                    window.DataManager.updateTask(task.id, { completed: true, completedAt: new Date().toISOString() });
+                }
+                if (window.RewardSystem?.completeTask) {
+                    window.RewardSystem.completeTask(task);
+                }
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+            };
+
+            const rescheduleBtn = document.createElement('button');
+            rescheduleBtn.className = 'btn btn-secondary';
+            rescheduleBtn.innerHTML = '<i class="fas fa-calendar-plus"></i> Reschedule';
+            rescheduleBtn.title = "Move to tomorrow";
+            rescheduleBtn.onclick = () => {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                // Keep the same time, just change the day
+                const oldDate = new Date(task.plannerDate);
+                tomorrow.setHours(oldDate.getHours(), oldDate.getMinutes(), 0, 0);
+
+                // Apply timezone offset to get local YYYY-MM-DDTHH:mm string
+                const offset = tomorrow.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(tomorrow.getTime() - offset)).toISOString().slice(0, 16);
+
+                if (window.TaskStore?.updateTaskByHash) {
+                    window.TaskStore.updateTaskByHash(task.hash || task.id, { plannerDate: localISOTime });
+                } else if (window.DataManager?.updateTask) {
+                    window.DataManager.updateTask(task.id, { plannerDate: localISOTime });
+                }
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+            };
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'btn btn-outline';
+            cancelBtn.innerHTML = '<i class="fas fa-times"></i> Cancel';
+            cancelBtn.title = "Remove from schedule";
+            cancelBtn.onclick = () => {
+                if (window.TaskStore?.updateTaskByHash) {
+                    window.TaskStore.updateTaskByHash(task.hash || task.id, { plannerDate: null, isFixed: false });
+                } else if (window.DataManager?.updateTask) {
+                    window.DataManager.updateTask(task.id, { plannerDate: null });
+                }
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+            };
+
+            actions.appendChild(claimBtn);
+            actions.appendChild(rescheduleBtn);
+            actions.appendChild(cancelBtn);
+
+            item.appendChild(info);
+            item.appendChild(actions);
+
+            pastTasksList.appendChild(item);
+        });
+    }
+
     // Render achievements list
     function renderAchievements() {
         // Clear current list
@@ -619,20 +736,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial render
     renderRewards();
     renderAchievements();
+    renderPastTasksReview();
 
     window.addEventListener('activeUserChanged', () => {
         renderRewards();
         renderAchievements();
+        renderPastTasksReview();
     });
 
     if (window.EventBus) {
         window.EventBus.addEventListener('taskCompleted', () => {
             renderRewards();
             renderAchievements();
+            renderPastTasksReview();
         });
         window.EventBus.addEventListener('dataChanged', () => {
             renderRewards();
             renderAchievements();
+            renderPastTasksReview();
         });
     }
     
