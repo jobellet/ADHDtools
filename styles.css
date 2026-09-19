@@ -506,6 +506,54 @@ footer {
     padding: 1rem;
 }
 
+/* Evening Review / Past Tasks */
+.rewards-past-tasks {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.past-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.past-task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--surface);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+}
+
+.past-task-info {
+    flex: 1;
+}
+
+.past-task-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.past-task-meta {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.past-task-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.past-task-actions .btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+
 /* Rewards Tool Toggle */
 #toggle-rewards-setup-btn {
     margin-bottom: 1.5rem;
@@ -1411,6 +1459,7 @@ footer {
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-left: 4px solid rgba(255, 255, 255, 0.5);
+    z-index: 10;
 }
 
 .event:hover {
@@ -1419,8 +1468,12 @@ footer {
 }
 
 .event.calendar-event {
-    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
-    color: var(--on-secondary);
+    background: rgba(3, 218, 198, 0.15);
+    border-left: 4px solid var(--secondary-color);
+    color: var(--text-color);
+    z-index: 1;
+    pointer-events: none;
+    box-shadow: none;
 }
 
 .event .delete-event {

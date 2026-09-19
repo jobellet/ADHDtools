@@ -162,6 +162,33 @@ async function handleVoiceCommand(text) {
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
 }
 
+function checkOverlap(newStartMinutes, newDurationMinutes, taskIdToIgnore) {
+    const todayStr = localDateString(currentDate);
+    const tasks = (window.TaskStore?.getAllTasks?.() || window.DataManager?.getTasks?.() || []).map(wrapTask);
+    const todaysActionableTasks = tasks.filter(t =>
+        t.plannerDate &&
+        t.plannerDate.startsWith(todayStr) &&
+        !t.isCalendarEvent &&
+        t.isActionable !== false &&
+        t.type !== 'event'
+    );
+
+    const newEndMinutes = newStartMinutes + newDurationMinutes;
+
+    for (const t of todaysActionableTasks) {
+        if (t.id === taskIdToIgnore || t.hash === taskIdToIgnore) continue;
+        const start = parseTimeToMinutes(t.plannerDate.slice(11, 16));
+        if (start === null) continue;
+        const duration = t.duration || t.durationMinutes || getDefaultDurationMinutes();
+        const end = start + duration;
+
+        if (newStartMinutes < end && newEndMinutes > start) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function startResize(e, task, eventDiv) {
     e.preventDefault();
     const startY = e.clientY;
@@ -177,6 +204,14 @@ function startResize(e, task, eventDiv) {
         document.removeEventListener('mouseup', onUp);
         const diff = ev.clientY - startY;
         const minutes = Math.max(5, startDuration + Math.round(diff / minuteHeight / 5) * 5);
+
+        const startMins = parseTimeToMinutes(task.plannerDate.slice(11, 16));
+        if (startMins !== null && checkOverlap(startMins, minutes, task.id || task.hash)) {
+            alert('Cannot resize task: overlaps with another scheduled task.');
+            eventDiv.style.height = `calc(${startDuration} * var(--minute-height))`;
+            return;
+        }
+
         window.DataManager.updateTask(task.id, { duration: minutes });
     }
     document.addEventListener('mousemove', onMove);
@@ -473,6 +508,13 @@ function initDayPlanner() {
         const deadlineVal = eventDeadlineInput.value ? new Date(eventDeadlineInput.value) : null;
         const deadline = deadlineVal ? new Date(deadlineVal.getTime() - (deadlineVal.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : null;
         const dependency = eventDependencySelect?.value || null;
+
+        const startMins = parseTimeToMinutes(time);
+        const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
+        if (startMins !== null && checkOverlap(startMins, duration, taskIdToIgnore)) {
+            alert('Cannot schedule task: overlaps with another scheduled task.');
+            return;
+        }
 
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
