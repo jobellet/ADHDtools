@@ -7,6 +7,7 @@ const DEFAULT_CONFIG = {
   dayEnd: '22:00',
   fixedTag: '[FIX]',
   flexibleTag: '[FLEX]',
+  bufferDurationMinutes: 5,
 };
 
 function parseTimeToMinutes(timeStr, fallback = 0) {
@@ -87,6 +88,7 @@ function loadCalendarBlocks(todayStr, config) {
 function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()), nowMinutes = null) {
   const dayStart = parseTimeToMinutes(config.dayStart, 0);
   const dayEnd = parseTimeToMinutes(config.dayEnd, 24 * 60);
+  const buffer = Number(config.bufferDurationMinutes ?? 5);
   const fixed = [];
   const flexible = [];
 
@@ -127,16 +129,16 @@ function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()
 
   upcomingFixed.forEach(slot => {
     const gapEnd = Math.max(dayStart, Math.min(slot.startMinutes, dayEnd));
-    while (flexible.length && cursor + getDurationMinutes(flexible[0]) <= gapEnd) {
+    while (flexible.length && cursor + getDurationMinutes(flexible[0]) <= gapEnd - buffer) {
       const task = flexible.shift();
       const duration = getDurationMinutes(task);
       schedule.push({ task, startMinutes: cursor, endMinutes: cursor + duration });
-      cursor += duration;
+      cursor += duration + buffer;
     }
     const start = Math.max(cursor, slot.startMinutes);
     const end = Math.min(dayEnd, Math.max(slot.endMinutes, start));
     schedule.push({ task: slot.task, startMinutes: start, endMinutes: end });
-    cursor = end;
+    cursor = end + buffer;
   });
 
   while (flexible.length && cursor < dayEnd) {
@@ -144,7 +146,7 @@ function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()
     const duration = getDurationMinutes(task);
     if (cursor + duration > dayEnd) break;
     schedule.push({ task, startMinutes: cursor, endMinutes: cursor + duration });
-    cursor += duration;
+    cursor += duration + buffer;
   }
   return schedule;
 }

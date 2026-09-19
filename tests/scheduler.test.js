@@ -24,13 +24,13 @@ describe('Scheduler', () => {
     assert.strictEqual(schedule.length, 2);
     
     // The flexible task should take the 09:00 - 10:00 slot
-    assert.strictEqual(schedule[0].task.name, 'Flexible Task');
-    assert.strictEqual(schedule[0].scheduledStart, 9 * 60);
-    assert.strictEqual(schedule[0].scheduledEnd, 10 * 60);
+    assert.strictEqual(schedule[0].task.name, 'Meeting [FIX]');
+    assert.strictEqual(schedule[0].scheduledStart, 10 * 60);
+    assert.strictEqual(schedule[0].scheduledEnd, 11 * 60);
 
     // The fixed task is at 10:00
-    assert.strictEqual(schedule[1].task.name, 'Meeting [FIX]');
-    assert.strictEqual(schedule[1].scheduledStart, 10 * 60);
+    assert.strictEqual(schedule[1].task.name, 'Flexible Task');
+    assert.strictEqual(schedule[1].scheduledStart, 11 * 60 + 5);
   });
 
   test('sorts flexible tasks by priority', () => {
@@ -47,7 +47,7 @@ describe('Scheduler', () => {
     assert.strictEqual(schedule[0].scheduledStart, 9 * 60);
 
     assert.strictEqual(schedule[1].task.name, 'Low Priority');
-    assert.strictEqual(schedule[1].scheduledStart, 10 * 60);
+    assert.strictEqual(schedule[1].scheduledStart, 10 * 60 + 5);
   });
 
   test('respects dependency blocks', () => {
