@@ -349,7 +349,7 @@ function minutesToTime(minutes) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-function fillDayFromCalendarAndTasks() {
+function fillDayFromCalendarAndTasks(isAuto = false) {
     if (!window.DataManager) return;
     const defaultDuration = getDefaultDurationMinutes();
     const { startMinutes, endMinutes } = getDayBounds();
@@ -416,7 +416,9 @@ function fillDayFromCalendarAndTasks() {
     });
 
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
-    alert('Day filled from calendar events and prioritized tasks.');
+    if (!isAuto) {
+        alert('Day filled from calendar events and prioritized tasks.');
+    }
 }
 
 function handleReceivedTaskForDayPlanner(event) {
@@ -653,6 +655,18 @@ function initDayPlanner() {
     });
 
     window.EventBus.addEventListener('ef-receiveTaskFor-DayPlanner', handleReceivedTaskForDayPlanner);
+
+    // Auto-fill check
+    const todayStr = localDateString(currentDate);
+    const autofillKey = `adhd_planner_autofilled_${todayStr}`;
+    if (!localStorage.getItem(autofillKey)) {
+        const tasks = window.DataManager ? window.DataManager.getTasks() : (window.TaskStore?.getAllTasks ? window.TaskStore.getAllTasks() : []);
+        const todaysTasks = tasks.filter(t => t.plannerDate && t.plannerDate.startsWith(todayStr));
+        if (todaysTasks.length === 0) {
+            fillDayFromCalendarAndTasks(true);
+        }
+        localStorage.setItem(autofillKey, 'true');
+    }
 
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
     scrollToCurrent();
