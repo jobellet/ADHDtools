@@ -215,12 +215,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const rewardPoints = document.createElement('div');
             rewardPoints.className = 'reward-points';
-            rewardPoints.textContent = `${reward.points} points`;
+            rewardPoints.innerHTML = `<strong>Cost:</strong> ${reward.points} points`;
 
             const claimBtn = document.createElement('button');
-            claimBtn.className = 'claim-btn';
-            claimBtn.textContent = 'Claim';
-            claimBtn.disabled = getAvailablePoints() < reward.points;
+            claimBtn.className = 'btn btn-primary claim-btn';
+            claimBtn.textContent = `Claim (-${reward.points} pts)`;
+            const isAffordable = getAvailablePoints() >= reward.points;
+            claimBtn.disabled = !isAffordable;
+            if (!isAffordable) {
+                const shortfall = (reward.points - getAvailablePoints()).toFixed(2);
+                claimBtn.title = `Need ${shortfall} more points`;
+            } else {
+                claimBtn.title = '';
+            }
             claimBtn.addEventListener('click', function() {
                 claimReward(index);
             });
