@@ -266,8 +266,47 @@
       app: APP_NAME,
       version: APP_VERSION,
       exportedAt: new Date().toISOString(),
+      deviceId: getDeviceId(),
     };
     return data;
+  }
+
+  function getDeviceId() {
+    const KEY = 'adhd-device-id';
+    let id;
+    try {
+      id = localStorage.getItem(KEY);
+      if (!id) {
+        id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'device-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
+        localStorage.setItem(KEY, id);
+      }
+    } catch {
+      id = 'device-unknown';
+    }
+    return id;
+  }
+
+  function getExistingRaw() {
+    const raw = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key === 'metadata' || isSensitiveKey(key)) continue;
+      raw[key] = localStorage.getItem(key);
+    }
+    return raw;
+  }
+
+  async function mergeFromBackup(imported) {
+    if (!imported || !imported.metadata || imported.metadata.app !== APP_NAME) {
+      throw new Error('Invalid data file');
+    }
+    const { mergeBackup } = await import('./core/sync-merge.js');
+    const storageLog = (typeof window !== 'undefined' && window.getStorageLog) ? window.getStorageLog() : {};
+    const { updates, added, updated, conflicts } = mergeBackup(imported, getExistingRaw(), {
+      storageLog,
+      isSensitiveKey,
+    });
+    return { updates, added, updated, conflicts };
   }
 
   function exportDataToFile() {
@@ -585,6 +624,8 @@
   DataManager.importDataFromFile = importDataFromFile;
   DataManager.importDataFromObject = importDataFromObject;
   DataManager.collectAllData = collectAllData;
+  DataManager.mergeFromBackup = mergeFromBackup;
+  DataManager.getDeviceId = getDeviceId;
   DataManager.showNotification = showNotification;
 
   // Initial load
