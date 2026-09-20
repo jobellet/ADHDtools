@@ -31,7 +31,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const confettiCanvas = document.getElementById('confetti-canvas');
     
     // Load rewards and points from localStorage
-    let rewards = JSON.parse(localStorage.getItem('adhd-rewards')) || [];
+    const savedRewards = localStorage.getItem('adhd-rewards');
+    let rewards = savedRewards ? JSON.parse(savedRewards) : [];
+
+    if (!savedRewards || rewards.length === 0) {
+        rewards = [
+            { name: "15m Guilt-Free Break / YouTube", points: 10, icon: "☕" },
+            { name: "Special Coffee / Drink", points: 15, icon: "🥤" },
+            { name: "Walk Outside / Fresh Air", points: 10, icon: "🚶" },
+            { name: "30m Gaming Session", points: 25, icon: "🎮" }
+        ];
+        localStorage.setItem('adhd-rewards', JSON.stringify(rewards));
+    }
+
     let achievements = JSON.parse(localStorage.getItem('adhd-achievements')) || [];
     const LEDGER_KEY = 'adhd-points-ledger';
     let ledger = {};
@@ -516,17 +528,51 @@ document.addEventListener('DOMContentLoaded', function() {
             ledger[window.UserContext?.getActiveUser?.() || 'main'] = ledgerEntry;
             saveLedger();
 
-            // Show celebration
+            // Update UI first
+            renderRewards();
+            renderAchievements();
+
+            // Show celebration animation on the reward item
+            const targetItem = rewardsList.children[index];
+            if (targetItem) {
+                targetItem.style.position = 'relative';
+                const celebrationEl = document.createElement('div');
+                celebrationEl.textContent = '🎉 Claimed!';
+                Object.assign(celebrationEl.style, {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    backgroundColor: '#6200ee',
+                    color: 'white',
+                    padding: '10px 20px',
+                    borderRadius: '20px',
+                    fontWeight: 'bold',
+                    zIndex: '10',
+                    pointerEvents: 'none',
+                    opacity: '1',
+                    transition: 'all 1s ease-out'
+                });
+                targetItem.appendChild(celebrationEl);
+
+                setTimeout(() => {
+                    celebrationEl.style.top = '10%';
+                    celebrationEl.style.opacity = '0';
+                }, 10);
+
+                setTimeout(() => {
+                    celebrationEl.remove();
+                }, 1000);
+            }
+
             if (confetti) {
                 confetti.start();
             }
             
-            // Show confirmation
-            alert(`Congratulations! You've claimed "${reward.name}". Enjoy your reward!`);
-            
-            // Update UI
-            renderRewards();
-            renderAchievements();
+            // Show confirmation (delayed slightly to allow animation to start)
+            setTimeout(() => {
+                alert(`Congratulations! You've claimed "${reward.name}". Enjoy your reward!`);
+            }, 100);
         }
     }
 
