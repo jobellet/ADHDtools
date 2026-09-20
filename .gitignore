@@ -1,2 +1,24 @@
 node_modules/
 api-key.js
+
+# Logs
+*.log
+*.log.*
+server_log.txt
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Research notebook (kept locally, not part of the app)
+dnn_features_extraction.ipynb
+
+# Scratch/experiment scripts and local assets
+test_script.js
+test_tz.js
+test_tools.py
+test_csv_logic.js
+routine_running.png
