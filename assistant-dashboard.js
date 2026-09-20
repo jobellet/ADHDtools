@@ -44,52 +44,80 @@
     function renderBanner() {
       if (!banner || !window.ContextEngine) return;
       const context = window.ContextEngine.getContext(new Date());
-      if (!context || window.ContextEngine.isDismissed(context.id)) {
-        banner.innerHTML = '';
+
+      let focusCard = document.getElementById('current-focus-card');
+      const homeSection = document.getElementById('home');
+      if (context && !window.ContextEngine.isDismissed(context.id)) {
+        if (!focusCard) {
+          focusCard = document.createElement('div');
+          focusCard.id = 'current-focus-card';
+          focusCard.className = 'current-focus-card';
+          if (homeSection) {
+            homeSection.insertBefore(focusCard, banner);
+          }
+        }
+
+        focusCard.style.display = 'flex';
+        focusCard.className = `current-focus-card context-${context.type}`;
+        focusCard.style.padding = '1rem';
+        focusCard.style.marginBottom = '1rem';
+        focusCard.style.backgroundColor = 'var(--card-bg)';
+        focusCard.style.border = '2px solid var(--primary-color)';
+        focusCard.style.borderRadius = '8px';
+        focusCard.style.alignItems = 'center';
+        focusCard.style.justifyContent = 'space-between';
+
+        focusCard.innerHTML = '';
+
+        const contentDiv = document.createElement('div');
+        contentDiv.style.display = 'flex';
+        contentDiv.style.alignItems = 'center';
+        contentDiv.style.gap = '1rem';
+
+        const icon = document.createElement('i');
+        icon.className = `fas ${context.icon || 'fa-compass'} context-banner-icon`;
+        icon.style.fontSize = '2rem';
+        icon.style.color = 'var(--primary-color)';
+        contentDiv.appendChild(icon);
+
+        const body = document.createElement('div');
+        const title = document.createElement('strong');
+        title.textContent = `Current Focus: ${context.title}`;
+        title.style.display = 'block';
+        title.style.fontSize = '1.2rem';
+        const message = document.createElement('p');
+        message.textContent = context.message;
+        message.style.margin = '0';
+        body.append(title, message);
+        contentDiv.appendChild(body);
+
+        focusCard.appendChild(contentDiv);
+
+        if (context.action) {
+          const actBtn = document.createElement('button');
+          actBtn.className = 'btn btn-primary';
+          actBtn.textContent = context.action.label;
+          actBtn.addEventListener('click', () => {
+             const toolCard = document.querySelector(`.tool-card[data-tool='${context.action.tool}']`);
+             if (toolCard) {
+                 toolCard.click();
+             } else {
+                 runContextAction(context.action);
+             }
+          });
+          focusCard.appendChild(actBtn);
+        }
+      } else if (focusCard) {
+        focusCard.style.display = 'none';
+      }
+
+      if (banner) {
         banner.style.display = 'none';
-        return;
       }
-
-      banner.style.display = 'flex';
-      banner.className = `context-banner context-${context.type}`;
-      banner.innerHTML = '';
-
-      const icon = document.createElement('i');
-      icon.className = `fas ${context.icon || 'fa-compass'} context-banner-icon`;
-      banner.appendChild(icon);
-
-      const body = document.createElement('div');
-      body.className = 'context-banner-body';
-      const title = document.createElement('strong');
-      title.textContent = context.title;
-      const message = document.createElement('p');
-      message.textContent = context.message;
-      body.append(title, message);
-      banner.appendChild(body);
-
-      const actions = document.createElement('div');
-      actions.className = 'context-banner-actions';
-      if (context.action) {
-        const actBtn = document.createElement('button');
-        actBtn.className = 'btn btn-primary';
-        actBtn.textContent = context.action.label;
-        actBtn.addEventListener('click', () => runContextAction(context.action));
-        actions.appendChild(actBtn);
-      }
-      const dismissBtn = document.createElement('button');
-      dismissBtn.className = 'btn btn-outline btn-compact';
-      dismissBtn.title = 'Dismiss for this session';
-      dismissBtn.innerHTML = '<i class="fas fa-times"></i>';
-      dismissBtn.addEventListener('click', () => {
-        window.ContextEngine.dismiss(context.id);
-        renderBanner();
-      });
-      actions.appendChild(dismissBtn);
-      banner.appendChild(actions);
 
       // Optional hands-free mode: jump straight into an open routine window.
       const cfg = window.ConfigManager?.getConfig?.();
-      if (cfg?.contextAutoSwitch && context.type === 'routine' && lastAutoSwitchedContext !== context.id) {
+      if (context && cfg?.contextAutoSwitch && context.type === 'routine' && lastAutoSwitchedContext !== context.id) {
         lastAutoSwitchedContext = context.id;
         runContextAction(context.action);
       }
