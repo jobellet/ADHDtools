@@ -28,7 +28,15 @@ Then on **each device**: open **Settings → Calendar Notifications & Google Syn
 2. Click **Restore from Drive** and sign in with the **same Google account**.
 3. If some items exist on both devices, a conflict dialog lets you choose per item: keep existing, overwrite, or keep both. The app then reloads with the merged data.
 
-Repeat backup/restore whenever you want to push fresh data around. (This is a manual snapshot sync, not real-time.)
+Repeat backup/restore whenever you want to push fresh data around.
+
+### Automatic sync (optional)
+
+Leave **“Automatic sync”** checked (About tab, under the Drive buttons) and the app handles the round-trips for you:
+
+- **On startup:** if another device pushed a newer backup to Drive, it is pulled and merged automatically — new items appear, and for items changed on both sides the most recent version wins. Only a *true* conflict (the same item edited differently on two devices with no way to tell which is newer) opens the manual conflict dialog.
+- **Daily:** after 24h without a backup, your local snapshot is pushed to Drive (also when you hide the tab).
+- **Never opens a Google popup on its own** — automatic sync only runs when you have already granted Drive access in this browser. Uncheck it anytime to go fully manual.
 
 ---
 
