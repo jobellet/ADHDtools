@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const rescheduleSaveBtn = document.getElementById('routine-reschedule-save');
     const rescheduleCancelBtn = document.getElementById('routine-reschedule-cancel');
     const rescheduleCloseBtn = document.getElementById('routine-reschedule-close');
+    const rescheduleSheet = document.getElementById('routine-edit-sheet');
+    const rescheduleSheetBackdrop = document.getElementById('routine-edit-sheet-backdrop');
+    const rescheduleSheetList = document.getElementById('routine-reschedule-list-mobile');
+    const rescheduleSheetCloseBtn = document.getElementById('routine-edit-sheet-close');
+    const rescheduleSheetCancelBtn = document.getElementById('routine-edit-sheet-cancel');
+    const rescheduleSheetSaveBtn = document.getElementById('routine-edit-sheet-save');
 
     const activeRoutineDisplay = document.getElementById('active-routine-display');
     const routineControls = document.querySelector('.routine-controls');
@@ -52,9 +58,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pieChartContainer) pieChartContainer.style.display = 'none';
 
     // --- DOM Elements for Settings Management ---
-    const settingRoutineSelect = document.getElementById('setting-routine-select');
+    const routineListCards = document.getElementById('routine-list-cards');
     const settingCreateRoutineBtn = document.getElementById('setting-create-routine-btn');
-    const settingDeleteRoutineBtn = document.getElementById('setting-delete-routine-btn');
+    const routineEditModal = document.getElementById('routine-edit-modal');
+    const routineEditModalBackdrop = document.getElementById('routine-edit-modal-backdrop');
+    const routineEditModalCloseBtn = document.getElementById('routine-edit-modal-close');
+    const routineEditModalSaveBtn = document.getElementById('routine-edit-modal-save-btn');
+    const routineEditModalDeleteBtn = document.getElementById('routine-edit-modal-delete-btn');
+    const routineEditModalAddTaskBtn = document.getElementById('routine-edit-modal-add-task-btn');
+    const routineEditModalName = document.getElementById('routine-edit-modal-name');
+    const routineEditModalStartTime = document.getElementById('routine-edit-modal-start-time');
+    const routineEditModalWeekdays = document.getElementById('routine-edit-modal-weekdays');
+    const routineEditModalTasksList = document.getElementById('routine-edit-modal-tasks-list');
+    const routinePickerModal = document.getElementById('routine-picker-modal');
+    const routinePickerModalBackdrop = document.getElementById('routine-picker-modal-backdrop');
+    const routinePickerModalCloseBtn = document.getElementById('routine-picker-modal-close');
+    const routinePickerList = document.getElementById('routine-picker-list');
+    // Legacy inline editor (desktop fallback) keeps its old ids
     const settingRoutineEditor = document.getElementById('setting-routine-editor');
     const settingRoutineName = document.getElementById('setting-routine-name');
     const settingRoutineStartTime = document.getElementById('setting-routine-start-time');
@@ -65,6 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingExportRoutineBtn = document.getElementById('setting-export-routine-btn');
     const settingImportRoutineBtn = document.getElementById('setting-import-routine-btn');
     const settingImportRoutineFile = document.getElementById('setting-import-routine-file');
+
+    // --- DOM Elements for View Tabs ---
+    const routineViewPlayerBtn = document.getElementById('routine-view-player-btn');
+    const routineViewManageBtn = document.getElementById('routine-view-manage-btn');
+    const routineViewPlayer = document.getElementById('routine-view-player');
+    const routineViewManage = document.getElementById('routine-view-manage');
 
 
 
@@ -253,6 +279,35 @@ document.addEventListener('DOMContentLoaded', () => {
         return newRoutine;
     }
 
+    function isMobileViewport() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function notify(message, type) {
+        if (window.DataManager?.showNotification) {
+            window.DataManager.showNotification(message, type);
+        } else {
+            alert(message);
+        }
+    }
+
+    // --- View Tabs ---
+    function showRoutineView(view) {
+        if (routineViewPlayerBtn) routineViewPlayerBtn.classList.toggle('active', view === 'player');
+        if (routineViewManageBtn) routineViewManageBtn.classList.toggle('active', view === 'manage');
+        if (routineViewPlayerBtn) routineViewPlayerBtn.setAttribute('aria-selected', view === 'player' ? 'true' : 'false');
+        if (routineViewManageBtn) routineViewManageBtn.setAttribute('aria-selected', view === 'manage' ? 'true' : 'false');
+        if (routineViewPlayer) routineViewPlayer.classList.toggle('hidden', view !== 'player');
+        if (routineViewManage) routineViewManage.classList.toggle('hidden', view !== 'manage');
+    }
+
+    function setupRoutineViewTabs() {
+        if (!routineViewPlayerBtn || !routineViewManageBtn) return;
+        routineViewPlayerBtn.addEventListener('click', () => showRoutineView('player'));
+        routineViewManageBtn.addEventListener('click', () => showRoutineView('manage'));
+        showRoutineView('player');
+    }
+
     // --- Routine Selection Logic ---
     function findBestRoutineForNow() {
         const now = new Date();
@@ -274,24 +329,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return todaysRoutines[0];
     }
 
-    // --- Routine Management UI (Settings) ---
+    // --- Routine Management UI ---
+
+    const DAY_LABELS = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+
+    function formatDays(weekDays) {
+        if (!Array.isArray(weekDays) || weekDays.length === 0) return 'No days set';
+        if (weekDays.length === 7) return 'Every day';
+        const ordered = [1, 2, 3, 4, 5, 6, 0].filter(d => weekDays.includes(d));
+        return ordered.map(d => DAY_LABELS[d]).join(', ');
+    }
 
     function initSettingsUI() {
-        if (!settingRoutineSelect) return;
-
         updateSettingsRoutineSelect();
 
-        settingRoutineSelect.addEventListener('change', () => {
-            selectedRoutineId = settingRoutineSelect.value;
-            loadRoutineIntoEditor(selectedRoutineId);
-        });
-
-        settingCreateRoutineBtn.addEventListener('click', () => {
-            const name = prompt("Enter new routine name:");
-            if (name) {
+        if (settingCreateRoutineBtn) {
+            settingCreateRoutineBtn.addEventListener('click', () => {
                 const newRoutine = {
                     id: generateId(),
-                    name: name,
+                    name: '',
                     startTime: "08:00",
                     weekDays: [1, 2, 3, 4, 5],
                     tasks: [],
@@ -299,25 +355,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 routines.push(newRoutine);
                 saveRoutines();
+                selectedRoutineId = newRoutine.id;
                 updateSettingsRoutineSelect();
-                settingRoutineSelect.value = newRoutine.id;
-                loadRoutineIntoEditor(newRoutine.id);
-            }
-        });
+                openRoutineEditModal(newRoutine, true);
+            });
+        }
 
-        settingDeleteRoutineBtn.addEventListener('click', () => {
-            if (!selectedRoutineId) return;
-            if (confirm("Delete this routine?")) {
-                routines = routines.filter(r => r.id !== selectedRoutineId);
-                saveRoutines();
-                selectedRoutineId = null;
-                updateSettingsRoutineSelect();
-                settingRoutineEditor.classList.add('hidden');
-            }
-        });
+        if (routineEditModalSaveBtn) routineEditModalSaveBtn.addEventListener('click', saveRoutineFromModal);
+        if (routineEditModalDeleteBtn) routineEditModalDeleteBtn.addEventListener('click', deleteSelectedRoutine);
+        if (routineEditModalAddTaskBtn) routineEditModalAddTaskBtn.addEventListener('click', () => addTaskRow(routineEditModalTasksList));
 
-        settingSaveRoutineBtn.addEventListener('click', saveRoutineFromEditor);
-        settingAddTaskBtn.addEventListener('click', addTaskInEditor);
+        if (routineEditModalCloseBtn) routineEditModalCloseBtn.addEventListener('click', closeRoutineEditModal);
+        if (routineEditModalBackdrop) routineEditModalBackdrop.addEventListener('click', closeRoutineEditModal);
+
+        if (routinePickerModalCloseBtn) routinePickerModalCloseBtn.addEventListener('click', closeRoutinePicker);
+        if (routinePickerModalBackdrop) routinePickerModalBackdrop.addEventListener('click', closeRoutinePicker);
+
+        if (settingSaveRoutineBtn) settingSaveRoutineBtn.addEventListener('click', saveRoutineFromEditor);
+        if (settingAddTaskBtn) settingAddTaskBtn.addEventListener('click', () => addTaskRow(settingRoutineTasksList));
 
         if (settingExportRoutineBtn) {
             settingExportRoutineBtn.addEventListener('click', exportRoutineToCSV);
@@ -333,93 +388,201 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSettingsRoutineSelect() {
-        if (!settingRoutineSelect) return;
-        settingRoutineSelect.innerHTML = '<option value="">-- Select Routine --</option>';
-        routines.forEach(r => {
-            const option = document.createElement('option');
-            option.value = r.id;
-            option.textContent = r.name;
-            settingRoutineSelect.appendChild(option);
+        renderRoutineCards();
+    }
+
+    function renderRoutineCards() {
+        if (!routineListCards) return;
+        routineListCards.innerHTML = '';
+
+        routines.forEach(routine => {
+            const card = document.createElement('div');
+            card.className = 'routine-card';
+
+            const info = document.createElement('button');
+            info.type = 'button';
+            info.className = 'routine-card-info';
+            const taskCount = (routine.tasks || []).length;
+            const totalMin = (routine.tasks || []).reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
+            const meta = [];
+            if (routine.startTime) meta.push(routine.startTime);
+            meta.push(formatDays(routine.weekDays));
+            if (taskCount > 0) meta.push(`${taskCount} ${taskCount === 1 ? 'task' : 'tasks'} \u00b7 ${totalMin} min`);
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'routine-card-name';
+            nameSpan.textContent = routine.name || 'Untitled routine';
+            const metaSpan = document.createElement('span');
+            metaSpan.className = 'routine-card-meta';
+            metaSpan.textContent = meta.join(' \u00b7 ');
+
+            info.appendChild(nameSpan);
+            info.appendChild(metaSpan);
+            info.addEventListener('click', () => {
+                selectedRoutineId = routine.id;
+                openRoutineEditModal(routine);
+            });
+
+            const playBtn = document.createElement('button');
+            playBtn.type = 'button';
+            playBtn.className = 'routine-card-play';
+            playBtn.title = 'Run routine';
+            playBtn.setAttribute('aria-label', `Run ${routine.name || 'routine'}`);
+            playBtn.innerHTML = '<i class="fas fa-play"></i>';
+            playBtn.addEventListener('click', () => {
+                closeRoutinePicker();
+                activateRoutine(routine.id);
+            });
+
+            card.appendChild(info);
+            card.appendChild(playBtn);
+            routineListCards.appendChild(card);
         });
-        if (selectedRoutineId) {
-            settingRoutineSelect.value = selectedRoutineId;
-        } else {
-            settingRoutineSelect.value = "";
+
+        if (routines.length === 0) {
+            const empty = document.createElement('p');
+            empty.className = 'routine-cards-empty';
+            empty.textContent = 'No routines yet. Tap "New" to create one.';
+            routineListCards.appendChild(empty);
         }
     }
 
-    function loadRoutineIntoEditor(routineId) {
-        const routine = routines.find(r => r.id === routineId);
-        if (!routine) {
-            settingRoutineEditor.classList.add('hidden');
-            selectedRoutineId = null;
-            return;
+    // --- Routine Edit Modal (mobile sheet / desktop dialog) ---
+
+    function openRoutineEditModal(routine, isNew = false) {
+        if (!routineEditModal || !routine) return;
+        selectedRoutineId = routine.id;
+
+        routineEditModalName.value = routine.name || '';
+        routineEditModalStartTime.value = routine.startTime || '';
+        if (routineEditModalDeleteBtn) {
+            routineEditModalDeleteBtn.style.display = isNew ? 'none' : '';
         }
 
-        selectedRoutineId = routineId;
-        settingRoutineEditor.classList.remove('hidden');
-
-        settingRoutineName.value = routine.name;
-        settingRoutineStartTime.value = routine.startTime || '';
-
-        const checkboxes = settingRoutineWeekdays.querySelectorAll('input[type="checkbox"]');
+        const checkboxes = routineEditModalWeekdays.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach(cb => {
             cb.checked = routine.weekDays && routine.weekDays.includes(parseInt(cb.value));
         });
 
-        renderEditorTasks(routine.tasks);
+        routineEditModalTasksList.innerHTML = '';
+        (routine.tasks || []).forEach(task => appendTaskRow(routineEditModalTasksList, task));
+
+        routineEditModal.classList.remove('hidden');
+        if (routineEditModalBackdrop) routineEditModalBackdrop.classList.remove('hidden');
+        routineEditModalName.focus();
     }
 
-    function renderEditorTasks(tasks) {
-        settingRoutineTasksList.innerHTML = '';
-        tasks.forEach((task, index) => {
-            const div = document.createElement('div');
-            div.className = 'routine-task-item';
+    function closeRoutineEditModal() {
+        if (!routineEditModal) return;
+        routineEditModal.classList.add('hidden');
+        if (routineEditModalBackdrop) routineEditModalBackdrop.classList.add('hidden');
+    }
 
-            const nameInput = document.createElement('input');
-            nameInput.type = 'text';
-            nameInput.className = 'task-name';
-            nameInput.value = task.name;
-            nameInput.placeholder = 'Task Name';
+    function saveRoutineFromModal() {
+        if (!selectedRoutineId) return closeRoutineEditModal();
+        const routine = routines.find(r => r.id === selectedRoutineId);
+        if (!routine) return closeRoutineEditModal();
 
-            const durationInput = document.createElement('input');
-            durationInput.type = 'number';
-            durationInput.className = 'task-duration';
-            durationInput.value = task.duration;
-            durationInput.min = '1';
-            durationInput.placeholder = 'Min';
+        const name = routineEditModalName.value.trim();
+        if (!name) {
+            routineEditModalName.focus();
+            notify('Please give this routine a name.');
+            return;
+        }
 
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'btn-remove-task';
-            removeBtn.title = 'Remove';
-            removeBtn.innerHTML = '&times;';
-            removeBtn.addEventListener('click', () => {
-                div.remove();
+        routine.name = name;
+        routine.startTime = routineEditModalStartTime.value;
+
+        const selectedDays = [];
+        routineEditModalWeekdays.querySelectorAll('input:checked').forEach(cb => {
+            selectedDays.push(parseInt(cb.value));
+        });
+        routine.weekDays = selectedDays;
+
+        routine.tasks = collectTaskRows(routineEditModalTasksList);
+        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + t.duration, 0);
+
+        saveRoutines();
+        updateSettingsRoutineSelect();
+        closeRoutineEditModal();
+        notify('Routine saved!');
+
+        const best = findBestRoutineForNow();
+        showReadyToStart(best);
+    }
+
+    function deleteSelectedRoutine() {
+        if (!selectedRoutineId) return;
+        if (!confirm("Delete this routine?")) return;
+        routines = routines.filter(r => r.id !== selectedRoutineId);
+        saveRoutines();
+        selectedRoutineId = null;
+        updateSettingsRoutineSelect();
+        closeRoutineEditModal();
+    }
+
+    // --- Routine Picker (run any routine from the player view) ---
+
+    function openRoutinePicker() {
+        if (!routinePickerModal) return;
+        routinePickerList.innerHTML = '';
+
+        routines.forEach(routine => {
+            const li = document.createElement('li');
+            li.className = 'routine-picker-item';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'routine-picker-btn';
+            const label = document.createElement('span');
+            label.textContent = routine.name || 'Untitled routine';
+            const meta = document.createElement('span');
+            meta.className = 'routine-card-meta';
+            const taskCount = (routine.tasks || []).length;
+            meta.textContent = taskCount > 0 ? `${taskCount} ${taskCount === 1 ? 'task' : 'tasks'}` : 'No tasks yet';
+            btn.appendChild(label);
+            btn.appendChild(meta);
+            btn.addEventListener('click', () => {
+                closeRoutinePicker();
+                activateRoutine(routine.id);
             });
 
-            div.appendChild(nameInput);
-            div.appendChild(durationInput);
-            div.appendChild(removeBtn);
-
-            settingRoutineTasksList.appendChild(div);
+            li.appendChild(btn);
+            routinePickerList.appendChild(li);
         });
+
+        if (routines.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'routine-cards-empty';
+            empty.textContent = 'No routines yet. Create one in the Routines tab.';
+            routinePickerList.appendChild(empty);
+        }
+
+        routinePickerModal.classList.remove('hidden');
+        if (routinePickerModalBackdrop) routinePickerModalBackdrop.classList.remove('hidden');
     }
 
-    function addTaskInEditor() {
+    function closeRoutinePicker() {
+        if (!routinePickerModal) return;
+        routinePickerModal.classList.add('hidden');
+        if (routinePickerModalBackdrop) routinePickerModalBackdrop.classList.add('hidden');
+    }
+
+    function appendTaskRow(listEl, task) {
         const div = document.createElement('div');
         div.className = 'routine-task-item';
 
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.className = 'task-name';
-        nameInput.value = '';
-        nameInput.placeholder = 'New Task';
+        nameInput.value = task ? task.name : '';
+        nameInput.placeholder = 'Task Name';
 
         const durationInput = document.createElement('input');
         durationInput.type = 'number';
         durationInput.className = 'task-duration';
-        durationInput.value = '5';
+        durationInput.inputMode = 'numeric';
+        durationInput.value = task ? task.duration : '5';
         durationInput.min = '1';
         durationInput.placeholder = 'Min';
 
@@ -427,6 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
         removeBtn.type = 'button';
         removeBtn.className = 'btn-remove-task';
         removeBtn.title = 'Remove';
+        removeBtn.setAttribute('aria-label', 'Remove task');
         removeBtn.innerHTML = '&times;';
         removeBtn.addEventListener('click', () => {
             div.remove();
@@ -436,8 +600,63 @@ document.addEventListener('DOMContentLoaded', () => {
         div.appendChild(durationInput);
         div.appendChild(removeBtn);
 
-        settingRoutineTasksList.appendChild(div);
-        nameInput.focus();
+        listEl.appendChild(div);
+        return div;
+    }
+
+    function collectTaskRows(listEl) {
+        const tasks = [];
+        listEl.querySelectorAll('.routine-task-item').forEach(div => {
+            const name = div.querySelector('.task-name').value.trim();
+            const duration = parseInt(div.querySelector('.task-duration').value) || 5;
+            if (name) {
+                tasks.push({
+                    id: generateId(),
+                    name: name,
+                    duration: duration,
+                    startAt: null
+                });
+            }
+        });
+        return tasks;
+    }
+
+    function addTaskRow(listEl) {
+        const div = appendTaskRow(listEl, null);
+        const nameInput = div.querySelector('.task-name');
+        if (nameInput) nameInput.focus();
+    }
+
+    // --- Legacy inline editor (desktop fallback) ---
+
+    function loadRoutineIntoEditor(routineId) {
+        const routine = routines.find(r => r.id === routineId);
+        if (!routine) {
+            settingRoutineEditor?.classList.add('hidden');
+            selectedRoutineId = null;
+            return;
+        }
+
+        selectedRoutineId = routineId;
+        if (settingRoutineEditor) settingRoutineEditor.classList.remove('hidden');
+
+        if (settingRoutineName) settingRoutineName.value = routine.name;
+        if (settingRoutineStartTime) settingRoutineStartTime.value = routine.startTime || '';
+
+        if (settingRoutineWeekdays) {
+            const checkboxes = settingRoutineWeekdays.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = routine.weekDays && routine.weekDays.includes(parseInt(cb.value));
+            });
+        }
+
+        renderEditorTasks(routine.tasks);
+    }
+
+    function renderEditorTasks(tasks) {
+        if (!settingRoutineTasksList) return;
+        settingRoutineTasksList.innerHTML = '';
+        tasks.forEach(task => appendTaskRow(settingRoutineTasksList, task));
     }
 
     function saveRoutineFromEditor() {
@@ -454,27 +673,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         routine.weekDays = selectedDays;
 
-        const newTasks = [];
-        let totalDuration = 0;
-        settingRoutineTasksList.querySelectorAll('.routine-task-item').forEach(div => {
-            const name = div.querySelector('.task-name').value.trim();
-            const duration = parseInt(div.querySelector('.task-duration').value) || 5;
-            if (name) {
-                newTasks.push({
-                    id: generateId(),
-                    name: name,
-                    duration: duration,
-                    startAt: null
-                });
-                totalDuration += duration;
-            }
-        });
-        routine.tasks = newTasks;
-        routine.totalDuration = totalDuration;
+        routine.tasks = collectTaskRows(settingRoutineTasksList);
+        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + t.duration, 0);
 
         saveRoutines();
         updateSettingsRoutineSelect();
-        alert("Routine saved!");
+        notify("Routine saved!");
 
         const best = findBestRoutineForNow();
         showReadyToStart(best);
@@ -579,39 +783,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (confirm(`Found ${newTasks.length} tasks. Append them to current routine?`)) {
                     // We append to the DOM directly to allow user to save/cancel
                     newTasks.forEach(task => {
-                        const div = document.createElement('div');
-                        div.className = 'routine-task-item';
-
-                        const nameInput = document.createElement('input');
-                        nameInput.type = 'text';
-                        nameInput.className = 'task-name';
-                        nameInput.value = task.name;
-                        nameInput.placeholder = 'Task Name';
-
-                        const durationInput = document.createElement('input');
-                        durationInput.type = 'number';
-                        durationInput.className = 'task-duration';
-                        durationInput.value = task.duration;
-                        durationInput.min = '1';
-                        durationInput.placeholder = 'Min';
-
-                        const removeBtn = document.createElement('button');
-                        removeBtn.type = 'button';
-                        removeBtn.className = 'btn-remove-task';
-                        removeBtn.title = 'Remove';
-                        removeBtn.innerHTML = '&times;';
-                        removeBtn.addEventListener('click', () => {
-                            div.remove();
-                        });
-
-                        div.appendChild(nameInput);
-                        div.appendChild(durationInput);
-                        div.appendChild(removeBtn);
-
-                        settingRoutineTasksList.appendChild(div);
+                        appendTaskRow(settingRoutineTasksList, task);
                     });
 
-                    alert("Tasks imported! Click 'Save Routine' to persist changes.");
+                    notify("Tasks imported! Click 'Save Routine' to persist changes.");
                 }
             } else {
                 alert("No valid tasks found in CSV.");
@@ -631,6 +806,21 @@ document.addEventListener('DOMContentLoaded', () => {
             playerRoutineNameDisplay.textContent = "No routine scheduled for now.";
             playerRoutineTasksList.innerHTML = "";
             if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
+            if (activeRoutineDisplay) {
+                let runOtherBtn = document.getElementById('run-other-routine-btn');
+                if (!runOtherBtn) {
+                    runOtherBtn = document.createElement('button');
+                    runOtherBtn.id = 'run-other-routine-btn';
+                    runOtherBtn.type = 'button';
+                    runOtherBtn.className = 'btn btn-outline';
+                    runOtherBtn.innerHTML = '<i class="fas fa-list"></i> <span data-i18n="routine-run-other">Run another routine</span>';
+                    activeRoutineDisplay.appendChild(runOtherBtn);
+                }
+                const newRunBtn = runOtherBtn.cloneNode(true);
+                runOtherBtn.parentNode.replaceChild(newRunBtn, runOtherBtn);
+                newRunBtn.addEventListener('click', openRoutinePicker);
+                newRunBtn.style.display = '';
+            }
             return;
         }
 
@@ -662,6 +852,22 @@ document.addEventListener('DOMContentLoaded', () => {
             activateRoutine(routine.id);
             startBtn.style.display = 'none';
         });
+
+        let runOtherBtn = document.getElementById('run-other-routine-btn');
+        if (!runOtherBtn && activeRoutineDisplay) {
+            runOtherBtn = document.createElement('button');
+            runOtherBtn.id = 'run-other-routine-btn';
+            runOtherBtn.type = 'button';
+            runOtherBtn.className = 'btn btn-outline';
+            runOtherBtn.innerHTML = '<i class="fas fa-list"></i> <span data-i18n="routine-run-other">Run another routine</span>';
+            activeRoutineDisplay.appendChild(runOtherBtn);
+        }
+        if (runOtherBtn) {
+            const newRunBtn = runOtherBtn.cloneNode(true);
+            runOtherBtn.parentNode.replaceChild(newRunBtn, runOtherBtn);
+            newRunBtn.addEventListener('click', openRoutinePicker);
+            newRunBtn.style.display = '';
+        }
     }
 
     function activateRoutine(routineId) {
@@ -848,21 +1054,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleRescheduleDragOver(e) {
+    function handleRescheduleDragOver(e, container) {
         e.preventDefault();
-        if (!draggingRescheduleItem) return;
-        const afterElement = getRescheduleDragAfterElement(rescheduleList, e.clientY);
+        const listEl = container || rescheduleList;
+        if (!draggingRescheduleItem || !listEl) return;
+        const afterElement = getRescheduleDragAfterElement(listEl, e.clientY);
         if (!afterElement) {
-            rescheduleList.appendChild(draggingRescheduleItem);
+            listEl.appendChild(draggingRescheduleItem);
         } else if (afterElement !== draggingRescheduleItem) {
-            rescheduleList.insertBefore(draggingRescheduleItem, afterElement);
+            listEl.insertBefore(draggingRescheduleItem, afterElement);
         }
     }
 
-    function buildRescheduleList() {
-        if (!rescheduleList || !activeRoutine) return;
+    function buildRescheduleList(listEl) {
+        if (!listEl || !activeRoutine) return;
         const remainingTasks = activeRoutine.tasks.slice(currentTaskIndex);
-        rescheduleList.innerHTML = '';
+        listEl.innerHTML = '';
 
         remainingTasks.forEach((task, idx) => {
             const li = document.createElement('li');
@@ -887,26 +1094,63 @@ document.addEventListener('DOMContentLoaded', () => {
             if (idx === 0) parts.push('current');
             meta.textContent = parts.join(' • ');
 
+            const moveBtns = document.createElement('span');
+            moveBtns.className = 'routine-reschedule-move';
+
+            const upBtn = document.createElement('button');
+            upBtn.type = 'button';
+            upBtn.className = 'routine-reschedule-arrow';
+            upBtn.title = 'Move up';
+            upBtn.setAttribute('aria-label', 'Move task up');
+            upBtn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            upBtn.addEventListener('click', () => {
+                const prev = li.previousElementSibling;
+                if (prev) listEl.insertBefore(li, prev);
+            });
+
+            const downBtn = document.createElement('button');
+            downBtn.type = 'button';
+            downBtn.className = 'routine-reschedule-arrow';
+            downBtn.title = 'Move down';
+            downBtn.setAttribute('aria-label', 'Move task down');
+            downBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            downBtn.addEventListener('click', () => {
+                const next = li.nextElementSibling;
+                if (next) listEl.insertBefore(next, li);
+            });
+
+            moveBtns.appendChild(upBtn);
+            moveBtns.appendChild(downBtn);
+
             li.appendChild(grip);
             li.appendChild(name);
             li.appendChild(meta);
+            li.appendChild(moveBtns);
 
             li.addEventListener('dragstart', handleRescheduleDragStart);
             li.addEventListener('dragend', handleRescheduleDragEnd);
 
-            rescheduleList.appendChild(li);
+            listEl.appendChild(li);
         });
     }
 
     function openRescheduleModal() {
-        if (!activeRoutine || !rescheduleModal || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) return;
+        if (!activeRoutine || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) return;
 
         if (currentTaskTimer) {
             clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
 
-        buildRescheduleList();
+        if (isMobileViewport() && rescheduleSheet && rescheduleSheetList) {
+            buildRescheduleList(rescheduleSheetList);
+            rescheduleSheet.classList.remove('hidden');
+            if (rescheduleSheetBackdrop) rescheduleSheetBackdrop.classList.remove('hidden');
+            return;
+        }
+
+        if (!rescheduleModal || !rescheduleList) return;
+        buildRescheduleList(rescheduleList);
         rescheduleModal.classList.remove('hidden');
     }
 
@@ -914,18 +1158,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rescheduleModal) {
             rescheduleModal.classList.add('hidden');
         }
+        if (rescheduleSheet) {
+            rescheduleSheet.classList.add('hidden');
+            if (rescheduleSheetBackdrop) rescheduleSheetBackdrop.classList.add('hidden');
+        }
         if (shouldResume && activeRoutine) {
             startNextTask();
         }
     }
 
     function saveRescheduledOrder() {
-        if (!activeRoutine || !rescheduleList) return;
+        if (!activeRoutine) return;
+        const sourceList = (rescheduleSheet && !rescheduleSheet.classList.contains('hidden')) ? rescheduleSheetList : rescheduleList;
+        if (!sourceList) return;
 
         const completedTasks = activeRoutine.tasks.slice(0, currentTaskIndex);
         const newRemainingTasks = [];
 
-        Array.from(rescheduleList.children).forEach(item => {
+        Array.from(sourceList.children).forEach(item => {
             const originalIdx = parseInt(item.dataset.originalIndex);
             if (!isNaN(originalIdx) && activeRoutine.tasks[originalIdx]) {
                 newRemainingTasks.push(activeRoutine.tasks[originalIdx]);
@@ -1207,7 +1457,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rescheduleSaveBtn) rescheduleSaveBtn.addEventListener('click', saveRescheduledOrder);
     if (rescheduleCancelBtn) rescheduleCancelBtn.addEventListener('click', () => closeRescheduleModal(true));
     if (rescheduleCloseBtn) rescheduleCloseBtn.addEventListener('click', () => closeRescheduleModal(true));
-    if (rescheduleList) rescheduleList.addEventListener('dragover', handleRescheduleDragOver);
+    if (rescheduleList) rescheduleList.addEventListener('dragover', (e) => handleRescheduleDragOver(e, rescheduleList));
+    if (rescheduleSheetList) rescheduleSheetList.addEventListener('dragover', (e) => handleRescheduleDragOver(e, rescheduleSheetList));
+    if (rescheduleSheetCloseBtn) rescheduleSheetCloseBtn.addEventListener('click', () => closeRescheduleModal(true));
+    if (rescheduleSheetCancelBtn) rescheduleSheetCancelBtn.addEventListener('click', () => closeRescheduleModal(true));
+    if (rescheduleSheetSaveBtn) rescheduleSheetSaveBtn.addEventListener('click', saveRescheduledOrder);
+    if (rescheduleSheetBackdrop) rescheduleSheetBackdrop.addEventListener('click', () => closeRescheduleModal(true));
+    setupRoutineViewTabs();
     if (focusCompleteTaskBtn) focusCompleteTaskBtn.addEventListener('click', manualAdvanceTask);
     if (focusSkipTaskBtn) focusSkipTaskBtn.addEventListener('click', skipCurrentTask);
     if (exitFocusBtn) exitFocusBtn.addEventListener('click', exitFocusMode);

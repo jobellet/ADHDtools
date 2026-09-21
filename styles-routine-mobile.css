@@ -1,0 +1,413 @@
+/* Mobile-first routine interface: view tabs, cards, and bottom sheets */
+
+.routine-layout {
+    display: flex;
+    flex-direction: column;
+}
+
+.routine-view-controls {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+.routine-view-controls .routine-view-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color, #ddd);
+    background: var(--surface, #fff);
+    font-weight: 600;
+}
+
+.routine-view-controls .routine-view-btn.active {
+    background: var(--primary-color, #4a6cf7);
+    color: #fff;
+    border-color: transparent;
+}
+
+#routine-view-player.hidden,
+#routine-view-manage.hidden,
+.routine-edit-sheet.hidden,
+.routine-sheet-backdrop.hidden {
+    display: none;
+}
+
+#routine-view-player,
+#routine-view-manage {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* --- Manage view: routine cards --- */
+
+.routine-management-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.routine-management-header h3 {
+    margin: 0;
+}
+
+.routine-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.routine-card {
+    display: flex;
+    align-items: stretch;
+    background: var(--surface, #fff);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.routine-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.9rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    min-height: 48px;
+    cursor: pointer;
+}
+
+.routine-card-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: inherit;
+}
+
+.routine-card-meta {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.routine-card-play {
+    flex: 0 0 64px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-left: 1px solid var(--border-color, #e0e0e0);
+    background: var(--primary-color, #4a6cf7);
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.routine-cards-empty {
+    padding: 1rem;
+    text-align: center;
+    opacity: 0.7;
+}
+
+#run-other-routine-btn {
+    order: 5;
+    margin-top: 0.5rem;
+    min-height: 44px;
+}
+
+/* --- Bottom sheets & modals (shared) --- */
+
+.routine-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9000;
+}
+
+.routine-edit-sheet {
+    position: fixed;
+    z-index: 9001;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 85dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface, #fff);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 769px) {
+    .routine-edit-sheet {
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(560px, 92vw);
+        max-height: 80vh;
+        border-radius: 12px;
+    }
+
+    .routine-edit-sheet.routine-edit-sheet-lg {
+        width: min(680px, 94vw);
+    }
+}
+
+.routine-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.routine-sheet-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.routine-sheet-header .close-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(0, 0, 0, 0.06);
+    font-size: 1rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+
+.routine-sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.25rem 0;
+}
+
+.routine-sheet-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.routine-sheet-actions .btn {
+    flex: 1;
+    padding: 0.9rem;
+}
+
+/* --- Reschedule sheet list --- */
+
+.routine-sheet-list,
+.routine-reschedule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.routine-reschedule-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.6rem;
+    background: #f7f7f8;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    min-height: 48px;
+    touch-action: manipulation;
+}
+
+.routine-reschedule-item.routine-reschedule-current {
+    border-color: var(--primary-color, #4a6cf7);
+    background: rgba(74, 108, 247, 0.08);
+}
+
+.routine-reschedule-item.dragging {
+    opacity: 0.6;
+}
+
+.routine-reschedule-grip {
+    opacity: 0.4;
+    cursor: grab;
+}
+
+.routine-reschedule-name {
+    flex: 1;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.routine-reschedule-meta {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+.routine-reschedule-move {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.routine-reschedule-arrow {
+    width: 40px;
+    height: 32px;
+    border: 1px solid #d4d4d8;
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 0.75rem;
+}
+
+.routine-reschedule-arrow:active {
+    background: #ececf0;
+}
+
+/* --- Routine picker sheet --- */
+
+.routine-picker-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.routine-picker-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    min-height: 48px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 10px;
+    background: var(--surface, #fff);
+    text-align: left;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.routine-picker-btn:active {
+    background: #f0f0f5;
+}
+
+/* --- Legacy reschedule modal (desktop) needs its overlay --- */
+
+.routine-reschedule-modal:not(.hidden) {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 9000;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+}
+
+.routine-reschedule-dialog {
+    width: min(520px, 94vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface, #fff);
+    border-radius: 12px;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.routine-reschedule-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.routine-reschedule-header h3 {
+    margin: 0;
+}
+
+.routine-reschedule-header .close-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+
+.routine-reschedule-tip {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin: 0 0 0.75rem;
+}
+
+.routine-reschedule-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.routine-reschedule-actions .btn {
+    flex: 1;
+    padding: 0.9rem;
+}
+
+/* --- Editor task rows: bigger touch targets --- */
+
+.routine-task-item {
+    grid-template-columns: 1fr 72px 44px;
+}
+
+.routine-task-item input {
+    min-height: 44px;
+    font-size: 16px;
+}
+
+.routine-task-item .btn-remove-task {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    font-size: 1.25rem;
+}
+
+.routine-editor-tools {
+    justify-content: flex-end;
+}
+
+.routine-add-task-btn {
+    margin-top: 0.5rem;
+    min-height: 44px;
+}
+
+/* Mobile: the manage view fills the routine viewport and scrolls internally */
+@media (max-width: 768px) {
+    #routine-view-manage {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
