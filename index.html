@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="routine-focus.css">
     <link rel="stylesheet" href="styles-routine-settings.css">
+    <link rel="stylesheet" href="styles-routine-mobile.css">
     <link rel="stylesheet" href="mobile-optimization.css">
     <link rel="stylesheet" href="styles-assistant.css">
     <script src="timestamp-storage.js" defer></script>
@@ -924,7 +925,20 @@
                 <p data-i18n="routine-text">Create, manage, and run daily routines with timed tasks.</p>
 
                 <div class="routine-container routine-layout">
-                    <div class="routine-player">
+                    <div class="routine-view-controls" role="tablist" aria-label="Routine views">
+                        <button type="button" id="routine-view-player-btn" class="btn routine-view-btn active"
+                            aria-selected="true" role="tab">
+                            <i class="fas fa-play"></i>
+                            <span data-i18n="routine-player-tab">Play</span>
+                        </button>
+                        <button type="button" id="routine-view-manage-btn" class="btn routine-view-btn"
+                            aria-selected="false" role="tab">
+                            <i class="fas fa-list-check"></i>
+                            <span data-i18n="routine-manage-tab">Routines</span>
+                        </button>
+                    </div>
+
+                    <div id="routine-view-player" class="routine-view routine-player">
                         <h3 data-i18n="routine-active-heading">Active Routine</h3>
                         <div id="active-routine-display">
                             <h4 id="player-current-routine-name" data-i18n="routine-none-active">No routine
@@ -938,9 +952,7 @@
                         </div>
 
                         <div class="routine-controls">
-                            <!-- Start button moved to top -->
-                            <div class="routine-player-controls"
-                                style="display: flex; gap: 1rem; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                            <div class="routine-player-controls">
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="routine-auto-run">
                                     <span class="slider round"></span>
@@ -968,68 +980,61 @@
                             the current task as done.</p>
                     </div>
 
-                    <div class="routine-management-panel" style="margin-top: 2rem; background: var(--card-bg); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <h3 style="margin-top: 0; margin-bottom: 1rem;">Routine Management</h3>
+                    <div id="routine-view-manage" class="routine-view routine-management-panel">
+                        <div class="routine-management-header">
+                            <h3 data-i18n="routine-manage-heading-2">Your Routines</h3>
+                            <button type="button" id="setting-create-routine-btn" class="btn btn-primary routine-new-btn">
+                                <i class="fas fa-plus"></i>
+                                <span data-i18n="routine-new-btn">New</span>
+                            </button>
+                        </div>
+                        <div id="routine-list-cards" class="routine-cards"></div>
+
+                        <div id="setting-routine-editor" class="routine-editor hidden">
+                            <div class="routine-editor-body">
+                                <div class="setting-group flex-row gap-sm routine-editor-tools">
+                                    <button type="button" id="setting-export-routine-btn" class="btn btn-secondary btn-sm" title="Export to CSV"><i class="fas fa-file-export"></i> Export</button>
+                                    <button type="button" id="setting-import-routine-btn" class="btn btn-secondary btn-sm" title="Import from CSV"><i class="fas fa-file-import"></i> Import</button>
+                                    <input type="file" id="setting-import-routine-file" accept=".csv" style="display:none">
+                                </div>
+
+                                <div class="setting-group">
+                                    <label for="setting-routine-name">Routine Name</label>
+                                    <input type="text" id="setting-routine-name">
+                                </div>
+
+                                <div class="setting-group">
+                                    <label for="setting-routine-start-time">Preferred Start Time</label>
+                                    <input type="time" id="setting-routine-start-time">
+                                </div>
+
+                                <div class="setting-group">
+                                    <label>Preferred Week Days</label>
+                                    <div class="week-days-selector" id="setting-routine-weekdays">
+                                        <label><input type="checkbox" value="1"> Mon</label>
+                                        <label><input type="checkbox" value="2"> Tue</label>
+                                        <label><input type="checkbox" value="3"> Wed</label>
+                                        <label><input type="checkbox" value="4"> Thu</label>
+                                        <label><input type="checkbox" value="5"> Fri</label>
+                                        <label><input type="checkbox" value="6"> Sat</label>
+                                        <label><input type="checkbox" value="0"> Sun</label>
+                                    </div>
+                                </div>
+
+                                <div class="setting-group">
+                                    <label>Tasks</label>
+                                    <div id="setting-routine-tasks-list" class="routine-tasks-editor-list"></div>
+                                    <button type="button" id="setting-add-task-btn" class="btn btn-outline btn-sm btn-block routine-add-task-btn">
+                                        <i class="fas fa-plus"></i> Add Task
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="settings-content">
                             <div class="setting-group checkbox-group">
                                 <input type="checkbox" id="setting-routine-auto-run">
-                                <label for="setting-routine-auto-run">Enable auto-run by default</label>
-                            </div>
-
-                            <hr class="settings-divider">
-
-                            <div class="routine-management-area">
-                                <div class="setting-group">
-                                    <label for="setting-routine-select">Select Routine</label>
-                                    <div class="flex-row gap-sm">
-                                        <select id="setting-routine-select" class="flex-grow"></select>
-                                        <button type="button" id="setting-create-routine-btn" class="btn btn-secondary" title="Create New" aria-label="Create New Routine"><i class="fas fa-plus"></i></button>
-                                        <button type="button" id="setting-delete-routine-btn" class="btn btn-danger" title="Delete" aria-label="Delete Routine"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                </div>
-
-                                <div id="setting-routine-editor" class="routine-editor hidden">
-                                    <div class="setting-group flex-row gap-sm" style="justify-content: flex-end; margin-bottom: 1rem;">
-                                        <button type="button" id="setting-export-routine-btn" class="btn btn-secondary btn-sm" title="Export to CSV"><i class="fas fa-file-export"></i> Export CSV</button>
-                                        <button type="button" id="setting-import-routine-btn" class="btn btn-secondary btn-sm" title="Import from CSV"><i class="fas fa-file-import"></i> Import CSV</button>
-                                        <input type="file" id="setting-import-routine-file" accept=".csv" style="display:none">
-                                    </div>
-
-                                    <div class="setting-group">
-                                        <label for="setting-routine-name">Routine Name</label>
-                                        <input type="text" id="setting-routine-name">
-                                    </div>
-
-                                    <div class="setting-group">
-                                        <label for="setting-routine-start-time">Preferred Start Time</label>
-                                        <input type="time" id="setting-routine-start-time">
-                                    </div>
-
-                                    <div class="setting-group">
-                                        <label>Preferred Week Days</label>
-                                        <div class="week-days-selector" id="setting-routine-weekdays">
-                                            <label><input type="checkbox" value="1"> Mon</label>
-                                            <label><input type="checkbox" value="2"> Tue</label>
-                                            <label><input type="checkbox" value="3"> Wed</label>
-                                            <label><input type="checkbox" value="4"> Thu</label>
-                                            <label><input type="checkbox" value="5"> Fri</label>
-                                            <label><input type="checkbox" value="6"> Sat</label>
-                                            <label><input type="checkbox" value="0"> Sun</label>
-                                        </div>
-                                    </div>
-
-                                    <div class="setting-group">
-                                        <label>Tasks</label>
-                                        <div id="setting-routine-tasks-list" class="routine-tasks-editor-list"></div>
-                                        <button type="button" id="setting-add-task-btn" class="btn btn-outline btn-sm btn-block" style="margin-top: 0.5rem;">
-                                            <i class="fas fa-plus"></i> Add Task
-                                        </button>
-                                    </div>
-
-                                    <div class="setting-group">
-                                        <button type="button" id="setting-save-routine-btn" class="btn btn-success btn-block">Save Routine</button>
-                                    </div>
-                                </div>
+                                <label for="setting-routine-auto-run" data-i18n="routine-auto-run-setting">Enable auto-run by default</label>
                             </div>
                         </div>
                     </div>
@@ -1051,6 +1056,83 @@
                         <button id="routine-reschedule-cancel" class="btn btn-secondary">Cancel</button>
                         <button id="routine-reschedule-save" class="btn btn-primary">Save Order</button>
                     </div>
+                </div>
+            </div>
+
+            <div id="routine-edit-sheet-backdrop" class="routine-sheet-backdrop hidden"></div>
+            <div id="routine-edit-sheet" class="routine-edit-sheet hidden" role="dialog" aria-modal="true"
+                aria-labelledby="routine-edit-sheet-title">
+                <div class="routine-sheet-header">
+                    <h3 id="routine-edit-sheet-title">Reschedule Current Task</h3>
+                    <button id="routine-edit-sheet-close" class="close-btn" aria-label="Close reschedule window">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <p class="routine-reschedule-tip" data-i18n="routine-sheet-hint">Move the current task anywhere in the queue. Drag, or use the arrows.</p>
+                <div class="routine-sheet-body">
+                    <ul id="routine-reschedule-list-mobile" class="routine-sheet-list"></ul>
+                </div>
+                <div class="routine-sheet-actions">
+                    <button id="routine-edit-sheet-cancel" class="btn btn-secondary" data-i18n="routine-sheet-cancel">Cancel</button>
+                    <button id="routine-edit-sheet-save" class="btn btn-primary" data-i18n="routine-sheet-save">Save Order</button>
+                </div>
+            </div>
+
+            <div id="routine-edit-modal-backdrop" class="routine-sheet-backdrop hidden"></div>
+            <div id="routine-edit-modal" class="routine-edit-sheet routine-edit-sheet-lg hidden" role="dialog"
+                aria-modal="true" aria-labelledby="routine-edit-modal-title">
+                <div class="routine-sheet-header">
+                    <h3 id="routine-edit-modal-title" data-i18n="routine-edit-sheet-title">Edit Routine</h3>
+                    <button id="routine-edit-modal-close" class="close-btn" aria-label="Close routine editor">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="routine-sheet-body">
+                    <div class="setting-group">
+                        <label for="routine-edit-modal-name" data-i18n="routine-name-label-2">Routine Name</label>
+                        <input type="text" id="routine-edit-modal-name">
+                    </div>
+                    <div class="setting-group">
+                        <label for="routine-edit-modal-start-time" data-i18n="routine-start-time-label-2">Start Time</label>
+                        <input type="time" id="routine-edit-modal-start-time">
+                    </div>
+                    <div class="setting-group">
+                        <label data-i18n="routine-weekdays-label">Days</label>
+                        <div class="week-days-selector" id="routine-edit-modal-weekdays">
+                            <label><input type="checkbox" value="1"> Mon</label>
+                            <label><input type="checkbox" value="2"> Tue</label>
+                            <label><input type="checkbox" value="3"> Wed</label>
+                            <label><input type="checkbox" value="4"> Thu</label>
+                            <label><input type="checkbox" value="5"> Fri</label>
+                            <label><input type="checkbox" value="6"> Sat</label>
+                            <label><input type="checkbox" value="0"> Sun</label>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label data-i18n="routine-tasks-label">Tasks</label>
+                        <div id="routine-edit-modal-tasks-list" class="routine-tasks-editor-list"></div>
+                        <button type="button" id="routine-edit-modal-add-task-btn" class="btn btn-outline btn-sm btn-block routine-add-task-btn">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                    </div>
+                </div>
+                <div class="routine-sheet-actions">
+                    <button id="routine-edit-modal-delete-btn" class="btn btn-danger" data-i18n="routine-delete-btn">Delete</button>
+                    <button id="routine-edit-modal-save-btn" class="btn btn-success" data-i18n="routine-save-btn">Save</button>
+                </div>
+            </div>
+
+            <div id="routine-picker-modal-backdrop" class="routine-sheet-backdrop hidden"></div>
+            <div id="routine-picker-modal" class="routine-edit-sheet routine-edit-sheet-lg hidden" role="dialog"
+                aria-modal="true" aria-labelledby="routine-picker-modal-title">
+                <div class="routine-sheet-header">
+                    <h3 id="routine-picker-modal-title" data-i18n="routine-picker-title">Run Routine</h3>
+                    <button id="routine-picker-modal-close" class="close-btn" aria-label="Close routine picker">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="routine-sheet-body">
+                    <ul id="routine-picker-list" class="routine-picker-list"></ul>
                 </div>
             </div>
 
