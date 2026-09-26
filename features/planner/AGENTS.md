@@ -6,6 +6,7 @@ Read first: [../AGENTS.md](../AGENTS.md). ES modules: they `import` from `core/`
 | --- | --- |
 | `day-planner.js` | Entry. Toolbar (Add event, Lock plan, AI Plan `data-cap="ai"`, Record `data-cap="speech"`, Clear day), the **add/edit event form** (`#event-modal`: what, start, how long chips, "More options", inline conflict box with "Use HH:MM", Delete when editing), drag-to-resize, voice add. `window.DayPlanner`. |
 | `planner-utils.js` | Builds the day's items with `buildSchedule` (tasks + routines + calendar), day bounds, defaults. |
+| `ai-plan.js` | AI Plan button: strict prompt + local validation/conflict repair of the model's plan (`planDayWithAI`). Never trusts the model: unknown texts, duplicates and overlaps are fixed or dropped before saving. |
 | `render-day.js` | Draws the hour grid `#time-blocks`: calendar events, routine blocks (orange, click → Routines), fixed tasks, auto-placed tasks (dashed), current-time line. |
 | `planner.css` | Timeline colours, now/next strip, Plan ahead panel, event form (bottom sheet on phones). |
 | `strings.js` | Keys `plan.*`, `legend.*`, `conflict.*`, `event.*`. |
