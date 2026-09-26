@@ -79,7 +79,7 @@ npm run mcp:auth -- --client-id "YOUR_DESKTOP_CLIENT_ID" --client-secret "YOUR_C
 3. Click **Continue**. The page says *"Done"*.
 4. The terminal says **`Connected. Found the app backup from …`**. You're done with Google.
 
-The sign-in key is saved in `~/.config/adhd-tools-mcp/credentials.json`, which only you can read. **To sign in again later** (for example after 7 days in Testing), just run `npm run mcp:auth`: it reuses the saved ID and secret.
+The sign-in key is saved in `~/.config/adhd-tools-mcp/credentials.json`, which only you can read. Never share this file, and don't paste your Client secret in chats ([if you did](mcp-troubleshooting.md#secret-shared)). **To sign in again later** (for example after 7 days in Testing), just run `npm run mcp:auth`: it reuses the saved ID and secret.
 
 > **Stuck?** "Usage: npm run mcp:auth …" → [how to type the command](mcp-troubleshooting.md#auth-usage) · no page opens → [open the link yourself](mcp-troubleshooting.md#browser-did-not-open) · "Access blocked" / "Error 403: access_denied" → [add yourself as test user](mcp-troubleshooting.md#access-blocked-test-user) · "Google hasn't verified this app" → [it's normal](mcp-troubleshooting.md#unverified-warning) · "redirect_uri_mismatch" → [use a Desktop client](mcp-troubleshooting.md#redirect-uri-mismatch) · "invalid_client" → [ID or secret wrong](mcp-troubleshooting.md#invalid-client) · "This site can't be reached (127.0.0.1)" or "timed out" → [run it again](mcp-troubleshooting.md#auth-timeout) · "did not return a refresh token" → [remove old access](mcp-troubleshooting.md#no-refresh-token) · "no app backup found" → [back up / same account / same project](mcp-troubleshooting.md#no-backup) · "Drive API … disabled" → [turn on the Drive API](mcp-troubleshooting.md#drive-api-disabled)
 
@@ -133,8 +133,22 @@ Keep that address secret: anyone who has it can read and change your tasks.
 
 > **Stuck?** "401" / the connector does not connect → [check the address and token](mcp-troubleshooting.md#le-chat-401)
 
-## Step 4 — Try it
+## Step 4 — Check everything
 
+In the `ADHDtools` folder:
+
+```bash
+git pull              # get the latest version
+npm run mcp:check     # tests Node, Google, your backup, the AI app's config, and starts the server like the AI app does
+```
+
+Each line with a **✗** comes with a **Fix:** link. When all lines show **✓**: quit the AI app completely, open it again, and start a new **text** chat.
+
+> **Stuck?** The AI says it can't find or use the tools → [tools not usable in this chat](mcp-troubleshooting.md#ai-cant-see-tools) · worked before, not after a Node update → [node path changed](mcp-troubleshooting.md#node-path-changed) · you shared your Client secret → [change it](mcp-troubleshooting.md#secret-shared)
+
+## Step 5 — Try it
+
+- *"Use the adhd-tools tool get_overview: what are my next events?"*
 - *"Give me an overview of my day."*
 - *"Add 'send the invoice', 20 minutes, important, due Friday."*
 - *"My tax report is too big. Break it into steps of 15 to 30 minutes."*
@@ -148,7 +162,7 @@ Then open the app. The changes appear within about 2 minutes, with a short messa
 
 | Tool | What it does |
 | --- | --- |
-| `get_overview` | Date and time now, current and next item, counts, day settings, changes still waiting for the app |
+| `get_overview` | Date and time now, current and next item, next calendar events and fixed tasks (7 days), counts, day settings, changes still waiting for the app |
 | `list_tasks` | Tasks: pending, overdue, done or all, with search |
 | `get_schedule` | The plan of a day: routines (with buffer), events, fixed tasks, and today's auto-placed tasks |
 | `find_free_slots` | Free windows of a day that fit a given length |

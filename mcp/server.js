@@ -5,6 +5,7 @@
 //   node mcp/server.js            stdio transport (desktop AI apps start it themselves)
 //   node mcp/server.js http       HTTP transport for web AI apps (needs ADHD_MCP_TOKEN)
 //   node mcp/server.js auth       one-time Google sign-in (saves a refresh token locally)
+//   node mcp/server.js check      test the whole setup and print the fix for what fails
 //
 // Setup guide: docs/mcp.md. Only JSON-RPC goes to stdout; logs go to stderr.
 import { createServer } from 'node:http';
@@ -149,7 +150,10 @@ export function createHttpServer({ token, store = lazyStore() }) {
 const isMain = Boolean(process.argv[1]) && pathToFileURL(realpathSync(process.argv[1])).href === import.meta.url;
 if (isMain) {
   const command = process.argv[2] || 'stdio';
-  if (command === 'auth') {
+  if (command === 'check') {
+    const { runCheck } = await import('./check.js');
+    process.exit((await runCheck()) ? 1 : 0);
+  } else if (command === 'auth') {
     const { runAuth } = await import('./auth.js');
     await runAuth(process.argv.slice(3));
   } else if (command === 'http') {
@@ -164,7 +168,7 @@ if (isMain) {
   } else if (command === 'stdio') {
     runStdio();
   } else {
-    console.error('Usage: node mcp/server.js [stdio|http|auth]');
+    console.error('Usage: node mcp/server.js [stdio|http|auth|check]');
     process.exit(2);
   }
 }

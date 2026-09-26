@@ -68,6 +68,7 @@ Bitte deinen KI-Assistenten (Mistral, Claude oder jede App mit MCP): *„Teile m
    `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
 4. Trage den Server in den MCP-Einstellungen deiner KI-App ein: Befehl `node`, Argument `/voller/pfad/zu/ADHDtools/mcp/server.js`.
    Für Le Chat im Web starte `node mcp/server.js http` bei einem kleinen Hoster (siehe Anleitung).
+   Dann `git pull` und `npm run mcp:check` ausführen: prüft alles und nennt für jedes Problem die Lösung.
 5. Frag: *„Gib mir einen Überblick über meinen Tag.“* Lass die App offen: Sie übernimmt die Änderungen in etwa 2 Minuten.
 
 **Bei einem Schritt hängen geblieben?** Jeder Schritt der Anleitung verlinkt die Lösung für die angezeigte Meldung: [**Fixing problems**](docs/mcp-troubleshooting.md) (zum Beispiel [„Publish app“ ist ausgegraut](docs/mcp-troubleshooting.md#publish-greyed-out)).

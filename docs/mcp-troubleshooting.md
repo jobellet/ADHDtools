@@ -114,11 +114,14 @@ No. *Internal* only works for company Google Workspace accounts. Keep **External
 ### "Usage: npm run mcp:auth -- --client-id <ID> --client-secret <SECRET>"
 
 **Why:** the command needs your Desktop client's ID and secret the first time. (Later, `npm run mcp:auth` alone reuses them.)
+If the message ends with **"See docs/mcp.md, step 2"**, your copy of the project is old: run `git pull` in the `ADHDtools` folder first.
 **Fix:** copy both from [Clients](https://console.cloud.google.com/auth/clients) → your **Desktop** client, and keep the `--` after `mcp:auth`:
 ```bash
 npm run mcp:auth -- --client-id "123-abc.apps.googleusercontent.com" --client-secret "GOCSPX-…"
 ```
-Run it inside the `ADHDtools` folder (`cd ADHDtools` first).
+Run it inside the `ADHDtools` folder (`cd ADHDtools` first). Each value needs its own name before it: `--client-id "…"` **and** `--client-secret "…"`. Don't add `--print-env`: it is only for [web hosting](mcp.md#le-chat-mistral-on-the-web-or-phone-and-other-web-apps).
+
+If the terminal shows **`dquote>`**, a closing `"` is missing (often after pasting over two lines). Press **Ctrl+C** and paste the command again on one line.
 
 <a name="browser-did-not-open"></a>
 ### No browser page opens
@@ -196,11 +199,30 @@ Example (Mac):
 ```
 Test it by hand: `node /full/path/to/ADHDtools/mcp/server.js` should print `ready (stdio)` and wait (stop it with Ctrl+C).
 
+<a name="ai-cant-see-tools"></a>
+### The AI lists the ADHD Tools tools, but says it "can't find" or "can't use" them
+
+**Where:** in the chat, for example *"I don't see the ADHD Tools functions"* or *"the MCP is not loaded"*.
+**Why:** the AI app knows the server, but the tools are not usable in this chat. Common causes: a **voice** chat (voice mode may not use tools from your computer), tools switched off for this chat, a chat started before the server was ready, or a mode that uses other tools (for example Cowork or a project with its own connectors).
+**Fix:**
+1. In the terminal, in the `ADHDtools` folder: `git pull`, then `npm run mcp:check`. Fix every line with a ✗ first.
+2. Quit the AI app completely (**⌘+Q** on a Mac, not just closing the window) and open it again.
+3. Start a **new text chat** (not voice).
+4. Check the chat's tools menu (the slider/"+" icon under the message box in Claude Desktop): **adhd-tools** must be **on**.
+5. Ask by name: *"Use the adhd-tools tool get_overview."* The app should ask you to allow the tool: click **Allow**.
+6. Still nothing? In Claude Desktop, open **Settings → Developer**: *adhd-tools* should say **running**. If it shows an error, `npm run mcp:check` prints the end of its log.
+
 <a name="npm-in-config"></a>
 ### "Unexpected token '>'", "invalid JSON", or the server stops at once
 
 **Why:** the AI app starts `npm run mcp`. npm writes extra lines, and the AI app can't read them.
 **Fix:** use `node` + the path to `server.js` (see above), not `npm`.
+
+<a name="node-path-changed"></a>
+### It worked before, and now the server does not start (after a Node update)
+
+**Why:** with **nvm** or Homebrew, the path to `node` changes when Node is updated (for example `…/node/v24.21.0/bin/node`).
+**Fix:** run `which node` again, put the new path in the AI app's config, and restart the app. `npm run mcp:check` shows when the path does not exist.
 
 <a name="windows-paths"></a>
 ### Windows: the path does not work
@@ -248,6 +270,15 @@ Test it by hand: `node /full/path/to/ADHDtools/mcp/server.js` should print `read
 ### "That time is taken by …"
 
 This is on purpose: nothing is ever booked on top of something else. The answer gives the next free time; say yes to it, or pick another time.
+
+<a name="secret-shared"></a>
+### I shared my Client secret (in a chat, a screenshot, an issue…)
+
+**Why it matters a little:** Google says a Desktop client's secret is not really secret, but it is better to change it. Your data stays safe: the secret alone does not give access; the sign-in key in `~/.config/adhd-tools-mcp/credentials.json` does. **Never share that file.**
+**Fix:**
+1. In [Clients](https://console.cloud.google.com/auth/clients) → your **Desktop** client → **Add secret**, copy it.
+2. Delete the old secret there.
+3. Run `npm run mcp:auth -- --client-id "…" --client-secret "NEW_SECRET"`.
 
 <a name="drive-error"></a>
 ### "Could not reach your data: Google Drive 4xx/5xx"

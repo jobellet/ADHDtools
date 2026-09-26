@@ -11,7 +11,9 @@ import { createInterface } from 'node:readline';
 const SERVER = new URL('../mcp/server.js', import.meta.url).pathname;
 const today = new Date();
 const pad = n => String(n).padStart(2, '0');
-const DAY = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const DAY = ymd(today);
+const TOMORROW = ymd(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1));
 
 function writeBackup(dir, extra = {}) {
   const backup = {
@@ -22,7 +24,10 @@ function writeBackup(dir, extra = {}) {
     'adhd-deleted-tasks': [{ id: 'gone', deletedAt: '2026-01-01T00:00:00Z' }],
     'adhd-tool-routines': [{ id: 'r1', name: 'Morning routine', startTime: '07:00', weekDays: [0, 1, 2, 3, 4, 5, 6],
       tasks: [{ name: 'Shower', duration: 20 }, { name: 'Breakfast', duration: 10 }] }],
-    'adhd-calendar-events': [{ id: 'e1', title: 'Lab meeting', start: `${DAY}T23:00`, end: `${DAY}T23:30`, isFixed: true }],
+    'adhd-calendar-events': [
+      { id: 'e1', title: 'Lab meeting', start: `${DAY}T23:00`, end: `${DAY}T23:30`, isFixed: true },
+      { id: 'e2', title: 'Dentist', start: `${TOMORROW}T10:00`, end: `${TOMORROW}T11:00`, isFixed: true },
+    ],
     'adhd-ai-settings': { apiKey: 'secret' },
     metadata: { app: 'ADHD Tools Hub', exportedAt: new Date().toISOString() },
     ...extra,
@@ -95,6 +100,7 @@ describe('MCP server (stdio, local folder)', () => {
     const overview = await server.call('get_overview');
     assert.equal(overview.isError, false);
     assert.equal(overview.data.counts.pending, 1);
+    assert.ok(overview.data.upcoming.some(u => u.name === 'Dentist' && u.start === `${TOMORROW}T10:00`), 'next events of the coming days');
     const tasks = await server.call('list_tasks', { filter: 'all' });
     assert.deepEqual(tasks.data.tasks.map(t => t.id), ['big']);
     const routines = await server.call('list_routines');
@@ -227,5 +233,40 @@ describe('MCP setup docs', () => {
     assert.ok(used.length >= 8);
     const all = anchors['docs/mcp-troubleshooting.md'];
     assert.deepEqual(used.filter(a => !all.has(a)), []);
+  });
+});
+
+describe('npm run mcp:check', () => {
+  const run = env => new Promise(resolve => {
+    const child = spawn(process.execPath, [SERVER, 'check'], { env: { ...process.env, ...env } });
+    let out = '';
+    child.stdout.on('data', d => { out += d; });
+    child.stderr.on('data', d => { out += d; });
+    child.on('close', code => resolve({ code, out }));
+  });
+
+  test('passes on a good setup and starts the server like the AI app does', async () => {
+    const { clientConfigs } = await import('../mcp/check.js');
+    const home = mkdtempSync(join(tmpdir(), 'adhd-check-'));
+    const env = { HOME: home, XDG_CONFIG_HOME: join(home, '.config'), APPDATA: join(home, 'AppData'), ADHD_MCP_DATA_DIR: home };
+    writeBackup(home);
+    const [{ config }] = clientConfigs(env);
+    const { mkdirSync } = await import('node:fs');
+    mkdirSync(join(config, '..'), { recursive: true });
+    try {
+      writeFileSync(config, JSON.stringify({ mcpServers: { 'adhd-tools': { command: process.execPath, args: [SERVER], env: { ADHD_MCP_DATA_DIR: home } } } }));
+      const good = await run(env);
+      assert.equal(good.code, 0, good.out);
+      assert.match(good.out, /can start the server: 11 tools/);
+
+      writeFileSync(config, JSON.stringify({ mcpServers: { 'adhd-tools': { command: '/nowhere/bin/node', args: [SERVER] } } }));
+      const broken = await run({ ...env, ADHD_MCP_DATA_DIR: '', ADHD_MCP_CREDENTIALS: join(home, 'none.json') });
+      assert.equal(broken.code, 1);
+      assert.match(broken.out, /does not exist/);
+      assert.match(broken.out, /mcp-troubleshooting\.md#server-not-listed/);
+      assert.match(broken.out, /mcp-troubleshooting\.md#not-connected/);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
   });
 });
