@@ -63,12 +63,14 @@ Pide a tu asistente de IA (Mistral, Claude o cualquier app compatible con MCP) q
 **Configuración (unos 10 minutos):**
 
 1. En la app, conecta Google y toca **Más → Acerca de → Sync Across Devices → Back up now**. Deja la sincronización automática activada.
-2. En [Google Cloud Console](https://console.cloud.google.com/apis/credentials), en el **mismo proyecto** que el Client ID de la app: **Create credentials → OAuth client ID → Desktop app**. En la pantalla de consentimiento, haz clic en **Publish app**.
+2. En [Google Auth Platform → Clients](https://console.cloud.google.com/auth/clients), en el **mismo proyecto** que el Client ID de la app: **+ Create client → Desktop app**. Copia el ID y el secreto. En **Audience → Test users**, comprueba que tu correo está ahí. (Publicar la app es opcional: ver la guía.)
 3. En tu ordenador (Node 18+): `git clone https://github.com/jobellet/ADHDtools.git` y, en esa carpeta:
    `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
 4. Añade el servidor en los ajustes MCP de tu app de IA: comando `node`, argumento `/ruta/completa/ADHDtools/mcp/server.js`.
    Para Le Chat en la web, ejecuta `node mcp/server.js http` en un pequeño hosting (ver la guía).
 5. Pregunta: *«Dame un resumen de mi día.»* Deja la app abierta: aplica los cambios en unos 2 minutos.
+
+**¿Atascado en un paso?** Cada paso de la guía enlaza con la solución del mensaje que ves: [**Fixing problems**](docs/mcp-troubleshooting.md) (por ejemplo [«Publish app» está en gris](docs/mcp-troubleshooting.md#publish-greyed-out)).
 
 Guía completa (en inglés), configuración de Mistral Vibe y Le Chat, y solución de problemas: [**docs/mcp.md**](docs/mcp.md).
 

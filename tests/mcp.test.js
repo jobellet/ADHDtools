@@ -185,3 +185,47 @@ describe('MCP server over HTTP', () => {
     }
   });
 });
+
+// Every error the user can meet links to a fix that exists (docs/mcp-troubleshooting.md).
+describe('MCP setup docs', () => {
+  const read = p => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+  // GitHub's heading ids: lower case, drop punctuation, spaces → "-".
+  const slug = h => h.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-');
+  const anchorsOf = text => new Set([
+    ...[...text.matchAll(/<a name="([^"]+)"><\/a>/g)].map(m => m[1]),
+    ...[...text.matchAll(/^#{1,6} (.+)$/gm)].map(m => slug(m[1])),
+  ]);
+  const docs = {
+    'docs/mcp.md': read('docs/mcp.md'),
+    'docs/mcp-troubleshooting.md': read('docs/mcp-troubleshooting.md'),
+    'docs/google-calendar-sync.md': read('docs/google-calendar-sync.md'),
+  };
+  const anchors = Object.fromEntries(Object.entries(docs).map(([k, v]) => [k, anchorsOf(v)]));
+  const fixes = [...docs['docs/mcp-troubleshooting.md'].matchAll(/<a name="([^"]+)"><\/a>/g)].map(m => m[1]);
+
+  test('every #link in the guides and READMEs points to a real section', () => {
+    const broken = [];
+    const sources = { ...docs, 'README.md': read('README.md'), 'README.fr.md': read('README.fr.md'), 'README.de.md': read('README.de.md'), 'README.es.md': read('README.es.md') };
+    for (const [file, text] of Object.entries(sources)) {
+      for (const [, target, anchor] of text.matchAll(/\]\(((?:docs\/)?[\w-]*\.md)?#([^)\s]+)\)/g)) {
+        const doc = target ? `docs/${target.replace(/^docs\//, '')}` : file;
+        if (!anchors[doc]) continue; // links to other docs are checked by their own tests
+        if (!anchors[doc].has(anchor)) broken.push(`${file} → ${doc}#${anchor}`);
+      }
+    }
+    assert.deepEqual(broken, []);
+  });
+
+  test('every fix is reachable from a step of the setup guide', () => {
+    const linked = new Set([...docs['docs/mcp.md'].matchAll(/mcp-troubleshooting\.md#([\w-]+)/g)].map(m => m[1]));
+    assert.deepEqual(fixes.filter(a => !linked.has(a)), [], 'add a "Stuck?" link in docs/mcp.md');
+  });
+
+  test('every error the server prints links to an existing fix', () => {
+    const code = ['mcp/store.js', 'mcp/auth.js', 'mcp/server.js', 'mcp/tools.js'].map(read).join('\n');
+    const used = [...code.matchAll(/help\('([^']+)'\)/g)].map(m => m[1]);
+    assert.ok(used.length >= 8);
+    const all = anchors['docs/mcp-troubleshooting.md'];
+    assert.deepEqual(used.filter(a => !all.has(a)), []);
+  });
+});
