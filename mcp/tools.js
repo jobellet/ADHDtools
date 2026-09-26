@@ -137,6 +137,20 @@ function schedule(state, dateStr) {
   };
 }
 
+// Next calendar events and fixed tasks in the coming days (routines left out: they repeat).
+function upcoming(state, days = 7, max = 10) {
+  const out = [];
+  const nowMin = state.now.getHours() * 60 + state.now.getMinutes();
+  for (let d = 0; d < days && out.length < max; d += 1) {
+    const day = new Date(state.now.getFullYear(), state.now.getMonth(), state.now.getDate() + d);
+    const dateStr = localDate(day);
+    scheduler.getBusyBlocks(dateStr, overrides(state))
+      .filter(b => b.kind !== 'routine' && (d > 0 || b.end > nowMin))
+      .forEach(b => out.push({ start: `${dateStr}T${clock(b.start)}`, end: clock(b.end), name: b.name, kind: b.kind === 'task' ? 'fixed task' : 'event', id: b.id }));
+  }
+  return out.slice(0, max);
+}
+
 function freeSlots(state, dateStr, minutes) {
   const dayStart = toMinutes(state.config.dayStart) ?? 0;
   const dayEnd = toMinutes(state.config.dayEnd) ?? 24 * 60;
@@ -157,7 +171,7 @@ const DATE = { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: '
 
 export const READ_TOOLS = {
   get_overview: {
-    description: 'Start here. Today\'s date and time for the user, the current and next item, counts, day settings, and your changes the app has not applied yet.',
+    description: 'Start here. Today\'s date and time for the user, the current and next item, the next calendar events and fixed tasks of the coming 7 days, counts, day settings, and your changes the app has not applied yet.',
     input: { type: 'object', properties: {} },
     run(state) {
       const today = localDate(state.now);
@@ -171,6 +185,7 @@ export const READ_TOOLS = {
         activeUser: state.activeUser || 'main',
         current: s.items.find(i => i.start <= nowClock && nowClock < i.end) || null,
         next: s.items.find(i => i.start > nowClock) || null,
+        upcoming: upcoming(state),
         counts: {
           pending: tasks.filter(t => t.status !== 'done' && !t.calendarCopy).length,
           overdue: tasks.filter(t => t.status === 'overdue').length,

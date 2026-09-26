@@ -9,7 +9,8 @@
     "test:all": "npm test && npm run test:ui",
     "mcp": "node mcp/server.js",
     "mcp:auth": "node mcp/server.js auth",
-    "mcp:http": "node mcp/server.js http"
+    "mcp:http": "node mcp/server.js http",
+    "mcp:check": "node mcp/server.js check"
   },
   "keywords": [],
   "author": "",

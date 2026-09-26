@@ -9,6 +9,7 @@ through the user's own Google Drive. User setup guide: [docs/mcp.md](../docs/mcp
 | `tools.js` | The tools. `loadState()` reads the Drive backup (+ changes still in the inbox), then runs `core/scheduler.js` on it with an in-memory `localStorage`. Read tools: `get_overview`, `list_tasks`, `get_schedule`, `find_free_slots`, `list_routines`. Write tools come from `OPS` in `core/assistant-ops.js`: `add_task`, `update_task`, `schedule_task`, `complete_task`, `delete_task`, `break_down_task`. |
 | `store.js` | Where data lives: Google Drive app folder (refresh token from `auth` or env vars) or a local folder (`ADHD_MCP_DATA_DIR`, tests). |
 | `auth.js` | One-time Google sign-in (loopback + PKCE), saves the refresh token in the user's config folder (`credentialsPath()`, mode 600). |
+| `check.js` | `npm run mcp:check`: tests Node, Google sign-in, the backup, the tools, the AI app's config (Claude Desktop path per OS), starts the server like the AI app does, shows its log. Each ✗ prints a `help()` link. |
 | `coverage.js` | For every TaskStore method, scheduler function, task field, storage key and global: which tool uses it, or why not. Checked by `tests/mcp-coverage.test.js`. |
 
 ## Data flow (do not break)

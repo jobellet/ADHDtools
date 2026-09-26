@@ -68,6 +68,7 @@ Pide a tu asistente de IA (Mistral, Claude o cualquier app compatible con MCP) q
    `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
 4. Añade el servidor en los ajustes MCP de tu app de IA: comando `node`, argumento `/ruta/completa/ADHDtools/mcp/server.js`.
    Para Le Chat en la web, ejecuta `node mcp/server.js http` en un pequeño hosting (ver la guía).
+   Luego ejecuta `git pull` y `npm run mcp:check`: lo prueba todo y da la solución de cada problema.
 5. Pregunta: *«Dame un resumen de mi día.»* Deja la app abierta: aplica los cambios en unos 2 minutos.
 
 **¿Atascado en un paso?** Cada paso de la guía enlaza con la solución del mensaje que ves: [**Fixing problems**](docs/mcp-troubleshooting.md) (por ejemplo [«Publish app» está en gris](docs/mcp-troubleshooting.md#publish-greyed-out)).
