@@ -28,6 +28,10 @@ Scenarios to verify core behavior after changes.
 * **Routine editor on a phone:** open a routine in a phone-sized window. Only step names show. Tap a step → its duration, ↑ ↓ and delete appear (other steps close). Drag a step by ⋮⋮ to the top, tap **Save** → the new order and durations are kept.
 * **Routine from Now:** during the routine's time, tap **Start routine** → the full-screen player opens. Close it: the Now view shows the current step and its timer. Finish all steps → the routine is marked done for today and its remaining time frees up.
 * **Not now:** on a task, tap **Not now → Later today** → the task disappears for one hour, then comes back. **Tomorrow** moves it to tomorrow.
+* **Edit a running event:** during a calendar event (e.g. a Google Calendar import), the Now view shows it with **Edit**:
+  * **Edit → In 15 min** → the event moves 15 minutes later in the Calendar and the planner; its length is kept; the change survives the next sync (`localOverride`).
+  * **Edit → It’s an event, not a task** → the Now view switches to the next task; tasks can now be scheduled during the event; the event is still drawn in the Calendar and the planner.
+  * Postponing into a busy time is refused with an error message.
 * **Setup-based UI:** set `localStorage.gcalConnected = 'true'` and reload → *Calendar file / link import (.ics)* and the ICS refresh field disappear from Settings; *Show all options* brings them back. Without an AI provider, **AI Plan** and **AI Breakdown** are hidden.
 
 ## Scheduler & TaskStore

@@ -14,6 +14,8 @@ Read first: [../AGENTS.md](../AGENTS.md). Logic lives in `core/now-state.js` (mo
   updates countdowns. Re-render only when the state key changes.
 - **Side effects:** pins the current auto-placed task (`autoPinned`); auto-starts a routine if
   `contextAutoSwitch`; calls `AppRouter.autoRoute(state)` when the mode changes.
-- **Actions:** Done → `TaskStore.markComplete`; Not now → snooze 60 min / tomorrow / send to Breakdown;
+- **Actions:** event → `CalendarTool.postponeEvent` (+15/+60 min, refused on conflict) / `markEventPassive`
+  (“it’s an event, not a task”: stays in the calendar, frees its time); Done → `TaskStore.markComplete`;
+  Not now → snooze 60 min / tomorrow / send to Breakdown;
   routine → `RoutinePlayer.start/show/edit`, "skip today" writes `adhd-routine-runs`.
 - Tests: `tests/now-state.test.js` (logic). UI: browser check of the 3 modes (see `tests/AGENTS.md`).

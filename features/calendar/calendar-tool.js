@@ -154,6 +154,59 @@
     normalizeEvent(ev);
   }
 
+  // The Now view shows a running event by the hash the scheduler gives it
+  // (calendarInstanceId, uid or id, in that order).
+  function findEventByHash(hash) {
+    if (!hash) return null;
+    return events.find(ev => [ev.calendarInstanceId, ev.uid, ev.id].includes(hash)) || null;
+  }
+
+  // Move an event to a new start (same length). Returns the event, or null
+  // when it does not exist or the new time would overlap another event.
+  function postponeEvent(hash, newStart) {
+    const ev = findEventByHash(hash);
+    if (!ev || !ev.start) return null;
+    const start = new Date(newStart);
+    if (isNaN(start) || start < new Date()) return null;
+    const shiftMs = ms => new Date(new Date(ms).getTime() + (start - new Date(ev.start)));
+    const end = ev.end ? shiftMs(ev.end) : null;
+    if (end && end <= start) return null;
+    const sameDay = window.UnifiedScheduler?.localDateString?.(start) === window.UnifiedScheduler?.localDateString?.(new Date(ev.start));
+    if (sameDay) {
+      const clashes = window.UnifiedScheduler?.findConflicts?.({
+        dateStr: window.UnifiedScheduler.localDateString(start),
+        startMinutes: start.getHours() * 60 + start.getMinutes(),
+        durationMinutes: Math.max(5, Math.round(((end || new Date(start.getTime() + 60 * 60000)) - start) / 60000)),
+        ignore: [hash, ev.calendarInstanceId, ev.uid, ev.id].filter(Boolean),
+      });
+      if (clashes && clashes.length) return null;
+    }
+    const pad = n => String(n).padStart(2, '0');
+    const naive = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    if (!ev.instanceStart) ev.instanceStart = ev.start;
+    ev.start = naive(start);
+    if (end) ev.end = naive(end);
+    ev.localOverride = true;
+    normalizeEvent(ev);
+    saveEvents(events);
+    render();
+    return ev;
+  }
+
+  // "This is an event, not a task": it stops blocking time, so tasks can run
+  // during it (the scheduler skips it; the calendar still shows it).
+  function markEventPassive(hash) {
+    const ev = findEventByHash(hash);
+    if (!ev) return null;
+    ev.isFixed = false;
+    ev.notATask = true;
+    ev.localOverride = true;
+    normalizeEvent(ev);
+    saveEvents(events);
+    render();
+    return ev;
+  }
+
   function handleDragStart(e) {
     e.dataTransfer.setData('text/plain', e.target.dataset.id);
   }
@@ -340,13 +393,24 @@
   function mergeEventsPreserveOverrides(existing, incoming) {
     const merged = new Map();
     const getKey = (ev) => `${ev.title}|${ev.start}|${ev.end}`;
-
-    existing.forEach(ev => merged.set(getKey(ev), ev));
+    const identityOf = (ev) => ev.calendarUid || ev.uid || ev.id || null;
+    const byIdentity = new Map();
+    existing.forEach(ev => {
+      merged.set(getKey(ev), ev);
+      const identity = identityOf(ev);
+      if (identity && !byIdentity.has(identity)) byIdentity.set(identity, ev);
+    });
 
     incoming.forEach(ev => {
       const key = getKey(ev);
       const current = merged.get(key);
       if (current && current.localOverride) return;
+      // A locally moved/edited event (localOverride) is the same event as the
+      // incoming one (same calendar identity): the sync must not bring the
+      // original time back as a duplicate.
+      const identity = identityOf(ev);
+      const mine = identity && byIdentity.get(identity);
+      if (mine && mine.localOverride) return;
       merged.set(key, ev);
     });
 
@@ -585,9 +649,12 @@
           id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
           instanceStart: ev.start || ev.instanceStart,
         }));
-        events = mergeEventsPreserveOverrides(events, normalized);
+        const overriddenIdentities = new Set(
+          events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
+        );
+        events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
         saveEvents(events);
-        convertEventsToTasks(normalized);
+        convertEventsToTasks(normalized.filter(ev => !overriddenIdentities.has(ev.calendarUid || ev.uid || ev.id)));
         render();
         alert(`Imported ${parsed.length} events.`);
       } catch (err) {
@@ -623,9 +690,12 @@
           id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
           instanceStart: ev.start || ev.instanceStart,
         }));
-        events = mergeEventsPreserveOverrides(events, normalized);
+        const overriddenIdentities = new Set(
+          events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
+        );
+        events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
         saveEvents(events);
-        convertEventsToTasks(normalized);
+        convertEventsToTasks(normalized.filter(ev => !overriddenIdentities.has(ev.calendarUid || ev.uid || ev.id)));
         render();
         return;
       } catch (err) {
@@ -696,12 +766,20 @@
     isPassiveEvent(task) {
       return !!(task && task.isCalendarEvent && task.isActionable === false);
     },
+    findEventByHash,
+    postponeEvent,
+    markEventPassive,
     ingestExternalEvents(rawEvents) {
       if (!Array.isArray(rawEvents) || rawEvents.length === 0) return 0;
       const normalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
+      const overridden = new Set(
+        events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
+      );
       events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
       saveEvents(events);
-      convertEventsToTasks(normalized);
+      // Only events that survived the merge get a TaskStore copy, so a locally
+      // moved event does not come back as a copy at its original time.
+      convertEventsToTasks(normalized.filter(ev => !overridden.has(ev.calendarUid || ev.uid || ev.id)));
       render();
       return normalized.length;
     },

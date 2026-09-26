@@ -224,6 +224,22 @@ describe('Scheduler: calendar copies and too-long tasks never block the day', ()
     assert.ok(names.includes('Groceries') && names.includes('Read'), names.join());
   });
 
+  test('a calendar event marked "not a task" frees its time for tasks', () => {
+    const now = new Date(2026, 8, 26, 13, 0);
+    const config = { dayStart: '06:00', dayEnd: '22:00', bufferDurationMinutes: 5 };
+    const work = [{ hash: 'w', name: 'Write report', durationMinutes: 60, importance: 6, urgency: 5 }];
+    const event = { id: 'ev1', title: 'Kids at home', start: '2026-09-26T13:00', end: '2026-09-26T15:00', isFixed: true };
+    const blocked = buildSchedule({ tasks: work, now, config: { ...config, calendarEvents: [event] } });
+    assert.ok(blocked.some(s => s.task.source === 'calendar'), 'a fixed event blocks the slot');
+    const pushedTo = blocked.find(s => s.task.name === 'Write report');
+    assert.ok(pushedTo.scheduledStart >= 15 * 60, 'the task waits until the event is over');
+
+    const freed = buildSchedule({ tasks: work, now, config: { ...config, calendarEvents: [{ ...event, notATask: true }] } });
+    assert.ok(!freed.some(s => s.task.source === 'calendar'), 'a "not a task" event books no time');
+    const report = freed.find(s => s.task.name === 'Write report');
+    assert.strictEqual(report.scheduledStart, 13 * 60, 'work can run during the freed time');
+  });
+
   test('isPassiveOrAllDay spots calendar copies only', () => {
     assert.strictEqual(isPassiveOrAllDay({ isAllDay: true }), true);
     assert.strictEqual(isPassiveOrAllDay({ plannerDate: '2026-09-26', durationMinutes: 1440 }), true);
