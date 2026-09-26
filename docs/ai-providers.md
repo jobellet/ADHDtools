@@ -9,7 +9,7 @@ ADHD Tools works **fully offline with no AI at all** — the schedule generator,
 
 ## Supported providers
 
-Open **Settings → AI Assistance (optional — any provider)** and pick one:
+Open **More → Settings → AI Assistance (optional — any provider)** and pick one:
 
 | Provider | Default model | Where to get a key |
 | --- | --- | --- |
@@ -22,6 +22,8 @@ Open **Settings → AI Assistance (optional — any provider)** and pick one:
 | Custom / Local | any | Any OpenAI-compatible endpoint: Ollama, LM Studio, vLLM… (no key needed for most local servers) |
 
 Paste your key, optionally override the model, click **Test connection**, then **Save**. A step-by-step tutorial for obtaining keys is built into the Settings panel itself.
+
+Without a provider, the AI buttons (**AI Plan**, **AI Breakdown**) are hidden so the screens stay simple. They appear as soon as a provider is saved (or with **Settings → General → Show all options**).
 
 Keys are stored only in your browser's `localStorage` and requests go directly from your browser to the provider — there is no middleman server. Using an API may incur charges with your provider; keep your key private and use the **Clear** button to remove it at any time.
 

@@ -4,6 +4,29 @@ import { recordTaskDuration } from './duration-learning.js';
 
 const STORAGE_KEY = 'adhd-unified-tasks';
 const URGENCY_REFRESH_KEY = 'adhd-urgency-refresh-date';
+// Deleted task ids, so a sync merge does not bring deleted tasks back.
+export const DELETED_TASKS_KEY = 'adhd-deleted-tasks';
+const MAX_TOMBSTONES = 1000;
+
+function readTombstones() {
+  try {
+    const raw = (typeof localStorage !== 'undefined') ? localStorage.getItem(DELETED_TASKS_KEY) : null;
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeTombstones(list) {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(DELETED_TASKS_KEY, JSON.stringify(list.slice(-MAX_TOMBSTONES)));
+    }
+  } catch (err) {
+    console.warn('Failed to save deleted-task list', err);
+  }
+}
 
 function readLegacyTasks() {
   try {
@@ -117,6 +140,39 @@ function saveTasks(nextTasks) {
   persist();
 }
 
+// Remove tasks for good. Returns the removed tasks (keep them to undo).
+function deleteTasks(hashes) {
+  const drop = new Set(hashes);
+  const removed = tasks.filter(t => drop.has(t.hash) || drop.has(t.id));
+  if (!removed.length) return [];
+  tasks = tasks.filter(t => !removed.includes(t));
+  persist();
+  const deletedAt = new Date().toISOString();
+  const ids = new Set(removed.flatMap(t => [t.hash, t.id]).filter(Boolean));
+  writeTombstones([...readTombstones().filter(x => !ids.has(x.id)), ...[...ids].map(id => ({ id, deletedAt }))]);
+  return removed;
+}
+
+// Put back tasks returned by deleteTasks (undo).
+function undeleteTasks(removed) {
+  const existing = new Set(tasks.map(t => t.hash));
+  const back = (removed || []).filter(t => !existing.has(t.hash));
+  if (!back.length) return 0;
+  tasks = [...tasks, ...back];
+  persist();
+  const ids = new Set(back.flatMap(t => [t.hash, t.id]).filter(Boolean));
+  writeTombstones(readTombstones().filter(x => !ids.has(x.id)));
+  return back.length;
+}
+
+// Pending tasks whose deadline has passed (optionally for one user).
+function getOverdueTasks(now = new Date(), user = null) {
+  return tasks.filter(t => !t.completed && !t.isArchived && t.deadline
+    && (!user || t.user === user)
+    && !Number.isNaN(new Date(t.deadline).getTime())
+    && new Date(t.deadline) < now);
+}
+
 function restoreTask(hash) {
   return updateTaskByHash(hash, { isArchived: false, archivedReason: null });
 }
@@ -210,6 +266,9 @@ const TaskStore = {
   addTask,
   updateTaskByHash,
   restoreTask,
+  deleteTasks,
+  undeleteTasks,
+  getOverdueTasks,
   archiveStaleTasks,
   upsertTaskByHash,
   saveTasks,

@@ -65,6 +65,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (appleIcon) appleIcon.href = iconPath;
     }
 
+    // Page title in the current language (nav labels are already translated).
+    function toolTitle(toolName) {
+        const key = { home: 'tab-now', routine: 'tab-routines' }[toolName] || `nav-${toolName}`;
+        const text = window.I18n?.t(key, {}, TOOLS[toolName].title) || TOOLS[toolName].title;
+        return text.replace(/<[^>]*>/g, '').trim();
+    }
+
     function switchTool(toolName, updateHistory = true) {
         if (!document.getElementById(toolName) || !TOOLS[toolName]) {
             toolName = 'home';
@@ -81,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         updateAppIcon(toolName);
         if (updateHistory) updateUrl(toolName);
-        document.title = `${TOOLS[toolName].title} - ADHD Tools Hub`;
+        document.title = `${toolTitle(toolName)} - ADHD Tools Hub`;
         closeSheets();
 
         if (changed) {
@@ -191,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ----- Clock -----
     function updateTime() {
         if (!currentTimeDisplay) return;
-        currentTimeDisplay.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        currentTimeDisplay.textContent = new Date().toLocaleTimeString(document.documentElement.lang || undefined, { hour: '2-digit', minute: '2-digit' });
     }
     setInterval(updateTime, 10000);
     updateTime();
@@ -211,6 +218,11 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         switchTool(initialTool, false);
     }
+
+    window.addEventListener('languageChanged', () => {
+        updateTime();
+        if (currentTool && currentTool !== 'home') document.title = `${toolTitle(currentTool)} - ADHD Tools Hub`;
+    });
 
     window.switchTool = navigate;
     window.AppRouter = { autoRoute, isAuto: () => autoMode, current: () => currentTool };

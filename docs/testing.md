@@ -7,6 +7,7 @@ Scenarios to verify core behavior after changes.
 * **Default view:** open the app root while a task or routine is scheduled now → the Now view shows it with a countdown. With nothing planned now (and nothing within the break window, 15 min by default) → the Day Planner opens.
 * **Routine booking:** create a routine at 07:00 with 30 min of steps. The planner shows an orange block 07:00–07:33 (10 % buffer). Add a task “Call dentist at 7:10am” in **Add** → it moves to 07:35 and the message says why.
 * **No overlapping routines:** create a second routine at 07:20 on the same weekday → Save is refused with the name of the conflicting routine.
+* **Routine editor on a phone:** open a routine in a phone-sized window. Only step names show. Tap a step → its duration, ↑ ↓ and delete appear (other steps close). Drag a step by ⋮⋮ to the top, tap **Save** → the new order and durations are kept.
 * **Routine from Now:** during the routine's time, tap **Start routine** → the full-screen player opens. Close it: the Now view shows the current step and its timer. Finish all steps → the routine is marked done for today and its remaining time frees up.
 * **Not now:** on a task, tap **Not now → Later today** → the task disappears for one hour, then comes back. **Tomorrow** moves it to tomorrow.
 * **Setup-based UI:** set `localStorage.gcalConnected = 'true'` and reload → *Calendar file / link import (.ics)* and the ICS refresh field disappear from Settings; *Show all options* brings them back. Without an AI provider, **AI Plan** and **AI Breakdown** are hidden.

@@ -37,7 +37,12 @@
     let renderedKey = '';
     let lastMode = null;
 
-    const fmtClock = date => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
+    const locale = () => document.documentElement.lang || undefined;
+    const fmtClock = date => date.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
+    const fmtDate = date => date.toLocaleDateString(locale(), { day: 'numeric', month: 'short' });
+    const UNDO_MS = 15000;
+    let lastDeleted = null; // { tasks, at } for the Undo bar
     const fmt = seconds => window.NowState.formatDuration(seconds);
     const isToolActive = id => document.getElementById(id)?.classList.contains('active');
 
@@ -91,7 +96,7 @@
     function completeTask(slot) {
       if (!slot?.task?.hash || !window.TaskStore?.markComplete) return;
       window.TaskStore.markComplete(slot.task.hash);
-      window.DataManager?.showNotification?.(`Done: ${taskName(slot.task)} ✓`);
+      window.DataManager?.showNotification?.(t('now.toast.done', { name: taskName(slot.task) }));
       refreshAll();
     }
 
@@ -156,12 +161,12 @@
       const box = el.skipChoices;
       box.innerHTML = '';
       const label = document.createElement('p');
-      label.textContent = 'Not now? Pick one:';
+      label.textContent = t('now.skip.prompt');
       box.appendChild(label);
-      box.appendChild(button('Later today', 'fa-hourglass-half', 'btn-outline', () => snoozeTask(slot, 60)));
-      box.appendChild(button('Tomorrow', 'fa-calendar-plus', 'btn-outline', () => moveToTomorrow(slot)));
-      box.appendChild(button('Too big: split it', 'fa-project-diagram', 'btn-outline', () => sendToBreakdown(slot.task)));
-      box.appendChild(button('Cancel', 'fa-times', 'btn-link', () => { box.hidden = true; }));
+      box.appendChild(button(t('now.skip.later'), 'fa-hourglass-half', 'btn-outline', () => snoozeTask(slot, 60)));
+      box.appendChild(button(t('now.skip.tomorrow'), 'fa-calendar-plus', 'btn-outline', () => moveToTomorrow(slot)));
+      box.appendChild(button(t('now.skip.split'), 'fa-project-diagram', 'btn-outline', () => sendToBreakdown(slot.task)));
+      box.appendChild(button(t('now.skip.cancel'), 'fa-times', 'btn-link', () => { box.hidden = true; }));
       box.hidden = false;
     }
 
@@ -185,7 +190,7 @@
       }
       steps.forEach((step, i) => {
         const li = document.createElement('li');
-        li.textContent = `${step.name} · ${step.duration} min`;
+        li.textContent = `${step.name} · ${t('unit.min', { n: step.duration })}`;
         if (i < activeIndex) li.classList.add('done');
         if (i === activeIndex) li.classList.add('active');
         el.steps.appendChild(li);
@@ -197,7 +202,7 @@
       const kind = kindOf(slot);
       const task = slot.task;
       view.dataset.kind = kind;
-      el.kicker.textContent = kind === 'routine' ? 'ROUTINE NOW' : kind === 'event' ? 'IN YOUR CALENDAR' : 'NOW';
+      el.kicker.textContent = t(kind === 'routine' ? 'now.kicker.routine' : kind === 'event' ? 'now.kicker.event' : 'now.kicker.now');
       el.title.textContent = taskName(task);
       el.meta.textContent = `${fmtClock(slot.startTime)} – ${fmtClock(slot.endTime)}`;
       el.actions.innerHTML = '';
@@ -206,18 +211,18 @@
       if (kind === 'routine') {
         const running = window.RoutinePlayer?.getState?.();
         const isThisRunning = running && running.routineId === task.routineId;
-        el.meta.textContent += ` · ${task.stepsMinutes} min of steps + buffer`;
+        el.meta.textContent += ` · ${t('now.stepsBuffer', { min: task.stepsMinutes })}`;
         renderSteps(task.steps, isThisRunning ? running.stepIndex : -1);
         if (isThisRunning) {
           el.actions.append(
-            button('Show routine', 'fa-expand', 'btn-primary btn-large', () => window.RoutinePlayer.show()),
-            button('Step done', 'fa-check', 'btn-secondary btn-large', () => window.manualAdvanceTask?.()),
+            button(t('now.btn.showRoutine'), 'fa-expand', 'btn-primary btn-large', () => window.RoutinePlayer.show()),
+            button(t('now.btn.stepDone'), 'fa-check', 'btn-secondary btn-large', () => window.manualAdvanceTask?.()),
           );
         } else {
           el.actions.append(
-            button('Start routine', 'fa-play', 'btn-primary btn-large', () => window.RoutinePlayer?.start(task.routineId)),
-            button('Edit steps', 'fa-pen', 'btn-outline', () => { window.switchTool?.('routine'); window.RoutinePlayer?.edit(task.routineId); }),
-            button('Skip today', 'fa-forward', 'btn-outline', () => skipRoutineToday(slot)),
+            button(t('now.btn.startRoutine'), 'fa-play', 'btn-primary btn-large', () => window.RoutinePlayer?.start(task.routineId)),
+            button(t('now.btn.editSteps'), 'fa-pen', 'btn-outline', () => { window.switchTool?.('routine'); window.RoutinePlayer?.edit(task.routineId); }),
+            button(t('now.btn.skipToday'), 'fa-forward', 'btn-outline', () => skipRoutineToday(slot)),
           );
         }
         return;
@@ -225,48 +230,48 @@
 
       el.steps.hidden = true;
       if (kind === 'event') {
-        el.actions.append(button('See the day', 'fa-calendar-day', 'btn-outline', () => window.switchTool?.('planner')));
+        el.actions.append(button(t('now.btn.seeDay'), 'fa-calendar-day', 'btn-outline', () => window.switchTool?.('planner')));
         return;
       }
 
       const bits = [];
-      if (task.deadline) bits.push(`due ${formatDue(task.deadline)}`);
-      if (task.importance >= 8) bits.push('important');
+      if (task.deadline) bits.push(formatDue(task.deadline));
+      if (task.importance >= 8) bits.push(t('now.important'));
       if (bits.length) el.meta.textContent += ` · ${bits.join(' · ')}`;
       el.actions.append(
-        button('Done', 'fa-check', 'btn-primary btn-large', () => completeTask(slot)),
-        button('Focus', 'fa-expand', 'btn-secondary btn-large', () => startFocus(slot), 'Full-screen focus timer'),
-        button('Not now', 'fa-forward', 'btn-outline btn-large', () => showSkipChoices(slot)),
+        button(t('now.btn.done'), 'fa-check', 'btn-primary btn-large', () => completeTask(slot)),
+        button(t('now.btn.focus'), 'fa-expand', 'btn-secondary btn-large', () => startFocus(slot), t('now.btn.focusTitle')),
+        button(t('now.btn.notNow'), 'fa-forward', 'btn-outline btn-large', () => showSkipChoices(slot)),
       );
     }
 
     function renderBreak(next) {
       view.dataset.kind = kindOf(next);
-      el.kicker.textContent = 'BREAK';
-      el.title.textContent = `Next: ${taskName(next.task)}`;
-      el.meta.textContent = `Starts at ${fmtClock(next.startTime)}. Stretch, drink some water.`;
+      el.kicker.textContent = t('now.kicker.break');
+      el.title.textContent = t('now.break.title', { name: taskName(next.task) });
+      el.meta.textContent = t('now.break.meta', { time: fmtClock(next.startTime) });
       renderSteps(kindOf(next) === 'routine' ? next.task.steps : null);
       el.actions.innerHTML = '';
       el.skipChoices.hidden = true;
       if (kindOf(next) === 'routine') {
-        el.actions.append(button('Start it now', 'fa-play', 'btn-primary btn-large', () => window.RoutinePlayer?.start(next.task.routineId)));
+        el.actions.append(button(t('now.btn.startNow'), 'fa-play', 'btn-primary btn-large', () => window.RoutinePlayer?.start(next.task.routineId)));
       }
     }
 
     function renderFree(next) {
       view.dataset.kind = 'free';
-      el.kicker.textContent = 'FREE TIME';
-      el.title.textContent = 'Nothing planned right now';
+      el.kicker.textContent = t('now.kicker.free');
+      el.title.textContent = t('now.free.title');
       el.meta.textContent = next
-        ? `Next: ${taskName(next.task)} at ${fmtClock(next.startTime)}.`
-        : 'Your day is clear. Add a task or plan ahead.';
+        ? t('now.free.next', { name: taskName(next.task), time: fmtClock(next.startTime) })
+        : t('now.free.clear');
       el.timer.hidden = true;
       el.steps.hidden = true;
       el.skipChoices.hidden = true;
       el.actions.innerHTML = '';
       el.actions.append(
-        button('Plan my day', 'fa-calendar-day', 'btn-primary btn-large', () => window.switchTool?.('planner')),
-        button('Add a task', 'fa-plus', 'btn-outline btn-large', () => window.AppSheets?.open('capture')),
+        button(t('now.btn.planDay'), 'fa-calendar-day', 'btn-primary btn-large', () => window.switchTool?.('planner')),
+        button(t('now.btn.addTask'), 'fa-plus', 'btn-outline btn-large', () => window.AppSheets?.open('capture')),
       );
     }
 
@@ -276,7 +281,7 @@
       if (!items.length) {
         const li = document.createElement('li');
         li.className = 'now-next-empty';
-        li.textContent = 'Nothing else today.';
+        li.textContent = t('now.next.empty');
         el.nextList.appendChild(li);
         return;
       }
@@ -291,7 +296,7 @@
         name.textContent = taskName(slot.task);
         const len = document.createElement('span');
         len.className = 'now-next-len';
-        len.textContent = `${Math.round((slot.endTime - slot.startTime) / 60000)} min`;
+        len.textContent = t('unit.min', { n: Math.round((slot.endTime - slot.startTime) / 60000) });
         li.append(time, name, len);
         el.nextList.appendChild(li);
       });
@@ -310,14 +315,14 @@
       strip.dataset.mode = state.mode;
       const text = document.createElement('span');
       text.className = 'plan-next-text';
-      const label = state.current ? 'Now' : state.mode === 'break' ? 'Soon' : 'Next';
+      const label = t(state.current ? 'strip.now' : state.mode === 'break' ? 'strip.soon' : 'strip.next');
       text.innerHTML = `<strong></strong> <span class="plan-next-name"></span> <span class="plan-next-time"></span>`;
       text.querySelector('strong').textContent = label;
       text.querySelector('.plan-next-name').textContent = taskName(slot.task);
       text.querySelector('.plan-next-time').dataset.role = 'strip-time';
       strip.appendChild(text);
       if (state.mode !== 'free') {
-        strip.appendChild(button('Open', 'fa-stopwatch', 'btn-primary btn-sm', () => window.switchTool?.('home')));
+        strip.appendChild(button(t('strip.open'), 'fa-stopwatch', 'btn-primary btn-sm', () => window.switchTool?.('home')));
       }
       tickStrip();
     }
@@ -326,42 +331,67 @@
       const timeEl = el.planStrip?.querySelector('[data-role="strip-time"]');
       if (!timeEl || !state) return;
       const now = new Date();
-      if (state.current) timeEl.textContent = `· ${fmt((state.current.endTime - now) / 1000)} left`;
+      if (state.current) timeEl.textContent = t('strip.left', { time: fmt((state.current.endTime - now) / 1000) });
       else if (state.next) timeEl.textContent = state.mode === 'break'
-        ? `· starts in ${fmt((state.next.startTime - now) / 1000)}`
-        : `· at ${fmtClock(state.next.startTime)}`;
+        ? t('strip.startsIn', { time: fmt((state.next.startTime - now) / 1000) })
+        : t('strip.at', { time: fmtClock(state.next.startTime) });
     }
 
     // ----- Deadlines panel (plan ahead, break big tasks down) -----
 
+    // "due tomorrow 17:00", "overdue since 19 Aug"… in the current language.
     function formatDue(deadline) {
       const due = new Date(deadline);
-      if (Number.isNaN(due.getTime())) return deadline;
+      if (Number.isNaN(due.getTime())) return t('due.on', { when: deadline });
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const dueDay = new Date(due);
       dueDay.setHours(0, 0, 0, 0);
       const days = Math.round((dueDay - today) / 86400000);
       const time = deadline.length > 10 ? ` ${fmtClock(due)}` : '';
-      if (days < 0) return `overdue (${due.toLocaleDateString()})`;
-      if (days === 0) return `today${time}`;
-      if (days === 1) return `tomorrow${time}`;
-      if (days < 7) return `${due.toLocaleDateString([], { weekday: 'long' })}${time}`;
-      return due.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      if (due < new Date()) return t('due.overdue', { date: fmtDate(due) });
+      if (days === 0) return t('due.on', { when: `${t('due.today')}${time}` });
+      if (days === 1) return t('due.on', { when: `${t('due.tomorrow')}${time}` });
+      if (days < 7) return t('due.on', { when: `${due.toLocaleDateString(locale(), { weekday: 'long' })}${time}` });
+      return t('due.on', { when: fmtDate(due) });
+    }
+
+    function deleteTasks(tasks) {
+      if (!tasks.length || !window.TaskStore?.deleteTasks) return;
+      const removed = window.TaskStore.deleteTasks(tasks.map(task => task.hash));
+      lastDeleted = { tasks: removed, at: Date.now() };
+      setTimeout(() => {
+        if (lastDeleted && Date.now() - lastDeleted.at >= UNDO_MS) {
+          lastDeleted = null;
+          renderDeadlines();
+        }
+      }, UNDO_MS + 50);
+      refreshAll();
+    }
+
+    function undoDelete() {
+      if (!lastDeleted) return;
+      window.TaskStore?.undeleteTasks?.(lastDeleted.tasks);
+      lastDeleted = null;
+      refreshAll();
     }
 
     function renderDeadlines() {
       const box = el.deadlines;
       if (!box) return;
+      const now = new Date();
       const user = window.UserContext?.getActiveUser?.();
-      const pending = (window.TaskStore?.getPendingTasks?.() || []).filter(t => !user || t.user === user);
+      const pending = (window.TaskStore?.getPendingTasks?.() || []).filter(task => !user || task.user === user);
+      const overdue = window.TaskStore?.getOverdueTasks?.(now, user) || [];
       const withDeadline = pending
-        // A fixed appointment's time is not a deadline to plan for.
-        .filter(t => t.deadline && !(t.plannerDate && (t.isFixed || t.deadline.slice(0, 16) === t.plannerDate.slice(0, 16))))
+        // A fixed appointment's time is not a deadline to plan for, unless it is overdue.
+        .filter(task => task.deadline && (overdue.includes(task)
+          || !(task.plannerDate && (task.isFixed || task.deadline.slice(0, 16) === task.plannerDate.slice(0, 16)))))
         .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
       const big = pending
-        .filter(t => !withDeadline.includes(t) && (t.needsBreakdown || Number(t.durationMinutes) > BIG_TASK_MINUTES));
-      const items = [...withDeadline, ...big].slice(0, 10);
+        .filter(task => !withDeadline.includes(task) && (task.needsBreakdown || Number(task.durationMinutes) > BIG_TASK_MINUTES));
+      const all = [...withDeadline, ...big];
+      const items = all.slice(0, 10);
 
       // Open on large screens; on phones it starts closed. The user's choice sticks.
       const wasOpen = box.querySelector('details')?.open;
@@ -369,19 +399,34 @@
       const details = document.createElement('details');
       details.open = wasOpen ?? window.matchMedia('(min-width: 769px)').matches;
       const summary = document.createElement('summary');
-      summary.innerHTML = '<i class="fas fa-flag-checkered"></i> <span>Plan ahead</span> <span class="count"></span>';
-      summary.querySelector('.count').textContent = String(items.length);
+      summary.innerHTML = '<i class="fas fa-flag-checkered"></i> <span></span> <span class="count"></span>';
+      summary.querySelector('span').textContent = t('plan.ahead');
+      summary.querySelector('.count').textContent = String(all.length);
       details.appendChild(summary);
       box.appendChild(details);
       const hint = document.createElement('p');
       hint.className = 'plan-deadlines-hint';
-      hint.textContent = 'Deadlines and big tasks. Split big ones into small steps (15–30 min) so they fit in your day.';
+      hint.textContent = t('plan.hint');
       details.appendChild(hint);
+
+      if (lastDeleted && Date.now() - lastDeleted.at < UNDO_MS) {
+        const bar = document.createElement('div');
+        bar.className = 'plan-undo-bar';
+        bar.setAttribute('role', 'status');
+        const text = document.createElement('span');
+        text.textContent = t('plan.deleted', { n: lastDeleted.tasks.length });
+        bar.append(text, button(t('plan.undo'), 'fa-undo', 'btn-outline btn-sm', undoDelete));
+        details.appendChild(bar);
+      }
+
+      if (overdue.length) {
+        details.appendChild(button(t('plan.deleteOverdue', { n: overdue.length }), 'fa-trash-alt', 'btn-danger-outline btn-sm plan-delete-overdue', () => deleteTasks(overdue)));
+      }
 
       if (!items.length) {
         const empty = document.createElement('p');
         empty.className = 'plan-deadlines-empty';
-        empty.textContent = 'No deadlines coming. Add one with “by Friday” in Add.';
+        empty.textContent = t('plan.empty');
         details.appendChild(empty);
         return;
       }
@@ -390,8 +435,7 @@
       list.className = 'plan-deadline-list';
       items.forEach(task => {
         const li = document.createElement('li');
-        const overdue = task.deadline && new Date(task.deadline) < new Date();
-        li.className = `plan-deadline-item${overdue ? ' overdue' : ''}`;
+        li.className = `plan-deadline-item${overdue.includes(task) ? ' overdue' : ''}`;
         const info = document.createElement('div');
         info.className = 'plan-deadline-info';
         const name = document.createElement('span');
@@ -400,18 +444,33 @@
         const meta = document.createElement('span');
         meta.className = 'plan-deadline-meta';
         const parts = [];
-        if (task.deadline) parts.push(`due ${formatDue(task.deadline)}`);
-        parts.push(`${task.durationMinutes || '?'} min`);
-        if (task.plannerDate) parts.push(`planned ${task.plannerDate.slice(5, 10)} ${task.plannerDate.slice(11, 16)}`);
+        if (task.deadline) parts.push(formatDue(task.deadline));
+        parts.push(t('unit.min', { n: task.durationMinutes || '?' }));
+        if (task.plannerDate && task.plannerDate.length >= 16) {
+          const planned = new Date(task.plannerDate);
+          parts.push(t('plan.planned', { date: `${fmtDate(planned)} ${fmtClock(planned)}` }));
+        }
         meta.textContent = parts.join(' · ');
         info.append(name, meta);
         li.appendChild(info);
+        const actions = document.createElement('div');
+        actions.className = 'plan-deadline-actions';
         if (task.needsBreakdown || Number(task.durationMinutes) > 30) {
-          li.appendChild(button('Split', 'fa-project-diagram', 'btn-outline btn-sm', () => sendToBreakdown(task), 'Break it into small steps'));
+          actions.appendChild(button(t('plan.split'), 'fa-project-diagram', 'btn-outline btn-sm', () => sendToBreakdown(task), t('plan.splitTitle')));
         }
+        const del = button('', 'fa-trash-alt', 'btn-icon-danger btn-sm', () => deleteTasks([task]), t('plan.delete'));
+        del.setAttribute('aria-label', `${t('plan.delete')}: ${taskName(task)}`);
+        actions.appendChild(del);
+        li.appendChild(actions);
         list.appendChild(li);
       });
       details.appendChild(list);
+      if (all.length > items.length) {
+        const more = document.createElement('p');
+        more.className = 'plan-deadlines-more';
+        more.textContent = t('plan.more', { n: all.length - items.length });
+        details.appendChild(more);
+      }
     }
 
     // ----- Main loop -----
@@ -468,17 +527,17 @@
         const running = window.RoutinePlayer?.getState?.();
         if (kindOf(state.current) === 'routine' && running && running.routineId === state.current.task.routineId) {
           el.title.textContent = running.stepName || taskName(state.current.task);
-          el.kicker.textContent = `${running.name.toUpperCase()} · STEP ${Math.min(running.stepIndex + 1, running.stepCount)}/${running.stepCount}`;
-          setTimer(Math.abs(running.secondsLeft), running.stepSeconds, running.secondsLeft < 0 ? 'over time' : 'left in this step', running.secondsLeft < 0);
+          el.kicker.textContent = t('now.kicker.step', { routine: running.name.toUpperCase(), n: Math.min(running.stepIndex + 1, running.stepCount), total: running.stepCount });
+          setTimer(Math.abs(running.secondsLeft), running.stepSeconds, t(running.secondsLeft < 0 ? 'now.timer.over' : 'now.timer.stepLeft'), running.secondsLeft < 0);
         } else {
           const left = (state.current.endTime - now) / 1000;
-          setTimer(left, (state.current.endTime - state.current.startTime) / 1000, 'left');
+          setTimer(left, (state.current.endTime - state.current.startTime) / 1000, t('now.timer.left'));
         }
         if (isToolActive('home')) document.title = `${fmt((state.current.endTime - now) / 1000)} · ${taskName(state.current.task)}`;
       } else if (state.mode === 'break' && state.next) {
         const until = (state.next.startTime - now) / 1000;
-        setTimer(until, (Number(window.ConfigManager?.getConfig?.().breakWindowMinutes) || 15) * 60, 'until it starts');
-        if (isToolActive('home')) document.title = `Break · ${taskName(state.next.task)} in ${fmt(until)}`;
+        setTimer(until, (Number(window.ConfigManager?.getConfig?.().breakWindowMinutes) || 15) * 60, t('now.timer.until'));
+        if (isToolActive('home')) document.title = t('now.doc.break', { name: taskName(state.next.task), time: fmt(until) });
       }
       tickStrip();
       // Slot boundary passed: recompute right away instead of waiting.
@@ -501,7 +560,7 @@
     };
     window.EventBus?.addEventListener('dataChanged', recompute);
     window.EventBus?.addEventListener('calendarEventsUpdated', recompute);
-    ['scheduleNeedsRefresh', 'routinesChanged', 'routinePlayerChanged', 'activeUserChanged', 'configUpdated'].forEach(name => {
+    ['scheduleNeedsRefresh', 'routinesChanged', 'routinePlayerChanged', 'activeUserChanged', 'configUpdated', 'languageChanged'].forEach(name => {
       window.addEventListener(name, recompute);
     });
     document.addEventListener('visibilitychange', () => {

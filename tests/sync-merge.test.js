@@ -114,3 +114,29 @@ describe('mergeBackup — full backup merge', () => {
     assert.strictEqual(result.updated, 0);
   });
 });
+
+describe('mergeBackup — deleted tasks stay deleted', () => {
+  const task = (id, name) => ({ id, hash: id, name });
+
+  test('a task deleted locally is not brought back by the backup', () => {
+    const imported = { metadata: { app: 'ADHD Tools Hub' }, 'adhd-unified-tasks': [task('a', 'A'), task('b', 'B')] };
+    const existingRaw = {
+      'adhd-unified-tasks': JSON.stringify([task('b', 'B')]),
+      'adhd-deleted-tasks': JSON.stringify([{ id: 'a', deletedAt: '2026-09-26T07:00:00Z' }]),
+    };
+    const { updates } = mergeBackup(imported, existingRaw);
+    assert.deepStrictEqual((updates['adhd-unified-tasks'] || []).map(t => t.id), ['b']);
+  });
+
+  test('a task deleted on the other device is removed here', () => {
+    const imported = {
+      metadata: { app: 'ADHD Tools Hub' },
+      'adhd-unified-tasks': [task('b', 'B')],
+      'adhd-deleted-tasks': [{ id: 'a', deletedAt: '2026-09-26T07:00:00Z' }],
+    };
+    const existingRaw = { 'adhd-unified-tasks': JSON.stringify([task('a', 'A'), task('b', 'B')]) };
+    const { updates } = mergeBackup(imported, existingRaw);
+    assert.deepStrictEqual(updates['adhd-unified-tasks'].map(t => t.id), ['b']);
+    assert.deepStrictEqual(updates['adhd-deleted-tasks'].map(x => x.id), ['a']);
+  });
+});
