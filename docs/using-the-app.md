@@ -76,6 +76,8 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
 - **Two routines can't overlap** on the same day. If you try, Save is refused and the app names the routine in the way.
 - The buffer is set in **Settings → General → Routine buffer**.
 - **Settings → General → Start the routine player by itself** starts the player automatically when the routine's time begins.
+- **Editing steps:** on a phone the editor shows only the step names, so the list stays short. Tap a step to change its duration, move it with the ↑ ↓ arrows, or delete it. On a computer every step shows its duration directly.
+- **Changing the order:** drag a step by its handle (⋮⋮) with your finger or the mouse, or use the ↑ ↓ arrows. Tap **Save** to keep the new order.
 - You can export and import a routine's steps as CSV from the routine editor.
 
 ## The Plan view

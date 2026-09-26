@@ -604,40 +604,148 @@ document.addEventListener('DOMContentLoaded', () => {
         if (routinePickerModalBackdrop) routinePickerModalBackdrop.classList.add('hidden');
     }
 
+    // One step in the routine editor:
+    //   [drag handle] [step name] [open/close]
+    //   details (tap the step to open): duration, move up / down, delete.
+    // On phones only the name shows until the step is tapped; on larger
+    // screens the details stay open.
     function appendTaskRow(listEl, task) {
         const div = document.createElement('div');
         div.className = 'routine-task-item';
+
+        const handle = document.createElement('button');
+        handle.type = 'button';
+        handle.className = 'routine-drag-handle';
+        handle.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+        handle.title = tr('routine.drag');
+        handle.setAttribute('aria-label', tr('routine.drag'));
+        handle.addEventListener('pointerdown', (e) => startStepDrag(e, div, listEl));
 
         const nameInput = document.createElement('input');
         nameInput.type = 'text';
         nameInput.className = 'task-name';
         nameInput.value = task ? task.name : '';
-        nameInput.placeholder = 'Task Name';
+        nameInput.placeholder = tr('routine.stepName');
+        nameInput.setAttribute('aria-label', tr('routine.stepName'));
 
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'routine-step-toggle';
+        toggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        toggle.setAttribute('aria-label', tr('routine.editStep'));
+        toggle.addEventListener('click', () => setStepOpen(div, !div.classList.contains('open')));
+
+        const details = document.createElement('div');
+        details.className = 'routine-step-details';
+
+        const durationLabel = document.createElement('label');
+        durationLabel.className = 'task-duration-label';
+        const durationText = document.createElement('span');
+        durationText.textContent = tr('routine.duration');
         const durationInput = document.createElement('input');
         durationInput.type = 'number';
         durationInput.className = 'task-duration';
         durationInput.inputMode = 'numeric';
         durationInput.value = task ? task.duration : '5';
         durationInput.min = '1';
-        durationInput.placeholder = 'Min';
+        durationLabel.append(durationText, durationInput);
+
+        const moveBtn = (icon, label, dir) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'routine-step-move';
+            btn.innerHTML = `<i class="fas ${icon}"></i>`;
+            btn.title = label;
+            btn.setAttribute('aria-label', label);
+            btn.addEventListener('click', () => moveStep(div, dir));
+            return btn;
+        };
 
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'btn-remove-task';
-        removeBtn.title = 'Remove';
-        removeBtn.setAttribute('aria-label', 'Remove task');
-        removeBtn.innerHTML = '&times;';
+        removeBtn.title = tr('routine.removeStep');
+        removeBtn.setAttribute('aria-label', tr('routine.removeStep'));
+        removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
         removeBtn.addEventListener('click', () => {
             div.remove();
         });
 
-        div.appendChild(nameInput);
-        div.appendChild(durationInput);
-        div.appendChild(removeBtn);
+        details.append(durationLabel, moveBtn('fa-arrow-up', tr('routine.moveUp'), -1), moveBtn('fa-arrow-down', tr('routine.moveDown'), 1), removeBtn);
 
+        // Tapping the step (its name) opens it; other steps close.
+        nameInput.addEventListener('focus', () => setStepOpen(div, true));
+
+        div.append(handle, nameInput, toggle, details);
         listEl.appendChild(div);
         return div;
+    }
+
+    function setStepOpen(row, open) {
+        if (open) {
+            row.parentElement?.querySelectorAll('.routine-task-item.open').forEach(other => {
+                if (other !== row) other.classList.remove('open');
+            });
+        }
+        row.classList.toggle('open', open);
+        row.querySelector('.routine-step-toggle')?.setAttribute('aria-expanded', String(open));
+    }
+
+    function moveStep(row, dir) {
+        const target = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+        if (!target) return;
+        if (dir < 0) row.parentElement.insertBefore(row, target);
+        else row.parentElement.insertBefore(target, row);
+        row.querySelector(dir < 0 ? '.routine-step-move' : '.routine-step-move:nth-of-type(2)')?.focus();
+        flashStep(row);
+    }
+
+    function flashStep(row) {
+        row.classList.remove('moved');
+        void row.offsetWidth; // restart the animation
+        row.classList.add('moved');
+    }
+
+    // Drag a step by its handle (mouse, pen or finger).
+    function startStepDrag(e, row, listEl) {
+        if (e.button !== undefined && e.button !== 0) return;
+        e.preventDefault();
+        // Listen on the document: moving the row in the DOM would drop a
+        // pointer capture on the handle.
+        const pointerId = e.pointerId;
+        row.classList.add('dragging');
+        listEl.classList.add('is-sorting');
+
+        const onMove = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            ev.preventDefault();
+            const siblings = [...listEl.querySelectorAll('.routine-task-item')].filter(el => el !== row);
+            const after = siblings.find(el => {
+                const box = el.getBoundingClientRect();
+                return ev.clientY < box.top + box.height / 2;
+            });
+            if (after) {
+                if (row.nextElementSibling !== after) listEl.insertBefore(row, after);
+            } else if (listEl.lastElementChild !== row) {
+                listEl.appendChild(row);
+            }
+            // Scroll the list when dragging near its edges.
+            const box = listEl.getBoundingClientRect();
+            if (ev.clientY < box.top + 30) listEl.scrollTop -= 8;
+            else if (ev.clientY > box.bottom - 30) listEl.scrollTop += 8;
+        };
+        const onUp = (ev) => {
+            if (ev.pointerId !== pointerId) return;
+            document.removeEventListener('pointermove', onMove);
+            document.removeEventListener('pointerup', onUp);
+            document.removeEventListener('pointercancel', onUp);
+            row.classList.remove('dragging');
+            listEl.classList.remove('is-sorting');
+            flashStep(row);
+        };
+        document.addEventListener('pointermove', onMove, { passive: false });
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
     }
 
     function collectTaskRows(listEl) {
@@ -661,6 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = appendTaskRow(listEl, null);
         const nameInput = div.querySelector('.task-name');
         if (nameInput) nameInput.focus();
+        div.scrollIntoView?.({ block: 'nearest' });
     }
 
     function exportRoutineToCSV() {
