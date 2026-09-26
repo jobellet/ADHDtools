@@ -273,11 +273,11 @@
 
 @media (max-width: 900px) {
     .now-view {
-            grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .now-card {
-            min-height: 0;
+        min-height: 0;
     }
 }
 
@@ -285,40 +285,40 @@
 
 @media (max-width: 768px) {
     .quick-capture-form {
-            flex-wrap: wrap;
+        flex-wrap: wrap;
     }
 
     .quick-capture-form input[type="text"] {
-            flex: 1 1 100%;
-            font-size: 16px; /* no zoom on iOS */
+        flex: 1 1 100%;
+        font-size: 16px; /* no zoom on iOS */
     }
 
     .quick-capture-form .btn {
-            flex: 1 1 0;
+        flex: 1 1 0;
     }
 
     #home.tool-section {
-            overflow-y: auto;
-            padding: 10px 4px;
+        overflow-y: auto;
+        padding: 10px 4px;
     }
 
     .now-card {
-            padding: 1.25rem 1rem;
-            border-radius: 16px;
-            flex: 0 0 auto;
+        padding: 1.25rem 1rem;
+        border-radius: 16px;
+        flex: 0 0 auto;
     }
 
     .now-title {
-            font-size: 1.7rem;
+        font-size: 1.7rem;
     }
 
     .now-meta {
-            margin-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
     }
 
     .now-timer {
-            width: min(58vw, 230px);
-            margin-bottom: 1rem;
+        width: min(58vw, 230px);
+        margin-bottom: 1rem;
     }
 }
 

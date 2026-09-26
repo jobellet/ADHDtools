@@ -193,17 +193,17 @@
 
 @media (min-width: 769px) {
     .routine-tasks-editor-list .routine-task-item {
-            grid-template-columns: 44px minmax(0, 1fr) auto;
+        grid-template-columns: 44px minmax(0, 1fr) auto;
     }
 
     .routine-step-toggle {
-            display: none;
+        display: none;
     }
 
     .routine-step-details,
     .routine-task-item.open .routine-step-details {
-            grid-column: auto;
-            display: flex;
-            padding: 0;
+        grid-column: auto;
+        display: flex;
+        padding: 0;
     }
 }

@@ -234,7 +234,7 @@ body.cap-gcal:not(.show-all-options) [data-cap-hide~="gcal"] {
 
 @media (max-width: 1024px) {
     .app-brand span {
-            display: none;
+        display: none;
     }
 }
 
@@ -242,89 +242,89 @@ body.cap-gcal:not(.show-all-options) [data-cap-hide~="gcal"] {
 
 @media (max-width: 768px) {
     .app-nav {
-            order: 2;
-            position: relative;
-            top: auto;
-            box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.1);
-            padding-bottom: env(safe-area-inset-bottom);
+        order: 2;
+        position: relative;
+        top: auto;
+        box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.1);
+        padding-bottom: env(safe-area-inset-bottom);
     }
 
     main {
-            order: 1;
+        order: 1;
     }
 
     .app-nav-inner {
-            padding: 0 4px;
-            min-height: var(--tabbar-height);
+        padding: 0 4px;
+        min-height: var(--tabbar-height);
     }
 
     .app-brand,
     .app-clock {
-            display: none;
+        display: none;
     }
 
     .app-tabs {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            width: 100%;
-            gap: 0;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: 100%;
+        gap: 0;
     }
 
     .app-tab {
-            flex-direction: column;
-            justify-content: center;
-            gap: 0.15rem;
-            width: 100%;
-            padding: 0.35rem 0;
-            border-radius: 12px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            min-height: 54px;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.15rem;
+        width: 100%;
+        padding: 0.35rem 0;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        min-height: 54px;
     }
 
     .app-tab i {
-            font-size: 1.2rem;
+        font-size: 1.2rem;
     }
 
     .app-tab.active {
-            background: transparent;
+        background: transparent;
     }
 
     .app-tab-add {
-            background: transparent;
-            color: var(--on-surface);
+        background: transparent;
+        color: var(--on-surface);
     }
 
     .app-tab-add i {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 44px;
-            height: 32px;
-            border-radius: 16px;
-            background: var(--primary-color);
-            color: var(--on-primary);
-            font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 32px;
+        border-radius: 16px;
+        background: var(--primary-color);
+        color: var(--on-primary);
+        font-size: 1.1rem;
     }
 
     .app-tab-add:hover {
-            background: transparent;
-            color: var(--primary-color);
+        background: transparent;
+        color: var(--primary-color);
     }
 
     .app-sheet {
-            top: auto;
-            bottom: 0;
-            left: 0;
-            transform: none;
-            width: 100%;
-            border-radius: 20px 20px 0 0;
-            padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
-            max-height: 85dvh;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        border-radius: 20px 20px 0 0;
+        padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+        max-height: 85dvh;
     }
 
     .more-grid {
-            grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 

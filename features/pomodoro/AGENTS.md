@@ -4,9 +4,7 @@ Read first: [../AGENTS.md](../AGENTS.md). Legacy UI, self-contained.
 
 | File | Role |
 | --- | --- |
-| `pomodoro.js` | `#pomodoro` timer (focus/short/long breaks, bell/chime sounds, interval chime). Fires `pomodoroCompleted` on `EventBus`. |
+| `pomodoro.js` | `#pomodoro` timer (focus/short/long breaks, interval chime). Bell / chime / digital sounds are synthesised with Web Audio (`playSound`), so they work offline with no download. Fires `pomodoroCompleted` on `EventBus`. |
 
 - Stores `pomodoroSettings`, `pomodoroSessionsCompleted`, `pomodoroIntervalChime`. Settings UI: Settings → Pomodoro.
 
-- Known issue: the bell/chime/digital sounds load from soundbible.com (external request, breaks offline).
-  Prefer local files in `sounds/` (used by Focus Mode backgrounds) when you touch this.

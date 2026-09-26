@@ -131,25 +131,6 @@ export function getPlannerTasksForDay(currentDate) {
     });
 }
 
-export function formatTime(h, m) {
-    const period = h >= 12 ? 'PM' : 'AM';
-    let hh = h % 12; if (hh === 0) hh = 12;
-    return `${hh}:${m.toString().padStart(2, '0')} ${period}`;
-}
-
-export function populateTimeOptions(select) {
-    select.innerHTML = '';
-    const { startMinutes, endMinutes } = getDayBounds();
-    for (let minutes = startMinutes; minutes < endMinutes; minutes += 5) {
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        const opt = document.createElement('option');
-        opt.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        opt.textContent = formatTime(h, m);
-        select.appendChild(opt);
-    }
-}
-
 export function populateTaskOptions(select) {
     select.innerHTML = '<option value="">-- New Event --</option>';
     const tasks = getUnifiedTasks().filter(t => !t.plannerDate && !t.completed);
