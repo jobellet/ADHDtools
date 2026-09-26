@@ -8,6 +8,7 @@ Read first: [../AGENTS.md](../AGENTS.md). ES modules: they `import` from `core/`
 | `planner-utils.js` | Builds the day's items with `buildSchedule` (tasks + routines + calendar), day bounds, defaults. |
 | `ai-plan.js` | AI Plan button: strict prompt + local validation/conflict repair of the model's plan (`planDayWithAI`). Never trusts the model: unknown texts, duplicates and overlaps are fixed or dropped before saving. |
 | `render-day.js` | Draws the hour grid `#time-blocks`: calendar events, routine blocks (orange, click → Routines), fixed tasks, auto-placed tasks (dashed), current-time line. |
+| `routing.js` | Geocoding and routing module that calculates travel time (walking, biking, driving) between locations using OpenStreetMap. |
 | `planner.css` | Timeline colours, now/next strip, Plan ahead panel, event form (bottom sheet on phones). |
 | `strings.js` | Keys `plan.*`, `legend.*`, `conflict.*`, `event.*`. |
 

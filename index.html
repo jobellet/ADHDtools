@@ -300,6 +300,19 @@
                                 <select id="event-dependency">
                                     <option value="">—</option>
                                 </select>
+                                <label for="event-location" class="event-label" data-i18n="event.location">Location</label>
+                                <div style="position: relative;">
+                                    <input type="text" id="event-location" autocomplete="off" placeholder="Search location..." data-i18n-placeholder="event.locationPlaceholder">
+                                    <ul id="event-location-suggestions" class="location-suggestions" style="display: none; position: absolute; z-index: 1000; background: var(--bg-surface); border: 1px solid var(--border-color); list-style: none; padding: 0; margin: 0; width: 100%; max-height: 200px; overflow-y: auto;"></ul>
+                                </div>
+                                <div id="event-travel-mode-container" style="display: none; margin-top: 10px;">
+                                    <label for="event-travel-mode" class="event-label" data-i18n="event.travelMode">Travel Mode</label>
+                                    <select id="event-travel-mode">
+                                        <option value="walk" data-i18n="event.modeWalk">Walk</option>
+                                        <option value="bike" data-i18n="event.modeBike">Bike</option>
+                                        <option value="car" data-i18n="event.modeCar">Car</option>
+                                    </select>
+                                </div>
                             </details>
 
                             <div class="event-actions">
