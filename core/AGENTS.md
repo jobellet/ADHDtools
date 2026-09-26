@@ -9,6 +9,7 @@ so classic scripts can use it. Data model details: [docs/task-model.md](../docs/
 | `task-model.js` | ES module | `createTask`, `updateTask`, `markTaskCompleted`, `computeUrgencyFromDeadline`, `computeAchievementScore`, `isPassiveOrAllDay` · `window.TaskModel` | `tests/task-model.test.js` |
 | `task-store.js` | ES module | `TaskStore` (default, `window.TaskStore`), `DELETED_TASKS_KEY` | `tests/task-store.test.js` |
 | `scheduler.js` | ES module | `buildSchedule`, `getTodaySchedule`, `getCurrentTask`, `getRoutineBlocks`, `routineBookedMinutes`, `getBusyBlocks`, `findConflicts`, `findNextFreeSlot`, `findRoutineConflicts`, `localDateString` · `window.UnifiedScheduler` | `tests/scheduler.test.js` |
+| `assistant-ops.js` | ES module | `OPS` (changes an AI assistant may make: schema + plan), `makeOp`, `planOp`, `applyEffects`, `pendingOps`, `validate` · shared by `mcp/` and `features/assistant/` | `tests/assistant-ops.test.js` |
 | `urgency-helpers.js` | ES module | Urgency smoothing + skip ledger · `window.UrgencyHelpers` | `tests/urgency-helpers.test.js` |
 | `duration-learning.js` | ES module | `recordTaskDuration`, `getEstimatedDuration` · `window.DurationLearning` | `tests/duration-learning.test.js` |
 | `sync-merge.js` | ES module | `mergeBackup`, `mergeArrayKey` (loaded with `import()` by `services/data-manager.js`) | `tests/sync-merge.test.js` |

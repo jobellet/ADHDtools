@@ -56,6 +56,22 @@ Si 17:00 est déjà pris (par exemple par votre routine du soir), la tâche pass
 
 L’application ne montre que les options que vous utilisez. Par exemple, l’import `.ics` est masqué dès que Google Agenda est connecté, et les boutons IA sont masqués sans fournisseur d’IA. *Paramètres → General → Afficher toutes les options* réaffiche tout.
 
+## 🤖 Parlez à votre planning avec votre assistant IA (MCP)
+
+Demandez à votre assistant IA (Mistral, Claude, ou toute application compatible MCP) de *« découper ma déclaration d’impôts en petites étapes »* ou *« trouver une heure pour le sport demain »*. Les changements apparaissent dans l’application. Votre propre Google Drive sert de stockage : pas de serveur à nous, pas de ngrok, pas de Tailscale.
+
+**Installation (environ 10 minutes) :**
+
+1. Dans l’application, connectez Google et touchez **Plus → À propos → Sync Across Devices → Back up now**. Laissez la synchronisation automatique activée.
+2. Dans [Google Cloud Console](https://console.cloud.google.com/apis/credentials), dans le **même projet** que le Client ID de l’application : **Create credentials → OAuth client ID → Desktop app**. Sur l’écran de consentement, cliquez **Publish app**.
+3. Sur votre ordinateur (Node 18+) : `git clone https://github.com/jobellet/ADHDtools.git`, puis dans ce dossier :
+   `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
+4. Ajoutez le serveur dans les réglages MCP de votre application IA : commande `node`, argument `/chemin/complet/ADHDtools/mcp/server.js`.
+   Pour Le Chat sur le web, lancez `node mcp/server.js http` sur un petit hébergeur (voir le guide).
+5. Demandez : *« Donne-moi un aperçu de ma journée. »* Laissez l’application ouverte : elle applique les changements en 2 minutes environ.
+
+Guide complet (en anglais), configuration de Mistral Vibe et de Le Chat, dépannage : [**docs/mcp.md**](docs/mcp.md).
+
 ## 📚 Guides
 
 Les guides détaillés sont en anglais :
@@ -66,6 +82,7 @@ Les guides détaillés sont en anglais :
 | [**Google Agenda**](docs/google-calendar-sync.md) | Synchronisation privée OAuth (recommandée, sans lien public), import `.ics` ou lien ICS public. |
 | [**Données sur plusieurs appareils**](docs/sync-across-devices.md) | Sauvegarde Google Drive, export/import de fichier, e-mail, avec fusion sans conflit. |
 | [**IA (optionnelle)**](docs/ai-providers.md) | Votre propre fournisseur : OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter ou un modèle local. Tout marche aussi sans IA. |
+| [**Assistant IA via MCP**](docs/mcp.md) | Mistral, Claude ou une autre application MCP lit votre journée, ajoute et découpe des tâches, via votre Google Drive. |
 | [**Modèle de données & planificateur**](docs/task-model.md) | L’objet Task, TaskStore, la réservation des routines, la construction de la journée. |
 | [**Vision & état**](docs/vision-roadmap.md) | La direction du projet et ce qui marche déjà. |
 | [**Cas de test**](docs/testing.md) | Scénarios pour vérifier l’application après des changements. |

@@ -11,6 +11,7 @@ Do not read whole folders to "get context": each `AGENTS.md` lists what is insid
 | `shell/` | Router, config, translations, setup detection | [shell/AGENTS.md](shell/AGENTS.md) |
 | `services/` | Storage, Google (auth, Calendar, Drive), import/export | [services/AGENTS.md](services/AGENTS.md) |
 | `features/<name>/` | One screen each: JS + CSS + `strings.js` + `AGENTS.md` | [features/AGENTS.md](features/AGENTS.md) |
+| `mcp/` | MCP server: AI assistants read the day and queue changes via Google Drive (Node only) | [mcp/AGENTS.md](mcp/AGENTS.md) |
 | `styles/` | Legacy shared CSS and the app shell CSS | [styles/AGENTS.md](styles/AGENTS.md) |
 | `tests/` | `node:test` unit tests (no browser) | [tests/AGENTS.md](tests/AGENTS.md) |
 | `docs/` | User guides and design docs; READMEs in 4 languages | [docs/AGENTS.md](docs/AGENTS.md) |
@@ -34,6 +35,7 @@ works on a 390 px phone (bottom tab bar) and on desktop.
 npm ci && npm test                  # unit tests (Node 22, node:test) — must pass before every commit
 npm run test:ui                     # browser tests: the real app in headless Chromium, phone + desktop
 node .claude/static-server.cjs      # serve on http://localhost:8422 (also under /ADHDtools/ like GitHub Pages)
+node mcp/server.js                  # MCP server for AI assistants (stdio); setup: docs/mcp.md
 ```
 `npm run test:ui` needs Chromium once: `npx playwright install chromium` (skip it where Playwright
 browsers are preinstalled). CI runs **both** `npm test` and `npm run test:ui` on every PR.
@@ -104,6 +106,7 @@ arrive after a classic script: listen to `schedulerReady`.
 | `DayPlanner` | `features/planner/day-planner.js` | `rerender()`, `scrollToCurrent()` |
 | `CalendarTool` | `features/calendar/calendar-tool.js` | `ingestExternalEvents(events)` |
 | `RewardSystem` | `features/rewards/reward-system.js` | Points and rewards |
+| `AssistantInbox` | `features/assistant/assistant-inbox.js` | `check()`: apply changes queued by the MCP server |
 
 Add a global only when another file needs it, and add a row here.
 
@@ -124,6 +127,7 @@ After changing tasks, dispatch `dataChanged` on `EventBus` **and** `scheduleNeed
 | `adhd-calendar-events` | features/calendar | | `adhd-calendar-ics-url` | features/calendar |
 | `gcalClientId`, `gcal*` | services/google-* | | `adhd-ai-settings` | core/ai-provider (never exported) |
 | `adhd-hub-data` | services/data-manager (legacy mirror) | | `adhd-storage-log` | services/timestamp-storage |
+| `adhd-assistant-applied` | features/assistant (ops applied, read by mcp/) | | | |
 Other keys belong to the feature that names them (`adhd-habits`, `adhd-rewards`, `adhd-breakdown-tasks`…).
 Changing the shape of stored data needs a migration that reads the old shape (users keep their data).
 
@@ -152,6 +156,9 @@ Changing the shape of stored data needs a migration that reads the old shape (us
   user types a place in the event form (`features/planner/routing.js`).
 - **Setup-aware UI:** controls for optional integrations get `data-cap="ai|speech"` or `data-cap-hide="gcal"`.
 - **No dead code:** remove files/keys you replace. `tests/architecture.test.js` fails on unreferenced files.
+- **Keep the AI assistant in step:** a new TaskStore method, scheduler function, task field, `adhd-…` storage
+  key or global makes `tests/mcp-coverage.test.js` fail until `mcp/coverage.js` says which MCP tool uses it
+  (or `no: <reason>`). See [mcp/AGENTS.md](mcp/AGENTS.md) → "When you add something to the app".
 - **Keep docs true:** if you change a contract above, update this file in the same commit.
 
 ## Working in parallel

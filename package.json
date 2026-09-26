@@ -6,7 +6,10 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "test:ui": "node --test --test-concurrency=1 tests/ui/*.test.js",
-    "test:all": "npm test && npm run test:ui"
+    "test:all": "npm test && npm run test:ui",
+    "mcp": "node mcp/server.js",
+    "mcp:auth": "node mcp/server.js auth",
+    "mcp:http": "node mcp/server.js http"
   },
   "keywords": [],
   "author": "",

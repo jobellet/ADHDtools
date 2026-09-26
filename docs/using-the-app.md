@@ -99,7 +99,14 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
 - **Plan ahead** lists tasks with deadlines and big tasks (over 30–45 minutes). **Split** sends a task to Task Breakdown so you can cut it into 15–30 minute steps that fit into your day.
 - **Delete tasks you no longer need:** the 🗑 button deletes one task; **Delete all overdue (N)** deletes every task whose deadline has passed, in one click. An **Undo** bar stays for 15 seconds. Deleted tasks stay deleted on your other devices too (Google Drive sync).
 
-## Language
+## Your AI assistant (optional, MCP)
+
+You can let an AI assistant (Mistral, Claude…) read your day, add tasks, give them a time and split big ones, through your Google Drive. Setup: [Talk to your planner with your AI assistant](mcp.md).
+
+- Keep the app open: it applies the assistant's changes within about 2 minutes (or at once when you tap **Back up now**), and shows *"Your assistant made N change(s)."*
+- The assistant follows the same rules as you: if a time is taken, the task moves to the next free time.
+
+
 
 Pick English, Deutsch, Français or Español in **More** (flags at the bottom). The Now view, the planner, Add and the routine player follow the language. Some older tools (Pomodoro, Habits, Rewards…) are still partly in English. Without an AI provider, write new tasks in English (the offline parser only understands English); with AI you can write in your language.
 

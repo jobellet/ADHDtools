@@ -7,7 +7,7 @@ import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SOURCE_DIRS = ['core', 'shell', 'services', 'features', 'styles'];
+const SOURCE_DIRS = ['core', 'shell', 'services', 'features', 'styles', 'mcp'];
 const read = p => readFileSync(join(ROOT, p), 'utf8');
 
 function walk(dir) {
@@ -20,12 +20,13 @@ function walk(dir) {
 const sourceFiles = SOURCE_DIRS.flatMap(walk).filter(f => /\.(js|css)$/.test(f));
 const agentFiles = ['AGENTS.md', ...SOURCE_DIRS.concat(['tests', 'docs']).flatMap(walk).filter(f => f.endsWith('AGENTS.md'))];
 const indexHtml = read('index.html');
+const packageJson = read('package.json'); // Node entry points (mcp/server.js) are started from its scripts
 
 describe('Architecture', () => {
   it('every JS/CSS file is loaded by index.html or imported by another file', () => {
     const allJs = sourceFiles.filter(f => f.endsWith('.js')).map(f => [f, read(f)]);
     const unused = sourceFiles.filter(file => {
-      if (indexHtml.includes(`"${file}"`)) return false;
+      if (indexHtml.includes(`"${file}"`) || packageJson.includes(` ${file}`)) return false;
       const name = file.split('/').pop();
       return !allJs.some(([other, text]) => other !== file
         && new RegExp(`(from|import\\()\\s*['"][./]*[^'"]*${name.replace('.', '\\.')}['"]`).test(text));

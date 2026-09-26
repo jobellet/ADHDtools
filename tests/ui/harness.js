@@ -38,7 +38,9 @@ export async function launch() {
 // Open the app with seeded localStorage and a fixed clock.
 // Returns { page, context, errors, external } — errors = page errors + console errors,
 // external = requests to hosts other than the app (all are blocked).
-export async function openApp(browser, baseUrl, { device = 'desktop', path = '/', time, storage = {} } = {}) {
+// `session` seeds sessionStorage; `routes` = [[urlMatcher, handler]] answer outside requests
+// (e.g. a fake Google Drive) instead of blocking them.
+export async function openApp(browser, baseUrl, { device = 'desktop', path = '/', time, storage = {}, session = {}, routes = [] } = {}) {
   const { isMobile, hasTouch, ...viewport } = VIEWPORTS[device];
   const context = await browser.newContext({ viewport, isMobile: Boolean(isMobile), hasTouch: Boolean(hasTouch) });
   const page = await context.newPage();
@@ -53,6 +55,7 @@ export async function openApp(browser, baseUrl, { device = 'desktop', path = '/'
     if (!ALLOWED_EXTERNAL.some(re => re.test(href))) external.push(href);
     return route.abort();
   });
+  for (const [matcher, handler] of routes) await page.route(matcher, handler); // registered last = tried first
   if (time) await page.clock.install({ time: new Date(time) });
   await page.addInitScript(seed => {
     if (sessionStorage.getItem('__seeded')) return;
@@ -60,6 +63,9 @@ export async function openApp(browser, baseUrl, { device = 'desktop', path = '/'
     localStorage.clear();
     Object.entries(seed).forEach(([k, v]) => localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)));
   }, storage);
+  await page.addInitScript(seed => {
+    Object.entries(seed).forEach(([k, v]) => sessionStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)));
+  }, session);
   await page.goto(baseUrl + path, { waitUntil: 'load' });
   if (time) await page.clock.runFor(1500);
   else await page.waitForTimeout(800);

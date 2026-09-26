@@ -56,6 +56,22 @@ If 17:00 is already taken (for example by your evening routine), the task moves 
 
 The app only shows the options you use. For example, `.ics` import is hidden once Google Calendar is connected, and AI buttons are hidden without an AI provider. *Settings → General → Show all options* shows everything again.
 
+## 🤖 Talk to your planner with your AI assistant (MCP)
+
+Ask your AI assistant (Mistral, Claude, or any app that supports MCP) to *"split my tax report into small steps"* or *"find an hour for sport tomorrow"*. The changes show up in the app. Your own Google Drive is the storage: no server of ours, no ngrok, no Tailscale.
+
+**Setup (about 10 minutes):**
+
+1. In the app, connect Google and tap **More → About → Sync Across Devices → Back up now**. Keep *Automatic sync* on.
+2. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), in the **same project** as the app's Client ID: **Create credentials → OAuth client ID → Desktop app**. On the consent screen, click **Publish app**.
+3. On your computer (Node 18+): `git clone https://github.com/jobellet/ADHDtools.git`, then in that folder:
+   `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
+4. Add the server to your AI app's MCP settings: command `node`, argument `/full/path/to/ADHDtools/mcp/server.js`.
+   For Le Chat on the web, run `node mcp/server.js http` on a small host (see the guide).
+5. Ask: *"Give me an overview of my day."* Keep the app open: it applies the changes within about 2 minutes.
+
+Full guide, Mistral Vibe and Le Chat setup, and troubleshooting: [**docs/mcp.md**](docs/mcp.md).
+
 ## 📚 Guides & Tutorials
 
 | Guide | What you'll learn |
@@ -64,6 +80,7 @@ The app only shows the options you use. For example, `.ics` import is hidden onc
 | [**Google Calendar sync**](docs/google-calendar-sync.md) | Private OAuth sync (recommended, no public link), `.ics` file import, or a public ICS link. Full Google Cloud setup tutorial. |
 | [**Sync your data across devices**](docs/sync-across-devices.md) | Google Drive backup/restore, file export/import, email, with conflict-safe merging. |
 | [**Optional AI assistance**](docs/ai-providers.md) | Use your own provider: OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model. Everything also works without AI. |
+| [**AI assistant via MCP**](docs/mcp.md) | Let Mistral, Claude or another MCP app read your day, add tasks and split them, through your Google Drive. |
 | [**Data model & scheduler**](docs/task-model.md) | The Task object, TaskStore, routine booking and how the scheduler builds your day. |
 | [**Vision, roadmap & status**](docs/vision-roadmap.md) | Where the project is going and what already works. |
 | [**Manual test cases**](docs/testing.md) | Scenarios to check the app after changes. |
