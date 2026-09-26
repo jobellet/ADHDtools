@@ -24,6 +24,7 @@ reaching into another feature's DOM.
 | [pomodoro](pomodoro/AGENTS.md) | `pomodoro` | `pomodoro.js` | legacy UI |
 | [habits](habits/AGENTS.md) | `habits` | `habit-tracker.js` | legacy UI |
 | [rewards](rewards/AGENTS.md) | `rewards` | `reward-system.js` | legacy UI |
+| [assistant](assistant/AGENTS.md) | — (no screen: applies AI assistant changes, see `mcp/`) | `assistant-inbox.js` | core |
 
 "Legacy UI" = works, still partly English, styled by `styles/base.css`. When you touch one, move its
 new strings to `strings.js` and new CSS to its own `.css` file.

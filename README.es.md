@@ -56,6 +56,22 @@ Si las 17:00 ya están ocupadas (por ejemplo, por tu rutina de la noche), la tar
 
 La aplicación solo muestra las opciones que usas. Por ejemplo, la importación `.ics` se oculta en cuanto Google Calendar está conectado, y los botones de IA se ocultan sin proveedor de IA. *Ajustes → General → Mostrar todas las opciones* vuelve a mostrarlo todo.
 
+## 🤖 Habla con tu asistente de IA sobre tu día (MCP)
+
+Pide a tu asistente de IA (Mistral, Claude o cualquier app compatible con MCP) que *«divida mi declaración de impuestos en pasos pequeños»* o *«busque una hora para hacer deporte mañana»*. Los cambios aparecen en la app. Tu propio Google Drive es el almacenamiento: ningún servidor nuestro, sin ngrok, sin Tailscale.
+
+**Configuración (unos 10 minutos):**
+
+1. En la app, conecta Google y toca **Más → Acerca de → Sync Across Devices → Back up now**. Deja la sincronización automática activada.
+2. En [Google Cloud Console](https://console.cloud.google.com/apis/credentials), en el **mismo proyecto** que el Client ID de la app: **Create credentials → OAuth client ID → Desktop app**. En la pantalla de consentimiento, haz clic en **Publish app**.
+3. En tu ordenador (Node 18+): `git clone https://github.com/jobellet/ADHDtools.git` y, en esa carpeta:
+   `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
+4. Añade el servidor en los ajustes MCP de tu app de IA: comando `node`, argumento `/ruta/completa/ADHDtools/mcp/server.js`.
+   Para Le Chat en la web, ejecuta `node mcp/server.js http` en un pequeño hosting (ver la guía).
+5. Pregunta: *«Dame un resumen de mi día.»* Deja la app abierta: aplica los cambios en unos 2 minutos.
+
+Guía completa (en inglés), configuración de Mistral Vibe y Le Chat, y solución de problemas: [**docs/mcp.md**](docs/mcp.md).
+
 ## 📚 Guías
 
 Las guías detalladas están en inglés:
@@ -66,6 +82,7 @@ Las guías detalladas están en inglés:
 | [**Google Calendar**](docs/google-calendar-sync.md) | Sincronización privada OAuth (recomendada, sin enlace público), importación `.ics` o enlace ICS público. |
 | [**Datos en varios dispositivos**](docs/sync-across-devices.md) | Copia en Google Drive, exportar/importar archivo, correo, con fusión segura. |
 | [**IA (opcional)**](docs/ai-providers.md) | Tu propio proveedor: OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter o un modelo local. Todo funciona también sin IA. |
+| [**Asistente de IA con MCP**](docs/mcp.md) | Mistral, Claude u otra app MCP lee tu día, añade tareas y las divide, a través de tu Google Drive. |
 | [**Modelo de datos y planificador**](docs/task-model.md) | El objeto Task, TaskStore, la reserva de rutinas, cómo se construye el día. |
 | [**Visión y estado**](docs/vision-roadmap.md) | Hacia dónde va el proyecto y qué funciona ya. |
 | [**Casos de prueba**](docs/testing.md) | Escenarios para comprobar la aplicación tras cambios. |

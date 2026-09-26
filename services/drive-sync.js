@@ -17,6 +17,7 @@
   const REMOTE_GRACE_MS = 10 * 1000;
 
   let inFlight = false;
+  let localChanges = false; // data changed since the last backup (so the assistant sees fresh data)
 
   function notify(message, type) {
     if (window.DataManager?.showNotification) {
@@ -45,6 +46,24 @@
     return (data.files && data.files[0]) || null;
   }
 
+  // Read a JSON file from the app folder (e.g. the assistant inbox). null if missing or signed out.
+  async function readAppFile(name, { interactive = false } = {}) {
+    if (!window.GoogleAuth?.getClientId()) return null;
+    const token = await getToken({ interactive });
+    if (!token) return null;
+    const url = new URL(`${DRIVE_API}/files`);
+    url.searchParams.set('spaces', 'appDataFolder');
+    url.searchParams.set('q', `name = '${name}'`);
+    url.searchParams.set('fields', 'files(id)');
+    const list = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!list.ok) throw new Error(`Drive API ${list.status}`);
+    const file = (await list.json()).files?.[0];
+    if (!file) return null;
+    const resp = await fetch(`${DRIVE_API}/files/${file.id}?alt=media`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!resp.ok) throw new Error(`Drive API ${resp.status}`);
+    return resp.json();
+  }
+
   function lastLocalPush() {
     const last = Number(localStorage.getItem(LAST_BACKUP_KEY) || 0);
     return Number.isFinite(last) ? last : 0;
@@ -54,11 +73,13 @@
     return localStorage.getItem(AUTO_SYNC_KEY) !== 'false';
   }
 
-  async function backupToDrive({ silent = false } = {}) {
+  async function backupToDrive({ silent = false, skipInbox = false } = {}) {
     const status = document.getElementById('drive-sync-status');
     try {
       if (status) status.textContent = 'Backing up…';
       const token = await getToken();
+      // Changes queued by the AI assistant (MCP server) go in before the snapshot.
+      if (!skipInbox) await window.AssistantInbox?.check({ interactive: true });
       const payload = JSON.stringify(window.DataManager.collectAllData());
       const existing = await findBackupFile(token);
 
@@ -89,6 +110,7 @@
       if (!resp.ok) throw new Error(`Drive API ${resp.status}`);
 
       localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
+      localChanges = false;
       refreshStatus();
       if (!silent) {
         notify('Backup saved to your Google Drive (private app folder).', 'success');
@@ -185,7 +207,7 @@
     if (inFlight) return;
     if (!window.GoogleAuth?.getClientId()) return;
     if (!autoSyncEnabled()) return;
-    if (Date.now() - lastLocalPush() < AUTO_BACKUP_INTERVAL_MS) return;
+    if (!localChanges && Date.now() - lastLocalPush() < AUTO_BACKUP_INTERVAL_MS) return;
     inFlight = true;
     try {
       const token = await getToken({ interactive: false });
@@ -255,11 +277,18 @@
   }
 
   document.addEventListener('DOMContentLoaded', createUI);
+  document.addEventListener('DOMContentLoaded', () => {
+    const changed = () => { localChanges = true; };
+    window.EventBus?.addEventListener('dataChanged', changed);
+    window.addEventListener('routinesChanged', changed);
+  });
 
   window.DriveSync = {
     backupToDrive,
     restoreFromDrive,
     maybeAutoPull,
     maybeAutoBackup,
+    readAppFile,
+    isAutoSyncOn: autoSyncEnabled,
   };
 })();

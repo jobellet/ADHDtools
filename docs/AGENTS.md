@@ -7,6 +7,7 @@
 | `vision-roadmap.md` | Everyone | A roadmap item is done or added (Current Status list) |
 | `transition-plan.md` | Devs | Context-aware dashboard steps progress |
 | `google-calendar-sync.md`, `sync-across-devices.md`, `ai-providers.md` | Users | Integration UI/menu paths change |
+| `mcp.md` | Users | MCP tools, setup steps or sync timing change (tests check every tool is listed) |
 | `testing.md` | Devs/QA | Manual test scenarios for new flows |
 | `contributing.md` | Contributors | Setup, commands, conventions |
 | `flags/*.svg` | README language bar | — |

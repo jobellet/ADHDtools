@@ -14,13 +14,17 @@ CI runs both on every PR. Both must pass after merging the latest `main`.
 | `urgency-helpers.test.js`, `duration-learning.test.js` | Urgency smoothing, learned durations |
 | `i18n.test.js` | Every `features/*/strings.js` key exists in en/fr/de/es with the same placeholders; every `data-i18n*` key in `index.html` exists in all four |
 | `application-shell.test.js` | `index.html` references existing scripts; key ids exist |
+| `assistant-ops.test.js` | AI assistant ops: schemas, refuse vs move on a busy time, breakdown, tombstones |
+| `mcp.test.js` | MCP server over stdio and HTTP: protocol, reads backup, writes inbox only, secrets hidden, token needed |
+| `mcp-coverage.test.js` | Every TaskStore method, scheduler function, task field, storage key, global and tool is covered by `mcp/coverage.js`, documented and tested |
 | `architecture.test.js` | Every JS/CSS file is loaded or imported; every file is listed in an `AGENTS.md`; paths in `AGENTS.md` exist; globals table matches the code |
 
 ### Browser tests (`tests/ui/`)
 | File | Covers |
 | --- | --- |
-| `harness.js` | `startServer()` (serves the repo like GitHub Pages), `launch()`, `openApp(browser, url, { device, time, storage })`, `sampleDay(date)`, `VIEWPORTS` (phone 390×844, desktop 1366×900). `openApp` fixes the clock, seeds `localStorage`, blocks every outside request and returns `errors` (page + console) and `external` (requests made while loading). |
+| `harness.js` | `startServer()` (serves the repo like GitHub Pages), `launch()`, `openApp(browser, url, { device, time, storage, session, routes })`, `sampleDay(date)`, `VIEWPORTS` (phone 390×844, desktop 1366×900). `openApp` fixes the clock, seeds `localStorage`, blocks every outside request and returns `errors` (page + console) and `external` (requests made while loading). |
 | `now.test.js` | The app opens on the right screen: routine time → Now with timer; free time with work → next auto-placed task; nothing planned → planner. Never an all-day event as "now". |
+| `assistant.test.js` | MCP server queues changes → the real app applies them (moved if the time got taken) → backs up → the server sees them done. Fake Drive via `routes`. |
 | `planner.test.js` | The whole day is drawn at both sizes (timeline height = day × zoom, every item present, no NaN, no overlap, no sideways scroll, desktop fills the window); Ctrl+scroll zoom keeps blocks on their times; add-event form refuses a taken time and saves at the suggested one. |
 
 `sampleDay()` holds the tricky data that broke the app once: an all-day event and the task copies the
