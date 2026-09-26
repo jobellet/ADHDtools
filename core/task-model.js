@@ -53,7 +53,8 @@ export function createTask(raw = {}, overrides = {}) {
   const createdAt = raw.createdAt || new Date().toISOString();
   const user = raw.user || DEFAULT_USER;
   const name = raw.name || raw.title || raw.text || 'Untitled Task';
-  const deadline = raw.deadline || raw.plannerDate || null;
+  // An explicit `deadline: null` means "no deadline"; otherwise a planned time counts as one.
+  const deadline = raw.deadline === null ? null : (raw.deadline || raw.plannerDate || null);
   const durationMinutes = normalizeNumber(
     raw.durationMinutes ?? raw.duration ?? raw.estimatedMinutes,
     normalizeNumber(cfg?.defaultTaskMinutes, 60)

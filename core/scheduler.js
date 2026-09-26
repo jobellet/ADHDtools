@@ -219,6 +219,9 @@ function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()
     ? dayStart
     : Math.max(dayStart, Math.min(nowMinutes, dayEnd));
   let cursor = startCursor;
+  // End of the last placed item, without the pause: fixed items only move
+  // when they really overlap something, never because of the pause.
+  let busyUntil = startCursor;
 
   // Fixed blocks that already ended keep their original times instead of being
   // squeezed against the cursor.
@@ -232,13 +235,16 @@ function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()
     for (let task = takeNext(cursor, gapEnd - buffer); task; task = takeNext(cursor, gapEnd - buffer)) {
       const duration = getDurationMinutes(task);
       schedule.push({ task, startMinutes: cursor, endMinutes: cursor + duration });
+      busyUntil = cursor + duration;
       cursor += duration + buffer;
     }
     // A fixed block already in progress keeps its real start time.
     const inProgress = slot.startMinutes < startCursor && cursor <= startCursor;
-    const start = inProgress ? slot.startMinutes : Math.max(cursor, slot.startMinutes);
-    const end = Math.min(dayEnd, Math.max(slot.endMinutes, start));
+    const start = inProgress ? slot.startMinutes : Math.max(busyUntil, slot.startMinutes);
+    // Keep the item's length when it has to move.
+    const end = Math.max(start, Math.min(Math.max(dayEnd, slot.endMinutes), start + (slot.endMinutes - slot.startMinutes)));
     schedule.push({ task: slot.task, startMinutes: start, endMinutes: end });
+    busyUntil = end;
     cursor = end + buffer;
   });
 

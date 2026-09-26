@@ -1,5 +1,5 @@
 import { renderDayPlanner } from './renderDay.js';
-import { populateTimeOptions, populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './dayPlannerUtils.js';
+import { populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './dayPlannerUtils.js';
 import { createTask } from './core/task-model.js';
 
 let editingTaskId = null;
@@ -44,22 +44,63 @@ let dateDisplay,
     eventDependencySelect,
     eventModalTitle;
 
+const tr = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
+
+function setDuration(minutes) {
+    eventDurationInput.value = minutes;
+    eventModal.querySelectorAll('.event-chip[data-minutes]').forEach(chip => {
+        const on = Number(chip.dataset.minutes) === Number(minutes);
+        chip.classList.toggle('active', on);
+        chip.setAttribute('aria-pressed', String(on));
+    });
+}
+
+function showConflict(message, freeMinutes) {
+    const box = eventModal.querySelector('#event-conflict');
+    box.innerHTML = '';
+    if (!message) {
+        box.hidden = true;
+        return;
+    }
+    const text = document.createElement('p');
+    text.textContent = message;
+    box.appendChild(text);
+    if (Number.isFinite(freeMinutes)) {
+        const use = document.createElement('button');
+        use.type = 'button';
+        use.className = 'btn btn-primary btn-sm';
+        use.textContent = tr('event.useFree', { time: minutesToTime(freeMinutes) });
+        use.addEventListener('click', () => {
+            eventTimeSelect.value = minutesToTime(freeMinutes);
+            showConflict(null);
+        });
+        box.appendChild(use);
+    }
+    box.hidden = false;
+}
+
 function openModal(task, presetTime, externalTask) {
     eventModal.classList.add('active');
     eventModal.style.display = 'flex';
-    populateTimeOptions(eventTimeSelect);
+    document.body.classList.add('modal-open');
     populateTaskOptions(eventTaskSelect);
+    if (eventTaskSelect.options[0]) eventTaskSelect.options[0].textContent = '—';
     populateDependencyOptions();
+    showConflict(null);
+    eventModal.querySelector('.event-more').open = false;
+    const removeBtn = eventModal.querySelector('#event-remove-btn');
+    removeBtn.hidden = !task;
     pendingExternalTask = null;
     if (task) {
-        editingTaskId = task.id;
-        eventModalTitle.textContent = 'Edit Event';
-        eventTitleInput.value = task.text;
+        editingTaskId = task.hash || task.id;
+        eventModalTitle.textContent = tr('event.titleEdit');
+        eventTitleInput.value = (task.name || task.text || '').replace(/\[(FIX|FLEX)\]\s*/gi, '').trim();
         eventTimeSelect.value = task.plannerDate.slice(11, 16);
-        eventDurationInput.value = task.duration || getDefaultDurationMinutes();
+        setDuration(task.duration || task.durationMinutes || getDefaultDurationMinutes());
         eventImportanceInput.value = task.importance || 5;
         eventUrgencyInput.value = task.urgency || 5;
-        eventDeadlineInput.value = task.deadline ? task.deadline.slice(0, 16) : '';
+        const realDeadline = task.deadline && task.deadline.slice(0, 16) !== (task.plannerDate || '').slice(0, 16) ? task.deadline : '';
+        eventDeadlineInput.value = realDeadline ? realDeadline.slice(0, 16) : '';
         eventDependencySelect.value = task.dependency || '';
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
@@ -67,10 +108,10 @@ function openModal(task, presetTime, externalTask) {
     } else if (externalTask) {
         editingTaskId = null;
         pendingExternalTask = externalTask;
-        eventModalTitle.textContent = 'Schedule Task';
+        eventModalTitle.textContent = tr('event.titleSchedule');
         eventTitleInput.value = externalTask.text || '';
         eventTimeSelect.value = presetTime || getDefaultTime();
-        eventDurationInput.value = externalTask.duration || getDefaultDurationMinutes();
+        setDuration(externalTask.duration || getDefaultDurationMinutes());
         eventImportanceInput.value = externalTask.importance || externalTask.priority || 5;
         eventUrgencyInput.value = externalTask.urgency || externalTask.priority || 5;
         eventDeadlineInput.value = externalTask.deadline ? externalTask.deadline.slice(0, 16) : '';
@@ -80,10 +121,10 @@ function openModal(task, presetTime, externalTask) {
         eventTaskSelect.disabled = true;
     } else {
         editingTaskId = null;
-        eventModalTitle.textContent = 'Add Event';
+        eventModalTitle.textContent = tr('event.titleAdd');
         eventTitleInput.value = '';
         eventTimeSelect.value = presetTime || getDefaultTime();
-        eventDurationInput.value = getDefaultDurationMinutes();
+        setDuration(30);
         eventImportanceInput.value = 5;
         eventUrgencyInput.value = 5;
         eventDeadlineInput.value = '';
@@ -92,12 +133,20 @@ function openModal(task, presetTime, externalTask) {
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = false;
     }
+    // Hide "pick a task" when there is nothing to pick.
+    eventTaskSelect.closest('.event-more').querySelector('[for="event-task"]').hidden = eventTaskSelect.options.length <= 1;
+    eventTaskSelect.hidden = eventTaskSelect.options.length <= 1;
+    if (!eventTitleInput.disabled && !eventTitleInput.value) {
+        setTimeout(() => eventTitleInput.focus(), 50);
+    }
 }
 
 function closeModal() {
     eventModal.classList.remove('active');
     eventModal.style.display = 'none';
+    document.body.classList.remove('modal-open');
     if (eventForm) eventForm.reset();
+    showConflict(null);
     editingTaskId = null;
     pendingExternalTask = null;
     eventTitleInput.disabled = false;
@@ -108,12 +157,12 @@ function populateDependencyOptions() {
     if (!eventDependencySelect) return;
     const tasks = (window.TaskStore?.getAllTasks?.() || window.DataManager?.getTasks?.() || []).map(wrapTask);
     const current = eventDependencySelect.value;
-    eventDependencySelect.innerHTML = '<option value="">No dependency</option>';
+    eventDependencySelect.innerHTML = '<option value="">—</option>';
     tasks.forEach(task => {
         const opt = document.createElement('option');
         opt.value = task.hash || task.id;
         opt.textContent = task.name || task.text;
-        if (opt.value === editingTaskId || opt.value === (pendingExternalTask?.id || '')) return;
+        if (task.completed || opt.value === editingTaskId || opt.value === (pendingExternalTask?.id || '')) return;
         eventDependencySelect.appendChild(opt);
     });
     if (current) eventDependencySelect.value = current;
@@ -160,24 +209,23 @@ async function handleVoiceCommand(text) {
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
 }
 
-// Returns a message when [start, start+duration) collides with a routine,
-// a calendar event or another pinned task on the planner's day; else null.
-function describeConflict(newStartMinutes, newDurationMinutes, ignoreId) {
+// When [start, start+duration) collides with a routine, a calendar event or
+// another pinned task on the planner's day: { message, free }; else null.
+function findConflict(newStartMinutes, newDurationMinutes, ignoreId) {
     const scheduler = window.UnifiedScheduler;
     if (!scheduler?.findConflicts) return null;
     const dateStr = localDateString(currentDate);
-    const clashes = scheduler.findConflicts({
-        dateStr,
-        startMinutes: newStartMinutes,
-        durationMinutes: newDurationMinutes,
-        ignore: ignoreId ? [ignoreId] : [],
-    });
+    const ignore = ignoreId ? [ignoreId] : [];
+    const clashes = scheduler.findConflicts({ dateStr, startMinutes: newStartMinutes, durationMinutes: newDurationMinutes, ignore });
     if (!clashes.length) return null;
-    const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
     const names = clashes.map(c => `“${c.name}” (${minutesToTime(c.start)}–${minutesToTime(c.end)})`).join(', ');
-    const free = scheduler.findNextFreeSlot({ dateStr, fromMinutes: newStartMinutes, durationMinutes: newDurationMinutes, ignore: ignoreId ? [ignoreId] : [] });
-    const hint = Number.isFinite(free) ? ` ${t('conflict.nextFree', { time: minutesToTime(free) })}` : '';
-    return `${t('conflict.taken', { names })}${hint}`;
+    const free = scheduler.findNextFreeSlot({ dateStr, fromMinutes: newStartMinutes, durationMinutes: newDurationMinutes, ignore });
+    const hint = Number.isFinite(free) ? ` ${tr('conflict.nextFree', { time: minutesToTime(free) })}` : '';
+    return { message: `${tr('conflict.taken', { names })}${hint}`, free };
+}
+
+function describeConflict(newStartMinutes, newDurationMinutes, ignoreId) {
+    return findConflict(newStartMinutes, newDurationMinutes, ignoreId)?.message || null;
 }
 
 function startResize(e, task, eventDiv) {
@@ -384,7 +432,23 @@ function initDayPlanner() {
         if (!SR) recordBtn.disabled = true;
     }
     closeButton.addEventListener('click', closeModal);
+    eventModal.querySelector('.event-cancel')?.addEventListener('click', closeModal);
     window.addEventListener('click', e => { if (e.target === eventModal) closeModal(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && eventModal.classList.contains('active')) closeModal();
+    });
+    eventModal.querySelectorAll('.event-chip[data-minutes]').forEach(chip => {
+        chip.addEventListener('click', () => { setDuration(Number(chip.dataset.minutes)); showConflict(null); });
+    });
+    eventDurationInput.addEventListener('input', () => setDuration(eventDurationInput.value));
+    eventTimeSelect.addEventListener('input', () => showConflict(null));
+    eventModal.querySelector('#event-remove-btn')?.addEventListener('click', () => {
+        if (!editingTaskId) return;
+        if (window.TaskStore?.deleteTasks) window.TaskStore.deleteTasks([editingTaskId]);
+        else window.DataManager?.deleteTask?.(editingTaskId);
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        closeModal();
+    });
 
     timeBlocksContainer.addEventListener('click', e => {
         if (e.target.closest('.event')) return;
@@ -408,7 +472,7 @@ function initDayPlanner() {
             const task = getTaskFromStore(id);
             eventTitleInput.value = task?.name || task?.text || '';
             eventTitleInput.disabled = true;
-            eventDurationInput.value = task?.durationMinutes || task?.duration || getDefaultDurationMinutes();
+            setDuration(task?.durationMinutes || task?.duration || getDefaultDurationMinutes());
         } else {
             eventTitleInput.disabled = false;
             eventTitleInput.value = '';
@@ -418,6 +482,16 @@ function initDayPlanner() {
     eventForm.addEventListener('submit', e => {
         e.preventDefault();
         const time = eventTimeSelect.value;
+        if (!eventTitleInput.value.trim() && !eventTaskSelect.value) {
+            eventTitleInput.focus();
+            eventTitleInput.classList.add('invalid');
+            setTimeout(() => eventTitleInput.classList.remove('invalid'), 1200);
+            return;
+        }
+        if (!/^\d{2}:\d{2}$/.test(time)) {
+            eventTimeSelect.focus();
+            return;
+        }
         const duration = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
         const plannerDateTime = `${localDateString(currentDate)}T${time}`;
         const importance = parseInt(eventImportanceInput.value, 10) || 5;
@@ -428,15 +502,15 @@ function initDayPlanner() {
 
         const startMins = parseTimeToMinutes(time);
         const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
-        const conflict = startMins !== null ? describeConflict(startMins, duration, taskIdToIgnore) : null;
+        const conflict = startMins !== null ? findConflict(startMins, duration, taskIdToIgnore) : null;
         if (conflict) {
-            alert(conflict);
+            showConflict(conflict.message, conflict.free);
             return;
         }
 
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
-            updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline: deadline || plannerDateTime, durationMinutes: duration, duration, importance, urgency, dependency });
+            updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, importance, urgency, dependency });
         } else if (pendingExternalTask) {
             const title = eventTitleInput.value.trim() || pendingExternalTask.text;
             addTaskToStore({
@@ -448,7 +522,7 @@ function initDayPlanner() {
                 urgency: pendingExternalTask.urgency ?? urgency,
                 category: pendingExternalTask.category || 'other',
                 plannerDate: plannerDateTime,
-                deadline: deadline || plannerDateTime,
+                deadline,
                 durationMinutes: duration,
                 duration,
                 dependency,
@@ -457,7 +531,7 @@ function initDayPlanner() {
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
-                updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline: deadline || plannerDateTime, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency });
+                updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency });
             } else {
                 const title = eventTitleInput.value.trim();
                 if (!title) return;
@@ -466,7 +540,7 @@ function initDayPlanner() {
                     text: title,
                     originalTool: 'DayPlanner',
                     plannerDate: plannerDateTime,
-                    deadline: deadline || plannerDateTime,
+                    deadline,
                     durationMinutes: duration,
                     duration,
                     isFixed: true,

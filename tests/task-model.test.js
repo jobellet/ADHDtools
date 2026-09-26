@@ -98,3 +98,12 @@ describe('Task Model', () => {
     assert.strictEqual(task1.hash, task2.hash);
   });
 });
+
+describe('Task Model deadlines', () => {
+  test('an explicit null deadline is not replaced by the planned time', () => {
+    const planned = createTask({ name: 'Lab meeting', plannerDate: '2026-08-24T10:00', deadline: null });
+    assert.strictEqual(planned.deadline, null);
+    const legacy = createTask({ name: 'Old style', plannerDate: '2026-08-24T10:00' });
+    assert.strictEqual(legacy.deadline, '2026-08-24T10:00');
+  });
+});
