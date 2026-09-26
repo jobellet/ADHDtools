@@ -173,10 +173,11 @@ function describeConflict(newStartMinutes, newDurationMinutes, ignoreId) {
         ignore: ignoreId ? [ignoreId] : [],
     });
     if (!clashes.length) return null;
+    const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
     const names = clashes.map(c => `“${c.name}” (${minutesToTime(c.start)}–${minutesToTime(c.end)})`).join(', ');
     const free = scheduler.findNextFreeSlot({ dateStr, fromMinutes: newStartMinutes, durationMinutes: newDurationMinutes, ignore: ignoreId ? [ignoreId] : [] });
-    const hint = Number.isFinite(free) ? ` The next free slot is ${minutesToTime(free)}.` : '';
-    return `This time is already taken by ${names}.${hint}`;
+    const hint = Number.isFinite(free) ? ` ${t('conflict.nextFree', { time: minutesToTime(free) })}` : '';
+    return `${t('conflict.taken', { names })}${hint}`;
 }
 
 function startResize(e, task, eventDiv) {
@@ -567,6 +568,7 @@ function initDayPlanner() {
     window.addEventListener('scheduleNeedsRefresh', rerender);
     window.addEventListener('routinesChanged', rerender);
     window.addEventListener('configUpdated', rerender);
+    window.addEventListener('languageChanged', rerender);
     setInterval(rerender, 60000);
 
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });

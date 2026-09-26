@@ -14,16 +14,18 @@
     const progressCard = document.getElementById('daily-progress');
     if (!captureForm && !progressCard) return;
 
+    const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
+
     // ----- Quick capture -----
 
     function describeParsed(parsed) {
       const parts = [];
-      if (parsed.plannerDate) parts.push(`scheduled ${parsed.plannerDate.replace('T', ' ')}`);
-      else if (parsed.deadline) parts.push(`due ${parsed.deadline.replace('T', ' ')}`);
-      if (parsed.durationMinutes) parts.push(`${parsed.durationMinutes} min`);
-      if (parsed.importance) parts.push(`importance ${parsed.importance}`);
-      if (parsed.isFixed) parts.push('fixed');
-      const how = parsed.source === 'ai' ? 'understood by AI' : 'parsed offline';
+      if (parsed.plannerDate) parts.push(t('capture.scheduled', { date: parsed.plannerDate.replace('T', ' ') }));
+      else if (parsed.deadline) parts.push(t('capture.due', { date: parsed.deadline.replace('T', ' ') }));
+      if (parsed.durationMinutes) parts.push(t('unit.min', { n: parsed.durationMinutes }));
+      if (parsed.importance) parts.push(t('capture.importance', { n: parsed.importance }));
+      if (parsed.isFixed) parts.push(t('capture.fixed'));
+      const how = t(parsed.source === 'ai' ? 'capture.byAI' : 'capture.offline');
       return parts.length ? `${parts.join(' · ')} (${how})` : `(${how})`;
     }
 
@@ -35,10 +37,10 @@
 
     async function captureTask(text) {
       if (!text.trim() || !window.TaskParser || !window.TaskStore) return;
-      showCaptureStatus('Adding…');
+      showCaptureStatus(t('capture.adding'));
       const parsed = await window.TaskParser.parseSmart(text);
       if (!parsed || !parsed.name) {
-        showCaptureStatus('Could not understand that — try "Call mom tomorrow at 5pm".', true);
+        showCaptureStatus(t('capture.notUnderstood'), true);
         return;
       }
       const raw = {
@@ -67,24 +69,25 @@
           if (Number.isFinite(free)) {
             const hhmm = `${String(Math.floor(free / 60)).padStart(2, '0')}:${String(free % 60).padStart(2, '0')}`;
             raw.plannerDate = `${dateStr}T${hhmm}`;
-            moved = ` ${parsed.plannerDate.slice(11, 16)} was taken by “${clashes[0].name}”, so it is at ${hhmm}.`;
+            moved = ` ${t('capture.moved', { time: parsed.plannerDate.slice(11, 16), name: clashes[0].name, newTime: hhmm })}`;
           } else {
             raw.plannerDate = null;
-            moved = ` That day is full, so it waits in your task list.`;
+            moved = ` ${t('capture.dayFull')}`;
           }
         }
       }
 
       const task = window.TaskStore.addTask(raw);
       const shownName = task.name.replace(/\[(FIX|FLEX)\]\s*/gi, '').trim() || task.name;
-      showCaptureStatus(`Added “${shownName}” — ${describeParsed({ ...parsed, plannerDate: raw.plannerDate })}.${moved}`);
+      showCaptureStatus(`${t('capture.added', { name: shownName, details: describeParsed({ ...parsed, plannerDate: raw.plannerDate }) })}${moved}`);
 
       if (parsed.needsBreakdown) {
         const breakBtn = document.createElement('button');
         breakBtn.className = 'btn btn-outline btn-compact';
         breakBtn.style.marginLeft = '10px';
-        breakBtn.innerHTML = '<i class="fas fa-project-diagram"></i> Break it down';
-        breakBtn.title = 'This task seems complex. Click here to break it down.';
+        breakBtn.innerHTML = '<i class="fas fa-project-diagram"></i> <span></span>';
+        breakBtn.querySelector('span').textContent = t('capture.breakdown');
+        breakBtn.title = t('plan.splitTitle');
         breakBtn.addEventListener('click', () => {
           if (window.EventBus) {
             window.EventBus.dispatchEvent(new CustomEvent('ef-receiveTaskFor-TaskBreakdown', {
@@ -124,7 +127,7 @@
           recognition.interimResults = false;
           recognition.maxAlternatives = 1;
           captureVoiceBtn.classList.add('listening');
-          showCaptureStatus('Listening…');
+          showCaptureStatus(t('capture.listening'));
           recognition.onresult = async (event) => {
             const transcript = event.results[0][0].transcript;
             if (captureInput) captureInput.value = transcript;
@@ -157,15 +160,16 @@
 
       progressCard.innerHTML = '';
       const heading = document.createElement('h3');
-      heading.innerHTML = '<i class="fas fa-chart-line"></i> Today’s progress';
+      heading.innerHTML = '<i class="fas fa-chart-line"></i> <span></span>';
+      heading.querySelector('span').textContent = t('progress.heading');
       progressCard.appendChild(heading);
 
       const stats = document.createElement('div');
       stats.className = 'daily-progress-stats';
       [
-        { value: done.length, label: done.length === 1 ? 'task done' : 'tasks done' },
-        { value: points.toFixed(1), label: 'points earned' },
-        { value: Math.round(minutes), label: 'focused minutes' },
+        { value: done.length, label: t('progress.tasksDone') },
+        { value: points.toFixed(1), label: t('progress.points') },
+        { value: Math.round(minutes), label: t('progress.minutes') },
       ].forEach(({ value, label }) => {
         const stat = document.createElement('div');
         stat.className = 'daily-progress-stat';
@@ -177,12 +181,13 @@
       if (window.AIAssistant?.isEnabled?.() && done.length) {
         const coachBtn = document.createElement('button');
         coachBtn.className = 'btn btn-outline btn-sm';
-        coachBtn.innerHTML = '<i class="fas fa-comment-dots"></i> AI encouragement';
+        coachBtn.innerHTML = '<i class="fas fa-comment-dots"></i> <span></span>';
+        coachBtn.querySelector('span').textContent = t('progress.coach');
         const coachOut = document.createElement('p');
         coachOut.className = 'daily-progress-coach';
         coachBtn.addEventListener('click', async () => {
           coachBtn.disabled = true;
-          coachOut.textContent = 'Thinking…';
+          coachOut.textContent = t('progress.thinking');
           try {
             const names = done.slice(0, 10).map(t => t.name).join('; ');
             coachOut.textContent = await window.AIAssistant.complete(
@@ -204,6 +209,7 @@
     window.EventBus?.addEventListener('dataChanged', renderProgress);
     window.addEventListener('activeUserChanged', renderProgress);
     window.addEventListener('aiSettingsChanged', renderProgress);
+    window.addEventListener('languageChanged', renderProgress);
 
     renderProgress();
   });

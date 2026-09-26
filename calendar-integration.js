@@ -251,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Add export buttons to day planner events
     function addExportButtonsToDayPlanner() {
+        // Only useful once Google Calendar is connected.
+        if (localStorage.getItem(CONNECTED_FLAG_KEY) !== 'true') return;
         const timeBlocks = document.querySelectorAll('.time-block');
         timeBlocks.forEach(block => {
             if (block.querySelector('.export-to-calendar-btn')) return;
@@ -259,6 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const timeLabel = timeLabelEl.textContent;
             const exportBtn = document.createElement('button');
             exportBtn.className = 'export-to-calendar-btn';
+            exportBtn.type = 'button';
             exportBtn.innerHTML = '<i class="fas fa-calendar-plus"></i>';
             exportBtn.title = 'Export to Google Calendar';
 
@@ -296,6 +299,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (taskActions) {
                     const exportBtn = document.createElement('button');
                     exportBtn.className = 'export-to-calendar-btn';
+            exportBtn.type = 'button';
                     exportBtn.innerHTML = '<i class="fas fa-calendar-plus"></i>';
                     exportBtn.title = 'Export to Google Calendar';
 
@@ -318,13 +322,11 @@ document.addEventListener('DOMContentLoaded', function () {
     function initObservers() {
         const timeBlocksContainer = document.getElementById('time-blocks');
         if (timeBlocksContainer) {
+            // The planner re-renders its hours often: add the buttons after each render.
             const dayPlannerObserver = new MutationObserver(() => {
-                if (document.querySelector('.time-block')) {
-                    addExportButtonsToDayPlanner();
-                    dayPlannerObserver.disconnect();
-                }
+                if (document.querySelector('.time-block')) addExportButtonsToDayPlanner();
             });
-            dayPlannerObserver.observe(timeBlocksContainer, { childList: true, subtree: true });
+            dayPlannerObserver.observe(timeBlocksContainer, { childList: true });
         }
 
         const taskList = document.getElementById('task-list');

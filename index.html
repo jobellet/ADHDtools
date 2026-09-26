@@ -110,13 +110,13 @@
         <div class="quick-capture">
             <form id="quick-capture-form" class="quick-capture-form">
                 <input type="text" id="quick-capture-input"
-                    placeholder="e.g. “Call mom tomorrow at 5pm for 20 min !7”"
+                    placeholder="e.g. “Call mom tomorrow at 5pm for 20 min !7”" data-i18n-placeholder="capture.placeholder"
                     aria-label="Add a task in natural language" autocomplete="off" enterkeyhint="done">
                 <button type="button" id="quick-capture-voice" class="btn btn-secondary" title="Speak a task"
                     aria-label="Speak a task"><i class="fas fa-microphone"></i></button>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> <span data-i18n="add-btn-label">Add</span></button>
             </form>
-            <p class="quick-capture-hint">Say when (“at 5pm”, “tomorrow”), how long (“for 20 min”) and how important (“!7”). No time = the app fits it into a free slot.</p>
+            <p class="quick-capture-hint" data-i18n="capture.hint">Say when (“at 5pm”, “tomorrow”), how long (“for 20 min”) and how important (“!7”). No time = the app fits it into a free slot.</p>
             <p id="quick-capture-status" class="quick-capture-status" aria-live="polite"></p>
         </div>
     </div>
@@ -215,7 +215,7 @@
                                 <i class="fas fa-eraser"></i> <span class="btn-text" data-i18n="clear-all-btn">Clear day</span>
                             </button>
                         </div>
-                        <p class="planner-legend"><span class="legend routine">Routine (booked + buffer)</span><span class="legend fixed">Fixed</span><span class="legend flexible">Auto-placed</span><span class="legend calendar">Calendar</span></p>
+                        <p class="planner-legend"><span class="legend routine" data-i18n="legend.routine">Routine (booked + buffer)</span><span class="legend fixed" data-i18n="legend.fixed">Fixed</span><span class="legend flexible" data-i18n="legend.flexible">Auto-placed</span><span class="legend calendar" data-i18n="legend.calendar">Calendar</span></p>
                     </div>
 
                     <div class="time-blocks-container" id="time-blocks">
@@ -538,24 +538,24 @@
                                         <input type="time" id="setting-day-end" name="dayEnd" value="22:00">
                                     </div>
                                     <div class="setting-group">
-                                        <label for="setting-routine-buffer">Routine buffer (% added to booked time)</label>
+                                        <label for="setting-routine-buffer" data-i18n="settings.routineBuffer">Routine buffer (% added to booked time)</label>
                                         <input type="number" id="setting-routine-buffer" name="routineBufferPercent" min="0" max="100" step="5" value="10">
                                     </div>
                                     <div class="setting-group">
-                                        <label for="setting-task-buffer">Pause between tasks (minutes)</label>
+                                        <label for="setting-task-buffer" data-i18n="settings.taskBuffer">Pause between tasks (minutes)</label>
                                         <input type="number" id="setting-task-buffer" name="bufferDurationMinutes" min="0" max="60" step="1" value="5">
                                     </div>
                                     <div class="setting-group">
-                                        <label for="setting-break-window">Show the “next task” countdown when it starts within (minutes)</label>
+                                        <label for="setting-break-window" data-i18n="settings.breakWindow">Show the “next task” countdown when it starts within (minutes)</label>
                                         <input type="number" id="setting-break-window" name="breakWindowMinutes" min="0" max="120" step="5" value="15">
                                     </div>
                                     <div class="setting-group checkbox-group">
                                         <input type="checkbox" id="setting-context-autoswitch" name="contextAutoSwitch">
-                                        <label for="setting-context-autoswitch">Start the routine player by itself when a routine’s time begins</label>
+                                        <label for="setting-context-autoswitch" data-i18n="settings.autoStart">Start the routine player by itself when a routine’s time begins</label>
                                     </div>
                                     <div class="setting-group checkbox-group">
                                         <input type="checkbox" id="setting-show-all-options" name="showAllOptions">
-                                        <label for="setting-show-all-options">Show all options (also the ones your setup does not need)</label>
+                                        <label for="setting-show-all-options" data-i18n="settings.showAll">Show all options (also the ones your setup does not need)</label>
                                     </div>
                                 </div>
                             </details>
@@ -567,7 +567,7 @@
                                 <div class="settings-content">
                                     <div class="setting-group checkbox-group">
                                         <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
-                                        <label for="setting-include-calendar">Calendar events block time in the plan</label>
+                                        <label for="setting-include-calendar" data-i18n="settings.calBlock">Calendar events block time in the plan</label>
                                     </div>
                                     <div class="setting-group" data-cap-hide="gcal">
                                         <label for="setting-ics-refresh">ICS refresh interval (seconds)</label>
@@ -729,7 +729,7 @@
                         <!-- Calendar Imports Panel (offline / ICS users; tucked away once Google Calendar is connected) -->
                         <div class="settings-panel" data-cap-hide="gcal">
                             <details class="settings-toggle">
-                                <summary>Calendar file / link import (.ics)</summary>
+                                <summary data-i18n="settings.icsImport">Calendar file / link import (.ics)</summary>
                                 <div class="settings-content">
                                     <div class="setting-group">
                                         <button id="import-ics-btn" class="btn btn-secondary" type="button">
@@ -932,7 +932,7 @@
                     </button>
                 </div>
                 <div class="routine-sheet-body">
-                    <p class="routine-booking-note">A routine books its time in your day plan (steps + buffer from Settings). Nothing else can be scheduled on top of it.</p>
+                    <p class="routine-booking-note" data-i18n="routine.bookingNote">A routine books its time in your day plan (steps + buffer from Settings). Nothing else can be scheduled on top of it.</p>
                     <div class="setting-group">
                         <label for="routine-edit-modal-name" data-i18n="routine-name-label-2">Routine Name</label>
                         <input type="text" id="routine-edit-modal-name">
@@ -988,7 +988,7 @@
 
             <!-- Fullscreen Routine Focus Mode -->
             <div id="routine-focus-mode" class="routine-focus-mode hidden">
-                <button id="exit-routine-focus" class="exit-focus-btn" title="Exit Focus Mode" aria-label="Exit Focus Mode">
+                <button id="exit-routine-focus" class="exit-focus-btn" title="Exit" aria-label="Exit" data-i18n-title="player.exit">
                     <i class="fas fa-times"></i>
                 </button>
 
@@ -1018,7 +1018,7 @@
                             </svg>
                             <div class="timer-text">
                                 <span id="focus-time-remaining" class="time-large">--:--</span>
-                                <span class="time-label">remaining</span>
+                                <span class="time-label" data-i18n="player.remaining">remaining</span>
                             </div>
                         </div>
                     </div>
@@ -1026,22 +1026,21 @@
                     <div class="routine-focus-actions">
                         <button id="focus-complete-task-btn" class="focus-action-btn primary">
                             <i class="fas fa-check"></i>
-                            <span>Complete Task</span>
+                            <span data-i18n="player.complete">Step done</span>
                         </button>
                         <button id="focus-skip-task-btn" class="focus-action-btn secondary">
                             <i class="fas fa-forward"></i>
-                            <span>Skip</span>
+                            <span data-i18n="player.skip">Skip</span>
                         </button>
                         <label class="toggle-switch" style="flex-direction: column; gap: 0.2rem; margin-left: 1rem;">
                             <input type="checkbox" id="focus-auto-run">
                             <span class="slider round"></span>
-                            <span class="label-text" style="font-size: 0.8rem; color: var(--text-color);">Auto
-                                Run</span>
+                            <span class="label-text" style="font-size: 0.8rem; color: var(--text-color);" data-i18n="player.autoRun">Auto run</span>
                         </label>
                     </div>
 
                     <div class="routine-focus-task-list">
-                        <h3>Upcoming Tasks</h3>
+                        <h3 data-i18n="player.upcoming">Coming next</h3>
                         <ul id="focus-upcoming-tasks">
                             <!-- Will be populated by JavaScript -->
                         </ul>

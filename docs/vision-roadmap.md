@@ -76,7 +76,9 @@ The end goal is for the user not to have to search for the right tool to use at 
 
 ✅ Stale tools and code removed (Eisenhower Matrix, Task Manager, old Today view and context banner, unused Family view).
 
-🛠️ In progress: notifications for upcoming tasks, translating the Now view buttons and the offline parser (today English only).
+✅ The Now view, planner, Add sheet and routine player are translated (English, Deutsch, Français, Español); overdue tasks can be deleted one by one or all at once, and deletions sync across devices.
+
+🛠️ In progress: notifications for upcoming tasks, translating the older tools and the offline parser (today English only).
 
 🔜 Planned: smarter dependency handling, family profiles, and turning Task Breakdown steps into schedulable tasks automatically.
 

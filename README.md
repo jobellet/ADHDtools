@@ -39,7 +39,7 @@ If 17:00 is already taken (for example by your evening routine), the task moves 
 **Core**
 
 *   **Now view (default):** the current task, routine step or event with a countdown, and what comes next.
-*   **Day Planner:** the whole day on a timeline: routines, fixed tasks, tasks placed by the app, calendar events. A *Plan ahead* panel lists deadlines and big tasks to split.
+*   **Day Planner:** the whole day on a timeline: routines, fixed tasks, tasks placed by the app, calendar events. A *Plan ahead* panel lists deadlines and big tasks to split, and deletes overdue tasks one by one or all at once (with Undo).
 *   **Routines:** timed steps played one at a time. Each routine books its time (steps + buffer); overlapping routines can't be saved.
 *   **Quick capture (Add):** type or speak a task in plain words. Works offline; better with [AI](docs/ai-providers.md) if you set it up.
 *   **Unified scheduler:** one plan across tasks, routines and calendar events, ordered by importance × urgency, with no double booking.

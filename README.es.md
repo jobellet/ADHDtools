@@ -15,7 +15,7 @@ Un planificador del día para personas con TDAH que muestra **una sola cosa a la
 
 En cada momento solo haces una de estas tres cosas:
 
-1. **Hacer** la tarea de la pantalla. La aplicación se abre en la vista **Ahora**: la tarea, el paso de rutina o el evento actual, con una gran cuenta atrás y 2 o 3 botones (*Done*, *Focus*, *Not now*).
+1. **Hacer** la tarea de la pantalla. La aplicación se abre en la vista **Ahora**: la tarea, el paso de rutina o el evento actual, con una gran cuenta atrás y 2 o 3 botones (*Hecho*, *Enfoque*, *Ahora no*).
 2. **Descansar** y ver lo que viene. En un hueco corto, la vista *Ahora* muestra una cuenta atrás hasta lo siguiente.
 3. **Planificar** con antelación. Cuando no hay nada previsto, la aplicación abre el **planificador del día**. Ahí colocas tareas y divides las tareas grandes con fecha límite en pasos pequeños.
 
@@ -39,7 +39,7 @@ Si las 17:00 ya están ocupadas (por ejemplo, por tu rutina de la noche), la tar
 **Lo principal**
 
 *   **Vista «Ahora» (por defecto):** la tarea, el paso de rutina o el evento actual con cuenta atrás, y lo que viene después.
-*   **Planificador del día:** todo el día en una línea de tiempo: rutinas, tareas con hora fija, tareas colocadas por la aplicación, eventos del calendario. El panel *Plan ahead* muestra fechas límite y tareas grandes para dividir.
+*   **Planificador del día:** todo el día en una línea de tiempo: rutinas, tareas con hora fija, tareas colocadas por la aplicación, eventos del calendario. El panel *Planificar* muestra fechas límite y tareas grandes para dividir, y borra las tareas atrasadas una a una o todas a la vez (con Deshacer).
 *   **Rutinas:** pasos con tiempo, uno a uno. Cada rutina reserva su tiempo (pasos + margen); no se pueden guardar rutinas que se solapan.
 *   **Captura rápida (Añadir):** escribe o dicta una tarea con tus palabras. Funciona sin conexión; mejor con [IA](docs/ai-providers.md) si la configuras.
 *   **Planificador único:** un solo plan para tareas, rutinas y eventos, ordenado por importancia × urgencia, sin reservas dobles.
@@ -54,7 +54,7 @@ Si las 17:00 ya están ocupadas (por ejemplo, por tu rutina de la noche), la tar
 
 **Se adapta a tu configuración**
 
-La aplicación solo muestra las opciones que usas. Por ejemplo, la importación `.ics` se oculta en cuanto Google Calendar está conectado, y los botones de IA se ocultan sin proveedor de IA. *Ajustes → General → Show all options* vuelve a mostrarlo todo.
+La aplicación solo muestra las opciones que usas. Por ejemplo, la importación `.ics` se oculta en cuanto Google Calendar está conectado, y los botones de IA se ocultan sin proveedor de IA. *Ajustes → General → Mostrar todas las opciones* vuelve a mostrarlo todo.
 
 ## 📚 Guías
 

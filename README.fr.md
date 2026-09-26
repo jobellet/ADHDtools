@@ -15,7 +15,7 @@ Un planning de journée pour les personnes avec un TDAH, qui montre **une seule 
 
 À chaque instant, vous faites une seule de ces trois choses :
 
-1. **Faire** la tâche affichée. L’application s’ouvre sur la vue **Maintenant** : la tâche, l’étape de routine ou l’événement en cours, avec un grand compte à rebours et 2 ou 3 boutons (*Done*, *Focus*, *Not now*).
+1. **Faire** la tâche affichée. L’application s’ouvre sur la vue **Maintenant** : la tâche, l’étape de routine ou l’événement en cours, avec un grand compte à rebours et 2 ou 3 boutons (*Fait*, *Focus*, *Pas maintenant*).
 2. **Faire une pause** et voir ce qui arrive ensuite. Pendant un court creux, la vue *Maintenant* affiche un compte à rebours jusqu’au prochain élément.
 3. **Planifier à l’avance.** Quand rien n’est prévu, l’application ouvre le **planning de la journée**. Vous y placez les tâches et découpez les grosses tâches avec échéance en petites étapes.
 
@@ -39,7 +39,7 @@ Si 17:00 est déjà pris (par exemple par votre routine du soir), la tâche pass
 **L’essentiel**
 
 *   **Vue « Maintenant » (par défaut) :** la tâche, l’étape de routine ou l’événement en cours avec un compte à rebours, et la suite.
-*   **Planning de la journée :** toute la journée sur une ligne de temps : routines, tâches à heure fixe, tâches placées par l’application, événements du calendrier. Le panneau *Plan ahead* liste les échéances et les grosses tâches à découper.
+*   **Planning de la journée :** toute la journée sur une ligne de temps : routines, tâches à heure fixe, tâches placées par l’application, événements du calendrier. Le panneau *À planifier* liste les échéances et les grosses tâches à découper, et supprime les tâches en retard une par une ou toutes d’un coup (avec Annuler).
 *   **Routines :** des étapes minutées, une à la fois. Chaque routine réserve son temps (étapes + marge) ; deux routines qui se chevauchent ne peuvent pas être enregistrées.
 *   **Ajout rapide (Ajouter) :** écrivez ou dictez une tâche avec vos mots. Marche hors ligne ; mieux avec l’[IA](docs/ai-providers.md) si elle est configurée.
 *   **Planificateur unique :** un seul plan pour les tâches, routines et événements, trié par importance × urgence, sans double réservation.
@@ -54,7 +54,7 @@ Si 17:00 est déjà pris (par exemple par votre routine du soir), la tâche pass
 
 **S’adapte à votre configuration**
 
-L’application ne montre que les options que vous utilisez. Par exemple, l’import `.ics` est masqué dès que Google Agenda est connecté, et les boutons IA sont masqués sans fournisseur d’IA. *Paramètres → General → Show all options* réaffiche tout.
+L’application ne montre que les options que vous utilisez. Par exemple, l’import `.ics` est masqué dès que Google Agenda est connecté, et les boutons IA sont masqués sans fournisseur d’IA. *Paramètres → General → Afficher toutes les options* réaffiche tout.
 
 ## 📚 Guides
 

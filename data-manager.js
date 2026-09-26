@@ -167,12 +167,11 @@
 
     deleteTask: (id) => {
       const store = UnifiedTaskStore();
-      if (store?.getAllTasks) {
-        const before = store.getAllTasks().length;
-        store.saveTasks(store.getAllTasks().filter(t => t.hash !== id && t.id !== id));
+      if (store?.deleteTasks) {
+        const removed = store.deleteTasks([id]);
         dataStore.tasks = store.getAllTasks();
         saveData();
-        return dataStore.tasks.length < before;
+        return removed.length > 0;
       }
       const initialLength = dataStore.tasks.length;
       dataStore.tasks = dataStore.tasks.filter(t => t.id !== id);
@@ -330,10 +329,26 @@
     const collisions = [];
     const updates = {}; // Key -> New Value (for non-collisions)
 
+    // Tasks deleted on either side stay deleted (see TaskStore.deleteTasks).
+    const readList = (v) => {
+      try {
+        const list = typeof v === 'string' ? JSON.parse(v) : v;
+        return Array.isArray(list) ? list : [];
+      } catch {
+        return [];
+      }
+    };
+    const deletedIds = new Set([
+      ...readList(localStorage.getItem('adhd-deleted-tasks')),
+      ...readList(importedData['adhd-deleted-tasks']),
+    ].map(x => x?.id).filter(Boolean));
+    const notDeleted = item => !(item && typeof item === 'object' && (deletedIds.has(item.id) || deletedIds.has(item.hash)));
+
     Object.keys(importedData).forEach(key => {
       if (key === 'metadata' || isSensitiveKey(key)) return;
 
-      const importedVal = importedData[key];
+      let importedVal = importedData[key];
+      if (key === 'adhd-unified-tasks' && Array.isArray(importedVal)) importedVal = importedVal.filter(notDeleted);
       const existingValStr = localStorage.getItem(key);
 
       if (!existingValStr) {

@@ -15,7 +15,7 @@ Ein Tagesplaner für Menschen mit ADHS, der **immer nur eine Sache** zeigt. Er l
 
 Zu jedem Zeitpunkt machst du nur eines von drei Dingen:
 
-1. **Tun**, was auf dem Bildschirm steht. Die App öffnet sich in der Ansicht **Jetzt**: die aktuelle Aufgabe, der aktuelle Routine-Schritt oder Termin, mit einem großen Countdown und 2–3 Knöpfen (*Done*, *Focus*, *Not now*).
+1. **Tun**, was auf dem Bildschirm steht. Die App öffnet sich in der Ansicht **Jetzt**: die aktuelle Aufgabe, der aktuelle Routine-Schritt oder Termin, mit einem großen Countdown und 2–3 Knöpfen (*Erledigt*, *Fokus*, *Nicht jetzt*).
 2. **Pause machen** und sehen, was als Nächstes kommt. In einer kurzen Lücke zeigt die Ansicht *Jetzt* einen Countdown bis zum nächsten Punkt.
 3. **Vorausplanen.** Wenn gerade nichts geplant ist, öffnet die App den **Tagesplaner**. Dort verteilst du Aufgaben und teilst große Aufgaben mit Frist in kleine Schritte.
 
@@ -39,7 +39,7 @@ Ist 17:00 schon belegt (zum Beispiel durch deine Abendroutine), rutscht die Aufg
 **Kern**
 
 *   **Ansicht „Jetzt“ (Standard):** die aktuelle Aufgabe, der Routine-Schritt oder Termin mit Countdown, und was danach kommt.
-*   **Tagesplaner:** der ganze Tag auf einer Zeitleiste: Routinen, feste Aufgaben, von der App platzierte Aufgaben, Kalendertermine. Der Bereich *Plan ahead* listet Fristen und große Aufgaben zum Aufteilen.
+*   **Tagesplaner:** der ganze Tag auf einer Zeitleiste: Routinen, feste Aufgaben, von der App platzierte Aufgaben, Kalendertermine. Der Bereich *Vorausplanen* listet Fristen und große Aufgaben zum Aufteilen und löscht überfällige Aufgaben einzeln oder alle auf einmal (mit Rückgängig).
 *   **Routinen:** Schritte mit Zeit, einer nach dem anderen. Jede Routine reserviert ihre Zeit (Schritte + Puffer); überlappende Routinen lassen sich nicht speichern.
 *   **Schnell erfassen (Neu):** eine Aufgabe in normalen Worten tippen oder sprechen. Funktioniert offline; besser mit [KI](docs/ai-providers.md), wenn eingerichtet.
 *   **Gemeinsamer Planer:** ein Plan für Aufgaben, Routinen und Kalendertermine, sortiert nach Wichtigkeit × Dringlichkeit, ohne Doppelbuchung.
@@ -54,7 +54,7 @@ Ist 17:00 schon belegt (zum Beispiel durch deine Abendroutine), rutscht die Aufg
 
 **Passt sich deiner Einrichtung an**
 
-Die App zeigt nur die Optionen, die du nutzt. Zum Beispiel wird der `.ics`-Import ausgeblendet, sobald Google Kalender verbunden ist, und KI-Knöpfe sind ohne KI-Anbieter ausgeblendet. *Einstellungen → General → Show all options* zeigt wieder alles.
+Die App zeigt nur die Optionen, die du nutzt. Zum Beispiel wird der `.ics`-Import ausgeblendet, sobald Google Kalender verbunden ist, und KI-Knöpfe sind ohne KI-Anbieter ausgeblendet. *Einstellungen → General → Alle Optionen zeigen* zeigt wieder alles.
 
 ## 📚 Anleitungen
 

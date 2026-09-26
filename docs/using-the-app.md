@@ -45,7 +45,7 @@ Each time you push a task back, its urgency goes up a little, so it does not get
 
 **For a routine**
 
-- **Start routine** opens the full-screen routine player: one step at a time, with a timer. Tap **Complete Task** (or press the space bar) when a step is done.
+- **Start routine** opens the full-screen routine player: one step at a time, with a timer. Tap **Step done** (or press the space bar) when a step is done.
 - If you close the player, the Now view shows the current step and its own timer. **Step done** moves to the next step.
 - **Skip today** frees the routine's time for today.
 - When a routine is finished early, the rest of its booked time becomes free for the next task.
@@ -89,6 +89,11 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
 - Tap an empty spot to add an event at that time. The app refuses times that are already taken and suggests the next free slot.
 - **Lock plan** pins today's automatic plan, so times stop moving.
 - **Plan ahead** lists tasks with deadlines and big tasks (over 30–45 minutes). **Split** sends a task to Task Breakdown so you can cut it into 15–30 minute steps that fit into your day.
+- **Delete tasks you no longer need:** the 🗑 button deletes one task; **Delete all overdue (N)** deletes every task whose deadline has passed, in one click. An **Undo** bar stays for 15 seconds. Deleted tasks stay deleted on your other devices too (Google Drive sync).
+
+## Language
+
+Pick English, Deutsch, Français or Español in **More** (flags at the bottom). The Now view, the planner, Add and the routine player follow the language. Some older tools (Pomodoro, Habits, Rewards…) are still partly in English. Without an AI provider, write new tasks in English (the offline parser only understands English); with AI you can write in your language.
 
 ## The app adapts to your setup
 

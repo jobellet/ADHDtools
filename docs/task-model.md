@@ -40,6 +40,8 @@ All tasks are persisted in the browser under the `adhd-unified-tasks` key (via `
 * `getAllTasks()`, `getPendingTasks()`, `getTasksByUser(user)`
 * `addTask(task)`, `updateTaskByHash(hash, updates)`, `getTaskByHash(hash)`
 * `markComplete(hash)`
+* `getOverdueTasks(now, user)` – pending tasks whose deadline has passed.
+* `deleteTasks(hashes)` / `undeleteTasks(removed)` – delete for good (used by the *Plan ahead* panel) and undo. Deleted ids are kept in `adhd-deleted-tasks`, so a Google Drive merge or a file import does not bring deleted tasks back.
 
 Urgency scores are recalculated once per day from task deadlines, and the duration-learning module updates `durationMinutes` with a rolling average every time a task is marked complete.
 

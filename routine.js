@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatClockTime(dateObj) {
-        return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return dateObj.toLocaleTimeString(document.documentElement.lang || undefined, { hour: '2-digit', minute: '2-digit' });
     }
 
     function updateExpectedFinishTime() {
@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
             meta.push(formatDays(routine.weekDays));
             if (taskCount > 0) {
                 const booked = window.UnifiedScheduler?.routineBookedMinutes?.(routine, getBufferPercent()) || totalMin;
-                meta.push(`${taskCount} ${taskCount === 1 ? 'step' : 'steps'} \u00b7 ${totalMin} min (books ${booked})`);
+                meta.push(tr('routine.meta', { n: taskCount, min: totalMin, booked }));
             }
 
             const nameSpan = document.createElement('span');
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const empty = document.createElement('div');
             empty.className = 'routine-cards-empty';
             const text = document.createElement('p');
-            text.textContent = 'No routines yet. Tap "New", or start from an example:';
+            text.textContent = tr('routine.empty');
             empty.appendChild(text);
             Object.entries(routineTemplates).forEach(([id, template]) => {
                 const btn = document.createElement('button');
@@ -460,6 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             routineListCards.appendChild(empty);
         }
+    }
+
+    function tr(key, vars) {
+        return window.I18n ? window.I18n.t(key, vars) : key;
     }
 
     function getBufferPercent() {
@@ -526,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const conflicts = window.UnifiedScheduler?.findRoutineConflicts?.(draft, routines, getBufferPercent()) || [];
         if (conflicts.length) {
             const booked = window.UnifiedScheduler.routineBookedMinutes(draft, getBufferPercent());
-            notify(`“${name}” (${draft.startTime}, ${booked} min with buffer) overlaps “${conflicts[0].name}” at ${conflicts[0].startTime}. Pick another time or other days.`, 'error');
+            notify(tr('routine.overlap', { name, start: draft.startTime, min: booked, other: conflicts[0].name, otherStart: conflicts[0].startTime }), 'error');
             routineEditModalStartTime.focus();
             return;
         }
@@ -1282,11 +1286,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (focusTaskNumber) {
             const totalTasks = activeRoutine.tasks.length;
             const currentNumber = Math.min(currentTaskIndex + 1, totalTasks);
-            focusTaskNumber.textContent = `Task ${currentNumber} of ${totalTasks}`;
+            focusTaskNumber.textContent = tr('player.stepOf', { n: currentNumber, total: totalTasks });
         }
         if (focusFinishTime) {
             const finishTime = activeRoutineEndTime ? formatClockTime(activeRoutineEndTime) : '-';
-            focusFinishTime.textContent = `Finish by ${finishTime}`;
+            focusFinishTime.textContent = tr('player.finishBy', { time: finishTime });
         }
 
         // Progress bar
@@ -1351,6 +1355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Keep in sync when another tab or a sync pulls new routines.
+    window.addEventListener('languageChanged', () => updateSettingsRoutineSelect());
     window.addEventListener('storage', (e) => {
         if (e.key === ROUTINE_STORAGE_KEY && !activeRoutine) {
             loadRoutines();
