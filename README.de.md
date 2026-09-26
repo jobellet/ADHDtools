@@ -63,12 +63,14 @@ Bitte deinen KI-Assistenten (Mistral, Claude oder jede App mit MCP): *„Teile m
 **Einrichtung (etwa 10 Minuten):**
 
 1. Verbinde in der App Google und tippe **Mehr → Über → Sync Across Devices → Back up now**. Lass die automatische Synchronisierung an.
-2. In der [Google Cloud Console](https://console.cloud.google.com/apis/credentials), im **selben Projekt** wie die Client ID der App: **Create credentials → OAuth client ID → Desktop app**. Auf dem Zustimmungsbildschirm **Publish app** klicken.
+2. In [Google Auth Platform → Clients](https://console.cloud.google.com/auth/clients), im **selben Projekt** wie die Client ID der App: **+ Create client → Desktop app**. ID und Secret kopieren. Unter **Audience → Test users** prüfen, dass deine E-Mail dort steht. (Die App zu veröffentlichen ist freiwillig: siehe Anleitung.)
 3. Auf deinem Computer (Node 18+): `git clone https://github.com/jobellet/ADHDtools.git`, dann in diesem Ordner:
    `npm run mcp:auth -- --client-id "DESKTOP_CLIENT_ID" --client-secret "CLIENT_SECRET"`
 4. Trage den Server in den MCP-Einstellungen deiner KI-App ein: Befehl `node`, Argument `/voller/pfad/zu/ADHDtools/mcp/server.js`.
    Für Le Chat im Web starte `node mcp/server.js http` bei einem kleinen Hoster (siehe Anleitung).
 5. Frag: *„Gib mir einen Überblick über meinen Tag.“* Lass die App offen: Sie übernimmt die Änderungen in etwa 2 Minuten.
+
+**Bei einem Schritt hängen geblieben?** Jeder Schritt der Anleitung verlinkt die Lösung für die angezeigte Meldung: [**Fixing problems**](docs/mcp-troubleshooting.md) (zum Beispiel [„Publish app“ ist ausgegraut](docs/mcp-troubleshooting.md#publish-greyed-out)).
 
 Vollständige Anleitung (Englisch), Einrichtung von Mistral Vibe und Le Chat, Fehlerhilfe: [**docs/mcp.md**](docs/mcp.md).
 

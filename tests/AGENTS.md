@@ -15,7 +15,7 @@ CI runs both on every PR. Both must pass after merging the latest `main`.
 | `i18n.test.js` | Every `features/*/strings.js` key exists in en/fr/de/es with the same placeholders; every `data-i18n*` key in `index.html` exists in all four |
 | `application-shell.test.js` | `index.html` references existing scripts; key ids exist |
 | `assistant-ops.test.js` | AI assistant ops: schemas, refuse vs move on a busy time, breakdown, tombstones |
-| `mcp.test.js` | MCP server over stdio and HTTP: protocol, reads backup, writes inbox only, secrets hidden, token needed |
+| `mcp.test.js` | MCP server over stdio and HTTP: protocol, reads backup, writes inbox only, secrets hidden, token needed; setup docs: every `#link` and every `help('…')` points to a real section |
 | `mcp-coverage.test.js` | Every TaskStore method, scheduler function, task field, storage key, global and tool is covered by `mcp/coverage.js`, documented and tested |
 | `architecture.test.js` | Every JS/CSS file is loaded or imported; every file is listed in an `AGENTS.md`; paths in `AGENTS.md` exist; globals table matches the code |
 

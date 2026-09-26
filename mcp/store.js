@@ -15,6 +15,26 @@ const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
+// Every error the user can see links to its fix (tests check each anchor exists).
+export const HELP_URL = 'https://github.com/jobellet/ADHDtools/blob/main/docs/mcp-troubleshooting.md';
+export const help = anchor => `Fix: ${HELP_URL}#${anchor}`;
+
+// Explain a Drive API error in plain words, with the link to its fix.
+export function driveError(status, text) {
+  if (status === 403 && /accessNotConfigured|has not been used|is disabled|SERVICE_DISABLED/i.test(text)) {
+    return `The Google Drive API is off in your Google Cloud project. ${help('drive-api-disabled')}`;
+  }
+  if (status === 401) return `Google sign-in expired. ${help('invalid-grant')}`;
+  return `Google Drive ${status}: ${text.slice(0, 200)} ${help('drive-error')}`;
+}
+
+// Explain a failed sign-in (token endpoint) error.
+export function signInError(code) {
+  if (code === 'invalid_grant') return `Google sign-in failed (invalid_grant): it expired or was removed. Run "npm run mcp:auth". ${help('invalid-grant')}`;
+  if (code === 'invalid_client' || code === 'unauthorized_client') return `Google sign-in failed (${code}): the Client ID or secret is wrong. ${help('invalid-client')}`;
+  return `Google sign-in failed (${code}). Run "npm run mcp:auth". ${help('invalid-grant')}`;
+}
+
 export function credentialsPath(env = process.env) {
   return env.ADHD_MCP_CREDENTIALS || join(env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'adhd-tools-mcp', 'credentials.json');
 }
@@ -74,7 +94,7 @@ export function createDriveStore(creds, { fetchImpl = fetch } = {}) {
     });
     const body = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      throw new Error(`Google sign-in failed (${body.error || resp.status}). Run "npm run mcp:auth" again.`);
+      throw new Error(signInError(body.error || resp.status));
     }
     token = body.access_token;
     tokenExpiresAt = Date.now() + (body.expires_in || 3600) * 1000;
@@ -85,7 +105,7 @@ export function createDriveStore(creds, { fetchImpl = fetch } = {}) {
     const resp = await fetchImpl(url, { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${await accessToken()}` } });
     if (!resp.ok) {
       const text = await resp.text().catch(() => '');
-      throw new Error(`Google Drive ${resp.status}: ${text.slice(0, 200)}`);
+      throw new Error(driveError(resp.status, text));
     }
     return resp;
   }
@@ -136,7 +156,7 @@ export async function createStore(env = process.env) {
   if (env.ADHD_MCP_DATA_DIR) return createFileStore(env.ADHD_MCP_DATA_DIR);
   const creds = await loadCredentials(env);
   if (!creds?.refresh_token) {
-    throw new Error(`Not connected to Google Drive yet. Run "npm run mcp:auth" (credentials go to ${credentialsPath(env)}).`);
+    throw new Error(`Not connected to Google Drive yet. Run "npm run mcp:auth" (credentials go to ${credentialsPath(env)}). ${help('not-connected')}`);
   }
   return createDriveStore(creds);
 }

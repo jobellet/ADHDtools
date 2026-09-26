@@ -23,6 +23,11 @@ through the user's own Google Drive. User setup guide: [docs/mcp.md](../docs/mcp
 - Secrets: the backup never has API keys or Client IDs (`isSensitiveKey`); the server only reads the
   keys marked `read` in `coverage.js`.
 
+## Error messages
+Every error a user can see ends with `help('<anchor>')` (in `store.js`): a link to its section in
+[docs/mcp-troubleshooting.md](../docs/mcp-troubleshooting.md). New message → new section there + a **Stuck?**
+link in `docs/mcp.md`. `tests/mcp.test.js` checks that every anchor exists and every fix is linked from the guide.
+
 ## When you add something to the app
 `npm test` fails in `tests/mcp-coverage.test.js` when the app gets a new TaskStore method, scheduler function,
 task field, `adhd-…` storage key, `window.*` global or assistant op that `coverage.js` does not list. Then:
