@@ -1,6 +1,6 @@
 // google-auth.js — shared Google Identity Services (GIS) helper.
 // OAuth token flow only: needs just an OAuth Client ID (no API key).
-// Used by calendar-integration.js (Calendar sync) and drive-sync.js (Drive backup).
+// Used by services/google-calendar-sync.js (Calendar sync) and services/drive-sync.js (Drive backup).
 (function () {
   const CLIENT_ID_KEY = 'gcalClientId';
   const TOKEN_CACHE_PREFIX = 'google-token:'; // sessionStorage, cleared when the browser closes

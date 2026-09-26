@@ -1,6 +1,6 @@
-import { renderDayPlanner } from './renderDay.js';
-import { populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './dayPlannerUtils.js';
-import { createTask } from './core/task-model.js';
+import { renderDayPlanner } from './render-day.js';
+import { populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
+import { createTask } from '../../core/task-model.js';
 
 let editingTaskId = null;
 let pendingExternalTask = null;

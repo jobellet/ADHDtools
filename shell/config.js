@@ -35,7 +35,7 @@
     focusDefaultMinutes: 25,
 
     // Determines whether the routine player auto-runs tasks by default. This setting is
-    // exposed in the Settings panel and used by routine.js to initialize the auto-run
+    // exposed in the Settings panel and used by features/routine/routine.js to initialize the auto-run
     // checkbox. Users can override it per-session in the routine player itself.
     routineAutoRunDefault: false,
 

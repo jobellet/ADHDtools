@@ -69,7 +69,7 @@ Die ausführlichen Anleitungen sind auf Englisch:
 | [**Datenmodell & Planer**](docs/task-model.md) | Das Task-Objekt, TaskStore, Routine-Reservierung, wie der Planer den Tag baut. |
 | [**Vision & Stand**](docs/vision-roadmap.md) | Wohin das Projekt geht und was schon funktioniert. |
 | [**Testfälle**](docs/testing.md) | Szenarien, um die App nach Änderungen zu prüfen. |
-| [**Mitmachen**](docs/contributing.md) | App lokal starten, Tests ausführen, Änderungen einreichen. |
+| [**Mitmachen**](docs/contributing.md) · [**AGENTS.md**](AGENTS.md) | App lokal starten, Tests ausführen, Änderungen einreichen. `AGENTS.md` ist die Anleitung für KI-Coding-Agenten (und Menschen): Code-Karte, gemeinsame Begriffe, Regeln. |
 
 ## 🔒 Datenschutz
 

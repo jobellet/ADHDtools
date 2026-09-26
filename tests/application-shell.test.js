@@ -25,9 +25,9 @@ describe('Application shell', () => {
 
     for (const source of [
       'core/ai-provider.js',
-      'google-auth.js',
-      'drive-sync.js',
-      'data-manager.js',
+      'services/google-auth.js',
+      'services/drive-sync.js',
+      'services/data-manager.js',
     ]) {
       assert.match(indexHtml, new RegExp(`src=["']${source}["']`));
     }

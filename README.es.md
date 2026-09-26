@@ -69,7 +69,7 @@ Las guías detalladas están en inglés:
 | [**Modelo de datos y planificador**](docs/task-model.md) | El objeto Task, TaskStore, la reserva de rutinas, cómo se construye el día. |
 | [**Visión y estado**](docs/vision-roadmap.md) | Hacia dónde va el proyecto y qué funciona ya. |
 | [**Casos de prueba**](docs/testing.md) | Escenarios para comprobar la aplicación tras cambios. |
-| [**Contribuir**](docs/contributing.md) | Ejecutar la aplicación en local, ejecutar las pruebas, enviar cambios. |
+| [**Contribuir**](docs/contributing.md) · [**AGENTS.md**](AGENTS.md) | Ejecutar la aplicación en local, ejecutar las pruebas, enviar cambios. `AGENTS.md` es la guía para agentes de IA de código (y personas): mapa del código, vocabulario común, reglas. |
 
 ## 🔒 Privacidad
 

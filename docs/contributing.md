@@ -9,7 +9,7 @@ If you'd like to contribute, please follow these steps:
 5.  **Commit your changes:** Write clear and concise commit messages.
 6.  **Submit a pull request:** Push your changes to your fork and open a pull request to the main repository.
 
-**Note for contributors and AI agents:** Treat the vision and data model described in the [README](../README.md) and [task-model.md](task-model.md) as the global north star. When implementing new features or refactors, align them with the roadmap and update the docs to reflect progress so future work stays cohesive.
+**Note for contributors and AI agents:** start with [AGENTS.md](../AGENTS.md). Treat the vision and data model described in the [README](../README.md) and [task-model.md](task-model.md) as the global north star. When implementing new features or refactors, align them with the roadmap and update the docs to reflect progress so future work stays cohesive.
 
 ## Local development
 
@@ -34,14 +34,11 @@ The unit tests (`tests/*.test.js`, Node's built-in test runner) cover the schedu
 
 ## Where things live
 
-| File | Role |
-| --- | --- |
-| `app.js` | Navigation, sheets, and the default view (Now or Day Planner) |
-| `core/scheduler.js` | The day plan, routine booking, conflict helpers |
-| `core/now-state.js` / `now-view.js` | What to show now; the Now view and the planner helpers |
-| `capabilities.js` | Hides options the user's setup does not need |
-| `routine.js` | Routine editor and player |
-| `styles-app-shell.css` | Navigation, Now view, planner helpers (loaded last) |
+The code is split by layer: `core/` (pure logic), `shell/` (router, config, translations), `services/`
+(storage, Google, import/export), `features/<name>/` (one folder per screen: JS, CSS, strings) and
+`styles/` (shared CSS). The map, the shared vocabulary and the rules are in **[AGENTS.md](../AGENTS.md)**;
+each folder has its own short `AGENTS.md`. They are written for AI coding agents *and* humans —
+read them before changing code. `tests/architecture.test.js` checks that they stay true.
 
 To test Google Calendar/Drive features locally, add your local origin (e.g. `http://localhost:8422`) to your OAuth client's **Authorized JavaScript origins** — see the [Google Calendar tutorial](google-calendar-sync.md).
 

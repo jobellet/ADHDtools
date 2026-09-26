@@ -1,4 +1,4 @@
-// now-view.js - the default "Now" screen and the day planner's helpers.
+// features/now/now-view.js - the default "Now" screen and the day planner's helpers.
 //
 // Now view (#home): one thing at a time.
 //   doing -> the current task / routine / event, a big countdown and 2-3 buttons

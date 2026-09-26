@@ -1,0 +1,657 @@
+/* Day planner (#planner): now/next strip, timeline colours, Plan ahead panel,
+   add/edit event form. Loaded after styles/app-shell.css. */
+
+/* ---------- Planner ---------- */
+
+.plan-next-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    background: #f3eefe;
+    border-left: 5px solid var(--kind-task);
+}
+
+.plan-next-strip[hidden] {
+    display: none;
+}
+
+.plan-next-strip[data-mode="break"] {
+    background: #e6f4f1;
+    border-left-color: var(--kind-break);
+}
+
+.plan-next-strip[data-mode="free"] {
+    background: #f1f3f4;
+    border-left-color: var(--kind-free);
+}
+
+.plan-next-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.plan-next-time {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.plan-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+#planner .planner-header {
+    background: #f6f3fd;
+    box-shadow: none;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.planner-date {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.planner-controls .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+#planner .planner-controls .btn-primary {
+    background: var(--primary-color);
+    color: var(--on-primary);
+}
+
+.planner-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.9rem;
+    margin: 0;
+    width: 100%;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.legend::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+    background: var(--primary-color);
+}
+
+.legend.routine::before { background: var(--kind-routine); }
+
+.legend.flexible::before { background: transparent; border: 2px dashed var(--primary-color); }
+
+.legend.calendar::before { background: var(--kind-event); }
+
+#planner .time-blocks-container {
+    height: calc(100vh - 290px);
+    min-height: 360px;
+    max-height: none;
+}
+
+.event.routine-event {
+    background: linear-gradient(135deg, #f6b26b 0%, var(--kind-routine) 100%);
+}
+
+.event.flexible-event {
+    background: #efe7fd;
+    color: var(--primary-dark);
+    border: 2px dashed var(--primary-light);
+}
+
+.event.calendar-event {
+    background: linear-gradient(135deg, #90caf9 0%, var(--kind-event) 100%);
+    color: #fff;
+    border-bottom: none;
+    display: block;
+}
+
+.plan-side {
+    position: sticky;
+    top: 72px;
+}
+
+.plan-deadlines {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid #eee;
+    padding: 0 1rem;
+}
+
+.plan-deadlines details[open] {
+    padding-bottom: 1rem;
+}
+
+.plan-deadlines summary {
+    cursor: pointer;
+    padding: 0.75rem 0;
+    font-weight: 700;
+    font-size: 1.05rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.plan-deadlines summary::-webkit-details-marker {
+    display: none;
+}
+
+.plan-deadlines summary .count {
+    margin-left: auto;
+    background: #f3eefe;
+    color: var(--primary-color);
+    border-radius: 999px;
+    padding: 0 0.6rem;
+    font-size: 0.85rem;
+}
+
+.plan-deadlines-hint,
+.plan-deadlines-empty {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 0.75rem;
+}
+
+.plan-deadline-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.plan-deadline-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.plan-deadline-item.overdue .plan-deadline-meta {
+    color: #c5221f;
+    font-weight: 600;
+}
+
+.plan-deadline-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.plan-deadline-name {
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.plan-deadline-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.plan-deadline-item .btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* ---------- Tablets ---------- */
+
+@media (max-width: 1024px) {
+    .plan-layout {
+            grid-template-columns: minmax(0, 1fr);
+    }
+
+    .plan-side {
+            position: static;
+    }
+}
+
+/* ---------- Phones ---------- */
+
+@media (max-width: 768px) {
+    /* The planner scrolls as one page on phones. */
+
+    #planner.tool-section {
+            overflow-y: auto;
+    }
+
+    #planner .plan-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+            width: 100%;
+    }
+
+    #planner .day-planner-container,
+    #planner .plan-side {
+            width: 100%;
+    }
+
+    #planner .day-planner-container {
+            flex: 0 0 auto;
+            overflow: visible;
+    }
+
+    #planner .time-blocks-container {
+            flex: 0 0 auto;
+            height: 62dvh;
+            min-height: 300px;
+            padding-bottom: 0;
+    }
+
+    .plan-side {
+            order: -1;
+    }
+
+    .plan-deadlines-hint {
+            display: none;
+    }
+
+    .planner-legend {
+            display: none;
+    }
+
+    #planner .planner-header {
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+    }
+
+    .planner-date {
+            font-size: 1.05rem;
+            text-align: center;
+    }
+
+    /* Planner "Add event" is a normal toolbar button (the tab bar has "Add"). */
+
+    #add-event-btn {
+            position: static;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            box-shadow: none;
+            display: flex !important;
+    }
+
+    #add-event-btn i {
+            font-size: 1rem;
+    }
+
+    .plan-next-strip {
+            margin-bottom: 0.5rem;
+    }
+}
+
+/* ---------- Plan ahead: delete & undo ---------- */
+
+.plan-deadline-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+}
+
+.btn-icon-danger {
+    background: transparent;
+    color: #b3261e;
+    border: 1px solid transparent;
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.btn-icon-danger span:empty {
+    display: none;
+}
+
+.btn-icon-danger:hover,
+.btn-icon-danger:focus-visible {
+    background: #fdecea;
+    border-color: #f5c2bd;
+    color: #8c1d18;
+}
+
+.btn-danger-outline {
+    background: transparent;
+    color: #b3261e;
+    border: 1.5px solid #e8a19b;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.5rem;
+}
+
+.btn-danger-outline:hover {
+    background: #fdecea;
+    color: #8c1d18;
+}
+
+.plan-undo-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 10px;
+    background: #323232;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.plan-undo-bar .btn {
+    background: transparent;
+    color: #d0bcff;
+    border-color: #d0bcff;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.plan-deadlines-more {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.5rem 0 0;
+}
+
+/* Google Calendar export button on each planner hour: small, top-right. */
+
+.time-block .export-to-calendar-btn {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--kind-event);
+    z-index: 5;
+}
+
+.time-block .export-to-calendar-btn:hover {
+    background: #e3f2fd;
+}
+
+body:not(.cap-gcal) .export-to-calendar-btn {
+    display: none;
+}
+
+/* Plan ahead items: actions wrap under the text when space is short. */
+
+.plan-deadline-item {
+    flex-wrap: wrap;
+}
+
+.plan-deadline-info {
+    flex: 1 1 170px;
+}
+
+.plan-deadline-actions {
+    margin-left: auto;
+}
+
+/* An old phone rule makes every button full width; not these ones. */
+
+.plan-deadline-actions .btn,
+.plan-undo-bar .btn {
+    width: auto;
+}
+
+.plan-deadline-actions .btn-icon-danger {
+    width: 40px;
+}
+
+/* ---------- Add / edit event (day planner) ---------- */
+
+.event-modal.modal {
+    z-index: 950;
+    align-items: center;
+}
+
+.event-modal .event-modal-content {
+    width: min(480px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    padding: 0;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.event-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 1rem 1rem 0.5rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.event-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.event-modal .event-close {
+    position: static;
+    float: none;
+    margin: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #f1f1f1;
+    color: var(--on-surface);
+    font-size: 1.1rem;
+    border: none;
+}
+
+#event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 1.25rem 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.event-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0.5rem 0 0.15rem;
+    color: var(--on-surface);
+}
+
+#event-form input[type="text"],
+#event-form input[type="time"],
+#event-form input[type="datetime-local"],
+#event-form input[type="number"],
+#event-form select {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px; /* no zoom on phones */
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid #d9d4e5;
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+#event-form #event-title {
+    font-size: 1.1rem;
+}
+
+#event-form input:focus,
+#event-form select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(98, 0, 238, 0.15);
+}
+
+#event-form input.invalid {
+    border-color: #d93025;
+    box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.15);
+}
+
+.event-when input[type="time"] {
+    max-width: 200px;
+}
+
+.event-duration-chips {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+}
+
+.event-chip {
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1.5px solid #d9d4e5;
+    background: var(--surface);
+    color: var(--on-surface);
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.event-chip.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--on-primary);
+}
+
+.event-chip-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+    cursor: text;
+    font-weight: 500;
+}
+
+#event-form .event-chip-custom input[type="number"] {
+    border: none;
+    box-shadow: none;
+    min-height: 44px;
+    padding: 0;
+    text-align: right;
+    width: 100%;
+    background: transparent;
+}
+
+.event-conflict {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: #fdecea;
+    color: #8c1d18;
+    font-size: 0.95rem;
+}
+
+.event-conflict[hidden] {
+    display: none;
+}
+
+.event-conflict p {
+    margin: 0 0 0.5rem;
+}
+
+.event-more {
+    margin-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.25rem;
+}
+
+.event-more summary {
+    cursor: pointer;
+    padding: 0.6rem 0;
+    color: var(--primary-color);
+    font-weight: 600;
+    min-height: 44px;
+}
+
+.event-more-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.event-actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 0 calc(1rem + env(safe-area-inset-bottom));
+    margin-top: 0.75rem;
+    background: var(--surface);
+    border-top: 1px solid #f0f0f0;
+}
+
+.event-actions .btn {
+    min-height: 52px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    flex: 1 1 0;
+}
+
+.event-actions .event-save {
+    flex: 2 1 0;
+}
+
+.event-actions .event-remove {
+    flex: 1 1 100%;
+    color: #b3261e;
+    border-color: #e8a19b;
+    background: transparent;
+    min-height: 44px;
+}
+
+.event-actions .event-remove[hidden] {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .event-modal.modal {
+            align-items: flex-end;
+    }
+
+    .event-modal .event-modal-content {
+            width: 100%;
+            max-width: none;
+            max-height: 92dvh;
+            border-radius: 20px 20px 0 0;
+    }
+}
+
+#event-form .event-actions .btn,
+#event-form .event-conflict .btn {
+    width: auto;
+}
+
+.event-chip {
+    transition: none; /* selection shows at once */
+}

@@ -1,4 +1,4 @@
-// capabilities.js - adapt the UI to how this user set the app up.
+// shell/capabilities.js - adapt the UI to how this user set the app up.
 // Each integration is optional (Google Calendar, .ics import, AI provider,
 // voice). Controls for things the user does not use are tucked away, so the
 // screen only shows what helps; "Show all options" in Settings brings them back.

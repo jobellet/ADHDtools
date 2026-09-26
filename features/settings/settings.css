@@ -1,0 +1,14 @@
+/* Settings page layout. Loaded after styles/app-shell.css. */
+
+/* ---------- Settings: one readable column of collapsible sections ---------- */
+
+#settings .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+#settings .settings-actions {
+    max-width: 820px;
+    margin: 1rem auto 0;
+}

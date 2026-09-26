@@ -1,4 +1,4 @@
-// assistant-dashboard.js - the "assistant" layer around the Now view:
+// features/now/quick-capture.js - the "assistant" layer around the Now view:
 // 1. Quick capture: add or speak a task naturally (core/task-parser.js), in
 //    the "Add" sheet. A task given a time never lands on busy time (routine,
 //    event, other task): it moves to the next free slot and says so.
