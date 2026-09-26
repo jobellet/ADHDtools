@@ -1,127 +1,18 @@
-// assistant-dashboard.js - the "assistant" layer of the Home/Today view:
-// 1. Context banner: what should I be doing right now? (core/context-engine.js)
-// 2. Quick capture: add or speak a task naturally (core/task-parser.js)
-// 3. Daily progress: completed tasks + achievement points, with optional AI encouragement.
-// All three work without any AI provider configured.
+// assistant-dashboard.js - the "assistant" layer around the Now view:
+// 1. Quick capture: add or speak a task naturally (core/task-parser.js), in
+//    the "Add" sheet. A task given a time never lands on busy time (routine,
+//    event, other task): it moves to the next free slot and says so.
+// 2. Daily progress: completed tasks + achievement points, with optional AI encouragement.
+// Both work without any AI provider configured.
 
 (function () {
   document.addEventListener('DOMContentLoaded', () => {
-    const banner = document.getElementById('context-banner');
     const captureForm = document.getElementById('quick-capture-form');
     const captureInput = document.getElementById('quick-capture-input');
     const captureVoiceBtn = document.getElementById('quick-capture-voice');
     const captureStatus = document.getElementById('quick-capture-status');
     const progressCard = document.getElementById('daily-progress');
-    if (!banner && !captureForm && !progressCard) return;
-
-    let lastAutoSwitchedContext = null;
-
-    // ----- Context banner -----
-
-    function runContextAction(action) {
-      if (!action) return;
-      if (action.tool === 'focus' && action.taskSlot) {
-        const goalInput = document.getElementById('focus-goal');
-        const task = action.taskSlot.task;
-        if (goalInput) goalInput.value = task.name || task.text || 'Focus';
-        window.FocusTaskContext = {
-          taskHash: task.hash,
-          startedAt: Date.now(),
-          durationMinutes: task.durationMinutes,
-        };
-        document.getElementById('enter-focus-mode')?.click();
-        return;
-      }
-      window.switchTool?.(action.tool);
-      if (action.routineId) {
-        window.activateRoutine?.(action.routineId);
-      }
-      if (action.generate) {
-        setTimeout(() => document.getElementById('generate-schedule-btn')?.click(), 100);
-      }
-    }
-
-    function renderBanner() {
-      if (!banner || !window.ContextEngine) return;
-      const context = window.ContextEngine.getContext(new Date());
-
-      let focusCard = document.getElementById('current-focus-card');
-      const homeSection = document.getElementById('home');
-      if (context && !window.ContextEngine.isDismissed(context.id)) {
-        if (!focusCard) {
-          focusCard = document.createElement('div');
-          focusCard.id = 'current-focus-card';
-          focusCard.className = 'current-focus-card';
-          if (homeSection) {
-            homeSection.insertBefore(focusCard, banner);
-          }
-        }
-
-        focusCard.style.display = 'flex';
-        focusCard.className = `current-focus-card context-${context.type}`;
-        focusCard.style.padding = '1rem';
-        focusCard.style.marginBottom = '1rem';
-        focusCard.style.backgroundColor = 'var(--card-bg)';
-        focusCard.style.border = '2px solid var(--primary-color)';
-        focusCard.style.borderRadius = '8px';
-        focusCard.style.alignItems = 'center';
-        focusCard.style.justifyContent = 'space-between';
-
-        focusCard.innerHTML = '';
-
-        const contentDiv = document.createElement('div');
-        contentDiv.style.display = 'flex';
-        contentDiv.style.alignItems = 'center';
-        contentDiv.style.gap = '1rem';
-
-        const icon = document.createElement('i');
-        icon.className = `fas ${context.icon || 'fa-compass'} context-banner-icon`;
-        icon.style.fontSize = '2rem';
-        icon.style.color = 'var(--primary-color)';
-        contentDiv.appendChild(icon);
-
-        const body = document.createElement('div');
-        const title = document.createElement('strong');
-        title.textContent = `Current Focus: ${context.title}`;
-        title.style.display = 'block';
-        title.style.fontSize = '1.2rem';
-        const message = document.createElement('p');
-        message.textContent = context.message;
-        message.style.margin = '0';
-        body.append(title, message);
-        contentDiv.appendChild(body);
-
-        focusCard.appendChild(contentDiv);
-
-        if (context.action) {
-          const actBtn = document.createElement('button');
-          actBtn.className = 'btn btn-primary';
-          actBtn.textContent = context.action.label;
-          actBtn.addEventListener('click', () => {
-             const toolCard = document.querySelector(`.tool-card[data-tool='${context.action.tool}']`);
-             if (toolCard) {
-                 toolCard.click();
-             } else {
-                 runContextAction(context.action);
-             }
-          });
-          focusCard.appendChild(actBtn);
-        }
-      } else if (focusCard) {
-        focusCard.style.display = 'none';
-      }
-
-      if (banner) {
-        banner.style.display = 'none';
-      }
-
-      // Optional hands-free mode: jump straight into an open routine window.
-      const cfg = window.ConfigManager?.getConfig?.();
-      if (context && cfg?.contextAutoSwitch && context.type === 'routine' && lastAutoSwitchedContext !== context.id) {
-        lastAutoSwitchedContext = context.id;
-        runContextAction(context.action);
-      }
-    }
+    if (!captureForm && !progressCard) return;
 
     // ----- Quick capture -----
 
@@ -160,8 +51,32 @@
       };
       if (parsed.durationMinutes) raw.durationMinutes = parsed.durationMinutes;
       if (parsed.importance) raw.importance = parsed.importance;
+
+      // No double booking: a timed task that hits a routine, an event or
+      // another task moves to the next free slot of that day.
+      let moved = '';
+      const scheduler = window.UnifiedScheduler;
+      if (raw.plannerDate && raw.plannerDate.length >= 16 && scheduler?.findConflicts) {
+        const dateStr = raw.plannerDate.slice(0, 10);
+        const [h, m] = raw.plannerDate.slice(11, 16).split(':').map(Number);
+        const start = h * 60 + m;
+        const duration = raw.durationMinutes || Number(window.ConfigManager?.getConfig?.().defaultTaskMinutes) || 25;
+        const clashes = scheduler.findConflicts({ dateStr, startMinutes: start, durationMinutes: duration });
+        if (clashes.length) {
+          const free = scheduler.findNextFreeSlot({ dateStr, fromMinutes: start, durationMinutes: duration });
+          if (Number.isFinite(free)) {
+            const hhmm = `${String(Math.floor(free / 60)).padStart(2, '0')}:${String(free % 60).padStart(2, '0')}`;
+            raw.plannerDate = `${dateStr}T${hhmm}`;
+            moved = ` ${parsed.plannerDate.slice(11, 16)} was taken by “${clashes[0].name}”, so it is at ${hhmm}.`;
+          } else {
+            raw.plannerDate = null;
+            moved = ` That day is full, so it waits in your task list.`;
+          }
+        }
+      }
+
       const task = window.TaskStore.addTask(raw);
-      showCaptureStatus(`Added “${task.name}” — ${describeParsed(parsed)}`);
+      showCaptureStatus(`Added “${task.name}” — ${describeParsed({ ...parsed, plannerDate: raw.plannerDate })}.${moved}`);
 
       if (parsed.needsBreakdown) {
         const breakBtn = document.createElement('button');
@@ -175,6 +90,7 @@
               detail: { text: task.name, id: task.hash }
             }));
             window.switchTool?.('breakdown');
+            window.AppSheets?.close();
           }
         });
         captureStatus.appendChild(breakBtn);
@@ -182,8 +98,8 @@
 
       window.EventBus?.dispatchEvent(new Event('dataChanged'));
       window.dispatchEvent(new Event('scheduleNeedsRefresh'));
-      renderBanner();
       renderProgress();
+      window.dispatchEvent(new CustomEvent('taskCaptured', { detail: { task, needsBreakdown: Boolean(parsed.needsBreakdown), moved: Boolean(moved) } }));
     }
 
     if (captureForm) {
@@ -224,10 +140,11 @@
 
     function getCompletedToday() {
       const activeUser = window.UserContext?.getActiveUser?.();
-      const today = new Date().toISOString().slice(0, 10);
+      const today = window.UnifiedScheduler?.localDateString?.(new Date()) || new Date().toISOString().slice(0, 10);
       const all = window.TaskStore?.getAllTasks?.() || [];
       return all.filter(t => t.completed
-        && (t.completedAt || '').startsWith(today)
+        && t.completedAt
+        && (window.UnifiedScheduler?.localDateString?.(new Date(t.completedAt)) || t.completedAt.slice(0, 10)) === today
         && (!activeUser || t.user === activeUser));
     }
 
@@ -283,13 +200,10 @@
 
     // ----- Wiring -----
 
-    window.EventBus?.addEventListener('dataChanged', () => { renderBanner(); renderProgress(); });
-    window.EventBus?.addEventListener('calendarEventsUpdated', () => { renderBanner(); renderProgress(); });
-    window.addEventListener('activeUserChanged', () => { renderBanner(); renderProgress(); });
+    window.EventBus?.addEventListener('dataChanged', renderProgress);
+    window.addEventListener('activeUserChanged', renderProgress);
     window.addEventListener('aiSettingsChanged', renderProgress);
-    setInterval(renderBanner, 60000);
 
-    renderBanner();
     renderProgress();
   });
 })();

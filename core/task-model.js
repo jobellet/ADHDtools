@@ -97,7 +97,10 @@ export function createTask(raw = {}, overrides = {}) {
 }
 
 export function updateTask(task, updates) {
-  return createTask({ ...task, ...updates, createdAt: task.createdAt || new Date().toISOString(), hash: task.hash, id: task.id }, {});
+  const next = { ...task, ...updates, createdAt: task.createdAt || new Date().toISOString(), hash: task.hash, id: task.id };
+  // Keep fields the model does not normalize (notes, category, snoozedUntil…);
+  // normalized fields (duration, importance, deadline…) come from createTask.
+  return { ...next, ...createTask(next, {}) };
 }
 
 export function markTaskCompleted(task, completedAt = new Date().toISOString()) {

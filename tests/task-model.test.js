@@ -60,6 +60,17 @@ describe('Task Model', () => {
     assert.strictEqual(updated.hash, task.hash); // Hash shouldn't change on update
   });
 
+  test('updateTask keeps fields the model does not normalize', () => {
+    const raw = { name: 'Report', notes: 'draft', category: 'work' };
+    const task = createTask(raw, raw); // as TaskStore.addTask does
+    const updated = updateTask(task, { snoozedUntil: '2030-01-01T00:00:00Z', durationMinutes: 40 });
+    assert.strictEqual(updated.notes, 'draft');
+    assert.strictEqual(updated.category, 'work');
+    assert.strictEqual(updated.snoozedUntil, '2030-01-01T00:00:00Z');
+    assert.strictEqual(updated.durationMinutes, 40);
+    assert.strictEqual(updated.hash, task.hash);
+  });
+
   test('markTaskCompleted sets completed and completion time', () => {
     const task = createTask({ name: 'Finish project', durationMinutes: 60, importance: 10 });
     const now = new Date().toISOString();

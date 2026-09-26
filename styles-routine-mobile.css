@@ -23,6 +23,7 @@
     border-radius: 10px;
     border: 1px solid var(--border-color, #ddd);
     background: var(--surface, #fff);
+    color: var(--on-surface, #000);
     font-weight: 600;
 }
 

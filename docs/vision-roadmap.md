@@ -56,11 +56,15 @@ The end goal is for the user not to have to search for the right tool to use at 
 
 ✅ Day Planner “Add Event” modal with dependency/priority fields and scheduler-aware edits.
 
-🆕 Achievements grouped by task category with time-spent rollups; family overview cards in Today View; Habit Tracker check-ins create completed “habit” tasks automatically.
+🆕 Achievements grouped by task category with time-spent rollups; Habit Tracker check-ins create completed “habit” tasks automatically.
 
 🆕 **Natural-language quick capture** on the Home view: type or speak “Call mom tomorrow at 5pm for 20 min !7” and it becomes a fully-tagged Task. Works completely offline (`core/task-parser.js`), smarter when an [AI provider](ai-providers.md) is configured.
 
-🆕 **Context-aware Home dashboard** (`core/context-engine.js`): a single suggestion banner for *right now* — the open routine window, the scheduled task, morning planning, or evening review.
+🆕 **Now view as the default screen** (`core/now-state.js`, `now-view.js`): while something runs, the app shows only that — task, routine step or event — with a countdown and 2–3 buttons (Done / Focus / Not now). Short gaps show a break countdown to the next item. When nothing is planned, the app opens the Day Planner, with a *Plan ahead* panel to split big or deadline tasks into small steps.
+
+🆕 **Routines book time**: each routine blocks its steps + a buffer (10 % by default) in the unified schedule. Overlapping routines can't be saved, and a task added at a busy time moves to the next free slot.
+
+🆕 **UI adapts to the setup** (`capabilities.js`): `.ics` import hides once Google Calendar is connected, AI buttons hide without an AI provider; *Show all options* restores everything.
 
 🆕 **Provider-agnostic AI assistance** (`core/ai-provider.js`): works with OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or any local OpenAI-compatible server. AI remains strictly optional.
 

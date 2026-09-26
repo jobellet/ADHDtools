@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const calendarConflictDisplay = document.getElementById('routine-calendar-conflicts');
 
     // Controls
-    const startSelectedRoutineBtn = document.getElementById('start-selected-routine-btn');
     const routineSkipBtn = document.getElementById('routine-skip-btn');
     const routineRescheduleBtn = document.getElementById('routine-reschedule-btn');
     const rescheduleModal = document.getElementById('routine-reschedule-modal');
@@ -56,6 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
     if (pieChartContainer) pieChartContainer.style.display = 'none';
+    // Player controls only make sense while a routine runs.
+    if (routineControls) routineControls.style.display = 'none';
 
     // --- DOM Elements for Settings Management ---
     const routineListCards = document.getElementById('routine-list-cards');
@@ -74,14 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const routinePickerModalBackdrop = document.getElementById('routine-picker-modal-backdrop');
     const routinePickerModalCloseBtn = document.getElementById('routine-picker-modal-close');
     const routinePickerList = document.getElementById('routine-picker-list');
-    // Legacy inline editor (desktop fallback) keeps its old ids
-    const settingRoutineEditor = document.getElementById('setting-routine-editor');
-    const settingRoutineName = document.getElementById('setting-routine-name');
-    const settingRoutineStartTime = document.getElementById('setting-routine-start-time');
-    const settingRoutineWeekdays = document.getElementById('setting-routine-weekdays');
-    const settingRoutineTasksList = document.getElementById('setting-routine-tasks-list');
-    const settingAddTaskBtn = document.getElementById('setting-add-task-btn');
-    const settingSaveRoutineBtn = document.getElementById('setting-save-routine-btn');
     const settingExportRoutineBtn = document.getElementById('setting-export-routine-btn');
     const settingImportRoutineBtn = document.getElementById('setting-import-routine-btn');
     const settingImportRoutineFile = document.getElementById('setting-import-routine-file');
@@ -119,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Data Storage ---
     const ROUTINE_STORAGE_KEY = 'adhd-tool-routines';
-    const ROUTINE_RUN_REQUEST_KEY = 'adhd-tool-pending-routine-run';
+    const ROUTINE_RUNS_KEY = 'adhd-routine-runs'; // { [routineId]: last completed date }
     let routines = [];
     let selectedRoutineId = null; // ID of the routine currently being edited in settings
     let activeRoutine = null; // The routine object that is currently running
@@ -128,9 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTaskTimer = null;
     let activeTaskTimeLeftSeconds = 0;
     let activeTaskTotalDurationSeconds = 0;
-    let currentTaskStartTimestamp = null;
-    let autoStartCheckTimer = null;
-    const autoStartedToday = {};
     let activeRoutineStartTime = null;
     let activeRoutineEndTime = null;
     let autoRunEnabled = false;
@@ -183,14 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return hours * 60 + minutes;
     }
 
-    function minutesToDate(minutesOfDay) {
-        const base = new Date();
-        const totalMinutes = Math.max(0, minutesOfDay || 0);
-        base.setHours(0, 0, 0, 0);
-        base.setMinutes(totalMinutes);
-        return base;
-    }
-
     function formatClockTime(dateObj) {
         return dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
@@ -218,6 +200,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveRoutines() {
         localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(routines));
+        // The scheduler books routine time: let the planner and Now view refresh.
+        window.dispatchEvent(new Event('routinesChanged'));
+    }
+
+    function todayStr() {
+        return window.UnifiedScheduler?.localDateString?.(new Date()) || new Date().toISOString().slice(0, 10);
+    }
+
+    function markRoutineDoneToday(routineId) {
+        try {
+            const runs = JSON.parse(localStorage.getItem(ROUTINE_RUNS_KEY) || '{}');
+            runs[routineId] = todayStr();
+            localStorage.setItem(ROUTINE_RUNS_KEY, JSON.stringify(runs));
+        } catch (err) {
+            console.warn('Could not record routine run', err);
+        }
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
     }
 
     function loadRoutines() {
@@ -273,9 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         routines.push(newRoutine);
         saveRoutines();
-        if (typeof updateSettingsRoutineSelect === 'function') {
-            updateSettingsRoutineSelect();
-        }
+        updateSettingsRoutineSelect();
         return newRoutine;
     }
 
@@ -305,7 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!routineViewPlayerBtn || !routineViewManageBtn) return;
         routineViewPlayerBtn.addEventListener('click', () => showRoutineView('player'));
         routineViewManageBtn.addEventListener('click', () => showRoutineView('manage'));
-        showRoutineView('player');
+        // The Now view plays the routine of the moment; this tab is for managing them.
+        showRoutineView('manage');
     }
 
     // --- Routine Selection Logic ---
@@ -371,9 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (routinePickerModalCloseBtn) routinePickerModalCloseBtn.addEventListener('click', closeRoutinePicker);
         if (routinePickerModalBackdrop) routinePickerModalBackdrop.addEventListener('click', closeRoutinePicker);
 
-        if (settingSaveRoutineBtn) settingSaveRoutineBtn.addEventListener('click', saveRoutineFromEditor);
-        if (settingAddTaskBtn) settingAddTaskBtn.addEventListener('click', () => addTaskRow(settingRoutineTasksList));
-
         if (settingExportRoutineBtn) {
             settingExportRoutineBtn.addEventListener('click', exportRoutineToCSV);
         }
@@ -407,7 +402,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const meta = [];
             if (routine.startTime) meta.push(routine.startTime);
             meta.push(formatDays(routine.weekDays));
-            if (taskCount > 0) meta.push(`${taskCount} ${taskCount === 1 ? 'task' : 'tasks'} \u00b7 ${totalMin} min`);
+            if (taskCount > 0) {
+                const booked = window.UnifiedScheduler?.routineBookedMinutes?.(routine, getBufferPercent()) || totalMin;
+                meta.push(`${taskCount} ${taskCount === 1 ? 'step' : 'steps'} \u00b7 ${totalMin} min (books ${booked})`);
+            }
 
             const nameSpan = document.createElement('span');
             nameSpan.className = 'routine-card-name';
@@ -440,11 +438,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (routines.length === 0) {
-            const empty = document.createElement('p');
+            const empty = document.createElement('div');
             empty.className = 'routine-cards-empty';
-            empty.textContent = 'No routines yet. Tap "New" to create one.';
+            const text = document.createElement('p');
+            text.textContent = 'No routines yet. Tap "New", or start from an example:';
+            empty.appendChild(text);
+            Object.entries(routineTemplates).forEach(([id, template]) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-outline btn-sm';
+                btn.textContent = `+ ${template.name} (${template.startTime})`;
+                btn.addEventListener('click', () => {
+                    const conflicts = window.UnifiedScheduler?.findRoutineConflicts?.(template, routines, getBufferPercent()) || [];
+                    if (conflicts.length) {
+                        notify(`${template.name} overlaps “${conflicts[0].name}”. Create it and change its time.`, 'error');
+                    }
+                    const created = loadTemplate(id);
+                    if (created && conflicts.length) openRoutineEditModal(created);
+                });
+                empty.appendChild(btn);
+            });
             routineListCards.appendChild(empty);
         }
+    }
+
+    function getBufferPercent() {
+        const pct = Number(window.ConfigManager?.getConfig?.().routineBufferPercent);
+        return Number.isFinite(pct) ? pct : 10;
     }
 
     // --- Routine Edit Modal (mobile sheet / desktop dialog) ---
@@ -490,16 +510,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        routine.name = name;
-        routine.startTime = routineEditModalStartTime.value;
-
         const selectedDays = [];
         routineEditModalWeekdays.querySelectorAll('input:checked').forEach(cb => {
             selectedDays.push(parseInt(cb.value));
         });
-        routine.weekDays = selectedDays;
+        const draft = {
+            ...routine,
+            name,
+            startTime: routineEditModalStartTime.value,
+            weekDays: selectedDays,
+            tasks: collectTaskRows(routineEditModalTasksList),
+        };
 
-        routine.tasks = collectTaskRows(routineEditModalTasksList);
+        // Routines book their time (+ buffer): two routines can't share it.
+        const conflicts = window.UnifiedScheduler?.findRoutineConflicts?.(draft, routines, getBufferPercent()) || [];
+        if (conflicts.length) {
+            const booked = window.UnifiedScheduler.routineBookedMinutes(draft, getBufferPercent());
+            notify(`“${name}” (${draft.startTime}, ${booked} min with buffer) overlaps “${conflicts[0].name}” at ${conflicts[0].startTime}. Pick another time or other days.`, 'error');
+            routineEditModalStartTime.focus();
+            return;
+        }
+
+        Object.assign(routine, draft);
         routine.totalDuration = routine.tasks.reduce((sum, t) => sum + t.duration, 0);
 
         saveRoutines();
@@ -627,63 +659,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nameInput) nameInput.focus();
     }
 
-    // --- Legacy inline editor (desktop fallback) ---
-
-    function loadRoutineIntoEditor(routineId) {
-        const routine = routines.find(r => r.id === routineId);
-        if (!routine) {
-            settingRoutineEditor?.classList.add('hidden');
-            selectedRoutineId = null;
-            return;
-        }
-
-        selectedRoutineId = routineId;
-        if (settingRoutineEditor) settingRoutineEditor.classList.remove('hidden');
-
-        if (settingRoutineName) settingRoutineName.value = routine.name;
-        if (settingRoutineStartTime) settingRoutineStartTime.value = routine.startTime || '';
-
-        if (settingRoutineWeekdays) {
-            const checkboxes = settingRoutineWeekdays.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = routine.weekDays && routine.weekDays.includes(parseInt(cb.value));
-            });
-        }
-
-        renderEditorTasks(routine.tasks);
-    }
-
-    function renderEditorTasks(tasks) {
-        if (!settingRoutineTasksList) return;
-        settingRoutineTasksList.innerHTML = '';
-        tasks.forEach(task => appendTaskRow(settingRoutineTasksList, task));
-    }
-
-    function saveRoutineFromEditor() {
-        if (!selectedRoutineId) return;
-        const routine = routines.find(r => r.id === selectedRoutineId);
-        if (!routine) return;
-
-        routine.name = settingRoutineName.value;
-        routine.startTime = settingRoutineStartTime.value;
-
-        const selectedDays = [];
-        settingRoutineWeekdays.querySelectorAll('input:checked').forEach(cb => {
-            selectedDays.push(parseInt(cb.value));
-        });
-        routine.weekDays = selectedDays;
-
-        routine.tasks = collectTaskRows(settingRoutineTasksList);
-        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + t.duration, 0);
-
-        saveRoutines();
-        updateSettingsRoutineSelect();
-        notify("Routine saved!");
-
-        const best = findBestRoutineForNow();
-        showReadyToStart(best);
-    }
-
     function exportRoutineToCSV() {
         if (!selectedRoutineId) {
             alert("Please select a routine to export.");
@@ -783,10 +758,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (confirm(`Found ${newTasks.length} tasks. Append them to current routine?`)) {
                     // We append to the DOM directly to allow user to save/cancel
                     newTasks.forEach(task => {
-                        appendTaskRow(settingRoutineTasksList, task);
+                        appendTaskRow(routineEditModalTasksList, task);
                     });
 
-                    notify("Tasks imported! Click 'Save Routine' to persist changes.");
+                    notify("Steps imported. Tap Save to keep them.");
                 }
             } else {
                 alert("No valid tasks found in CSV.");
@@ -887,6 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentTaskIndex = 0;
         activeRoutineStartTime = new Date();
+        showRoutineView('player');
 
         if (currentTaskDisplay) currentTaskDisplay.style.display = '';
         if (pieChartContainer) pieChartContainer.style.display = '';
@@ -898,6 +874,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         startNextTask();
         enterFocusMode();
+        window.dispatchEvent(new Event('routinePlayerChanged'));
     }
 
     function renderActiveRoutineTaskList() {
@@ -937,8 +914,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
 
         drawPieChart(1, false);
-
-        currentTaskStartTimestamp = Date.now();
 
         renderActiveRoutineTaskList();
 
@@ -993,7 +968,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        markRoutineDoneToday(activeRoutine.id);
         activeRoutine = null;
+        window.dispatchEvent(new Event('routinePlayerChanged'));
         playerRoutineNameDisplay.textContent = "Routine Finished!";
         if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = "Routine Finished!";
         playerRoutineTasksList.innerHTML = '';
@@ -1293,6 +1270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function exitFocusMode() {
         if(focusModeEl) focusModeEl.classList.add('hidden');
+        window.dispatchEvent(new Event('routinePlayerChanged'));
     }
     function updateFocusUI() {
         if (!activeRoutine || !focusModeEl) return;
@@ -1349,107 +1327,36 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSpacebarHandler();
     setupTouchHandler();
 
-    function getRoutineToEdit() {
-        if (!routines.length) return null;
-        if (selectedRoutineId) {
-            return routines.find(r => r.id === selectedRoutineId) || routines[0];
-        }
-        return routines[0];
-    }
-
-    function initializeRoutines() {
-        if (currentTaskTimer) {
-            clearInterval(currentTaskTimer);
-            currentTaskTimer = null;
-        }
-        activeRoutine = null;
-        currentTaskIndex = -1;
-        if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = '';
-        if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = '';
-
-        loadRoutines();
-        selectedRoutineId = routines[0]?.id || null;
-        updateSettingsRoutineSelect();
-        const best = findBestRoutineForNow();
-        showReadyToStart(best);
-    }
-
-    function createRoutineHandler() {
-        const legacyNameInput = document.getElementById('routine-name');
-        const name = (legacyNameInput?.value || '').trim();
-        if (!name) return;
-
-        const newRoutine = {
-            id: generateId(),
-            name,
-            startTime: "08:00",
-            weekDays: [1, 2, 3, 4, 5],
-            tasks: [],
-            totalDuration: 0
-        };
-        routines.push(newRoutine);
-        selectedRoutineId = newRoutine.id;
-        saveRoutines();
-        updateSettingsRoutineSelect();
-    }
-
-    function addTaskAt(index, name, duration) {
-        const routine = getRoutineToEdit();
-        const taskName = (name || '').trim();
-        const taskDuration = parseInt(duration, 10);
-        if (!routine || !taskName || !Number.isInteger(taskDuration) || taskDuration <= 0) return;
-
-        const task = { id: generateId(), name: taskName, duration: taskDuration, startAt: null };
-        const insertAt = Number.isInteger(index) ? Math.max(0, Math.min(index, routine.tasks.length)) : routine.tasks.length;
-        routine.tasks.splice(insertAt, 0, task);
-        routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
-        saveRoutines();
-    }
-
-    function editTaskInRoutine(taskId, newName, newDuration) {
-        const name = (newName || '').trim();
-        const duration = parseInt(newDuration, 10);
-        if (!taskId || !name || !Number.isInteger(duration) || duration <= 0) return;
-
-        for (const routine of routines) {
-            const task = routine.tasks.find(t => t.id === taskId);
-            if (task) {
-                task.name = name;
-                task.duration = duration;
-                routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
-                saveRoutines();
-                return;
-            }
-        }
-    }
-
-    function deleteTaskFromRoutine(taskId) {
-        if (!taskId) return;
-        for (const routine of routines) {
-            const before = routine.tasks.length;
-            routine.tasks = routine.tasks.filter(t => t.id !== taskId);
-            if (routine.tasks.length !== before) {
-                routine.totalDuration = routine.tasks.reduce((sum, t) => sum + (parseInt(t.duration, 10) || 0), 0);
-                saveRoutines();
-                return;
-            }
-        }
-    }
-
-    // Export global functions if needed
-    window.loadTemplate = loadTemplate;
+    // Public API for the Now view.
     window.activateRoutine = activateRoutine;
     window.manualAdvanceTask = manualAdvanceTask;
-    window.initializeRoutines = initializeRoutines;
-    window.createRoutineHandler = createRoutineHandler;
-    window.addTaskAt = addTaskAt;
-    window.editTaskInRoutine = editTaskInRoutine;
-    window.deleteTaskFromRoutine = deleteTaskFromRoutine;
+    window.RoutinePlayer = {
+        isRunning: () => Boolean(activeRoutine),
+        runningRoutineId: () => activeRoutine?.id || null,
+        getState: () => activeRoutine ? {
+            routineId: activeRoutine.id,
+            name: activeRoutine.name,
+            stepIndex: currentTaskIndex,
+            stepCount: activeRoutine.tasks.length,
+            stepName: activeRoutine.tasks[currentTaskIndex]?.name || '',
+            secondsLeft: activeTaskTimeLeftSeconds,
+            stepSeconds: activeTaskTotalDurationSeconds,
+        } : null,
+        start: activateRoutine,
+        show: enterFocusMode,
+        edit: (routineId) => {
+            const routine = routines.find(r => r.id === routineId);
+            if (routine) openRoutineEditModal(routine);
+        },
+    };
 
-    // Allow start button if present in DOM (for old bindings)
-    if (startSelectedRoutineBtn) {
-        startSelectedRoutineBtn.style.display = 'none'; // Use new UI
-    }
+    // Keep in sync when another tab or a sync pulls new routines.
+    window.addEventListener('storage', (e) => {
+        if (e.key === ROUTINE_STORAGE_KEY && !activeRoutine) {
+            loadRoutines();
+            updateSettingsRoutineSelect();
+        }
+    });
 
     // Bind Player Controls (Moved to end to ensure elements exist)
     if (routineSkipBtn) routineSkipBtn.addEventListener('click', skipCurrentTask);

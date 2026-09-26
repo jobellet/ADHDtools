@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { buildSchedule } from '../core/scheduler.js';
+import { buildSchedule, routineBookedMinutes, findConflicts, findNextFreeSlot, findRoutineConflicts } from '../core/scheduler.js';
 
 describe('Scheduler', () => {
   const config = {
@@ -74,5 +74,103 @@ describe('Scheduler', () => {
     
     assert.strictEqual(schedule.length, 1);
     assert.strictEqual(schedule[0].scheduledStart, 11 * 60); // Starts at 11:00 AM
+  });
+});
+
+describe('Scheduler routines and conflicts', () => {
+  const config = { dayStart: '06:00', dayEnd: '22:00', bufferDurationMinutes: 5, routineBufferPercent: 10 };
+  // 2023-10-16 is a Monday
+  const monday = new Date(2023, 9, 16, 6, 0);
+  const morning = {
+    id: 'r1', name: 'Morning', startTime: '07:00', weekDays: [1, 2, 3, 4, 5],
+    tasks: [{ name: 'Shower', duration: 20 }, { name: 'Breakfast', duration: 10 }],
+  };
+
+  test('books routine time with the buffer margin', () => {
+    assert.strictEqual(routineBookedMinutes(morning, 10), 33);
+    assert.strictEqual(routineBookedMinutes(morning, 0), 30);
+    assert.strictEqual(routineBookedMinutes({ tasks: [] }, 10), 0);
+  });
+
+  test('routine blocks appear on matching weekdays only', () => {
+    const schedule = buildSchedule({ tasks: [], now: monday, config: { ...config, routines: [morning] } });
+    assert.strictEqual(schedule.length, 1);
+    assert.strictEqual(schedule[0].task.source, 'routine');
+    assert.strictEqual(schedule[0].scheduledStart, 7 * 60);
+    assert.strictEqual(schedule[0].scheduledEnd, 7 * 60 + 33);
+
+    const sunday = new Date(2023, 9, 15, 6, 0);
+    assert.strictEqual(buildSchedule({ tasks: [], now: sunday, config: { ...config, routines: [morning] } }).length, 0);
+  });
+
+  test('a routine done today frees its time', () => {
+    const schedule = buildSchedule({
+      tasks: [], now: monday,
+      config: { ...config, routines: [morning], routineRuns: { r1: '2023-10-16' } },
+    });
+    assert.strictEqual(schedule.length, 0);
+  });
+
+  test('flexible tasks never overlap a routine block', () => {
+    const tasks = [{ hash: 'a', name: 'Write report', durationMinutes: 45, importance: 8, urgency: 8 }];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 6, 30), config: { ...config, routines: [morning] } });
+    const report = schedule.find(s => s.task.hash === 'a');
+    const routine = schedule.find(s => s.task.source === 'routine');
+    assert.ok(report.scheduledStart >= routine.scheduledEnd || report.scheduledEnd <= routine.scheduledStart);
+    for (let i = 1; i < schedule.length; i += 1) {
+      assert.ok(schedule[i].scheduledStart >= schedule[i - 1].scheduledEnd, 'slots must not overlap');
+    }
+  });
+
+  test('a deadline alone does not pin a task to a time', () => {
+    const tasks = [{ hash: 'd', name: 'Tax form', deadline: '2023-10-20T17:00', durationMinutes: 30 }];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 9, 0), config });
+    assert.strictEqual(schedule[0].scheduledStart, 9 * 60);
+  });
+
+  test('auto-pinned tasks that were not finished go back to the queue', () => {
+    const tasks = [{ hash: 'p', name: 'Emails', plannerDate: '2023-10-16T09:00', durationMinutes: 30, autoPinned: true }];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 10, 0), config });
+    assert.strictEqual(schedule[0].scheduledStart, 10 * 60);
+  });
+
+  test('snoozed tasks wait until the snooze ends', () => {
+    const tasks = [
+      { hash: 'hi', name: 'Important', durationMinutes: 30, importance: 10, urgency: 10, snoozedUntil: new Date(2023, 9, 16, 10, 0).toISOString() },
+      { hash: 'lo', name: 'Small', durationMinutes: 30, importance: 2, urgency: 2 },
+      { hash: 'nt', name: 'Not today', durationMinutes: 30, snoozedUntil: new Date(2023, 9, 17, 9, 0).toISOString() },
+    ];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 9, 0), config });
+    assert.deepStrictEqual(schedule.map(s => [s.task.hash, s.scheduledStart]), [['lo', 9 * 60], ['hi', 10 * 60]]);
+  });
+
+  test('findConflicts and findNextFreeSlot see routines and pinned tasks', () => {
+    const overrides = {
+      ...config,
+      routines: [morning],
+      tasks: [{ hash: 't1', name: 'Dentist', plannerDate: '2023-10-16T08:00', durationMinutes: 60 }],
+    };
+    const clash = findConflicts({ dateStr: '2023-10-16', startMinutes: 7 * 60 + 30, durationMinutes: 15, overrides });
+    assert.deepStrictEqual(clash.map(c => c.kind), ['routine']);
+    assert.strictEqual(findConflicts({ dateStr: '2023-10-16', startMinutes: 8 * 60, durationMinutes: 30, ignore: 't1', overrides }).length, 0);
+    // 07:00-07:33 routine, 08:00-09:00 dentist -> a 30 min slot from 07:00 fits at 09:00
+    assert.strictEqual(findNextFreeSlot({ dateStr: '2023-10-16', fromMinutes: 7 * 60, durationMinutes: 30, overrides }), 9 * 60);
+    // a 20 min slot fits between them at 07:35
+    assert.strictEqual(findNextFreeSlot({ dateStr: '2023-10-16', fromMinutes: 7 * 60, durationMinutes: 20, overrides }), 7 * 60 + 35);
+  });
+
+  test('findRoutineConflicts detects overlapping routines on shared days', () => {
+    const other = { id: 'r2', name: 'Kids', startTime: '07:30', weekDays: [1], tasks: [{ name: 'Dress', duration: 10 }] };
+    const weekend = { id: 'r3', name: 'Yoga', startTime: '07:10', weekDays: [0, 6], tasks: [{ name: 'Yoga', duration: 30 }] };
+    assert.deepStrictEqual(findRoutineConflicts(morning, [morning, other, weekend]).map(r => r.id), ['r2']);
+  });
+});
+
+describe('Scheduler in-progress blocks', () => {
+  test('a fixed block that already started keeps its start time', () => {
+    const tasks = [{ hash: 'm', name: 'Meeting', plannerDate: '2023-10-16T09:00', durationMinutes: 60, isFixed: true }];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 9, 20), config: { dayStart: '06:00', dayEnd: '22:00' } });
+    assert.strictEqual(schedule[0].scheduledStart, 9 * 60);
+    assert.strictEqual(schedule[0].scheduledEnd, 10 * 60);
   });
 });

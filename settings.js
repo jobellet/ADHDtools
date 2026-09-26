@@ -10,7 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     fixedTag: document.getElementById('setting-fixed-tag'),
     flexibleTag: document.getElementById('setting-flexible-tag'),
     defaultTaskMinutes: document.getElementById('setting-default-task-minutes'),
-    enableUnifiedScheduler: document.getElementById('setting-unified-scheduler'),
+    routineBufferPercent: document.getElementById('setting-routine-buffer'),
+    bufferDurationMinutes: document.getElementById('setting-task-buffer'),
+    breakWindowMinutes: document.getElementById('setting-break-window'),
+    showAllOptions: document.getElementById('setting-show-all-options'),
     includeCalendarInSchedule: document.getElementById('setting-include-calendar'),
     routineAutoRunDefault: document.getElementById('setting-routine-auto-run'),
     contextAutoSwitch: document.getElementById('setting-context-autoswitch'),
@@ -27,7 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.fixedTag) fields.fixedTag.value = values.fixedTag;
     if (fields.flexibleTag) fields.flexibleTag.value = values.flexibleTag;
     if (fields.defaultTaskMinutes) fields.defaultTaskMinutes.value = values.defaultTaskMinutes;
-    if (fields.enableUnifiedScheduler) fields.enableUnifiedScheduler.checked = values.enableUnifiedScheduler;
+    if (fields.routineBufferPercent) fields.routineBufferPercent.value = values.routineBufferPercent ?? 10;
+    if (fields.bufferDurationMinutes) fields.bufferDurationMinutes.value = values.bufferDurationMinutes ?? 5;
+    if (fields.breakWindowMinutes) fields.breakWindowMinutes.value = values.breakWindowMinutes ?? 15;
+    if (fields.showAllOptions) fields.showAllOptions.checked = Boolean(values.showAllOptions);
     if (fields.includeCalendarInSchedule) fields.includeCalendarInSchedule.checked = values.includeCalendarInSchedule;
     if (fields.routineAutoRunDefault) fields.routineAutoRunDefault.checked = values.routineAutoRunDefault;
     if (fields.contextAutoSwitch) fields.contextAutoSwitch.checked = values.contextAutoSwitch;
@@ -37,6 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   populateFields(config);
+
+  // 0 is a valid value for buffers, so don't use `|| default` for these.
+  function numberOr(value, fallback) {
+    const num = Number(value);
+    return value !== '' && Number.isFinite(num) && num >= 0 ? num : fallback;
+  }
+
+  // "Show all options" applies right away, without pressing Save.
+  fields.showAllOptions?.addEventListener('change', () => {
+    window.ConfigManager.updateConfig({ showAllOptions: fields.showAllOptions.checked });
+  });
 
   const form = document.getElementById('settings-form');
   const status = document.getElementById('settings-status');
@@ -98,7 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fixedTag: fields.fixedTag?.value || window.ConfigManager.DEFAULT_CONFIG.fixedTag,
         flexibleTag: fields.flexibleTag?.value || window.ConfigManager.DEFAULT_CONFIG.flexibleTag,
         defaultTaskMinutes: Number(fields.defaultTaskMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.defaultTaskMinutes,
-        enableUnifiedScheduler: fields.enableUnifiedScheduler?.checked || false,
+        routineBufferPercent: numberOr(fields.routineBufferPercent?.value, 10),
+        bufferDurationMinutes: numberOr(fields.bufferDurationMinutes?.value, 5),
+        breakWindowMinutes: numberOr(fields.breakWindowMinutes?.value, 15),
+        showAllOptions: fields.showAllOptions?.checked || false,
         includeCalendarInSchedule: fields.includeCalendarInSchedule?.checked || false,
         routineAutoRunDefault: fields.routineAutoRunDefault?.checked || false,
         contextAutoSwitch: fields.contextAutoSwitch?.checked || false,

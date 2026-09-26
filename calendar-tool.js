@@ -317,6 +317,7 @@
 
   function saveIcsUrl(url) {
     localStorage.setItem(ICS_URL_KEY, url);
+    window.dispatchEvent(new Event('capabilitiesChanged'));
   }
 
   function saveEvents(events) {

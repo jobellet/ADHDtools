@@ -1,5 +1,4 @@
 import { buildSchedule } from './core/scheduler.js';
-import { createTask as createTaskModel } from './core/task-model.js';
 
 export function localDateString(date = new Date()) {
     const d = date instanceof Date ? date : new Date(date);
@@ -93,39 +92,32 @@ export function getPlannerTasksForDay(currentDate) {
         }
     });
 
-    if (!cfg.enableUnifiedScheduler) {
-        return todaysTasks;
-    }
-
     const schedulerTasks = [];
     todaysTasks.forEach(task => {
         schedulerTasks.push({
             ...task,
             startTime: task.plannerDate.slice(11, 16),
-            durationMinutes: task.duration || defaultDuration,
-            isFixed: true,
+            durationMinutes: task.duration || task.durationMinutes || defaultDuration,
         });
     });
 
-    tasks.filter(task => !task.plannerDate || task.plannerDate.startsWith(plannerDateStr)).forEach(task => {
-        if (todaysTasks.includes(task)) return;
+    tasks.filter(task => !task.plannerDate).forEach(task => {
         const priorityScore = task.priority === 'high' ? 8 : task.priority === 'low' ? 4 : 6;
         schedulerTasks.push({
             ...task,
-            durationMinutes: task.duration || defaultDuration,
+            durationMinutes: task.duration || task.durationMinutes || defaultDuration,
             importance: task.importance ?? priorityScore,
             urgency: task.urgency ?? priorityScore,
         });
     });
 
-    if (cfg.includeCalendarInSchedule) {
-        const calendarTasks = getCalendarTasksForDay(currentDate, defaultDuration);
-        schedulerTasks.push(...calendarTasks);
-    }
-
+    // Plan from "now" for today; other days are planned from the start of the day.
+    const now = new Date();
+    const isToday = localDateString(now) === plannerDateStr;
+    const planFrom = isToday ? now : new Date(`${plannerDateStr}T00:00`);
     const schedule = buildSchedule({
         tasks: schedulerTasks,
-        now: currentDate,
+        now: planFrom,
         config: cfg,
     }) || [];
 
@@ -210,40 +202,4 @@ function normalizeCalendarEvent(rawEvent) {
         ev.calendarInstanceId = `${ev.calendarUid}:${ev.instanceStart}`;
     }
     return ev;
-}
-
-function getCalendarTasksForDay(currentDate, defaultDuration) {
-    const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
-    const dayStr = localDateString(currentDate);
-    return events
-        .filter(ev => ev.start && ev.start.startsWith(dayStr))
-        .map(ev => normalizeCalendarEvent(ev))
-        .map(ev => {
-            const startTimeStr = ev.start ? ev.start.slice(11, 16) : null;
-            let durationMinutes = defaultDuration;
-            if (ev.start && ev.end) {
-                const startDate = new Date(ev.start);
-                const endDate = new Date(ev.end);
-                const diff = Math.round((endDate - startDate) / 60000);
-                if (Number.isFinite(diff) && diff > 0) {
-                    durationMinutes = diff;
-                }
-            }
-            const isFixed = ev.isFixed !== undefined ? ev.isFixed : true;
-            const taskBase = {
-                id: ev.id || ev.calendarInstanceId || ev.calendarUid || `calendar-${Date.now()}`,
-                title: ev.title || '',
-                text: ev.title || '',
-                source: 'calendar',
-                calendarUid: ev.calendarUid || null,
-                calendarInstanceId: ev.calendarInstanceId || null,
-                isFixed,
-                startTime: isFixed ? startTimeStr : null,
-                durationMinutes,
-                importance: 10,
-                urgency: 10,
-            };
-            return createTaskModel ? createTaskModel(taskBase, taskBase) : taskBase;
-        })
-        .filter(task => task && (!task.isFixed || task.startTime));
 }

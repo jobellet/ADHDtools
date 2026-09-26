@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const toolCards = document.querySelectorAll(".tool-card");
     const toolSections = document.querySelectorAll(".tool-section");
-    const navLinks = document.querySelectorAll("nav a[data-tool]");
+    const navLinks = document.querySelectorAll("nav a[data-tool], #main-nav-links a[data-tool]");
     const currentTimeDisplay = document.getElementById("current-time-display");
     const userSelect = document.getElementById("active-user-select");
     const addUserBtn = document.getElementById("add-user-btn");
@@ -10,81 +9,48 @@ document.addEventListener("DOMContentLoaded", () => {
     // Dynamically support both GitHub Pages (/ADHDtools) and local development (/)
     const BASE_PATH = window.location.pathname.startsWith('/ADHDtools') ? '/ADHDtools' : '';
 
-    // Handle Redirect from 404.html (GitHub Pages SPA Hack)
-    // This allows the SPA to handle routes like /pomodoro on GitHub Pages by:
-    // 1. 404.html catching the request
-    // 2. Redirecting to index.html with the original path/query/hash in the 'redirect' param
-    // 3. This script restoring the original state
+    // Handle Redirect from 404.html (GitHub Pages SPA Hack): 404.html sends
+    // deep links (e.g. /ADHDtools/pomodoro) to index.html?redirect=/pomodoro.
     const urlParams = new URLSearchParams(window.location.search);
     const redirectPath = urlParams.get('redirect');
     if (redirectPath) {
-        // Reconstruct the original URL (path + search + hash)
-        // redirectPath contains the decoded full path from 404.html
-        const newPath = BASE_PATH + redirectPath;
-        // Update the URL in the browser without reloading
-        window.history.replaceState(null, '', newPath);
+        window.history.replaceState(null, '', BASE_PATH + redirectPath);
     }
 
-    const TOOL_SLUG_MAP = {
-        'home': '',
-        'pomodoro': 'pomodoro',
-        'eisenhower': 'eisenhower',
-        'planner': 'Day_Planner',
-        'calendar': 'calendar',
-        'tasks': 'tasks',
-        'breakdown': 'breakdown',
-        'habits': 'habits',
-        'routine': 'routine',
-        'family': 'family',
-        'focus': 'focus',
-        'rewards': 'rewards',
-        'settings': 'settings',
-        'about': 'about'
+    const TOOLS = {
+        home: { slug: '', icon: 'home.svg', title: 'Now' },
+        pomodoro: { slug: 'pomodoro', icon: 'pomodoro.svg', title: 'Pomodoro Timer' },
+        planner: { slug: 'Day_Planner', icon: 'planner.svg', title: 'Day Planner' },
+        calendar: { slug: 'calendar', icon: 'calendar.svg', title: 'Calendar' },
+        breakdown: { slug: 'breakdown', icon: 'task-breakdown.svg', title: 'Task Breakdown' },
+        habits: { slug: 'habits', icon: 'habit-tracker.svg', title: 'Habit Tracker' },
+        routine: { slug: 'routine', icon: 'routine.svg', title: 'Routines' },
+        focus: { slug: 'focus', icon: 'focus-mode.svg', title: 'Focus Mode' },
+        rewards: { slug: 'rewards', icon: 'rewards.svg', title: 'Rewards' },
+        settings: { slug: 'settings', icon: 'settings.svg', title: 'Settings' },
+        about: { slug: 'about', icon: 'about.svg', title: 'About' },
     };
 
-    const TOOL_ICON_MAP = {
-        'home': 'home.svg',
-        'pomodoro': 'pomodoro.svg',
-        'eisenhower': 'eisenhower.svg',
-        'planner': 'planner.svg',
-        'calendar': 'calendar.svg',
-        'tasks': 'task-manager.svg',
-        'breakdown': 'task-breakdown.svg',
-        'habits': 'habit-tracker.svg',
-        'routine': 'routine.svg',
-        'family': 'routine.svg',
-        'focus': 'focus-mode.svg',
-        'rewards': 'rewards.svg',
-        'settings': 'settings.svg',
-        'about': 'about.svg'
-    };
-
-    // Reverse map for lookup
-    const SLUG_TOOL_MAP = Object.entries(TOOL_SLUG_MAP).reduce((acc, [tool, slug]) => {
+    const SLUG_TOOL_MAP = Object.entries(TOOLS).reduce((acc, [tool, { slug }]) => {
         acc[slug.toLowerCase()] = tool;
         return acc;
-    }, {});
+    }, { now: 'home' });
+
+    // Auto mode: when the app opens on its root URL it shows the Now view while
+    // something is running (or about to start) and the day planner otherwise,
+    // and keeps following the schedule until the user navigates by hand.
+    let autoMode = false;
+    let currentTool = null;
 
     function getSlugFromUrl() {
-        const path = window.location.pathname;
-        // Remove trailing slash
-        const cleanPath = path.endsWith('/') ? path.slice(0, -1) : path;
-        // Remove base path
-        let slug = cleanPath;
-        if (cleanPath.startsWith(BASE_PATH)) {
-            slug = cleanPath.slice(BASE_PATH.length);
-        }
-        // Remove leading slash
-        if (slug.startsWith('/')) {
-            slug = slug.slice(1);
-        }
-        return slug;
+        let slug = window.location.pathname.replace(/\/$/, '');
+        if (slug.startsWith(BASE_PATH)) slug = slug.slice(BASE_PATH.length);
+        return slug.replace(/^\//, '');
     }
 
     function updateUrl(toolName) {
-        const slug = TOOL_SLUG_MAP[toolName];
+        const slug = TOOLS[toolName]?.slug;
         if (slug === undefined) return;
-
         const newPath = slug ? `${BASE_PATH}/${slug}` : `${BASE_PATH}/`;
         if (window.location.pathname !== newPath) {
             history.pushState({ tool: toolName }, '', newPath);
@@ -92,99 +58,106 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateAppIcon(toolName) {
-        const iconName = TOOL_ICON_MAP[toolName] || 'home.svg';
-        const iconPath = `icons/${iconName}`;
-
+        const iconPath = `icons/${TOOLS[toolName]?.icon || 'home.svg'}`;
         const favicon = document.getElementById('favicon');
         const appleIcon = document.getElementById('apple-touch-icon');
-
         if (favicon) favicon.href = iconPath;
         if (appleIcon) appleIcon.href = iconPath;
     }
 
     function switchTool(toolName, updateHistory = true) {
-        // Fallback to home if tool not found
-        if (!document.getElementById(toolName)) {
+        if (!document.getElementById(toolName) || !TOOLS[toolName]) {
             toolName = 'home';
         }
+        const changed = toolName !== currentTool;
+        currentTool = toolName;
 
-        toolSections.forEach(section => {
-            section.classList.remove("active");
-        });
-        const activeSection = document.getElementById(toolName);
-        if (activeSection) {
-            activeSection.classList.add("active");
-        }
-
-        navLinks.forEach(link => {
-            link.classList.toggle("active", link.dataset.tool === toolName);
-        });
-
-        if (toolName === 'family') {
-            window.FamilyView?.init?.();
-            window.FamilyView?.render?.();
-        }
+        toolSections.forEach(section => section.classList.toggle("active", section.id === toolName));
+        navLinks.forEach(link => link.classList.toggle("active", link.dataset.tool === toolName));
+        // "More" is highlighted when one of its tools is open.
+        const moreBtn = document.querySelector('.hamburger-menu');
+        if (moreBtn) moreBtn.classList.toggle('active', !['home', 'planner', 'routine'].includes(toolName));
+        document.body.dataset.tool = toolName;
 
         updateAppIcon(toolName);
+        if (updateHistory) updateUrl(toolName);
+        document.title = `${TOOLS[toolName].title} - ADHD Tools Hub`;
+        closeSheets();
 
-        if (updateHistory) {
-            updateUrl(toolName);
+        if (changed) {
+            window.dispatchEvent(new CustomEvent('toolChanged', { detail: { tool: toolName } }));
+            if (toolName === 'planner') window.DayPlanner?.scrollToCurrent?.();
         }
+    }
 
-        // Update document title
-        const titleMap = {
-            'home': 'Home',
-            'pomodoro': 'Pomodoro Timer',
-            'eisenhower': 'Eisenhower Matrix',
-            'planner': 'Day Planner',
-            'calendar': 'Calendar',
-            'tasks': 'Task Manager',
-            'breakdown': 'Task Breakdown',
-            'habits': 'Habit Tracker',
-            'routine': 'Routine Tool',
-            'family': 'Family Routine',
-            'focus': 'Focus Mode',
-            'rewards': 'Rewards',
-            'settings': 'Settings',
-            'about': 'About'
-        };
-        document.title = `${titleMap[toolName] || 'Tool'} - ADHD Tools Hub`;
+    // Called by the Now view whenever the schedule state changes.
+    function autoRoute(state) {
+        if (!autoMode || !window.NowState) return;
+        if (currentTool !== 'home' && currentTool !== 'planner') return;
+        const target = window.NowState.defaultToolFor(state);
+        if (target !== currentTool) switchTool(target, false);
+    }
+
+    function navigate(toolName) {
+        autoMode = false;
+        switchTool(toolName);
+        window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     // Handle browser back/forward
     window.addEventListener('popstate', (event) => {
-        if (event.state && event.state.tool) {
-            switchTool(event.state.tool, false);
-        } else {
-            // Try to parse URL if state is missing (e.g. external link)
-            const slug = getSlugFromUrl();
-            const tool = SLUG_TOOL_MAP[slug.toLowerCase()] || 'home';
-            switchTool(tool, false);
-        }
+        autoMode = false;
+        const tool = event.state?.tool || SLUG_TOOL_MAP[getSlugFromUrl().toLowerCase()] || 'home';
+        switchTool(tool, false);
     });
 
-    toolCards.forEach(card => {
-        card.addEventListener("click", () => {
-            const toolName = card.dataset.tool;
-            switchTool(toolName);
-            window.scrollTo({ top: 0, behavior: "smooth" });
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[data-tool], [data-go-tool]');
+        if (!link) return;
+        e.preventDefault();
+        navigate(link.dataset.tool || link.dataset.goTool);
+    });
+
+    // ----- Sheets (More menu, Add task) -----
+    const sheets = {
+        more: { el: document.getElementById('more-menu'), backdrop: document.getElementById('more-menu-backdrop') },
+        capture: { el: document.getElementById('capture-sheet'), backdrop: document.getElementById('capture-sheet-backdrop') },
+    };
+    const hamburger = document.querySelector(".hamburger-menu");
+
+    function openSheet(name) {
+        closeSheets();
+        const sheet = sheets[name];
+        if (!sheet?.el) return;
+        sheet.el.classList.remove('hidden');
+        sheet.backdrop?.classList.remove('hidden');
+        if (name === 'more') hamburger?.setAttribute('aria-expanded', 'true');
+        const focusTarget = sheet.el.querySelector('input[type="text"]') || sheet.el.querySelector('a, button');
+        setTimeout(() => focusTarget?.focus(), 50);
+    }
+
+    function closeSheets() {
+        Object.values(sheets).forEach(({ el, backdrop }) => {
+            el?.classList.add('hidden');
+            backdrop?.classList.add('hidden');
         });
+        hamburger?.setAttribute('aria-expanded', 'false');
+    }
+
+    hamburger?.addEventListener('click', () => {
+        if (sheets.more.el?.classList.contains('hidden')) openSheet('more');
+        else closeSheets();
+    });
+    document.getElementById('nav-add-btn')?.addEventListener('click', () => openSheet('capture'));
+    Object.values(sheets).forEach(({ el, backdrop }) => {
+        backdrop?.addEventListener('click', closeSheets);
+        el?.querySelectorAll('[data-close-sheet]').forEach(btn => btn.addEventListener('click', closeSheets));
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeSheets();
     });
 
-    navLinks.forEach(link => {
-        link.addEventListener("click", (e) => {
-            e.preventDefault();
-            const toolName = link.dataset.tool;
-            switchTool(toolName);
-
-            // Close the mobile nav menu after selection
-            if (mainNavLinks.classList.contains("nav-open")) {
-                mainNavLinks.classList.remove("nav-open");
-                hamburger.setAttribute("aria-expanded", false);
-            }
-        });
-    });
-
+    // ----- User profiles -----
     function renderUserOptions() {
         if (!userSelect || !window.UserContext) return;
         const active = window.UserContext.getActiveUser();
@@ -201,10 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (userSelect) {
-        userSelect.addEventListener('change', (e) => {
-            const next = e.target.value;
-            window.UserContext?.setActiveUser(next);
-        });
+        userSelect.addEventListener('change', (e) => window.UserContext?.setActiveUser(e.target.value));
         window.addEventListener('activeUserChanged', renderUserOptions);
     }
 
@@ -218,52 +188,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Toggle hamburger menu
-    const hamburger = document.querySelector(".hamburger-menu");
-    const mainNavLinks = document.getElementById("main-nav-links");
-
-    hamburger.addEventListener("click", () => {
-        const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-        hamburger.setAttribute("aria-expanded", !expanded);
-        mainNavLinks.classList.toggle("nav-open");
-        // Don't switch to home on menu toggle, just toggle menu
-    });
-
-    // Toggle preferences drawer
-    const prefsToggleBtn = document.getElementById("prefs-toggle-btn");
-    const topPreferencesDrawer = document.getElementById("top-preferences-drawer");
-    if (prefsToggleBtn && topPreferencesDrawer) {
-        prefsToggleBtn.addEventListener("click", () => {
-            if (topPreferencesDrawer.style.display === "none") {
-                topPreferencesDrawer.style.display = "block";
-            } else {
-                topPreferencesDrawer.style.display = "none";
-            }
-        });
-    }
-
-    // Update time display every second
+    // ----- Clock -----
     function updateTime() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        currentTimeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+        if (!currentTimeDisplay) return;
+        currentTimeDisplay.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-
-    setInterval(updateTime, 1000);
+    setInterval(updateTime, 10000);
     updateTime();
 
     renderUserOptions();
 
-    // Initial Load
+    // ----- Initial view -----
     const initialSlug = getSlugFromUrl();
     const initialTool = SLUG_TOOL_MAP[initialSlug.toLowerCase()] || 'home';
-    switchTool(initialTool, false); // Don't push state on initial load, just replace if needed or do nothing
-    // Actually, if the URL is clean, we don't need to push. 
-    // If we landed on /ADHDtools/pomodoro, we just want to render pomodoro.
-    // If we landed on /ADHDtools/, we render home.
+    if (initialTool === 'home' && !initialSlug) {
+        autoMode = true;
+        // The scheduler is an ES module and may load after this script.
+        const decide = () => autoRoute(window.NowState?.getState?.());
+        switchTool('home', false);
+        if (window.UnifiedScheduler) decide();
+        else window.addEventListener('schedulerReady', decide, { once: true });
+    } else {
+        switchTool(initialTool, false);
+    }
 
-    // Expose switchTool globally for CrossTool
-    window.switchTool = switchTool;
+    window.switchTool = navigate;
+    window.AppRouter = { autoRoute, isAuto: () => autoMode, current: () => currentTool };
+    window.AppSheets = { open: openSheet, close: closeSheets };
 });
