@@ -1,5 +1,6 @@
 import { renderDayPlanner } from './render-day.js';
-import { populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
+import { populateTaskOptions, getDefaultTime, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
+import { planDayWithAI } from './ai-plan.js';
 import { createTask } from '../../core/task-model.js';
 
 let editingTaskId = null;
@@ -280,94 +281,23 @@ function scrollToCurrent() {
     });
 }
 
-function getBreakdownTasks() {
-    const tree = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
-    const tasks = [];
-    function traverse(nodes) {
-        nodes.forEach(n => {
-            if (n.completed) return;
-            if (n.subtasks && n.subtasks.length) {
-                traverse(n.subtasks);
-            } else if (n.text) {
-                tasks.push(n.text);
-            }
-        });
-    }
-    traverse(tree);
-    return tasks;
-}
-
-function getUnscheduledTaskNames() {
-    return (window.TaskStore?.getPendingTasks?.() || [])
-        .filter(t => !t.plannerDate)
-        .map(t => t.name || t.text)
-        .filter(Boolean);
-}
-
 async function autoPlanDay() {
     try {
         aiPlanBtn.disabled = true;
-        const breakdownTasks = getBreakdownTasks();
-        const tasks = [...new Set([...getUnscheduledTaskNames(), ...breakdownTasks])];
-        if (tasks.length === 0) {
-            alert('No unscheduled tasks to plan.');
-            return;
-        }
-        const events = getCalendarEvents(currentDate);
-        events.forEach(ev => {
-            const plannerDateTime = `${localDateString(currentDate)}T${ev.start}`;
-            const existing = window.DataManager.getTasks().map(wrapTask).find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
-            if (!existing) {
-                const startMins = parseInt(ev.start.slice(0, 2)) * 60 + parseInt(ev.start.slice(3, 5));
-                const endMins = ev.end ? parseInt(ev.end.slice(0, 2)) * 60 + parseInt(ev.end.slice(3, 5)) : startMins + 60;
-                window.DataManager.addTask({
-                    text: ev.title,
-                    plannerDate: plannerDateTime,
-                    duration: Math.max(5, endMins - startMins),
-                    originalTool: 'Calendar'
-                });
-            }
+        const result = await planDayWithAI(currentDate, {
+            tr,
+            dayBounds: getDayBounds(),
+            defaultDurationMinutes: getDefaultDurationMinutes(),
         });
-        let prompt = `Today is ${currentDate.toDateString()}.`;
-        if (events.length) {
-            prompt += `\nExisting events:`;
-            events.forEach(ev => {
-                prompt += `\n- ${ev.start}${ev.end ? '-' + ev.end : ''} ${ev.title}`;
-            });
-        } else {
-            prompt += `\nNo existing events.`;
-        }
-        prompt += `\nTasks to schedule:`;
-        tasks.forEach(t => { prompt += `\n- ${t}`; });
-        prompt += `\nReturn a JSON array of objects with time (HH:MM 24h), text, and duration in minutes.`;
-
-        if (!window.AIAssistant?.isEnabled?.()) {
-            alert('AI Plan needs an AI provider. Open Settings → AI Assistance to configure one, or use "Generate schedule for today" which works offline.');
+        if (!result.ok) {
+            window.DataManager?.showNotification?.(result.message, 'error');
             return;
         }
-        let plan;
-        try {
-            plan = await window.AIAssistant.completeJSON(prompt, { maxTokens: 1200 });
-        } catch (err) {
-            alert(`AI planning failed: ${err.message}`);
-            return;
-        }
-        if (!Array.isArray(plan)) {
-            alert('The AI response was not a plan (expected a JSON array).');
-            return;
-        }
-        plan.forEach(item => {
-            if (!item.time || !item.text) return;
-            const duration = parseInt(item.duration, 10) || getDefaultDurationMinutes();
-            const plannerDateTime = `${localDateString(currentDate)}T${item.time}`;
-            window.DataManager.addTask({
-                text: item.text,
-                plannerDate: plannerDateTime,
-                duration,
-                originalTool: 'AI'
-            });
-        });
-        alert('Day planned with AI.');
+        const parts = [result.message];
+        if (result.moved) parts.push(tr('plan.aiMoved', { n: result.moved }));
+        if (result.dropped) parts.push(tr('plan.aiDroppedCount', { n: result.dropped }));
+        window.DataManager?.showNotification?.(parts.join(' '), result.dropped ? 'warning' : 'success');
+        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
     } finally {
         aiPlanBtn.disabled = false;
     }
