@@ -16,11 +16,32 @@ If you'd like to contribute, please follow these steps:
 The app is a static site — no build step. Serve the folder over HTTP (ES modules don't work from `file://`), e.g.:
 
 ```bash
-npx serve .            # or
+node .claude/static-server.cjs   # serves on http://localhost:8422 (like GitHub Pages, also under /ADHDtools/)
+npx serve .                      # or
 python3 -m http.server 8422
 ```
 
 `core/*.js` are ES modules loaded via `<script type="module">`; the rest are classic deferred scripts. All state lives in `localStorage`.
+
+## Tests
+
+```bash
+npm ci
+npm test
+```
+
+The unit tests (`tests/*.test.js`, Node's built-in test runner) cover the scheduler (routine booking, conflicts, snoozing), the Now state, the task model, the parser, sync merging and the page shell. CI runs them on every pull request. For UI behaviour, follow the [manual test cases](testing.md) on a phone-sized and a desktop-sized window.
+
+## Where things live
+
+| File | Role |
+| --- | --- |
+| `app.js` | Navigation, sheets, and the default view (Now or Day Planner) |
+| `core/scheduler.js` | The day plan, routine booking, conflict helpers |
+| `core/now-state.js` / `now-view.js` | What to show now; the Now view and the planner helpers |
+| `capabilities.js` | Hides options the user's setup does not need |
+| `routine.js` | Routine editor and player |
+| `styles-app-shell.css` | Navigation, Now view, planner helpers (loaded last) |
 
 To test Google Calendar/Drive features locally, add your local origin (e.g. `http://localhost:8422`) to your OAuth client's **Authorized JavaScript origins** — see the [Google Calendar tutorial](google-calendar-sync.md).
 

@@ -76,7 +76,8 @@
       }
 
       const task = window.TaskStore.addTask(raw);
-      showCaptureStatus(`Added “${task.name}” — ${describeParsed({ ...parsed, plannerDate: raw.plannerDate })}.${moved}`);
+      const shownName = task.name.replace(/\[(FIX|FLEX)\]\s*/gi, '').trim() || task.name;
+      showCaptureStatus(`Added “${shownName}” — ${describeParsed({ ...parsed, plannerDate: raw.plannerDate })}.${moved}`);
 
       if (parsed.needsBreakdown) {
         const breakBtn = document.createElement('button');

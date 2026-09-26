@@ -2,7 +2,9 @@
 
 The Calendar tool can pull events from Google Calendar in three ways. **Private sync (Method 1) is recommended**: nothing is made public and no files need to be exported.
 
-All synced events flow into the shared TaskStore, so they show up in the Calendar tool, the Day Planner and the unified scheduler.
+All synced events flow into the shared TaskStore, so they show up in the Calendar tool, the Day Planner, the Now view and the unified scheduler. Fixed events **block time**: the app never schedules a task or routine on top of them (turn this off in **Settings → Calendar → Calendar events block time in the plan**).
+
+> **The app adapts:** once Google Calendar is connected, the `.ics` options (Methods 2 and 3) are hidden to keep the screens simple. To see them again, turn on **Settings → General → Show all options**.
 
 ---
 
@@ -35,7 +37,7 @@ You need a **Client ID** only — no API key, no billing.
 
 ### Step B — Connect the app
 
-1. Open the **Settings** tab and expand **Calendar Notifications & Google Sync**.
+1. Open **More → Settings** and expand **Calendar Notifications & Google Sync**.
 2. In the **Google Calendar API** box, paste your Client ID and click **Save**. (You can also paste the whole JSON file downloaded from Google — the ID is extracted automatically.)
 3. In the **Google Calendar Sync (private)** box, click **Connect & Sync**.
 4. A Google popup opens: pick your account and allow access. *(You will see an "unverified app" warning because it is your own test app — click "Continue".)*
@@ -64,7 +66,7 @@ When connected, small "export" buttons appear on Day Planner time blocks and tas
 ## Method 2 — Import an .ics file (offline, no account setup)
 
 1. Export your calendar as an `.ics` file. In **Google Calendar**: **Settings → Import & export → Export** downloads a ZIP with your calendars; extract the `.ics`.
-2. Open the **Calendar** tool and click **Import ICS**.
+2. Open **More → Settings** and expand **Calendar file / link import (.ics)**, then click **Import .ics File**.
 3. Select the file — events appear in the list and are stored locally.
 
 Imported events are converted into TaskStore entries using deterministic hashes (ICS UID + start time), so re-imports don't duplicate. `[FIX]` / `[FLEX]` tags in event titles control whether the scheduler treats them as fixed or movable blocks. Only simple events are supported; nothing is uploaded anywhere.
@@ -78,7 +80,7 @@ Imported events are converted into TaskStore entries using deterministic hashes 
 1. In **Google Calendar** open **Settings** and choose your calendar under **Settings for my calendars**.
 2. Under **Access permissions for events** check **Make available to public**.
 3. Go to **Integrate calendar** and copy the **Public address in iCal format**.
-4. In the Calendar tool paste this link into the **ICS URL** field and click **Load**. Events refresh automatically (default: every 30 seconds).
+4. In **More → Settings → Calendar file / link import (.ics)**, paste this link into the **ICS URL** field and click **Load**. Events refresh automatically (default: every 30 seconds, set in **Settings → Calendar**).
 
 To revoke access later, uncheck **Make available to public**, or use **Reset private URLs** to invalidate the old link.
 

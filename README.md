@@ -1,59 +1,84 @@
+<p align="center">
+  <a href="README.md"><img src="docs/flags/gb.svg" height="20" alt="English"> English</a> ·
+  <a href="README.de.md"><img src="docs/flags/de.svg" height="20" alt="Deutsch"> Deutsch</a> ·
+  <a href="README.fr.md"><img src="docs/flags/fr.svg" height="20" alt="Français"> Français</a> ·
+  <a href="README.es.md"><img src="docs/flags/es.svg" height="20" alt="Español"> Español</a>
+</p>
+
 # ADHD Tools Hub
 
 [**▶ Open the Live App**](https://jobellet.github.io/ADHDtools/)
 
-Interactive tools to help manage ADHD symptoms and improve productivity. Everything runs in your browser — your data stays on your device unless *you* connect a sync option.
+A day planner for people with ADHD that shows **one thing at a time**. It runs in your browser: your data stays on your device unless *you* turn on a sync option. It works on phones and computers, offline, with no account.
+
+## The idea: as little to think about as possible
+
+At any moment you only do one of three things:
+
+1. **Do** the task on the screen. The app opens on the **Now** view: the current task, routine step or event, with a big countdown and 2–3 buttons (*Done*, *Focus*, *Not now*).
+2. **Rest** and see what comes next. In a short gap, the Now view shows a countdown to the next item.
+3. **Plan** ahead. When nothing is planned, the app opens the **Day Planner**. There you place tasks and split big tasks with deadlines into small steps.
+
+Routines (morning, evening, anything you create) **book their time** in your day, with a buffer (+10 % by default). Nothing else can be scheduled at the same time: a task added at a busy time moves to the next free slot, and the app tells you why.
+
+➡️ **New here? Read the [user guide](docs/using-the-app.md).**
 
 ## Quick demo
 
-The offline quick-capture flow works without an AI provider:
+Adding a task works offline, without any AI:
 
 ```text
 Input:  Call mom tomorrow at 5pm for 20 min !7
-Result: [FIX] Call mom — scheduled tomorrow at 17:00 · 20 min · importance 7
+Result: Call mom — tomorrow at 17:00 · 20 min · importance 7 · fixed time
 ```
 
-The task is stored locally as a fixed, scheduled task with its duration and importance preserved. This is the same flow covered by the browser smoke test, with no AI provider configured.
+If 17:00 is already taken (for example by your evening routine), the task moves to the next free slot.
 
-The long-term goal: a unified personal assistant where you just add or speak a task ("Call mom tomorrow at 5pm !7") and the app handles urgency, scheduling, focus timing and rewards. Read the full [vision, roadmap & current status](docs/vision-roadmap.md) and the [Transition Plan](transition_plan.md).
+## 🧰 Features
+
+**Core**
+
+*   **Now view (default):** the current task, routine step or event with a countdown, and what comes next.
+*   **Day Planner:** the whole day on a timeline: routines, fixed tasks, tasks placed by the app, calendar events. A *Plan ahead* panel lists deadlines and big tasks to split.
+*   **Routines:** timed steps played one at a time. Each routine books its time (steps + buffer); overlapping routines can't be saved.
+*   **Quick capture (Add):** type or speak a task in plain words. Works offline; better with [AI](docs/ai-providers.md) if you set it up.
+*   **Unified scheduler:** one plan across tasks, routines and calendar events, ordered by importance × urgency, with no double booking.
+
+**More tools**
+
+*   **Task Breakdown:** split a big task into small steps (manually or with AI).
+*   **Focus Mode** and **Pomodoro Timer:** full-screen timers for deep work.
+*   **Calendar:** private [Google Calendar](docs/google-calendar-sync.md) sync, or `.ics` file / link import.
+*   **Habit Tracker** and **Rewards:** streaks, points for finished tasks, rewards you choose.
+*   **Several users** on one device, and **4 languages** (English, Deutsch, Français, Español).
+
+**Adapts to your setup**
+
+The app only shows the options you use. For example, `.ics` import is hidden once Google Calendar is connected, and AI buttons are hidden without an AI provider. *Settings → General → Show all options* shows everything again.
 
 ## 📚 Guides & Tutorials
 
 | Guide | What you'll learn |
 | --- | --- |
-| [**Sync your data across devices**](docs/sync-across-devices.md) | Google Drive backup/restore, file export/import via any cloud folder, email — with conflict-safe merging. |
-| [**Google Calendar sync**](docs/google-calendar-sync.md) | Private OAuth sync (recommended — no public link!), `.ics` file import, or a public ICS URL. Full Google Cloud setup tutorial included. |
-| [**Optional AI assistance**](docs/ai-providers.md) | Bring your own provider — OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model. Every feature also works without AI. |
-| [**Vision, roadmap & status**](docs/vision-roadmap.md) | Where the project is heading and what already works. |
-| [**Data model & scheduler**](docs/task-model.md) | The unified Task object, TaskStore, and how the scheduler prioritizes your day. |
-| [**Manual test cases**](docs/testing.md) | Scenarios to verify behavior after changes. |
-| [**Contributing**](docs/contributing.md) | How to set up locally and submit changes. |
+| [**User guide**](docs/using-the-app.md) | The Now view, Plan, Add, routines, settings. Start here. |
+| [**Google Calendar sync**](docs/google-calendar-sync.md) | Private OAuth sync (recommended, no public link), `.ics` file import, or a public ICS link. Full Google Cloud setup tutorial. |
+| [**Sync your data across devices**](docs/sync-across-devices.md) | Google Drive backup/restore, file export/import, email, with conflict-safe merging. |
+| [**Optional AI assistance**](docs/ai-providers.md) | Use your own provider: OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model. Everything also works without AI. |
+| [**Data model & scheduler**](docs/task-model.md) | The Task object, TaskStore, routine booking and how the scheduler builds your day. |
+| [**Vision, roadmap & status**](docs/vision-roadmap.md) | Where the project is going and what already works. |
+| [**Manual test cases**](docs/testing.md) | Scenarios to check the app after changes. |
+| [**Contributing**](docs/contributing.md) | Run the app locally, run the tests, send changes. |
 
-## 🧰 Features
-
-*   **Pomodoro Timer:** Work in focused sprints with timed breaks.
-*   **Eisenhower Matrix:** Prioritize tasks based on importance and urgency.
-*   **Day Planner:** Visualize your day with time blocks.
-*   **Task Manager & Breakdown:** Track to-dos and split complex tasks into manageable steps.
-*   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
-*   **Routines:** Create and run daily routines with timed steps. A routine books its time in your day (steps + a 10 % buffer, configurable), so nothing else can be scheduled on top of it.
-*   **Focus Mode:** Minimize distractions with a clean, focused interface.
-*   **Rewards:** Celebrate your accomplishments with visual rewards.
-*   **Calendar:** Sync privately with [Google Calendar](docs/google-calendar-sync.md) or import ICS files.
-*   **Now view (default):** The app opens on what to do *now* — the current task, routine step or event with a big countdown, and what comes next. When nothing is planned, it opens the Day Planner instead.
-*   **Unified Scheduler:** One plan across tasks, routines and calendar events, with no double booking.
-*   **Quick Capture:** Add or speak tasks in natural language — works offline, enhanced by [AI](docs/ai-providers.md) when configured.
-*   **Adapts to your setup:** Options you don't need are tucked away (e.g. `.ics` import once Google Calendar is connected, AI buttons without an AI provider). *Settings → General → Show all options* brings them back.
-*   **Cross-device sync:** [Back up to Google Drive or move a file](docs/sync-across-devices.md) — you choose.
+The guides are in English.
 
 ## 🔒 Privacy
 
-All data is stored locally in your browser. Nothing is sent to any server unless you explicitly enable an integration (Google sync goes directly from your browser to Google; AI requests go directly to the provider you configured). There is no middleman server.
+All data is stored in your browser. Nothing is sent to any server unless you turn on an integration: Google sync goes directly from your browser to Google, and AI requests go directly to the provider you chose. There is no middleman server.
 
 ## 💬 Feedback
 
-If you have suggestions or feedback, please open an issue — or just let me know!
+Suggestions and bug reports are welcome: please open an issue.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://opensource.org/licenses/MIT) file for details.
+MIT License. See the [LICENSE](LICENSE) file.
