@@ -1,5 +1,5 @@
 import TaskStore from './task-store.js';
-import { computeUrgencyFromDeadline } from './task-model.js';
+import { computeUrgencyFromDeadline, isPassiveOrAllDay } from './task-model.js';
 import UrgencyHelpers from './urgency-helpers.js';
 
 const DEFAULT_CONFIG = {
@@ -146,6 +146,7 @@ function loadCalendarBlocks(todayStr, config) {
             isFixed,
             source: 'calendar',
             hash: ev.calendarInstanceId || ev.id || `cal-${ev.start}`,
+            location: ev.location || '',
             startTime: ev.start?.slice(11, 16) || null,
             durationMinutes: duration,
             deadline: ev.end || null,
@@ -248,6 +249,12 @@ function buildDailySchedule(tasks, config, todayStr = localDateString(new Date()
     cursor = end + buffer;
   });
 
+  // Tasks too long for what is left of today can't be done today: they must
+  // not block the smaller tasks behind them.
+  for (let i = flexible.length - 1; i >= 0; i -= 1) {
+    if (getDurationMinutes(flexible[i]) > dayEnd - Math.max(cursor, notBefore(flexible[i]))) flexible.splice(i, 1);
+  }
+
   while (flexible.length && cursor < dayEnd) {
     const task = takeNext(cursor, dayEnd);
     if (!task) {
@@ -278,6 +285,7 @@ export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
   const taskMap = new Map(taskList.map(t => [t.hash, t]));
   const filtered = taskList.filter(t => {
     if (t.completed) return false;
+    if (isPassiveOrAllDay(t)) return false;
     if (isDependencyBlocked(t, taskMap)) return false;
     const plannerDateStr = typeof t.plannerDate === 'string' ? t.plannerDate.slice(0, 10) : null;
     // Respect rescheduled tasks: only schedule items for today or unscheduled ones.
@@ -326,21 +334,23 @@ export function getBusyBlocks(dateStr, overrides = {}) {
   const blocks = [];
   getRoutineBlocks(dateStr, cfg).forEach(slot => blocks.push({
     kind: 'routine', id: slot.task.routineId, name: slot.task.name,
+    location: slot.task.location || '',
     start: slot.startMinutes, end: slot.endMinutes,
   }));
   if (cfg.includeCalendarInSchedule !== false) {
     loadCalendarBlocks(dateStr, cfg).forEach(slot => blocks.push({
       kind: 'event', id: slot.task.hash, name: slot.task.name,
+      location: slot.task.location || '',
       start: slot.startMinutes, end: slot.endMinutes,
     }));
   }
   const tasks = Array.isArray(cfg.tasks) ? cfg.tasks : (TaskStore.getPendingTasks?.() || []);
   tasks
-    .filter(t => !t.completed && typeof t.plannerDate === 'string' && t.plannerDate.startsWith(dateStr) && t.plannerDate.length >= 16)
+    .filter(t => !t.completed && !isPassiveOrAllDay(t) && typeof t.plannerDate === 'string' && t.plannerDate.startsWith(dateStr) && t.plannerDate.length >= 16)
     .forEach(t => {
       const start = parseTimeToMinutes(t.plannerDate.slice(11, 16), null);
       if (!Number.isFinite(start)) return;
-      blocks.push({ kind: 'task', id: t.hash || t.id, name: t.name || t.text || 'Task', start, end: start + taskDurationForBusy(t) });
+      blocks.push({ kind: 'task', id: t.hash || t.id, name: t.name || t.text || 'Task', location: t.location || '', start, end: start + taskDurationForBusy(t) });
     });
   return blocks.sort((a, b) => a.start - b.start);
 }
@@ -396,6 +406,7 @@ const UnifiedScheduler = {
   findNextFreeSlot,
   findRoutineConflicts,
   routineBookedMinutes,
+  isPassiveOrAllDay,
   localDateString,
 };
 

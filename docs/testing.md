@@ -1,3 +1,18 @@
+# Testing
+
+## Automatic checks (run before every PR, after merging the latest `main`)
+
+```bash
+npm test          # unit tests (scheduler, tasks, translations, file structure)
+npm run test:ui   # the real app in headless Chromium, phone (390×844) and desktop (1366×900)
+```
+
+The first time, `npm run test:ui` needs a browser: `npx playwright install chromium`.
+CI runs both on every pull request. The browser tests check that the app opens on the right screen,
+that the planner shows the whole day (also with all-day calendar events), that zoom keeps blocks on
+their times, that the add-event form never double-books, and that there are no errors and no
+third-party requests while loading. Details: [tests/AGENTS.md](../tests/AGENTS.md).
+
 # Manual Test Cases
 
 Scenarios to verify core behavior after changes.
@@ -32,6 +47,7 @@ Scenarios to verify core behavior after changes.
 
 ## Google Calendar sync
 
+* **All-day events don't hide the day:** with auto-sync on, a calendar that has an all-day event. The planner still shows every other task; the all-day event is not a block and never appears as "now" or as overdue.
 * **Pipeline without OAuth:** in the console run
   `window.CalendarTool.ingestExternalEvents([{ uid: 't1@test', title: 'Probe', start: '2026-01-01T10:00:00', end: '2026-01-01T11:00:00' }])`
   — the event should appear in the Calendar tool and as a `calendar-import` task in `window.TaskStore.getAllTasks()`.

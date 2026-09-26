@@ -642,6 +642,11 @@
 
   function convertEventsToTasks(importedEvents) {
     if (!window.TaskStore?.upsertTaskByHash) return;
+    // Copies the user deleted stay deleted, even when sync brings the event again.
+    let deleted = new Set();
+    try {
+      deleted = new Set((JSON.parse(localStorage.getItem('adhd-deleted-tasks')) || []).map(x => x.id));
+    } catch { /* no tombstones */ }
     const cfg = window.ConfigManager?.getConfig?.() || {};
     const fixedTag = cfg.fixedTag || '[FIX]';
     const flexibleTag = cfg.flexibleTag || '[FLEX]';
@@ -679,6 +684,7 @@
         type: ev.type || 'event',
         isAllDay
       };
+      if (deleted.has(hash)) return;
       window.TaskStore.upsertTaskByHash(hash, task);
     });
     window.EventBus?.dispatchEvent(new Event('dataChanged'));

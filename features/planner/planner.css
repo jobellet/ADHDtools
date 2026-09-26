@@ -261,7 +261,10 @@
     background: linear-gradient(135deg, #90caf9 0%, var(--kind-event) 100%);
     color: #fff;
     border-bottom: none;
-    display: block;
+    /* base.css lays .calendar-event out in a row: keep title above time */
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
 }
 
 .plan-side {

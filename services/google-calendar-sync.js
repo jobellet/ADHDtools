@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ---- UI -------------------------------------------------------------
 
     let statusEl, syncBtn, disconnectBtn, calendarListEl;
+    let autoSyncIntervalId = null;
 
     function buildUI() {
         if (!container) return;
@@ -54,6 +55,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <label>Days back <input type="number" id="gcal-past-days" min="0" max="365" style="width:4.5rem; padding:0.2rem;"></label>
                 <label>Days ahead <input type="number" id="gcal-future-days" min="0" max="365" style="width:4.5rem; padding:0.2rem;"></label>
             </div>
+            <div style="display:flex; gap:0.75rem; margin-top:0.5rem; font-size:0.85rem; flex-wrap:wrap; align-items: center;">
+                <label style="display:flex; align-items:center; gap:0.3rem;"><input type="checkbox" id="gcal-auto-sync"> Auto-sync</label>
+                <label>every <input type="number" id="gcal-auto-sync-interval" min="1" max="60" style="width:3.5rem; padding:0.2rem;"> min</label>
+            </div>
             <span id="gcal-sync-status" class="status" style="display:block; margin-top:0.5rem; font-size:0.85rem;"></span>
         `;
         statusEl = container.querySelector('#gcal-sync-status');
@@ -67,13 +72,28 @@ document.addEventListener('DOMContentLoaded', function () {
         const cfg = getConfig();
         const pastInput = container.querySelector('#gcal-past-days');
         const futureInput = container.querySelector('#gcal-future-days');
+        const autoSyncCheckbox = container.querySelector('#gcal-auto-sync');
+        const autoSyncIntervalInput = container.querySelector('#gcal-auto-sync-interval');
         pastInput.value = parseInt(cfg.gcalPastDays, 10) || 7;
         futureInput.value = parseInt(cfg.gcalFutureDays, 10) || 30;
+
+        const isAutoSyncEnabled = cfg.gcalAutoSync !== undefined ? cfg.gcalAutoSync === 'true' || cfg.gcalAutoSync === true : true;
+        autoSyncCheckbox.checked = isAutoSyncEnabled;
+        autoSyncIntervalInput.value = parseInt(cfg.gcalAutoSyncInterval, 10) || 1;
+
         pastInput.addEventListener('change', () => {
             window.ConfigManager?.updateConfig({ gcalPastDays: Math.max(0, parseInt(pastInput.value, 10) || 7) });
         });
         futureInput.addEventListener('change', () => {
             window.ConfigManager?.updateConfig({ gcalFutureDays: Math.max(0, parseInt(futureInput.value, 10) || 30) });
+        });
+        autoSyncCheckbox.addEventListener('change', () => {
+            window.ConfigManager?.updateConfig({ gcalAutoSync: autoSyncCheckbox.checked });
+            startAutoSync();
+        });
+        autoSyncIntervalInput.addEventListener('change', () => {
+            window.ConfigManager?.updateConfig({ gcalAutoSyncInterval: Math.max(1, parseInt(autoSyncIntervalInput.value, 10) || 1) });
+            startAutoSync();
         });
 
         refreshUIState();
@@ -83,6 +103,28 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!statusEl) return;
         statusEl.textContent = message;
         statusEl.style.color = isError ? 'var(--danger-color)' : 'var(--text-muted)';
+    }
+
+    function startAutoSync() {
+        if (autoSyncIntervalId) {
+            clearInterval(autoSyncIntervalId);
+            autoSyncIntervalId = null;
+        }
+
+        const connected = localStorage.getItem(CONNECTED_FLAG_KEY) === 'true';
+        if (!connected) return;
+
+        const cfg = getConfig();
+        const isAutoSyncEnabled = cfg.gcalAutoSync !== undefined ? cfg.gcalAutoSync === 'true' || cfg.gcalAutoSync === true : true;
+
+        if (isAutoSyncEnabled) {
+            const intervalMins = parseInt(cfg.gcalAutoSyncInterval, 10) || 1;
+            autoSyncIntervalId = setInterval(() => {
+                if (localStorage.getItem(CONNECTED_FLAG_KEY) === 'true' && window.GoogleAuth?.hasSession(SCOPES)) {
+                    syncNow({ interactive: false, isAuto: true });
+                }
+            }, intervalMins * 60000);
+        }
     }
 
     function refreshUIState() {
@@ -162,9 +204,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return items;
     }
 
-    async function syncNow({ interactive } = { interactive: true }) {
+    async function syncNow({ interactive, isAuto } = { interactive: true, isAuto: false }) {
         try {
-            setStatus('Syncing…');
+            if (!isAuto) setStatus('Syncing…');
             const token = await window.GoogleAuth.getAccessToken(SCOPES, { interactive });
             if (!token) { refreshUIState(); return; } // silent mode, no session
 
@@ -209,7 +251,10 @@ document.addEventListener('DOMContentLoaded', function () {
             localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
             window.dispatchEvent(new Event('capabilitiesChanged'));
             refreshUIState();
-            setStatus(`Synced ${total} events (${pastDays} days back, ${futureDays} ahead) at ${new Date().toLocaleTimeString()}.`);
+            if (!isAuto) setStatus(`Synced ${total} events (${pastDays} days back, ${futureDays} ahead) at ${new Date().toLocaleTimeString()}.`);
+
+            // Ensure auto-sync is started if newly connected
+            if (interactive && !autoSyncIntervalId) startAutoSync();
         } catch (err) {
             console.error('Google Calendar sync failed:', err);
             setStatus('Sync failed: ' + err.message, true);
@@ -217,6 +262,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function disconnect() {
+        if (autoSyncIntervalId) {
+            clearInterval(autoSyncIntervalId);
+            autoSyncIntervalId = null;
+        }
         await window.GoogleAuth.revoke(SCOPES);
         localStorage.removeItem(CONNECTED_FLAG_KEY);
         localStorage.removeItem(LAST_SYNC_KEY);
@@ -290,6 +339,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Silent auto-sync when a session token from this browser session is still valid
     if (localStorage.getItem(CONNECTED_FLAG_KEY) === 'true' && window.GoogleAuth?.hasSession(SCOPES)) {
-        syncNow({ interactive: false });
+        syncNow({ interactive: false, isAuto: true });
+        startAutoSync();
     }
 });

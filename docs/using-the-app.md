@@ -91,6 +91,7 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
   - purple — tasks with a fixed time,
   - dashed — tasks the app placed for you (they move with the clock until they start),
   - blue — calendar events.
+- **All-day events** (birthdays, holidays…) are not drawn as blocks and never take time from your day.
 - **Add an event:** tap **+** (or an empty spot of the timeline, which pre-fills that time). The form asks only three things: **what**, **start** and **how long** (one tap: 15, 30, 45, 60, 90 min, or type another number). Importance, urgency, deadline, "do this after" and "pick a task from your list" are folded under **More options**.
 - If the time is already taken (routine, event or another task), the form says by what and offers a **Use HH:MM** button with the next free time. Nothing is ever booked on top of something else.
 - Tap an event in the timeline to change it, or **Delete** it.

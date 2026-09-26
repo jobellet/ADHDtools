@@ -43,6 +43,16 @@ describe('Translations', () => {
     }
   });
 
+  test('every data-i18n key used in index.html exists in all four languages', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const used = new Set([...html.matchAll(/data-i18n(?:-placeholder|-title|-aria-label)?="([^"]+)"/g)].map(m => m[1]));
+    assert.ok(used.size > 50);
+    for (const lang of ['en', 'fr', 'de', 'es']) {
+      const missing = [...used].filter(k => !(k in translations[lang]));
+      assert.deepStrictEqual(missing, [], `data-i18n keys missing in ${lang}`);
+    }
+  });
+
   test('t() fills values and falls back to English', () => {
     assert.strictEqual(I18n.t('plan.deleted', { n: 2 }), '2 tâche(s) supprimée(s).');
     assert.strictEqual(I18n.getLang(), 'fr');

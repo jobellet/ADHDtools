@@ -23,7 +23,7 @@
       .sort((a, b) => a.startTime - b.startTime);
 
     const current = slots.find(slot => now >= slot.startTime && now < slot.endTime) || null;
-    const future = slots.filter(slot => slot.startTime >= (current ? current.endTime : now) && slot !== current);
+    const future = slots.filter(slot => slot.endTime > now && slot !== current && (!current || slot.startTime >= current.startTime));
     const next = future[0] || null;
     const upcoming = future.slice(0, upcomingCount);
 

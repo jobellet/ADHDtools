@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import { buildSchedule, routineBookedMinutes, findConflicts, findNextFreeSlot, findRoutineConflicts } from '../core/scheduler.js';
+import { isPassiveOrAllDay } from '../core/task-model.js';
 
 describe('Scheduler', () => {
   const config = {
@@ -193,5 +194,41 @@ describe('Scheduler fixed items keep their time', () => {
     const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 8, 0), config: { dayStart: '06:00', dayEnd: '22:00' } });
     const b = schedule.find(s => s.task.hash === 'b');
     assert.deepStrictEqual([b.scheduledStart, b.scheduledEnd], [10 * 60, 10 * 60 + 30]);
+  });
+});
+
+describe('Scheduler: calendar copies and too-long tasks never block the day', () => {
+  const config = { dayStart: '06:00', dayEnd: '22:00', bufferDurationMinutes: 5 };
+  const now = new Date(2026, 8, 26, 13, 0);
+  const work = [
+    { hash: 'g', name: 'Groceries', durationMinutes: 60, importance: 6, urgency: 5 },
+    { hash: 'r', name: 'Read', durationMinutes: 30, importance: 3, urgency: 3 },
+  ];
+
+  test('all-day and passive calendar copies book no time', () => {
+    const tasks = [
+      { hash: 'bday', name: 'Birthday', plannerDate: '2026-09-26', durationMinutes: 1440, isFixed: true, isCalendarEvent: true, isAllDay: true, importance: 10, urgency: 10 },
+      { hash: 'copy', name: 'Lab meeting', plannerDate: '2026-09-26T15:00', durationMinutes: 60, isFixed: true, isCalendarEvent: true, isActionable: false },
+      ...work,
+    ];
+    const names = buildSchedule({ tasks, now, config }).map(s => s.task.name);
+    assert.ok(!names.includes('Birthday'));
+    assert.ok(!names.includes('Lab meeting'));
+    assert.ok(names.includes('Groceries') && names.includes('Read'), names.join());
+  });
+
+  test('a flexible task longer than the rest of the day does not block the others', () => {
+    const tasks = [{ hash: 'huge', name: 'Huge', durationMinutes: 1440, importance: 10, urgency: 10 }, ...work];
+    const names = buildSchedule({ tasks, now, config }).map(s => s.task.name);
+    assert.ok(!names.includes('Huge'));
+    assert.ok(names.includes('Groceries') && names.includes('Read'), names.join());
+  });
+
+  test('isPassiveOrAllDay spots calendar copies only', () => {
+    assert.strictEqual(isPassiveOrAllDay({ isAllDay: true }), true);
+    assert.strictEqual(isPassiveOrAllDay({ plannerDate: '2026-09-26', durationMinutes: 1440 }), true);
+    assert.strictEqual(isPassiveOrAllDay({ isCalendarEvent: true, isActionable: false }), true);
+    assert.strictEqual(isPassiveOrAllDay({ name: 'Work', durationMinutes: 60 }), false);
+    assert.strictEqual(isPassiveOrAllDay({ plannerDate: '2026-09-26T09:00', durationMinutes: 60 }), false);
   });
 });

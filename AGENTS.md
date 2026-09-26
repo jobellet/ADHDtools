@@ -32,10 +32,13 @@ works on a 390 px phone (bottom tab bar) and on desktop.
 
 ```bash
 npm ci && npm test                  # unit tests (Node 22, node:test) — must pass before every commit
+npm run test:ui                     # browser tests: the real app in headless Chromium, phone + desktop
 node .claude/static-server.cjs      # serve on http://localhost:8422 (also under /ADHDtools/ like GitHub Pages)
 ```
+`npm run test:ui` needs Chromium once: `npx playwright install chromium` (skip it where Playwright
+browsers are preinstalled). CI runs **both** `npm test` and `npm run test:ui` on every PR.
 No build step, no bundler, no runtime npm packages: files are served as they are (GitHub Pages).
-`jsdom` is a dev dependency only. CI (`.github/workflows/ci.yml`) runs `npm test` on every PR.
+`jsdom` and `playwright` are for tests only. CI: `.github/workflows/ci.yml` (jobs `test` and `ui`).
 
 ## Glossary (use these words in code, comments, commits and PRs)
 
@@ -54,6 +57,7 @@ No build step, no bundler, no runtime npm packages: files are served as they are
 | **Conflict** | Two items overlapping. Always refused or moved to the next free slot (`findConflicts`, `findNextFreeSlot`). |
 | **Now state** | `doing` (item running) · `break` (next item soon) · `free` (nothing soon → Plan view). `core/now-state.js`. |
 | **Overdue** | Pending task whose `deadline` has passed. |
+| **Calendar copy** | Task the Calendar tool makes from a calendar event (`isCalendarEvent`). All-day or passive ones (`isPassiveOrAllDay`) never book time, never run in Now and are never overdue. |
 | **Tombstone** | Id of a deleted task in `adhd-deleted-tasks`, so sync never brings it back. |
 | **Tool / screen** | A `<section class="tool-section">`; opened with `window.switchTool(id)`. |
 | **Capability** | A detected part of the user's setup (`gcal`, `ics`, `ai`, `speech`) that shows/hides UI. |
@@ -126,13 +130,26 @@ Changing the shape of stored data needs a migration that reads the old shape (us
 ## Rules that keep things from breaking
 
 - **Tests first:** `npm test` green before and after. Logic changes in `core/` need a unit test.
-- **Never double-book:** anything that sets a time uses `UnifiedScheduler.findConflicts` / `findNextFreeSlot`.
+- **UI tests for UI work:** any change to `index.html`, `features/`, `shell/`, `styles/`, `core/scheduler.js`
+  or `core/now-state.js` must pass `npm run test:ui`. A new screen or flow gets a test in `tests/ui/`.
+- **Merge `main` before you open a PR,** then run `npm test && npm run test:ui` again. Two PRs that each
+  pass alone can break the app together (this happened: a 1-minute calendar sync + all-day events hid
+  every other task from the planner).
+- **Never double-book:** anything that sets a time uses `UnifiedScheduler.findConflicts` / `findNextFreeSlot`
+  (this includes blocks the app creates by itself, like travel time).
+- **Nothing hides the day:** all-day events and calendar copies never book time (`isPassiveOrAllDay`);
+  a task longer than the time left today is not placed, it never blocks the tasks behind it.
 - **Delete tasks with `TaskStore.deleteTasks`** (writes tombstones). Never filter the array by hand.
 - **Deadlines:** a planned time is not a deadline. Pass `deadline: null` when there is none.
 - **Strings:** no user-visible English literal in JS. Add keys to the feature's `strings.js` in **all four**
-  languages with the same `{placeholders}` (a test checks this).
+  languages with the same `{placeholders}`. Every `data-i18n*` key in `index.html` must exist too (tests check both).
+- **Events on the right target:** `dataChanged` on `window.EventBus`, `scheduleNeedsRefresh` on `window`
+  (see Events). An event sent to the wrong target does nothing, and no error shows.
 - **Privacy:** no servers, no analytics, no new third-party requests. API keys never leave `localStorage`
-  and are excluded from export/sync (`isSensitiveKey` in `services/data-manager.js`).
+  and are excluded from export/sync (`isSensitiveKey` in `services/data-manager.js`). Opt-in services are
+  called only after a clear user action, never at load (the UI tests fail on any request while loading).
+  Allowed today: Google (when connected), the chosen AI provider, OpenStreetMap geocoding/routing when the
+  user types a place in the event form (`features/planner/routing.js`).
 - **Setup-aware UI:** controls for optional integrations get `data-cap="ai|speech"` or `data-cap-hide="gcal"`.
 - **No dead code:** remove files/keys you replace. `tests/architecture.test.js` fails on unreferenced files.
 - **Keep docs true:** if you change a contract above, update this file in the same commit.
@@ -154,8 +171,11 @@ Good parallel splits: (a) one feature's UI, (b) a `core/` function + its test, (
 Sequential: anything that changes a global, an event or a storage shape (update contracts first).
 
 ## Definition of done
-1. `npm test` passes; new logic has tests.
-2. Checked in a browser at 390×844 and 1366×900 with no console errors (see [tests/AGENTS.md](tests/AGENTS.md)).
+1. `npm test` and `npm run test:ui` pass, **after merging the latest `main`**; new logic and new flows have tests.
+2. Checked in a browser at 390×844 and 1366×900 with no console errors (the UI tests do this for the main
+   screens; look at your own screen too — see [tests/AGENTS.md](tests/AGENTS.md)).
 3. Strings in en/fr/de/es; no `alert()` in new flows.
 4. The folder's `AGENTS.md` (and this file, if a contract changed) and user docs (`docs/using-the-app.md`) are updated.
 5. Commit message: imperative summary line, then what and why.
+6. Never merge a PR with red CI. (Repo owner: in GitHub → Settings → Branches, require the `test` and `ui`
+   checks on `main` so this is enforced.)

@@ -381,7 +381,10 @@
       if (!box) return;
       const now = new Date();
       const user = window.UserContext?.getActiveUser?.();
-      const pending = (window.TaskStore?.getPendingTasks?.() || []).filter(task => !user || task.user === user);
+      // Calendar copies and all-day items are appointments, not work to plan.
+      const isAppointment = task => window.TaskModel?.isPassiveOrAllDay?.(task);
+      const pending = (window.TaskStore?.getPendingTasks?.() || [])
+        .filter(task => (!user || task.user === user) && !isAppointment(task));
       const overdue = window.TaskStore?.getOverdueTasks?.(now, user) || [];
       const withDeadline = pending
         // A fixed appointment's time is not a deadline to plan for, unless it is overdue.

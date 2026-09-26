@@ -1,6 +1,8 @@
 import { renderDayPlanner, relabelTimeline, getMinuteHeight } from './render-day.js';
-import { populateTaskOptions, getDefaultTime, getCalendarEvents, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
+import { populateTaskOptions, getDefaultTime, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
+import { planDayWithAI } from './ai-plan.js';
 import { createTask } from '../../core/task-model.js';
+import { geocode, getRoute } from './routing.js';
 
 let editingTaskId = null;
 let pendingExternalTask = null;
@@ -42,7 +44,14 @@ let dateDisplay,
     eventUrgencyInput,
     eventDeadlineInput,
     eventDependencySelect,
+    eventLocationInput,
+    eventLocationSuggestions,
+    eventTravelModeContainer,
+    eventTravelModeSelect,
     eventModalTitle;
+
+let selectedLocationCoords = null;
+let locationDebounce = null;
 
 const tr = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
 
@@ -102,6 +111,14 @@ function openModal(task, presetTime, externalTask) {
         const realDeadline = task.deadline && task.deadline.slice(0, 16) !== (task.plannerDate || '').slice(0, 16) ? task.deadline : '';
         eventDeadlineInput.value = realDeadline ? realDeadline.slice(0, 16) : '';
         eventDependencySelect.value = task.dependency || '';
+        eventLocationInput.value = task.location || '';
+        selectedLocationCoords = task.locationCoords || null;
+        if (task.travelMode) {
+            eventTravelModeContainer.style.display = 'block';
+            eventTravelModeSelect.value = task.travelMode;
+        } else {
+            eventTravelModeContainer.style.display = 'none';
+        }
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = true;
@@ -116,6 +133,14 @@ function openModal(task, presetTime, externalTask) {
         eventUrgencyInput.value = externalTask.urgency || externalTask.priority || 5;
         eventDeadlineInput.value = externalTask.deadline ? externalTask.deadline.slice(0, 16) : '';
         eventDependencySelect.value = externalTask.dependency || '';
+        eventLocationInput.value = externalTask.location || '';
+        selectedLocationCoords = externalTask.locationCoords || null;
+        if (externalTask.travelMode) {
+            eventTravelModeContainer.style.display = 'block';
+            eventTravelModeSelect.value = externalTask.travelMode;
+        } else {
+            eventTravelModeContainer.style.display = 'none';
+        }
         eventTitleInput.disabled = true;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = true;
@@ -129,6 +154,9 @@ function openModal(task, presetTime, externalTask) {
         eventUrgencyInput.value = 5;
         eventDeadlineInput.value = '';
         eventDependencySelect.value = '';
+        eventLocationInput.value = '';
+        selectedLocationCoords = null;
+        eventTravelModeContainer.style.display = 'none';
         eventTitleInput.disabled = false;
         eventTaskSelect.value = '';
         eventTaskSelect.disabled = false;
@@ -342,94 +370,23 @@ function scrollToCurrent() {
     });
 }
 
-function getBreakdownTasks() {
-    const tree = JSON.parse(localStorage.getItem('adhd-breakdown-tasks')) || [];
-    const tasks = [];
-    function traverse(nodes) {
-        nodes.forEach(n => {
-            if (n.completed) return;
-            if (n.subtasks && n.subtasks.length) {
-                traverse(n.subtasks);
-            } else if (n.text) {
-                tasks.push(n.text);
-            }
-        });
-    }
-    traverse(tree);
-    return tasks;
-}
-
-function getUnscheduledTaskNames() {
-    return (window.TaskStore?.getPendingTasks?.() || [])
-        .filter(t => !t.plannerDate)
-        .map(t => t.name || t.text)
-        .filter(Boolean);
-}
-
 async function autoPlanDay() {
     try {
         aiPlanBtn.disabled = true;
-        const breakdownTasks = getBreakdownTasks();
-        const tasks = [...new Set([...getUnscheduledTaskNames(), ...breakdownTasks])];
-        if (tasks.length === 0) {
-            alert('No unscheduled tasks to plan.');
-            return;
-        }
-        const events = getCalendarEvents(currentDate);
-        events.forEach(ev => {
-            const plannerDateTime = `${localDateString(currentDate)}T${ev.start}`;
-            const existing = window.DataManager.getTasks().map(wrapTask).find(t => t.plannerDate === plannerDateTime && t.text === ev.title);
-            if (!existing) {
-                const startMins = parseInt(ev.start.slice(0, 2)) * 60 + parseInt(ev.start.slice(3, 5));
-                const endMins = ev.end ? parseInt(ev.end.slice(0, 2)) * 60 + parseInt(ev.end.slice(3, 5)) : startMins + 60;
-                window.DataManager.addTask({
-                    text: ev.title,
-                    plannerDate: plannerDateTime,
-                    duration: Math.max(5, endMins - startMins),
-                    originalTool: 'Calendar'
-                });
-            }
+        const result = await planDayWithAI(currentDate, {
+            tr,
+            dayBounds: getDayBounds(),
+            defaultDurationMinutes: getDefaultDurationMinutes(),
         });
-        let prompt = `Today is ${currentDate.toDateString()}.`;
-        if (events.length) {
-            prompt += `\nExisting events:`;
-            events.forEach(ev => {
-                prompt += `\n- ${ev.start}${ev.end ? '-' + ev.end : ''} ${ev.title}`;
-            });
-        } else {
-            prompt += `\nNo existing events.`;
-        }
-        prompt += `\nTasks to schedule:`;
-        tasks.forEach(t => { prompt += `\n- ${t}`; });
-        prompt += `\nReturn a JSON array of objects with time (HH:MM 24h), text, and duration in minutes.`;
-
-        if (!window.AIAssistant?.isEnabled?.()) {
-            alert('AI Plan needs an AI provider. Open Settings → AI Assistance to configure one, or use "Generate schedule for today" which works offline.');
+        if (!result.ok) {
+            window.DataManager?.showNotification?.(result.message, 'error');
             return;
         }
-        let plan;
-        try {
-            plan = await window.AIAssistant.completeJSON(prompt, { maxTokens: 1200 });
-        } catch (err) {
-            alert(`AI planning failed: ${err.message}`);
-            return;
-        }
-        if (!Array.isArray(plan)) {
-            alert('The AI response was not a plan (expected a JSON array).');
-            return;
-        }
-        plan.forEach(item => {
-            if (!item.time || !item.text) return;
-            const duration = parseInt(item.duration, 10) || getDefaultDurationMinutes();
-            const plannerDateTime = `${localDateString(currentDate)}T${item.time}`;
-            window.DataManager.addTask({
-                text: item.text,
-                plannerDate: plannerDateTime,
-                duration,
-                originalTool: 'AI'
-            });
-        });
-        alert('Day planned with AI.');
+        const parts = [result.message];
+        if (result.moved) parts.push(tr('plan.aiMoved', { n: result.moved }));
+        if (result.dropped) parts.push(tr('plan.aiDroppedCount', { n: result.dropped }));
+        window.DataManager?.showNotification?.(parts.join(' '), result.dropped ? 'warning' : 'success');
+        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
     } finally {
         aiPlanBtn.disabled = false;
     }
@@ -480,11 +437,71 @@ function initDayPlanner() {
     eventUrgencyInput = document.getElementById('event-urgency');
     eventDeadlineInput = document.getElementById('event-deadline');
     eventDependencySelect = document.getElementById('event-dependency');
+    eventLocationInput = document.getElementById('event-location');
+    eventLocationSuggestions = document.getElementById('event-location-suggestions');
+    eventTravelModeContainer = document.getElementById('event-travel-mode-container');
+    eventTravelModeSelect = document.getElementById('event-travel-mode');
     eventModalTitle = document.getElementById('event-modal-title');
 
     if (!eventModal || !eventForm) {
         console.warn('Day Planner modal elements missing; skipping initialization');
         return;
+    }
+
+    if (eventLocationInput) {
+        eventLocationInput.addEventListener('input', () => {
+            const query = eventLocationInput.value.trim();
+            if (query.length < 3) {
+                eventLocationSuggestions.style.display = 'none';
+                selectedLocationCoords = null;
+                return;
+            }
+            clearTimeout(locationDebounce);
+            locationDebounce = setTimeout(async () => {
+                const results = await geocode(query);
+                if (results && results.length > 0 && eventLocationInput.value.trim() === query) {
+                    eventLocationSuggestions.innerHTML = '';
+                    results.forEach(res => {
+                        const li = document.createElement('li');
+                        li.textContent = res.displayName;
+                        li.style.padding = '8px';
+                        li.style.cursor = 'pointer';
+                        li.addEventListener('click', () => {
+                            eventLocationInput.value = res.displayName;
+                            selectedLocationCoords = res;
+                            eventLocationSuggestions.style.display = 'none';
+                        });
+                        eventLocationSuggestions.appendChild(li);
+                    });
+                    eventLocationSuggestions.style.display = 'block';
+                } else {
+                    eventLocationSuggestions.style.display = 'none';
+                }
+            }, 500);
+        });
+
+        // Hide suggestions on click outside
+        document.addEventListener('click', (e) => {
+            if (e.target !== eventLocationInput && e.target !== eventLocationSuggestions) {
+                eventLocationSuggestions.style.display = 'none';
+            }
+        });
+    }
+
+    if (eventTravelModeSelect) {
+        eventTravelModeSelect.addEventListener('change', async () => {
+            if (editingTaskId) {
+                const task = getTaskFromStore(editingTaskId);
+                if (task && task.locationCoords && task.startLocationCoords) {
+                    const route = await getRoute(task.startLocationCoords, task.locationCoords, eventTravelModeSelect.value);
+                    if (route) {
+                        updateTaskInStore(editingTaskId, { travelMode: route.mode, durationMinutes: route.minutes, duration: route.minutes });
+                        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+                    }
+                }
+            }
+        });
     }
 
     addEventBtn.addEventListener('click', () => openModal(null, getDefaultTime()));
@@ -555,6 +572,7 @@ function initDayPlanner() {
         const deadlineVal = eventDeadlineInput.value ? new Date(eventDeadlineInput.value) : null;
         const deadline = deadlineVal ? new Date(deadlineVal.getTime() - (deadlineVal.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : null;
         const dependency = eventDependencySelect?.value || null;
+        const locationStr = eventLocationInput ? eventLocationInput.value.trim() : '';
 
         const startMins = parseTimeToMinutes(time);
         const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
@@ -564,12 +582,13 @@ function initDayPlanner() {
             return;
         }
 
+        let savedTask = null;
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
-            updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, importance, urgency, dependency });
+            savedTask = updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, importance, urgency, dependency, location: locationStr, locationCoords: selectedLocationCoords });
         } else if (pendingExternalTask) {
             const title = eventTitleInput.value.trim() || pendingExternalTask.text;
-            addTaskToStore({
+            savedTask = addTaskToStore(createTask({
                 name: title,
                 text: title,
                 originalTool: pendingExternalTask.originalTool || 'TaskManager',
@@ -582,16 +601,18 @@ function initDayPlanner() {
                 durationMinutes: duration,
                 duration,
                 dependency,
+                location: locationStr,
+                locationCoords: selectedLocationCoords,
                 isFixed: true,
-            });
+            }));
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
-                updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency });
+                savedTask = updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency, location: locationStr, locationCoords: selectedLocationCoords });
             } else {
                 const title = eventTitleInput.value.trim();
                 if (!title) return;
-                addTaskToStore({
+                savedTask = addTaskToStore(createTask({
                     name: title,
                     text: title,
                     originalTool: 'DayPlanner',
@@ -603,7 +624,57 @@ function initDayPlanner() {
                     dependency,
                     importance,
                     urgency,
-                });
+                    location: locationStr,
+                    locationCoords: selectedLocationCoords,
+                }));
+            }
+        }
+
+        // Auto-compute travel time if necessary
+        if (savedTask && savedTask.locationCoords) {
+            const scheduler = window.UnifiedScheduler;
+            if (scheduler) {
+                const blocks = scheduler.getBusyBlocks(localDateString(currentDate));
+                const precedingBlocks = blocks.filter(b => b.end <= startMins && b.id !== savedTask.id);
+                if (precedingBlocks.length > 0) {
+                    const prevBlock = precedingBlocks[precedingBlocks.length - 1];
+                    let prevCoords = null;
+                    if (prevBlock.kind === 'task' || prevBlock.kind === 'event') {
+                        const t = getTaskFromStore(prevBlock.id);
+                        if (t && t.locationCoords) prevCoords = t.locationCoords;
+                    }
+                    if (prevCoords && (prevCoords.lat !== savedTask.locationCoords.lat || prevCoords.lon !== savedTask.locationCoords.lon)) {
+                        getRoute(prevCoords, savedTask.locationCoords).then(route => {
+                            if (!route) return;
+                            const travelStartMins = startMins - route.minutes;
+                            const dateStr = localDateString(currentDate);
+                            const place = String(savedTask.location || '').split(',')[0].trim();
+                            // The travel block obeys the same rule as everything else: never double-book.
+                            const clashes = travelStartMins < 0 ? [{}] : scheduler.findConflicts({
+                                dateStr, startMinutes: travelStartMins, durationMinutes: route.minutes, ignore: [savedTask.hash],
+                            });
+                            if (clashes.length) {
+                                window.DataManager?.showNotification?.(tr('event.travelNoRoom', { min: route.minutes, place }), 'error');
+                                return;
+                            }
+                            addTaskToStore(createTask({
+                                name: tr('event.travelTo', { place }),
+                                text: tr('event.travelTo', { place }),
+                                plannerDate: `${dateStr}T${minutesToTime(travelStartMins)}`,
+                                durationMinutes: route.minutes,
+                                duration: route.minutes,
+                                deadline: null,
+                                isFixed: true,
+                                originalTool: 'DayPlanner',
+                                travelMode: route.mode,
+                                startLocationCoords: prevCoords,
+                                locationCoords: savedTask.locationCoords,
+                            }));
+                            window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                            window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+                        });
+                    }
+                }
             }
         }
 

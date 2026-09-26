@@ -41,6 +41,17 @@ function generateHash({ user, name, createdAt, seed }) {
   return baseHash(basis);
 }
 
+// Calendar events are placed from the calendar itself (core/scheduler.js,
+// loadCalendarBlocks);
+// the copies the Calendar tool keeps in TaskStore ("passive" events) and
+// all-day items must never book time.
+export function isPassiveOrAllDay(task) {
+  if (!task) return false;
+  if (task.isAllDay) return true;
+  if (typeof task.plannerDate === 'string' && task.plannerDate.length === 10 && Number(task.durationMinutes) >= 12 * 60) return true;
+  return Boolean(task.isCalendarEvent && task.isActionable === false);
+}
+
 export function computeAchievementScore(task) {
   const durationHours = normalizeNumber(task.durationMinutes, 0) / 60;
   const importance = normalizeNumber(task.importance, 0);
@@ -80,6 +91,10 @@ export function createTask(raw = {}, overrides = {}) {
     needsBreakdown: typeof raw.needsBreakdown === 'boolean' ? raw.needsBreakdown : false,
     source: raw.source || raw.originalTool || 'manual',
     originalTool: raw.originalTool || raw.source || 'manual',
+    location: raw.location || null,
+    locationCoords: raw.locationCoords || null,
+    startLocationCoords: raw.startLocationCoords || null,
+    travelMode: raw.travelMode || null,
   };
   const hash = raw.hash || raw.id || generateHash(base);
   const task = {
@@ -116,6 +131,7 @@ if (typeof window !== 'undefined') {
     markTaskCompleted,
     computeUrgencyFromDeadline,
     computeAchievementScore,
+    isPassiveOrAllDay,
     DEFAULT_USER,
   };
 }
