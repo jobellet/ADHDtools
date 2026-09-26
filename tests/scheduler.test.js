@@ -174,3 +174,24 @@ describe('Scheduler in-progress blocks', () => {
     assert.strictEqual(schedule[0].scheduledEnd, 10 * 60);
   });
 });
+
+describe('Scheduler fixed items keep their time', () => {
+  test('a fixed item right after a routine is not pushed by the pause, nor shortened', () => {
+    const routines = [{ id: 'r', name: 'Morning', startTime: '08:00', weekDays: [0, 1, 2, 3, 4, 5, 6], tasks: [{ name: 'Shower', duration: 30 }] }];
+    const tasks = [{ hash: 'd', name: 'Dentist', plannerDate: '2023-10-16T08:35', durationMinutes: 15, isFixed: true }];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 7, 40), config: { dayStart: '06:00', dayEnd: '22:00', bufferDurationMinutes: 5, routines } });
+    const dentist = schedule.find(s => s.task.hash === 'd');
+    assert.strictEqual(dentist.scheduledStart, 8 * 60 + 35);
+    assert.strictEqual(dentist.scheduledEnd, 8 * 60 + 50);
+  });
+
+  test('an overlapping fixed item moves after the other one and keeps its length', () => {
+    const tasks = [
+      { hash: 'a', name: 'A', plannerDate: '2023-10-16T09:00', durationMinutes: 60, isFixed: true },
+      { hash: 'b', name: 'B', plannerDate: '2023-10-16T09:30', durationMinutes: 30, isFixed: true },
+    ];
+    const schedule = buildSchedule({ tasks, now: new Date(2023, 9, 16, 8, 0), config: { dayStart: '06:00', dayEnd: '22:00' } });
+    const b = schedule.find(s => s.task.hash === 'b');
+    assert.deepStrictEqual([b.scheduledStart, b.scheduledEnd], [10 * 60, 10 * 60 + 30]);
+  });
+});

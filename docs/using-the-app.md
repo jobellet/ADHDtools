@@ -88,7 +88,9 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
   - purple — tasks with a fixed time,
   - dashed — tasks the app placed for you (they move with the clock until they start),
   - blue — calendar events.
-- Tap an empty spot to add an event at that time. The app refuses times that are already taken and suggests the next free slot.
+- **Add an event:** tap **+** (or an empty spot of the timeline, which pre-fills that time). The form asks only three things: **what**, **start** and **how long** (one tap: 15, 30, 45, 60, 90 min, or type another number). Importance, urgency, deadline, "do this after" and "pick a task from your list" are folded under **More options**.
+- If the time is already taken (routine, event or another task), the form says by what and offers a **Use HH:MM** button with the next free time. Nothing is ever booked on top of something else.
+- Tap an event in the timeline to change it, or **Delete** it.
 - **Lock plan** pins today's automatic plan, so times stop moving.
 - **Plan ahead** lists tasks with deadlines and big tasks (over 30–45 minutes). **Split** sends a task to Task Breakdown so you can cut it into 15–30 minute steps that fit into your day.
 - **Delete tasks you no longer need:** the 🗑 button deletes one task; **Delete all overdue (N)** deletes every task whose deadline has passed, in one click. An **Undo** bar stays for 15 seconds. Deleted tasks stay deleted on your other devices too (Google Drive sync).

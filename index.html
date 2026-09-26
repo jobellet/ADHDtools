@@ -228,33 +228,69 @@
                 </aside>
                 </div>
 
-                <!-- Modal for Adding/Editing an Event -->
-                <div id="event-modal" class="modal">
-                    <div class="modal-content">
-                        <button class="close-button" aria-label="Close modal">&times;</button>
-                        <h3 id="event-modal-title" data-i18n="add-event-heading">Add Event</h3>
-                        <form id="event-form">
-                            <label for="event-task" data-i18n="event-import-task-label">Import Task:</label>
-                            <select id="event-task">
-                                <option value="" data-i18n="event-new-option">-- New Event --</option>
-                            </select>
-                            <label for="event-title" data-i18n="event-title-label">Title:</label>
-                            <input type="text" id="event-title" required>
-                            <label for="event-time" data-i18n="event-time-label">Start Time:</label>
-                            <select id="event-time"></select>
-                            <label for="event-duration" data-i18n="event-duration-label">Duration (minutes):</label>
-                            <input type="number" id="event-duration" min="5" step="5" value="60" required>
-                            <label for="event-importance" data-i18n="event-importance-label">Importance (1-10):</label>
-                            <input type="number" id="event-importance" min="1" max="10" step="1" value="5">
-                            <label for="event-urgency" data-i18n="event-urgency-label">Urgency (1-10):</label>
-                            <input type="number" id="event-urgency" min="1" max="10" step="1" value="5">
-                            <label for="event-deadline" data-i18n="event-deadline-label">Deadline:</label>
-                            <input type="datetime-local" id="event-deadline">
-                            <label for="event-dependency" data-i18n="event-dependency-label">Dependency:</label>
-                            <select id="event-dependency">
-                                <option value="" data-i18n="event-no-dependency-option">No dependency</option>
-                            </select>
-                            <button type="submit" class="btn" data-i18n="save-event-btn">Save Event</button>
+                <!-- Add / edit an event: title, time, length. Everything else is under "More options". -->
+                <div id="event-modal" class="modal event-modal" role="dialog" aria-modal="true" aria-labelledby="event-modal-title">
+                    <div class="modal-content event-modal-content">
+                        <div class="event-modal-header">
+                            <h3 id="event-modal-title" data-i18n="event.titleAdd">New event</h3>
+                            <button type="button" class="close-button event-close" aria-label="Close" data-i18n-title="event.cancel"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form id="event-form" novalidate>
+                            <label for="event-title" class="event-label" data-i18n="event.what">What?</label>
+                            <input type="text" id="event-title" required autocomplete="off" enterkeyhint="done"
+                                placeholder="e.g. Call the dentist" data-i18n-placeholder="event.whatPlaceholder">
+
+                            <div class="event-when">
+                                <div>
+                                    <label for="event-time" class="event-label" data-i18n="event.when">Start</label>
+                                    <input type="time" id="event-time" step="300" required>
+                                </div>
+                            </div>
+
+                            <span class="event-label" id="event-duration-label" data-i18n="event.howLong">How long?</span>
+                            <div class="event-duration-chips" role="group" aria-labelledby="event-duration-label">
+                                <button type="button" class="event-chip" data-minutes="15">15</button>
+                                <button type="button" class="event-chip" data-minutes="30">30</button>
+                                <button type="button" class="event-chip" data-minutes="45">45</button>
+                                <button type="button" class="event-chip" data-minutes="60">60</button>
+                                <button type="button" class="event-chip" data-minutes="90">90</button>
+                                <label class="event-chip event-chip-custom">
+                                    <input type="number" id="event-duration" min="5" max="720" step="5" value="30" inputmode="numeric" aria-label="Minutes">
+                                    <span>min</span>
+                                </label>
+                            </div>
+
+                            <div id="event-conflict" class="event-conflict" role="alert" hidden></div>
+
+                            <details class="event-more">
+                                <summary data-i18n="event.more">More options</summary>
+                                <label for="event-task" class="event-label" data-i18n="event.fromList">Or pick a task from your list</label>
+                                <select id="event-task">
+                                    <option value="">—</option>
+                                </select>
+                                <div class="event-more-grid">
+                                    <div>
+                                        <label for="event-importance" class="event-label" data-i18n="event.importance">Importance (1–10)</label>
+                                        <input type="number" id="event-importance" min="1" max="10" step="1" value="5" inputmode="numeric">
+                                    </div>
+                                    <div>
+                                        <label for="event-urgency" class="event-label" data-i18n="event.urgency">Urgency (1–10)</label>
+                                        <input type="number" id="event-urgency" min="1" max="10" step="1" value="5" inputmode="numeric">
+                                    </div>
+                                </div>
+                                <label for="event-deadline" class="event-label" data-i18n="event.deadline">Deadline</label>
+                                <input type="datetime-local" id="event-deadline">
+                                <label for="event-dependency" class="event-label" data-i18n="event.dependency">Do this after</label>
+                                <select id="event-dependency">
+                                    <option value="">—</option>
+                                </select>
+                            </details>
+
+                            <div class="event-actions">
+                                <button type="button" id="event-remove-btn" class="btn btn-outline event-remove" hidden><i class="fas fa-trash-alt"></i> <span data-i18n="event.remove">Delete</span></button>
+                                <button type="button" class="btn btn-outline event-cancel" data-i18n="event.cancel">Cancel</button>
+                                <button type="submit" class="btn btn-primary event-save" data-i18n="event.save">Save</button>
+                            </div>
                         </form>
                     </div>
                 </div>

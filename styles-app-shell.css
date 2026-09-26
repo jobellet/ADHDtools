@@ -1269,3 +1269,238 @@ body:not(.cap-gcal) .export-to-calendar-btn {
         padding: 0;
     }
 }
+
+/* ---------- Add / edit event (day planner) ---------- */
+.event-modal.modal {
+    z-index: 950;
+    align-items: center;
+}
+
+.event-modal .event-modal-content {
+    width: min(480px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    padding: 0;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.event-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 1rem 1rem 0.5rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.event-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.event-modal .event-close {
+    position: static;
+    float: none;
+    margin: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #f1f1f1;
+    color: var(--on-surface);
+    font-size: 1.1rem;
+    border: none;
+}
+
+#event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 1.25rem 0;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.event-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0.5rem 0 0.15rem;
+    color: var(--on-surface);
+}
+
+#event-form input[type="text"],
+#event-form input[type="time"],
+#event-form input[type="datetime-local"],
+#event-form input[type="number"],
+#event-form select {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px; /* no zoom on phones */
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid #d9d4e5;
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+#event-form #event-title {
+    font-size: 1.1rem;
+}
+
+#event-form input:focus,
+#event-form select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(98, 0, 238, 0.15);
+}
+
+#event-form input.invalid {
+    border-color: #d93025;
+    box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.15);
+}
+
+.event-when input[type="time"] {
+    max-width: 200px;
+}
+
+.event-duration-chips {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+}
+
+.event-chip {
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1.5px solid #d9d4e5;
+    background: var(--surface);
+    color: var(--on-surface);
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.event-chip.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--on-primary);
+}
+
+.event-chip-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+    cursor: text;
+    font-weight: 500;
+}
+
+#event-form .event-chip-custom input[type="number"] {
+    border: none;
+    box-shadow: none;
+    min-height: 44px;
+    padding: 0;
+    text-align: right;
+    width: 100%;
+    background: transparent;
+}
+
+.event-conflict {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 12px;
+    background: #fdecea;
+    color: #8c1d18;
+    font-size: 0.95rem;
+}
+
+.event-conflict[hidden] {
+    display: none;
+}
+
+.event-conflict p {
+    margin: 0 0 0.5rem;
+}
+
+.event-more {
+    margin-top: 0.75rem;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.25rem;
+}
+
+.event-more summary {
+    cursor: pointer;
+    padding: 0.6rem 0;
+    color: var(--primary-color);
+    font-weight: 600;
+    min-height: 44px;
+}
+
+.event-more-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.event-actions {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 0 calc(1rem + env(safe-area-inset-bottom));
+    margin-top: 0.75rem;
+    background: var(--surface);
+    border-top: 1px solid #f0f0f0;
+}
+
+.event-actions .btn {
+    min-height: 52px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    flex: 1 1 0;
+}
+
+.event-actions .event-save {
+    flex: 2 1 0;
+}
+
+.event-actions .event-remove {
+    flex: 1 1 100%;
+    color: #b3261e;
+    border-color: #e8a19b;
+    background: transparent;
+    min-height: 44px;
+}
+
+.event-actions .event-remove[hidden] {
+    display: none;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .event-modal.modal {
+        align-items: flex-end;
+    }
+
+    .event-modal .event-modal-content {
+        width: 100%;
+        max-width: none;
+        max-height: 92dvh;
+        border-radius: 20px 20px 0 0;
+    }
+}
+
+#event-form .event-actions .btn,
+#event-form .event-conflict .btn {
+    width: auto;
+}
+
+.event-chip {
+    transition: none; /* selection shows at once */
+}
