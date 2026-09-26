@@ -80,6 +80,10 @@ export function createTask(raw = {}, overrides = {}) {
     needsBreakdown: typeof raw.needsBreakdown === 'boolean' ? raw.needsBreakdown : false,
     source: raw.source || raw.originalTool || 'manual',
     originalTool: raw.originalTool || raw.source || 'manual',
+    location: raw.location || null,
+    locationCoords: raw.locationCoords || null,
+    startLocationCoords: raw.startLocationCoords || null,
+    travelMode: raw.travelMode || null,
   };
   const hash = raw.hash || raw.id || generateHash(base);
   const task = {

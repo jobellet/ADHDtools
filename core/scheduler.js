@@ -146,6 +146,7 @@ function loadCalendarBlocks(todayStr, config) {
             isFixed,
             source: 'calendar',
             hash: ev.calendarInstanceId || ev.id || `cal-${ev.start}`,
+            location: ev.location || '',
             startTime: ev.start?.slice(11, 16) || null,
             durationMinutes: duration,
             deadline: ev.end || null,
@@ -326,11 +327,13 @@ export function getBusyBlocks(dateStr, overrides = {}) {
   const blocks = [];
   getRoutineBlocks(dateStr, cfg).forEach(slot => blocks.push({
     kind: 'routine', id: slot.task.routineId, name: slot.task.name,
+    location: slot.task.location || '',
     start: slot.startMinutes, end: slot.endMinutes,
   }));
   if (cfg.includeCalendarInSchedule !== false) {
     loadCalendarBlocks(dateStr, cfg).forEach(slot => blocks.push({
       kind: 'event', id: slot.task.hash, name: slot.task.name,
+      location: slot.task.location || '',
       start: slot.startMinutes, end: slot.endMinutes,
     }));
   }
@@ -340,7 +343,7 @@ export function getBusyBlocks(dateStr, overrides = {}) {
     .forEach(t => {
       const start = parseTimeToMinutes(t.plannerDate.slice(11, 16), null);
       if (!Number.isFinite(start)) return;
-      blocks.push({ kind: 'task', id: t.hash || t.id, name: t.name || t.text || 'Task', start, end: start + taskDurationForBusy(t) });
+      blocks.push({ kind: 'task', id: t.hash || t.id, name: t.name || t.text || 'Task', location: t.location || '', start, end: start + taskDurationForBusy(t) });
     });
   return blocks.sort((a, b) => a.start - b.start);
 }

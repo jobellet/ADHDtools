@@ -5,6 +5,7 @@
 // conflict-repaired locally before it touches the task store, so a bad model
 // can never double-book the day or invent tasks.
 import { localDateString } from './planner-utils.js';
+import { ensureGeocoded, getTravelMatrix } from './routing.js';
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -130,7 +131,7 @@ export function normalizePlanItems(raw, rawText = '') {
 
 function normalizeBlocks(blocks) {
     return (blocks || [])
-        .map(b => ({ kind: b.kind, id: b.id, name: b.name || 'busy', start: Math.round(b.start), end: Math.round(b.end) }))
+        .map(b => ({ kind: b.kind, id: b.id, name: b.name || 'busy', location: b.location || '', start: Math.round(b.start), end: Math.round(b.end) }))
         .filter(b => Number.isFinite(b.start) && Number.isFinite(b.end) && b.end > b.start)
         .sort((a, b) => a.start - b.start);
 }
@@ -160,17 +161,28 @@ function overlaps(ranges, start, end) {
     return ranges.some(r => start < r.end && end > r.start);
 }
 
-export function buildPlanPrompt({ dateStr, weekday, windowStartMinutes, dayEndMinutes, tasks, busyBlocks }) {
+export function buildPlanPrompt({ dateStr, weekday, windowStartMinutes, dayEndMinutes, tasks, busyBlocks, travelMatrix }) {
     const lines = [];
     lines.push('You are a strict scheduling assistant. You place tasks on a timeline.');
     lines.push(`Today: ${dateStr} (${weekday}). All times are today, 24-hour HH:MM.`);
     lines.push(`Planning window: ${minutesToTime(windowStartMinutes)} to ${minutesToTime(dayEndMinutes)}.`);
     lines.push('Busy blocks (already taken — NEVER schedule inside or overlapping them):');
     lines.push(busyBlocks.length
-        ? '[' + busyBlocks.map(b => `{"start":"${minutesToTime(b.start)}","end":"${minutesToTime(b.end)}","name":${JSON.stringify(b.name)}}`).join(',') + ']'
+        ? '[' + busyBlocks.map(b => `{"start":"${minutesToTime(b.start)}","end":"${minutesToTime(b.end)}","name":${JSON.stringify(b.name)},"location":${JSON.stringify(b.location || '')}}`).join(',') + ']'
         : '[] (nothing is busy yet)');
     lines.push('Tasks to schedule (keep each "text" EXACTLY as given):');
-    lines.push('[' + tasks.map(t => JSON.stringify({ text: t.name, minutes: t.minutes })).join(',') + ']');
+    lines.push('[' + tasks.map(t => JSON.stringify({ text: t.name, minutes: t.minutes, location: t.location || '' })).join(',') + ']');
+
+    if (travelMatrix && travelMatrix.size > 0) {
+        lines.push('Travel matrix (minutes between locations):');
+        const matrixLines = [];
+        for (const [key, val] of travelMatrix.entries()) {
+            const [loc1, loc2] = key.split('|');
+            matrixLines.push(`- ${loc1} to ${loc2}: ${val.minutes} min (${val.mode})`);
+        }
+        lines.push(matrixLines.join('\n'));
+    }
+
     lines.push('Rules:');
     lines.push('1. Schedule EVERY task exactly once. Do not skip tasks. Do not invent extra tasks.');
     lines.push(`2. Every start time must be free: not inside a busy block, not overlapping another task, not before ${minutesToTime(windowStartMinutes)}, not after ${minutesToTime(dayEndMinutes)}.`);
@@ -178,8 +190,9 @@ export function buildPlanPrompt({ dateStr, weekday, windowStartMinutes, dayEndMi
     lines.push('4. A task that does not fit anywhere goes last, at the first free time after the last busy block or task.');
     lines.push('5. Order the output by start time.');
     lines.push('6. Output ONLY a JSON array — no prose, no markdown, no code fences, no comments, no trailing commas.');
+    lines.push('7. If consecutive tasks/blocks have DIFFERENT locations, you MUST insert a travel task between them named "Travel to [location name]" with duration from the travel matrix. Do not include travel tasks if locations are empty or identical. Output these extra travel tasks in the final JSON array.');
     lines.push('Format of each element, with exactly these keys:');
-    lines.push('{"time":"HH:MM","text":"the task text exactly as given","duration":<minutes as a plain number>}');
+    lines.push('{"time":"HH:MM","text":"the task text exactly as given","duration":<minutes as a plain number>,"isTravel":<true if this is a travel task, else omit>}');
     return lines.join('\n');
 }
 
@@ -195,7 +208,8 @@ export function validatePlan(items, { tasks, windowStartMinutes, dayEndMinutes, 
     [...items]
         .sort((a, b) => a.time - b.time)
         .forEach(item => {
-            if (!desired.has(item.text)) {
+            const isTravel = item.text.startsWith('Travel to ') || item.isTravel;
+            if (!desired.has(item.text) && !isTravel) {
                 report.unknown.push(item.text);
                 return;
             }
@@ -254,6 +268,7 @@ export async function planDayWithAI(currentDate, options = {}) {
             id: t.hash || t.id,
             name: (t.name || t.text).trim(),
             minutes: clamp(Math.round(Number(t.durationMinutes || t.duration || t.estimatedMinutes) || defaultDurationMinutes), 5, 480),
+            location: t.location || '',
         }));
     if (tasks.length === 0) return { ok: false, reason: 'noTasks', message: tr('plan.aiNoTasks') };
 
@@ -262,6 +277,15 @@ export async function planDayWithAI(currentDate, options = {}) {
     }
 
     const busyBlocks = normalizeBlocks(scheduler.getBusyBlocks(dateStr));
+
+    // Get coordinates for all unique locations
+    const allLocations = new Set([
+        ...tasks.map(t => t.location).filter(Boolean),
+        ...busyBlocks.map(b => b.location).filter(Boolean)
+    ]);
+    const coordsMap = await ensureGeocoded(Array.from(allLocations));
+    const travelMatrix = await getTravelMatrix(coordsMap);
+
     const prompt = buildPlanPrompt({
         dateStr,
         weekday: currentDate.toLocaleDateString('en-US', { weekday: 'long' }),
@@ -269,6 +293,7 @@ export async function planDayWithAI(currentDate, options = {}) {
         dayEndMinutes,
         tasks,
         busyBlocks,
+        travelMatrix,
     });
 
     let rawText = '';
@@ -318,6 +343,7 @@ export async function planDayWithAI(currentDate, options = {}) {
                 durationMinutes: item.duration,
                 isFixed: true,
                 originalTool: 'AI',
+                travelMode: item.text.startsWith('Travel to ') ? 'walk' : null, // AI tasks are saved as walk initially if they are travel, user can change later
             })
             : null;
         saved.push(created || { text: item.text, plannerDate: plannerDateTime, duration: item.duration });
