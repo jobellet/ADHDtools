@@ -48,10 +48,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Interval Chime variables
     let nextChimeSeconds = null;
 
-    // Audio elements
-    const bellAudio = new Audio('https://soundbible.com/mp3/service-bell_daniel_simion.mp3');
-    const chimeAudio = new Audio('https://soundbible.com/mp3/wind-chimes-daniel_simon.mp3');
-    const digitalAudio = new Audio('https://soundbible.com/mp3/sms-alert-5-daniel_simon.mp3');
 
     // Load settings from localStorage
     let settings = JSON.parse(localStorage.getItem('pomodoroSettings')) || {
@@ -382,26 +378,65 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function playNotification() {
-        // Play sound safely
+    // Notification sounds are made in the browser (Web Audio): no download,
+    // works offline, no third-party request.
+    function getAudioContext() {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume();
+        return audioContext;
+    }
+
+    // One struck tone: sine partials with a fast attack and an exponential decay.
+    function strike(ctx, when, partials, decay, volume) {
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.0001, when);
+        gain.gain.exponentialRampToValueAtTime(volume, when + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, when + decay);
+        gain.connect(ctx.destination);
+        partials.forEach(([freq, level]) => {
+            const osc = ctx.createOscillator();
+            const partGain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, when);
+            partGain.gain.value = level;
+            osc.connect(partGain).connect(gain);
+            osc.start(when);
+            osc.stop(when + decay + 0.05);
+        });
+    }
+
+    function playSound(kind) {
+        if (!kind || kind === 'none') return;
         try {
-            switch (settings.audioNotification) {
-                case 'bell':
-                    bellAudio.play().catch(() => { });
-                    break;
-                case 'chime':
-                    chimeAudio.play().catch(() => { });
-                    break;
-                case 'digital':
-                    digitalAudio.play().catch(() => { });
-                    break;
-                case 'none':
-                default:
-                    break;
+            const ctx = getAudioContext();
+            const t = ctx.currentTime + 0.02;
+            if (kind === 'bell') {
+                // Service bell: bright, inharmonic partials, ~1.5 s ring.
+                strike(ctx, t, [[1318, 1], [3163, 0.45], [4430, 0.25], [6590, 0.12]], 1.6, 0.35);
+            } else if (kind === 'chime') {
+                // Soft wind chime: four notes going down.
+                [1568, 1319, 1175, 988].forEach((f, i) => strike(ctx, t + i * 0.22, [[f, 1], [f * 2.76, 0.2]], 1.8, 0.18));
+            } else if (kind === 'digital') {
+                // Two short beeps.
+                [0, 0.18].forEach(offset => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.value = 1760;
+                    gain.gain.setValueAtTime(0.08, t + offset);
+                    gain.gain.setValueAtTime(0.0001, t + offset + 0.1);
+                    osc.connect(gain).connect(ctx.destination);
+                    osc.start(t + offset);
+                    osc.stop(t + offset + 0.12);
+                });
             }
         } catch (e) {
-            console.error('Audio play failed:', e);
+            console.error('Sound playback failed:', e);
         }
+    }
+
+    function playNotification() {
+        playSound(settings.audioNotification);
 
         // Show browser notification if supported
         if ('Notification' in window && Notification.permission === 'granted') {
@@ -486,23 +521,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function testSelectedSound() {
-        const selection = audioNotificationSelect.value;
-        let audio;
-        switch (selection) {
-            case 'bell':
-                audio = bellAudio;
-                break;
-            case 'chime':
-                audio = chimeAudio;
-                break;
-            case 'digital':
-                audio = digitalAudio;
-                break;
-            default:
-                return;
-        }
-        audio.currentTime = 0;
-        audio.play().catch(() => { });
+        playSound(audioNotificationSelect.value);
     }
 
     function updateLongBreakInfo() {

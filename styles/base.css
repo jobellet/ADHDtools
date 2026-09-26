@@ -1270,29 +1270,7 @@ footer {
     box-shadow: none;
 }
 
-.event .delete-event {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #d32f2f;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    transition: all 0.2s ease;
-}
 
-.event .delete-event:hover {
-    background-color: #d32f2f;
-    color: white;
-    transform: scale(1.1);
-}
 
 .event .resize-handle {
     position: absolute;

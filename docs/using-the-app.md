@@ -83,11 +83,15 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
 ## The Plan view
 
 - The **strip on top** shows what is happening now or next, with a countdown. **Open** goes to the Now view.
-- The **timeline** shows the whole day:
+- The **timeline** shows the whole day. Times on the left mark the **start and end of each item**, plus a few whole hours; the red label is the time now.
+- **Zoom:** pinch with two fingers on a phone (zoom out to see most of the day), or pinch on a trackpad / Ctrl+scroll on a computer. The app remembers your zoom.
+- On a computer the planner fills the window.
+- Blocks:
   - orange — routines (booked time, buffer included),
   - purple — tasks with a fixed time,
   - dashed — tasks the app placed for you (they move with the clock until they start),
   - blue — calendar events.
+- **All-day events** (birthdays, holidays…) are not drawn as blocks and never take time from your day.
 - **Add an event:** tap **+** (or an empty spot of the timeline, which pre-fills that time). The form asks only three things: **what**, **start** and **how long** (one tap: 15, 30, 45, 60, 90 min, or type another number). Importance, urgency, deadline, "do this after" and "pick a task from your list" are folded under **More options**.
 - If the time is already taken (routine, event or another task), the form says by what and offers a **Use HH:MM** button with the next free time. Nothing is ever booked on top of something else.
 - Tap an event in the timeline to change it, or **Delete** it.

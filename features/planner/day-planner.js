@@ -1,4 +1,4 @@
-import { renderDayPlanner } from './render-day.js';
+import { renderDayPlanner, relabelTimeline, getMinuteHeight } from './render-day.js';
 import { populateTaskOptions, getDefaultTime, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
 import { planDayWithAI } from './ai-plan.js';
 import { createTask } from '../../core/task-model.js';
@@ -283,27 +283,89 @@ function startResize(e, task, eventDiv) {
     document.addEventListener('pointerup', onUp);
 }
 
-let zoomLevel = 1;
-function applyZoom() {
-    document.documentElement.style.setProperty('--minute-height', `${2 * zoomLevel}px`);
+// Zoom = pixels per minute (--minute-height). Pinch on phones, trackpad pinch
+// or Ctrl+scroll on desktop. Remembered between visits.
+const ZOOM_KEY = 'adhd-planner-zoom';
+const ZOOM_MIN = 0.5;   // 30 px per hour: most of a day on one phone screen
+const ZOOM_MAX = 5;     // 300 px per hour
+let relabelFrame = null;
+
+function readZoom() {
+    const saved = parseFloat(localStorage.getItem(ZOOM_KEY));
+    return Number.isFinite(saved) ? Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, saved)) : 2;
+}
+
+function applyZoom(minuteHeight = readZoom()) {
+    document.documentElement.style.setProperty('--minute-height', `${minuteHeight}px`);
+}
+
+// Change the zoom and keep `anchorMinute` under the same screen point (offsetPx from the list top).
+function setZoom(minuteHeight, anchorMinute, offsetPx) {
+    const mh = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, minuteHeight));
+    applyZoom(mh);
+    const { startMinutes } = getDayBounds();
+    timeBlocksContainer.scrollTop = timelineOffset() + (anchorMinute - startMinutes) * mh - offsetPx;
+    try { localStorage.setItem(ZOOM_KEY, String(Math.round(mh * 100) / 100)); } catch { /* storage full */ }
+    if (!relabelFrame) {
+        relabelFrame = requestAnimationFrame(() => { relabelFrame = null; relabelTimeline(); });
+    }
+}
+
+// Minute of the day at a screen Y (the timeline element knows its own position).
+function minuteAtClientY(clientY) {
+    const timeline = timeBlocksContainer.querySelector('.timeline');
+    const top = timeline ? timeline.getBoundingClientRect().top : timeBlocksContainer.getBoundingClientRect().top;
+    return getDayBounds().startMinutes + (clientY - top) / getMinuteHeight();
+}
+
+// Top margin of the timeline inside the scrolling list.
+function timelineOffset() {
+    return timeBlocksContainer.querySelector('.timeline')?.offsetTop || 0;
+}
+
+function setupZoomGestures() {
+    let pinch = null;
+    const distance = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const middleY = t => (t[0].clientY + t[1].clientY) / 2;
+    timeBlocksContainer.addEventListener('touchstart', e => {
+        if (e.touches.length !== 2) return;
+        const y = middleY(e.touches);
+        pinch = { d0: distance(e.touches), mh0: getMinuteHeight(), minute: minuteAtClientY(y) };
+    }, { passive: true });
+    timeBlocksContainer.addEventListener('touchmove', e => {
+        if (!pinch || e.touches.length !== 2) return;
+        e.preventDefault(); // our zoom, not the page zoom
+        const y = middleY(e.touches);
+        const rect = timeBlocksContainer.getBoundingClientRect();
+        setZoom(pinch.mh0 * distance(e.touches) / pinch.d0, pinch.minute, y - rect.top);
+    }, { passive: false });
+    const endPinch = e => { if (e.touches.length < 2) pinch = null; };
+    timeBlocksContainer.addEventListener('touchend', endPinch);
+    timeBlocksContainer.addEventListener('touchcancel', endPinch);
+
+    // Trackpad pinch arrives as wheel events with ctrlKey.
+    timeBlocksContainer.addEventListener('wheel', e => {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const rect = timeBlocksContainer.getBoundingClientRect();
+        // Small steps for trackpads, capped for mouse wheels (one notch ≈ 18 %).
+        const delta = Math.max(-50, Math.min(50, e.deltaY));
+        setZoom(getMinuteHeight() * Math.exp(-delta * 0.004), minuteAtClientY(e.clientY), e.clientY - rect.top);
+    }, { passive: false });
 }
 
 function scrollToCurrent() {
     const now = new Date();
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     const { startMinutes, endMinutes } = getDayBounds();
-    const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
-
-    // Align current time near the top of the viewport with some padding (e.g., 15 mins)
-    const paddingMinutes = 15;
-    const boundedMinutes = Math.min(Math.max(currentMinutes, startMinutes), endMinutes);
-    const scrollPosition = ((boundedMinutes - startMinutes) * minuteHeight) - (paddingMinutes * minuteHeight);
-
     const containerHeight = timeBlocksContainer.clientHeight;
     // Hidden planner (other tool open): try again when it is shown.
     if (!containerHeight) return;
+    // Put "now" about a quarter down the view, whatever the zoom.
+    const boundedMinutes = Math.min(Math.max(currentMinutes, startMinutes), endMinutes);
+    const target = timelineOffset() + (boundedMinutes - startMinutes) * getMinuteHeight() - containerHeight * 0.25;
     timeBlocksContainer.scrollTo({
-        top: Math.max(0, Math.min(timeBlocksContainer.scrollHeight - containerHeight, scrollPosition)),
+        top: Math.max(0, Math.min(timeBlocksContainer.scrollHeight - containerHeight, target)),
         behavior: 'instant',
     });
 }
@@ -434,7 +496,8 @@ function initDayPlanner() {
                     const route = await getRoute(task.startLocationCoords, task.locationCoords, eventTravelModeSelect.value);
                     if (route) {
                         updateTaskInStore(editingTaskId, { travelMode: route.mode, durationMinutes: route.minutes, duration: route.minutes });
-                        window.EventBus?.dispatchEvent(new Event('scheduleNeedsRefresh'));
+                        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
                     }
                 }
             }
@@ -466,21 +529,15 @@ function initDayPlanner() {
         closeModal();
     });
 
+    // Tap on free space in the timeline: new event at that time (5-minute steps).
     timeBlocksContainer.addEventListener('click', e => {
-        if (e.target.closest('.event')) return;
-        const cls = e.target.classList;
-        if (!(e.target === timeBlocksContainer || cls.contains('time-block') || cls.contains('event-content'))) return;
-        const rect = timeBlocksContainer.getBoundingClientRect();
-        const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
+        if (e.target.closest('.event') || !e.target.closest('.timeline')) return;
         const { startMinutes, endMinutes } = getDayBounds();
-        const y = e.clientY - rect.top + timeBlocksContainer.scrollTop;
-        let minutes = Math.round(y / minuteHeight / 5) * 5 + startMinutes;
+        let minutes = Math.round(minuteAtClientY(e.clientY) / 5) * 5;
         minutes = Math.min(Math.max(startMinutes, minutes), Math.max(startMinutes, endMinutes - 5));
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        openModal(null, timeStr);
+        openModal(null, minutesToTime(minutes));
     });
+    setupZoomGestures();
 
     eventTaskSelect.addEventListener('change', () => {
         const id = eventTaskSelect.value;
@@ -588,27 +645,33 @@ function initDayPlanner() {
                     }
                     if (prevCoords && (prevCoords.lat !== savedTask.locationCoords.lat || prevCoords.lon !== savedTask.locationCoords.lon)) {
                         getRoute(prevCoords, savedTask.locationCoords).then(route => {
-                            if (route) {
-                                const h = Math.floor(startMins / 60).toString().padStart(2, '0');
-                                const m = (startMins % 60).toString().padStart(2, '0');
-                                const travelStartMins = startMins - route.minutes;
-                                const th = Math.floor(travelStartMins / 60).toString().padStart(2, '0');
-                                const tm = (travelStartMins % 60).toString().padStart(2, '0');
-
-                                addTaskToStore(createTask({
-                                    name: `Travel to ${savedTask.location}`,
-                                    text: `Travel to ${savedTask.location}`,
-                                    plannerDate: `${localDateString(currentDate)}T${th}:${tm}`,
-                                    durationMinutes: route.minutes,
-                                    duration: route.minutes,
-                                    isFixed: true,
-                                    originalTool: 'DayPlanner',
-                                    travelMode: route.mode,
-                                    startLocationCoords: prevCoords,
-                                    locationCoords: savedTask.locationCoords,
-                                }));
-                                window.EventBus?.dispatchEvent(new Event('scheduleNeedsRefresh'));
+                            if (!route) return;
+                            const travelStartMins = startMins - route.minutes;
+                            const dateStr = localDateString(currentDate);
+                            const place = String(savedTask.location || '').split(',')[0].trim();
+                            // The travel block obeys the same rule as everything else: never double-book.
+                            const clashes = travelStartMins < 0 ? [{}] : scheduler.findConflicts({
+                                dateStr, startMinutes: travelStartMins, durationMinutes: route.minutes, ignore: [savedTask.hash],
+                            });
+                            if (clashes.length) {
+                                window.DataManager?.showNotification?.(tr('event.travelNoRoom', { min: route.minutes, place }), 'error');
+                                return;
                             }
+                            addTaskToStore(createTask({
+                                name: tr('event.travelTo', { place }),
+                                text: tr('event.travelTo', { place }),
+                                plannerDate: `${dateStr}T${minutesToTime(travelStartMins)}`,
+                                durationMinutes: route.minutes,
+                                duration: route.minutes,
+                                deadline: null,
+                                isFixed: true,
+                                originalTool: 'DayPlanner',
+                                travelMode: route.mode,
+                                startLocationCoords: prevCoords,
+                                locationCoords: savedTask.locationCoords,
+                            }));
+                            window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                            window.dispatchEvent(new Event('scheduleNeedsRefresh'));
                         });
                     }
                 }

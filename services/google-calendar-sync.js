@@ -299,90 +299,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Add export buttons to day planner events
+    // Small "export to Google Calendar" button on each planned task of the day planner.
     function addExportButtonsToDayPlanner() {
         // Only useful once Google Calendar is connected.
         if (localStorage.getItem(CONNECTED_FLAG_KEY) !== 'true') return;
-        const timeBlocks = document.querySelectorAll('.time-block');
-        timeBlocks.forEach(block => {
-            if (block.querySelector('.export-to-calendar-btn')) return;
-            const timeLabelEl = block.querySelector('.time-label');
-            if (!timeLabelEl) return;
-            const timeLabel = timeLabelEl.textContent;
+        const timeline = document.querySelector('#time-blocks .timeline');
+        if (!timeline) return;
+        timeline.querySelectorAll('.event.task-event').forEach(eventEl => {
+            if (eventEl.querySelector('.export-to-calendar-btn')) return;
             const exportBtn = document.createElement('button');
             exportBtn.className = 'export-to-calendar-btn';
             exportBtn.type = 'button';
             exportBtn.innerHTML = '<i class="fas fa-calendar-plus"></i>';
             exportBtn.title = 'Export to Google Calendar';
-
-            exportBtn.addEventListener('click', function () {
-                const eventContent = block.querySelector('.event-content');
-                if (eventContent && eventContent.textContent.trim()) {
-                    const hourMatch = timeLabel.match(/(\d+):00/);
-                    if (hourMatch) {
-                        const hour = parseInt(hourMatch[1]);
-                        const isPM = timeLabel.includes('PM');
-                        let hour24 = hour;
-                        if (isPM && hour !== 12) hour24 += 12;
-                        if (!isPM && hour === 12) hour24 = 0;
-
-                        const today = new Date();
-                        const startTime = new Date(today.setHours(hour24, 0, 0, 0));
-                        const endTime = new Date(today.setHours(hour24 + 1, 0, 0, 0));
-                        exportEventToCalendar(eventContent.textContent.trim(), startTime, endTime);
-                    }
-                } else {
-                    alert('Please add content to this time block first');
-                }
+            exportBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // don't open the edit form
+                const [y, m, d] = timeline.dataset.date.split('-').map(Number);
+                const at = minutes => new Date(y, m - 1, d, Math.floor(minutes / 60), minutes % 60);
+                exportEventToCalendar(eventEl.dataset.title, at(Number(eventEl.dataset.start)), at(Number(eventEl.dataset.end)));
             });
-
-            block.appendChild(exportBtn);
-        });
-    }
-
-    // Add export buttons to tasks
-    function addExportButtonsToTasks() {
-        const taskItems = document.querySelectorAll('.task-item');
-        taskItems.forEach(task => {
-            if (!task.querySelector('.export-to-calendar-btn')) {
-                const taskActions = task.querySelector('.task-actions');
-                if (taskActions) {
-                    const exportBtn = document.createElement('button');
-                    exportBtn.className = 'export-to-calendar-btn';
-            exportBtn.type = 'button';
-                    exportBtn.innerHTML = '<i class="fas fa-calendar-plus"></i>';
-                    exportBtn.title = 'Export to Google Calendar';
-
-                    exportBtn.addEventListener('click', function () {
-                        const taskText = task.querySelector('.task-text').textContent;
-                        const tomorrow = new Date();
-                        tomorrow.setDate(tomorrow.getDate() + 1);
-                        tomorrow.setHours(9, 0, 0, 0);
-                        const endTime = new Date(tomorrow);
-                        endTime.setHours(10, 0, 0, 0);
-                        exportEventToCalendar(taskText, tomorrow, endTime, 'Task from ADHD Tools Hub');
-                    });
-
-                    taskActions.appendChild(exportBtn);
-                }
-            }
+            eventEl.appendChild(exportBtn);
         });
     }
 
     function initObservers() {
         const timeBlocksContainer = document.getElementById('time-blocks');
         if (timeBlocksContainer) {
-            // The planner re-renders its hours often: add the buttons after each render.
-            const dayPlannerObserver = new MutationObserver(() => {
-                if (document.querySelector('.time-block')) addExportButtonsToDayPlanner();
-            });
+            // The planner re-renders often: add the buttons after each render.
+            const dayPlannerObserver = new MutationObserver(() => addExportButtonsToDayPlanner());
             dayPlannerObserver.observe(timeBlocksContainer, { childList: true });
         }
 
-        const taskList = document.getElementById('task-list');
-        if (taskList) {
-            const taskListObserver = new MutationObserver(() => addExportButtonsToTasks());
-            taskListObserver.observe(taskList, { childList: true, subtree: true });
-        }
     }
 
     // ---- Init -------------------------------------------------------------

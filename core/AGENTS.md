@@ -6,7 +6,7 @@ so classic scripts can use it. Data model details: [docs/task-model.md](../docs/
 
 | File | Format | Exposes | Tested in |
 | --- | --- | --- | --- |
-| `task-model.js` | ES module | `createTask`, `updateTask`, `markTaskCompleted`, `computeUrgencyFromDeadline`, `computeAchievementScore` · `window.TaskModel` | `tests/task-model.test.js` |
+| `task-model.js` | ES module | `createTask`, `updateTask`, `markTaskCompleted`, `computeUrgencyFromDeadline`, `computeAchievementScore`, `isPassiveOrAllDay` · `window.TaskModel` | `tests/task-model.test.js` |
 | `task-store.js` | ES module | `TaskStore` (default, `window.TaskStore`), `DELETED_TASKS_KEY` | `tests/task-store.test.js` |
 | `scheduler.js` | ES module | `buildSchedule`, `getTodaySchedule`, `getCurrentTask`, `getRoutineBlocks`, `routineBookedMinutes`, `getBusyBlocks`, `findConflicts`, `findNextFreeSlot`, `findRoutineConflicts`, `localDateString` · `window.UnifiedScheduler` | `tests/scheduler.test.js` |
 | `urgency-helpers.js` | ES module | Urgency smoothing + skip ledger · `window.UrgencyHelpers` | `tests/urgency-helpers.test.js` |
@@ -29,9 +29,12 @@ Import graph (ES modules): `task-model` ← `urgency-helpers` ← `task-store` �
 - Auto-placed tasks start from *now*, ordered by importance × urgency; snoozed tasks wait for `snoozedUntil`.
 - A block already in progress keeps its real start. `autoPinned` tasks whose slot ended go back to the queue.
 - A `deadline` never pins a task to a time; only `plannerDate` (with time) or `startTime` does.
+- All-day events and passive calendar copies (`isPassiveOrAllDay`) are not scheduled and book no time.
+- A flexible task that no longer fits before `dayEnd` is left out; it never blocks the tasks after it.
 - Tests pass data through `config` (`routines`, `routineRuns`, `tasks`) instead of `localStorage`.
 
 ## Task store rules
 - `updateTask` keeps unknown fields (notes, category…); `createTask(raw, raw)` keeps them on add.
 - `deadline: null` means no deadline; missing `deadline` falls back to `plannerDate` (legacy).
+- `getOverdueTasks` never lists calendar copies or all-day events.
 - Delete with `deleteTasks(hashes)` (tombstones in `adhd-deleted-tasks`); undo with `undeleteTasks(removed)`.

@@ -1,4 +1,4 @@
-import { createTask, updateTask, markTaskCompleted, computeAchievementScore, computeUrgencyFromDeadline } from './task-model.js';
+import { createTask, updateTask, markTaskCompleted, computeAchievementScore, computeUrgencyFromDeadline, isPassiveOrAllDay } from './task-model.js';
 import UrgencyHelpers from './urgency-helpers.js';
 import { recordTaskDuration } from './duration-learning.js';
 
@@ -167,7 +167,8 @@ function undeleteTasks(removed) {
 
 // Pending tasks whose deadline has passed (optionally for one user).
 function getOverdueTasks(now = new Date(), user = null) {
-  return tasks.filter(t => !t.completed && !t.isArchived && t.deadline
+  // Calendar copies and all-day items are appointments, not deadlines.
+  return tasks.filter(t => !t.completed && !t.isArchived && t.deadline && !isPassiveOrAllDay(t)
     && (!user || t.user === user)
     && !Number.isNaN(new Date(t.deadline).getTime())
     && new Date(t.deadline) < now);

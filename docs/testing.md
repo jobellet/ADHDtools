@@ -1,3 +1,18 @@
+# Testing
+
+## Automatic checks (run before every PR, after merging the latest `main`)
+
+```bash
+npm test          # unit tests (scheduler, tasks, translations, file structure)
+npm run test:ui   # the real app in headless Chromium, phone (390×844) and desktop (1366×900)
+```
+
+The first time, `npm run test:ui` needs a browser: `npx playwright install chromium`.
+CI runs both on every pull request. The browser tests check that the app opens on the right screen,
+that the planner shows the whole day (also with all-day calendar events), that zoom keeps blocks on
+their times, that the add-event form never double-books, and that there are no errors and no
+third-party requests while loading. Details: [tests/AGENTS.md](../tests/AGENTS.md).
+
 # Manual Test Cases
 
 Scenarios to verify core behavior after changes.
@@ -7,6 +22,8 @@ Scenarios to verify core behavior after changes.
 * **Default view:** open the app root while a task or routine is scheduled now → the Now view shows it with a countdown. With nothing planned now (and nothing within the break window, 15 min by default) → the Day Planner opens.
 * **Routine booking:** create a routine at 07:00 with 30 min of steps. The planner shows an orange block 07:00–07:33 (10 % buffer). Add a task “Call dentist at 7:10am” in **Add** → it moves to 07:35 and the message says why.
 * **No overlapping routines:** create a second routine at 07:20 on the same weekday → Save is refused with the name of the conflicting routine.
+* **Timeline:** in Plan, the start/end times of each block appear on the left, level with the block edges. Pinch (phone) or Ctrl+scroll (desktop): blocks and labels stay aligned, fewer hour labels when zoomed out, zoom kept after reload. On desktop the timeline reaches the bottom of the window.
+* **Pomodoro sounds offline:** turn off the network, Settings → Pomodoro → Test Sound for Bell, Chime and Digital: each plays.
 * **Add event form:** in Plan, tap **+**. The title field has focus; Save with an empty title does nothing. Pick a start time inside a routine → a red box names the routine and offers **Use HH:MM**; tap it, then Save → the event is placed there with the chosen length and no deadline. Tap the event → **Modifier/Edit** shows the same values; **Delete** removes it.
 * **Routine editor on a phone:** open a routine in a phone-sized window. Only step names show. Tap a step → its duration, ↑ ↓ and delete appear (other steps close). Drag a step by ⋮⋮ to the top, tap **Save** → the new order and durations are kept.
 * **Routine from Now:** during the routine's time, tap **Start routine** → the full-screen player opens. Close it: the Now view shows the current step and its timer. Finish all steps → the routine is marked done for today and its remaining time frees up.
@@ -30,6 +47,7 @@ Scenarios to verify core behavior after changes.
 
 ## Google Calendar sync
 
+* **All-day events don't hide the day:** with auto-sync on, a calendar that has an all-day event. The planner still shows every other task; the all-day event is not a block and never appears as "now" or as overdue.
 * **Pipeline without OAuth:** in the console run
   `window.CalendarTool.ingestExternalEvents([{ uid: 't1@test', title: 'Probe', start: '2026-01-01T10:00:00', end: '2026-01-01T11:00:00' }])`
   — the event should appear in the Calendar tool and as a `calendar-import` task in `window.TaskStore.getAllTasks()`.

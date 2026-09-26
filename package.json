@@ -4,7 +4,9 @@
   "description": "[View Live Website](https://jobellet.github.io/ADHDtools/)",
   "main": "index.html",
   "scripts": {
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "test:ui": "node --test --test-concurrency=1 tests/ui/*.test.js",
+    "test:all": "npm test && npm run test:ui"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +14,8 @@
   "type": "module",
   "dependencies": {
     "jsdom": "^26.1.0"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
   }
 }

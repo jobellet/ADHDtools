@@ -98,10 +98,153 @@
 
 .legend.calendar::before { background: var(--kind-event); }
 
+/* ---------- Timeline (render-day.js) ---------- */
+/* y = (minute - day start) × --minute-height. Zoom changes only that variable. */
+
 #planner .time-blocks-container {
-    height: calc(100vh - 290px);
+    --gutter: 68px;
+    position: relative;
+    height: calc(100dvh - 300px);
     min-height: 360px;
     max-height: none;
+    padding: 0;
+    overflow-y: auto;
+    touch-action: pan-y; /* two-finger pinch is handled by the planner (zoom) */
+    overscroll-behavior: contain;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--surface);
+    scroll-behavior: auto;
+}
+
+.timeline {
+    position: relative;
+    margin: 14px 0;
+}
+
+.timeline-grid,
+.timeline-gutter,
+.timeline-lane {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.timeline-gutter {
+    left: 0;
+    width: var(--gutter);
+    border-right: 1px solid #eee;
+}
+
+.timeline-grid {
+    left: var(--gutter);
+    right: 0;
+    pointer-events: none;
+}
+
+.timeline-hour-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #f0f0f0;
+}
+
+.timeline-lane {
+    left: calc(var(--gutter) + 4px);
+    right: 6px;
+}
+
+.timeline-label {
+    position: absolute;
+    right: 10px;
+    transform: translateY(-50%);
+    font-size: 0.72rem;
+    line-height: 1;
+    color: #9aa0a6;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* Start / end of an item: darker, with a tick on the timeline. */
+.timeline-label.is-event {
+    color: var(--on-surface);
+    font-weight: 600;
+}
+
+.timeline-label.is-event::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    width: 7px;
+    border-top: 1.5px solid currentColor;
+}
+
+.timeline-label.is-now {
+    right: 4px;
+    padding: 2px 4px;
+    border-radius: 4px;
+    background: #e53935;
+    color: #fff;
+    font-weight: 700;
+    z-index: 3;
+}
+
+.timeline .current-time-indicator {
+    position: absolute;
+    left: var(--gutter);
+    right: 0;
+    height: 2px;
+    background: #e53935;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.timeline .event {
+    position: absolute;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.25;
+    overflow: hidden;
+    min-height: 12px;
+    border-bottom: none;
+    margin: 0;
+    transition: none; /* follow the zoom at once (base.css animates .event) */
+}
+
+.timeline .event:hover {
+    transform: none;
+    filter: brightness(1.04);
+}
+
+.timeline .event-title {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timeline .event-time {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Too short to show the time inside: the labels on the left show it. */
+.timeline .event.is-compact {
+    padding-top: 0;
+    padding-bottom: 0;
+    justify-content: center;
+    font-size: 0.78rem;
+}
+
+.timeline .event.is-compact .event-time {
+    display: none;
 }
 
 .event.routine-event {
@@ -118,7 +261,10 @@
     background: linear-gradient(135deg, #90caf9 0%, var(--kind-event) 100%);
     color: #fff;
     border-bottom: none;
-    display: block;
+    /* base.css lays .calendar-event out in a row: keep title above time */
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
 }
 
 .plan-side {
@@ -213,13 +359,59 @@
 
 /* ---------- Tablets ---------- */
 
+/* Large screens: the planner fills the window; the timeline and the
+   Plan ahead panel scroll inside it, so there is no empty space below. */
+@media (min-width: 1025px) {
+    #planner.tool-section.active {
+        display: flex;
+        flex-direction: column;
+        height: calc(100dvh - 56px - 3rem);
+        margin-bottom: 0;
+        padding: 1rem 1.5rem;
+    }
+
+    #planner .plan-next-strip {
+        flex: none;
+    }
+
+    #planner .plan-layout {
+        flex: 1 1 auto;
+        min-height: 0;
+        grid-template-rows: minmax(0, 1fr);
+    }
+
+    #planner .day-planner-container {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        height: 100%;
+        max-width: none;
+    }
+
+    #planner .planner-header {
+        flex: none;
+    }
+
+    #planner .time-blocks-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+    }
+
+    #planner .plan-side {
+        position: static;
+        height: 100%;
+        overflow-y: auto;
+    }
+}
+
 @media (max-width: 1024px) {
     .plan-layout {
-            grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .plan-side {
-            position: static;
+        position: static;
     }
 }
 
@@ -229,73 +421,73 @@
     /* The planner scrolls as one page on phones. */
 
     #planner.tool-section {
-            overflow-y: auto;
+        overflow-y: auto;
     }
 
     #planner .plan-layout {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.75rem;
-            width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        width: 100%;
     }
 
     #planner .day-planner-container,
     #planner .plan-side {
-            width: 100%;
+        width: 100%;
     }
 
     #planner .day-planner-container {
-            flex: 0 0 auto;
-            overflow: visible;
+        flex: 0 0 auto;
+        overflow: visible;
     }
 
     #planner .time-blocks-container {
-            flex: 0 0 auto;
-            height: 62dvh;
-            min-height: 300px;
-            padding-bottom: 0;
+        flex: 0 0 auto;
+        height: 62dvh;
+        min-height: 300px;
+        padding-bottom: 0;
     }
 
     .plan-side {
-            order: -1;
+        order: -1;
     }
 
     .plan-deadlines-hint {
-            display: none;
+        display: none;
     }
 
     .planner-legend {
-            display: none;
+        display: none;
     }
 
     #planner .planner-header {
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        margin-bottom: 0.5rem;
     }
 
     .planner-date {
-            font-size: 1.05rem;
-            text-align: center;
+        font-size: 1.05rem;
+        text-align: center;
     }
 
     /* Planner "Add event" is a normal toolbar button (the tab bar has "Add"). */
 
     #add-event-btn {
-            position: static;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            box-shadow: none;
-            display: flex !important;
+        position: static;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        box-shadow: none;
+        display: flex !important;
     }
 
     #add-event-btn i {
-            font-size: 1rem;
+        font-size: 1rem;
     }
 
     .plan-next-strip {
-            margin-bottom: 0.5rem;
+        margin-bottom: 0.5rem;
     }
 }
 
@@ -375,15 +567,15 @@
     margin: 0.5rem 0 0;
 }
 
-/* Google Calendar export button on each planner hour: small, top-right. */
+/* Google Calendar export button on each planned task: small, top-right. */
 
-.time-block .export-to-calendar-btn {
+.timeline .export-to-calendar-btn {
     position: absolute;
-    top: 0.6rem;
-    right: 0.6rem;
-    width: 32px;
-    height: 32px;
-    min-height: 32px;
+    top: 2px;
+    right: 2px;
+    width: 26px;
+    height: 26px;
+    min-height: 26px;
     padding: 0;
     border-radius: 8px;
     background: transparent;
@@ -391,7 +583,7 @@
     z-index: 5;
 }
 
-.time-block .export-to-calendar-btn:hover {
+.timeline .export-to-calendar-btn:hover {
     background: #e3f2fd;
 }
 
@@ -636,14 +828,14 @@ body:not(.cap-gcal) .export-to-calendar-btn {
 
 @media (max-width: 768px) {
     .event-modal.modal {
-            align-items: flex-end;
+        align-items: flex-end;
     }
 
     .event-modal .event-modal-content {
-            width: 100%;
-            max-width: none;
-            max-height: 92dvh;
-            border-radius: 20px 20px 0 0;
+        width: 100%;
+        max-width: none;
+        max-height: 92dvh;
+        border-radius: 20px 20px 0 0;
     }
 }
 
@@ -654,4 +846,36 @@ body:not(.cap-gcal) .export-to-calendar-btn {
 
 .event-chip {
     transition: none; /* selection shows at once */
+}
+
+/* Drag the bottom edge of a planned task to change its length. */
+.timeline .event-resizer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 8px;
+    cursor: ns-resize;
+    touch-action: none;
+}
+
+.timeline .event-resizer::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 2px;
+    width: 24px;
+    margin-left: -12px;
+    border-top: 2px solid currentColor;
+    opacity: 0.35;
+}
+
+.timeline .event.is-compact .event-resizer::after {
+    display: none; /* too short: the mark would look like an underline */
+}
+
+.timeline .event-time {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
