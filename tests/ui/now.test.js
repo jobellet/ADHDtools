@@ -76,3 +76,51 @@ test('nothing planned → the app opens on the planner', async () => {
     await context.close();
   }
 });
+
+test('an event running now can be edited from the Now view', async () => {
+  const { page, context, errors, external } = await openApp(browser, server.url, {
+    device: 'phone', time: `${DAY}T15:10:00`, storage: sampleDay(DAY),
+  });
+  try {
+    const now = await readNow(page);
+    assert.equal(now.mode, 'doing');
+    assert.equal(now.title, 'Lab meeting');
+    const editBtn = page.locator('#now-actions button', { hasText: 'Edit' });
+    await editBtn.click();
+    const choices = page.locator('#now-skip-choices button', { hasText: 'In 15 min' });
+    await choices.click();
+    const ev = await page.evaluate(() => {
+      const stored = JSON.parse(localStorage.getItem('adhd-calendar-events'));
+      return stored.find(e => e.title === 'Lab meeting');
+    });
+    assert.equal(ev.start, `${DAY}T15:25`, `event moved, got ${ev.start}`);
+    assert.equal(ev.localOverride, true, 'the change survives the next sync');
+    assert.deepEqual(errors, []);
+    assert.deepEqual(external, []);
+  } finally {
+    await context.close();
+  }
+});
+
+test('an event can be turned into "an event, not a task"', async () => {
+  const { page, context, errors, external } = await openApp(browser, server.url, {
+    device: 'phone', time: `${DAY}T15:10:00`, storage: sampleDay(DAY),
+  });
+  try {
+    const now = await readNow(page);
+    assert.equal(now.title, 'Lab meeting');
+    await page.locator('#now-actions button', { hasText: 'Edit' }).click();
+    await page.locator('#now-skip-choices button', { hasText: 'event, not a task' }).click();
+    const after = await readNow(page);
+    assert.notEqual(after.title, 'Lab meeting', 'the event frees the Now view');
+    const ev = await page.evaluate(() => {
+      const stored = JSON.parse(localStorage.getItem('adhd-calendar-events'));
+      return stored.find(e => e.title === 'Lab meeting');
+    });
+    assert.equal(ev.notATask, true, 'the event keeps its calendar entry');
+    assert.deepEqual(errors, []);
+    assert.deepEqual(external, []);
+  } finally {
+    await context.close();
+  }
+});

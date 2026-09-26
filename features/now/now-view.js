@@ -157,6 +157,42 @@
       refreshAll();
     }
 
+    // An event blocks its time like a task, but it is not work: the user may
+    // want to push it back or to keep tasks running during it.
+    function postponeEvent(slot, minutes) {
+      const newStart = new Date(Date.now() + minutes * 60000);
+      const moved = window.CalendarTool?.postponeEvent?.(slot.task.hash, newStart);
+      if (moved) {
+        window.DataManager?.showNotification?.(t('now.event.postponed', { name: taskName(slot.task), time: fmtClock(newStart) }));
+      } else {
+        window.DataManager?.showNotification?.(t('now.event.postponeFailed', { name: taskName(slot.task) }), 'error');
+      }
+      refreshAll();
+    }
+
+    function markEventNotATask(slot) {
+      const changed = window.CalendarTool?.markEventPassive?.(slot.task.hash);
+      if (changed) {
+        window.DataManager?.showNotification?.(t('now.event.notATaskDone', { name: taskName(slot.task) }));
+      } else {
+        window.DataManager?.showNotification?.(t('now.event.notATaskFailed', { name: taskName(slot.task) }), 'error');
+      }
+      refreshAll();
+    }
+
+    function showEventChoices(slot) {
+      const box = el.skipChoices;
+      box.innerHTML = '';
+      const label = document.createElement('p');
+      label.textContent = t('now.event.prompt');
+      box.appendChild(label);
+      box.appendChild(button(t('now.event.later', { min: 15 }), 'fa-hourglass-half', 'btn-outline', () => postponeEvent(slot, 15)));
+      box.appendChild(button(t('now.event.later', { min: 60 }), 'fa-hourglass-half', 'btn-outline', () => postponeEvent(slot, 60)));
+      box.appendChild(button(t('now.event.notATask'), 'fa-calendar-day', 'btn-outline', () => markEventNotATask(slot), t('now.event.notATaskTitle')));
+      box.appendChild(button(t('now.skip.cancel'), 'fa-times', 'btn-link', () => { box.hidden = true; }));
+      box.hidden = false;
+    }
+
     function showSkipChoices(slot) {
       const box = el.skipChoices;
       box.innerHTML = '';
@@ -230,7 +266,10 @@
 
       el.steps.hidden = true;
       if (kind === 'event') {
-        el.actions.append(button(t('now.btn.seeDay'), 'fa-calendar-day', 'btn-outline', () => window.switchTool?.('planner')));
+        el.actions.append(
+          button(t('now.btn.seeDay'), 'fa-calendar-day', 'btn-outline btn-large', () => window.switchTool?.('planner')),
+          button(t('now.btn.editEvent'), 'fa-pen', 'btn-outline btn-large', () => showEventChoices(slot)),
+        );
         return;
       }
 

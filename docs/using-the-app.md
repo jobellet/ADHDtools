@@ -50,7 +50,12 @@ Each time you push a task back, its urgency goes up a little, so it does not get
 - **Skip today** frees the routine's time for today.
 - When a routine is finished early, the rest of its booked time becomes free for the next task.
 
-**For a calendar event** you only see the countdown until it ends.
+**For a calendar event**
+
+- You see the countdown until it ends, plus **Edit** when you want to change something.
+- **Edit** gives two choices:
+  - **In 15 min** / **In 60 min**: moves the event later today (it keeps its length). The move is refused when the new time is taken by something else.
+  - **It’s an event, not a task**: the event stays in your calendar, but stops blocking time. Tasks can be scheduled during it, and the Now view shows the task, not the event. Timers belong to tasks, not to events.
 
 On the right (or below, on a phone) you see **Next up**: the next few items with their start time and length.
 

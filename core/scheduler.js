@@ -129,10 +129,14 @@ export function getRoutineBlocks(dateStr, config = {}, { includeDone = false } =
 
 function loadCalendarBlocks(todayStr, config) {
   try {
-    const events = JSON.parse((typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)('adhd-calendar-events')) || [];
+    let events;
+    if (Array.isArray(config?.calendarEvents)) events = config.calendarEvents;
+    else events = JSON.parse((typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)('adhd-calendar-events')) || [];
     const fixedTag = config?.fixedTag || '[FIX]';
     return events
-      .filter(ev => ev.start && ev.start.startsWith(todayStr))
+      // "Not a task" events keep their calendar entry but free their time:
+      // tasks can run during them and Now shows the task, not the event.
+      .filter(ev => ev.start && ev.start.startsWith(todayStr) && !ev.notATask)
       .map(ev => {
         const startMinutes = deriveStartMinutes({ startTime: ev.start.slice(11, 16) });
         const endMinutes = ev.end ? deriveStartMinutes({ startTime: ev.end.slice(11, 16) }) : null;
