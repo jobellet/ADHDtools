@@ -8,47 +8,63 @@
     <link rel="icon" type="image/svg+xml" href="icons/home.svg" id="favicon">
     <link rel="apple-touch-icon" href="icons/home.svg" id="apple-touch-icon">
     <title>ADHD Tools Hub</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="routine-focus.css">
-    <link rel="stylesheet" href="styles-routine-settings.css">
-    <link rel="stylesheet" href="styles-routine-mobile.css">
-    <link rel="stylesheet" href="mobile-optimization.css">
-    <link rel="stylesheet" href="styles-assistant.css">
-    <link rel="stylesheet" href="styles-app-shell.css">
-    <script src="timestamp-storage.js" defer></script>
+    <!-- Load order matters. See AGENTS.md → "Load order". -->
+    <!-- Styles: legacy shared styles, then the app shell, then one file per feature. -->
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/routine-player.css">
+    <link rel="stylesheet" href="styles/routine-settings.css">
+    <link rel="stylesheet" href="styles/routine-mobile.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+    <link rel="stylesheet" href="styles/assistant.css">
+    <link rel="stylesheet" href="styles/app-shell.css">
+    <link rel="stylesheet" href="features/now/now.css">
+    <link rel="stylesheet" href="features/planner/planner.css">
+    <link rel="stylesheet" href="features/routine/routine.css">
+    <link rel="stylesheet" href="features/settings/settings.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="app.js" defer></script>
-    <script src="config.js" defer></script>
-    <script src="data-manager.js" defer></script>
-    <script src="google-auth.js" defer></script>
-    <script src="drive-sync.js" defer></script>
+
+    <!-- 1. Shell & services (classic scripts, run in this order) -->
+    <script src="services/timestamp-storage.js" defer></script>
+    <script src="shell/app.js" defer></script>
+    <script src="shell/config.js" defer></script>
+    <script src="shell/i18n.js" defer></script>
+    <script src="features/now/strings.js" defer></script>
+    <script src="features/planner/strings.js" defer></script>
+    <script src="features/routine/strings.js" defer></script>
+    <script src="features/settings/strings.js" defer></script>
+    <script src="services/data-manager.js" defer></script>
+    <script src="services/google-auth.js" defer></script>
+    <script src="services/drive-sync.js" defer></script>
     <script src="core/user-context.js" defer></script>
-    <script src="cross-tool-interaction.js" defer></script>
+    <script src="services/cross-tool-interaction.js" defer></script>
     <script src="core/ai-provider.js" defer></script>
     <script src="core/task-parser.js" defer></script>
     <script src="core/now-state.js" defer></script>
-    <script src="capabilities.js" defer></script>
-    <script src="api-settings.js" defer></script>
-    <script src="settings.js" defer></script>
-    <script src="pomodoro.js" defer></script>
+    <script src="shell/capabilities.js" defer></script>
+    <script src="features/settings/ai-settings.js" defer></script>
+    <script src="features/settings/settings.js" defer></script>
+    <script src="features/pomodoro/pomodoro.js" defer></script>
+
+    <!-- 2. Core data layer (ES modules) and the planner, which imports them -->
     <script type="module" src="core/duration-learning.js"></script>
     <script type="module" src="core/urgency-helpers.js"></script>
     <script type="module" src="core/task-model.js"></script>
     <script type="module" src="core/task-store.js"></script>
     <script type="module" src="core/scheduler.js"></script>
-    <script type="module" src="day-planner.js"></script>
-    <script src="task-breakdown.js" defer></script>
-    <script src="habit-tracker.js" defer></script>
-    <script src="focus-mode.js" defer></script>
-    <script src="reward-system.js" defer></script>
-    <script src="now-view.js" defer></script>
-    <script src="assistant-dashboard.js" defer></script>
-    <script src="calendar-tool.js" defer></script>
-    <script src="calendar-settings.js" defer></script>
-    <script src="calendar-integration.js" defer></script>
-    <script src="routine.js" defer></script>
-    <script src="i18n.js" defer></script>
-    <script src="credentials-sync.js" defer></script>
+    <script type="module" src="features/planner/day-planner.js"></script>
+
+    <!-- 3. Features -->
+    <script src="features/breakdown/task-breakdown.js" defer></script>
+    <script src="features/habits/habit-tracker.js" defer></script>
+    <script src="features/focus/focus-mode.js" defer></script>
+    <script src="features/rewards/reward-system.js" defer></script>
+    <script src="features/now/now-view.js" defer></script>
+    <script src="features/now/quick-capture.js" defer></script>
+    <script src="features/calendar/calendar-tool.js" defer></script>
+    <script src="features/calendar/calendar-settings.js" defer></script>
+    <script src="services/google-calendar-sync.js" defer></script>
+    <script src="features/routine/routine.js" defer></script>
+    <script src="services/credentials-sync.js" defer></script>
 </head>
 
 <body>

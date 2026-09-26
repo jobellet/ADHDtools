@@ -1,4 +1,4 @@
-import { formatTime, getCalendarEvents, getDayBounds, getPlannerTasksForDay, localDateString } from './dayPlannerUtils.js';
+import { formatTime, getCalendarEvents, getDayBounds, getPlannerTasksForDay, localDateString } from './planner-utils.js';
 
 export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize }) {
     if (!window.DataManager) return;

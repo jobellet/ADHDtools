@@ -1,6 +1,6 @@
 // core/now-state.js - what should the user see right now?
 // Pure logic on top of the unified schedule (core/scheduler.js). Rendering is
-// in now-view.js; routing (Now view vs Day planner) is in app.js.
+// in features/now/now-view.js; routing (Now view vs Day planner) is in shell/app.js.
 //
 // Modes:
 //   'doing' - a task, routine or event is running now -> show it with a timer

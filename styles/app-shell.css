@@ -1,0 +1,333 @@
+/* App shell: tokens, navigation (top bar on desktop, bottom tab bar on
+   phones), sheets (More, Add), setup-based hiding, shared buttons.
+   Feature styles live next to each feature: features/<name>/<name>.css.
+   Loaded after the legacy styles in styles/ so it wins over them. */
+
+:root {
+    --kind-task: var(--primary-color);
+    --kind-routine: #e67e22;
+    --kind-event: #1e88e5;
+    --kind-break: #00897b;
+    --kind-free: #607d8b;
+    --text-muted: #5f6368;
+    --tabbar-height: 64px;
+    /* Used by older stylesheets but never defined before. */
+    --text-color: #1f1f1f;
+    --text-secondary: #5f6368;
+    --border-color: #e0e0e0;
+    --card-bg: var(--surface);
+}
+
+/* ---------- Setup-based visibility (capabilities.js) ---------- */
+
+body:not(.show-all-options):not(.cap-ai) [data-cap~="ai"],
+body:not(.show-all-options):not(.cap-speech) [data-cap~="speech"],
+body.cap-gcal:not(.show-all-options) [data-cap-hide~="gcal"] {
+    display: none !important;
+}
+
+/* ---------- Navigation ---------- */
+
+.app-nav {
+    position: sticky;
+    top: 0;
+    z-index: 300;
+    background: var(--surface);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.app-nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 56px;
+}
+
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    white-space: nowrap;
+}
+
+.app-brand i {
+    font-size: 1.3rem;
+}
+
+.app-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0 auto;
+    padding: 0;
+}
+
+.app-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    color: var(--on-surface);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.app-tab:hover {
+    background: rgba(98, 0, 238, 0.08);
+    color: var(--primary-color);
+}
+
+.app-tab.active {
+    background: rgba(98, 0, 238, 0.12);
+    color: var(--primary-color);
+}
+
+.app-tab-add {
+    background: var(--primary-color);
+    color: var(--on-primary);
+}
+
+.app-tab-add:hover {
+    background: var(--primary-dark);
+    color: var(--on-primary);
+}
+
+.app-clock {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.app-tab:focus-visible,
+.btn:focus-visible,
+.more-grid a:focus-visible {
+    outline: 3px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+/* ---------- Sheets (More menu, Add task) ---------- */
+
+.sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 900;
+}
+
+.app-sheet {
+    position: fixed;
+    z-index: 901;
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    padding: 1rem 1.25rem 1.25rem;
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    left: 50%;
+    top: 72px;
+    transform: translateX(-50%);
+}
+
+.sheet-backdrop.hidden,
+.app-sheet.hidden {
+    display: none;
+}
+
+.app-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.app-sheet-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.app-sheet .close-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-size: 1.2rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.app-sheet .close-btn:hover {
+    background: #f1f1f1;
+}
+
+.more-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.5rem;
+    padding: 0;
+    margin: 0 0 1rem;
+}
+
+.more-grid a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.9rem 0.5rem;
+    border-radius: 12px;
+    background: #f6f3fd;
+    color: var(--on-surface);
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.more-grid a i {
+    font-size: 1.3rem;
+    color: var(--primary-color);
+}
+
+.more-grid a:hover,
+.more-grid a.active {
+    background: rgba(98, 0, 238, 0.14);
+    color: var(--primary-color);
+}
+
+.more-prefs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    border-top: 1px solid #eee;
+    padding-top: 0.75rem;
+}
+
+.more-prefs .user-switcher label {
+    color: var(--text-muted);
+}
+
+.btn-link {
+    background: transparent;
+    color: var(--text-muted);
+}
+
+.btn-block {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+/* ---------- Tablets ---------- */
+
+@media (max-width: 1024px) {
+    .app-brand span {
+            display: none;
+    }
+}
+
+/* ---------- Phones: bottom tab bar ---------- */
+
+@media (max-width: 768px) {
+    .app-nav {
+            order: 2;
+            position: relative;
+            top: auto;
+            box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.1);
+            padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    main {
+            order: 1;
+    }
+
+    .app-nav-inner {
+            padding: 0 4px;
+            min-height: var(--tabbar-height);
+    }
+
+    .app-brand,
+    .app-clock {
+            display: none;
+    }
+
+    .app-tabs {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            width: 100%;
+            gap: 0;
+    }
+
+    .app-tab {
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.15rem;
+            width: 100%;
+            padding: 0.35rem 0;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            min-height: 54px;
+    }
+
+    .app-tab i {
+            font-size: 1.2rem;
+    }
+
+    .app-tab.active {
+            background: transparent;
+    }
+
+    .app-tab-add {
+            background: transparent;
+            color: var(--on-surface);
+    }
+
+    .app-tab-add i {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 32px;
+            border-radius: 16px;
+            background: var(--primary-color);
+            color: var(--on-primary);
+            font-size: 1.1rem;
+    }
+
+    .app-tab-add:hover {
+            background: transparent;
+            color: var(--primary-color);
+    }
+
+    .app-sheet {
+            top: auto;
+            bottom: 0;
+            left: 0;
+            transform: none;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
+            max-height: 85dvh;
+    }
+
+    .more-grid {
+            grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+body.modal-open {
+    overflow: hidden;
+}

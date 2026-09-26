@@ -67,7 +67,7 @@ The app only shows the options you use. For example, `.ics` import is hidden onc
 | [**Data model & scheduler**](docs/task-model.md) | The Task object, TaskStore, routine booking and how the scheduler builds your day. |
 | [**Vision, roadmap & status**](docs/vision-roadmap.md) | Where the project is going and what already works. |
 | [**Manual test cases**](docs/testing.md) | Scenarios to check the app after changes. |
-| [**Contributing**](docs/contributing.md) | Run the app locally, run the tests, send changes. |
+| [**Contributing**](docs/contributing.md) · [**AGENTS.md**](AGENTS.md) | Run the app locally, run the tests, send changes. `AGENTS.md` is the guide for AI coding agents (and humans): code map, shared vocabulary, rules. |
 
 The guides are in English.
 

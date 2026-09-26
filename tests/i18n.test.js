@@ -1,9 +1,9 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import vm from 'node:vm';
 
-// i18n.js is a classic browser script: run it in a small sandbox.
+// shell/i18n.js and features/*/strings.js are classic browser scripts: run them in a sandbox.
 function loadI18n(lang) {
   const sandbox = {
     window: { dispatchEvent() {} },
@@ -12,7 +12,12 @@ function loadI18n(lang) {
     CustomEvent: class {},
   };
   vm.createContext(sandbox);
-  vm.runInContext(readFileSync(new URL('../i18n.js', import.meta.url), 'utf8'), sandbox);
+  vm.runInContext(readFileSync(new URL('../shell/i18n.js', import.meta.url), 'utf8'), sandbox);
+  sandbox.I18n = sandbox.window.I18n;
+  for (const feature of readdirSync(new URL('../features/', import.meta.url))) {
+    const file = new URL(`../features/${feature}/strings.js`, import.meta.url);
+    if (existsSync(file)) vm.runInContext(readFileSync(file, 'utf8'), sandbox);
+  }
   return sandbox.window;
 }
 

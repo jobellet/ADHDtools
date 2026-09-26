@@ -299,7 +299,7 @@
     if (!imported || !imported.metadata || imported.metadata.app !== APP_NAME) {
       throw new Error('Invalid data file');
     }
-    const { mergeBackup } = await import('./core/sync-merge.js');
+    const { mergeBackup } = await import('../core/sync-merge.js');
     const storageLog = (typeof window !== 'undefined' && window.getStorageLog) ? window.getStorageLog() : {};
     const { updates, added, updated, conflicts } = mergeBackup(imported, getExistingRaw(), {
       storageLog,

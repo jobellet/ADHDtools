@@ -1,4 +1,4 @@
-import { buildSchedule } from './core/scheduler.js';
+import { buildSchedule } from '../../core/scheduler.js';
 
 export function localDateString(date = new Date()) {
     const d = date instanceof Date ? date : new Date(date);

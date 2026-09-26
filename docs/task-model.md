@@ -85,7 +85,7 @@ These functions are used by the Day Planner, quick capture and the routine edito
 * `break` – nothing now, but the next item starts within `breakWindowMinutes` (15 by default) → countdown to it,
 * `free` – nothing now or soon → the app opens the **Day Planner**.
 
-`now-view.js` renders this state (and the planner's now/next strip and *Plan ahead* panel); `app.js` picks the default view with `NowState.defaultToolFor(state)`.
+`features/now/now-view.js` renders this state (and the planner's now/next strip and *Plan ahead* panel); `shell/app.js` picks the default view with `NowState.defaultToolFor(state)`.
 
 In the Day Planner, **Lock plan** writes the current automatic times into the tasks (`plannerDate`), so they stop moving.
 

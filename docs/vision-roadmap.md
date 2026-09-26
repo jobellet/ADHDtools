@@ -12,7 +12,7 @@ Once everything is set up, the user should only have to:
 
 All tools (Pomodoro, Planner, Focus Mode, Routine, Calendar, Habit Tracker, Rewards) operate on a shared task data format, ensuring every feature reflects the same task universe. See [task-model.md](task-model.md).
 
-See also the [**Transition Plan**](../transition_plan.md): the roadmap to a context-aware dashboard that automatically displays the appropriate tool based on the time of day and user habits. How the app works today is described in the [user guide](using-the-app.md).
+See also the [**Transition Plan**](transition-plan.md): the roadmap to a context-aware dashboard that automatically displays the appropriate tool based on the time of day and user habits. How the app works today is described in the [user guide](using-the-app.md).
 
 ## 🧠 Typical User Workflow
 
@@ -36,7 +36,7 @@ See also the [**Transition Plan**](../transition_plan.md): the roadmap to a cont
 
 The app should feel like a cognitive prosthesis for people who struggle with task switching or priority overload. Rather than forcing users to plan everything, it helps them see only what matters right now — and rewards consistent progress rather than perfection.
 
-The end goal is for the user not to have to search for the right tool to use at a given time but for the system to remove cognitive and tool-search burden. For instance, at a certain time of the day the only thing to do is to display a given routine. When it is time to cook, the system just displays the recipe of the day, when it is work time, the system only displays the day plan and pomodoro, etc. Read more in the [Transition Plan](../transition_plan.md).
+The end goal is for the user not to have to search for the right tool to use at a given time but for the system to remove cognitive and tool-search burden. For instance, at a certain time of the day the only thing to do is to display a given routine. When it is time to cook, the system just displays the recipe of the day, when it is work time, the system only displays the day plan and pomodoro, etc. Read more in the [Transition Plan](transition-plan.md).
 
 ## Current Status
 
@@ -60,11 +60,11 @@ The end goal is for the user not to have to search for the right tool to use at 
 
 🆕 **Natural-language quick capture** in the **Add** sheet: type or speak “Call mom tomorrow at 5pm for 20 min !7” and it becomes a fully-tagged Task. Works completely offline (`core/task-parser.js`), smarter when an [AI provider](ai-providers.md) is configured.
 
-🆕 **Now view as the default screen** (`core/now-state.js`, `now-view.js`): while something runs, the app shows only that — task, routine step or event — with a countdown and 2–3 buttons (Done / Focus / Not now). Short gaps show a break countdown to the next item. When nothing is planned, the app opens the Day Planner, with a *Plan ahead* panel to split big or deadline tasks into small steps.
+🆕 **Now view as the default screen** (`core/now-state.js`, `features/now/now-view.js`): while something runs, the app shows only that — task, routine step or event — with a countdown and 2–3 buttons (Done / Focus / Not now). Short gaps show a break countdown to the next item. When nothing is planned, the app opens the Day Planner, with a *Plan ahead* panel to split big or deadline tasks into small steps.
 
 🆕 **Routines book time**: each routine blocks its steps + a buffer (10 % by default) in the unified schedule. Overlapping routines can't be saved, and a task added at a busy time moves to the next free slot.
 
-🆕 **UI adapts to the setup** (`capabilities.js`): `.ics` import hides once Google Calendar is connected, AI buttons hide without an AI provider; *Show all options* restores everything.
+🆕 **UI adapts to the setup** (`shell/capabilities.js`): `.ics` import hides once Google Calendar is connected, AI buttons hide without an AI provider; *Show all options* restores everything.
 
 🆕 **Provider-agnostic AI assistance** (`core/ai-provider.js`): works with OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or any local OpenAI-compatible server. AI remains strictly optional.
 

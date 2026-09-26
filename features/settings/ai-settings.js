@@ -1,4 +1,4 @@
-// api-settings.js - UI for configuring the optional AI provider.
+// features/settings/ai-settings.js - UI for configuring the optional AI provider.
 // The app works fully without AI ("None"); this panel lets users plug in any
 // provider (OpenAI/ChatGPT, Gemini, Claude, Mistral, Groq, OpenRouter, or a
 // custom OpenAI-compatible endpoint such as Ollama). Keys stay in localStorage.

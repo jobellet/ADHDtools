@@ -2,7 +2,7 @@
   "name": "adhdtools",
   "version": "1.0.0",
   "description": "[View Live Website](https://jobellet.github.io/ADHDtools/)",
-  "main": "api-settings.js",
+  "main": "index.html",
   "scripts": {
     "test": "node --test tests/*.test.js"
   },
