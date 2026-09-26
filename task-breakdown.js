@@ -435,17 +435,8 @@ document.addEventListener('DOMContentLoaded', () => {
     saveTree();
     renderTree();
 
-    // Switch to breakdown view
-    document.querySelectorAll('.tool-section').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.nav-links li a').forEach(el => el.classList.remove('active'));
-
-    const breakdownSection = document.getElementById('breakdown');
-    if (breakdownSection) breakdownSection.classList.add('active');
-
-    const navLink = document.querySelector('a[data-tool="breakdown"]');
-    if (navLink) navLink.classList.add('active');
-
-    alert(`Task '${standardizedTask.text}' added to Task Breakdown.`);
+    window.switchTool?.('breakdown');
+    window.DataManager?.showNotification?.(`“${standardizedTask.text}” is ready to split into small steps.`);
   }
 
   if (window.EventBus) {

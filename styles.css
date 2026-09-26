@@ -158,81 +158,6 @@ header .container {
     margin-top: 0.5rem;
 }
 
-nav {
-    background-color: var(--surface);
-    box-shadow: var(--box-shadow);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-nav ul {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 0.5rem;
-    justify-content: center;
-    padding: 0;
-    flex: 1 1 100%;
-}
-
-nav .container {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-
-
-nav li {
-    margin: 0;
-}
-
-nav a {
-    display: block;
-    padding: 1rem;
-    color: var(--on-surface);
-    border-bottom: 3px solid transparent;
-    text-align: center;
-}
-
-nav a:hover,
-nav a.active {
-    color: var(--primary-color);
-    border-bottom: 3px solid var(--primary-color);
-}
-
-/* Hamburger Menu */
-.hamburger-menu {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--on-surface);
-    /* Ensure visible text color */
-    padding: 8px;
-    /* Increase touch target size */
-    z-index: 101;
-    /* Ensure it's above other elements */
-}
-
-/* Prefs Toggle Button */
-#prefs-toggle-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--primary-color);
-    padding: 8px;
-}
 
 /* Main content */
 main {
@@ -262,42 +187,7 @@ footer {
 }
 
 /* Home Page Grid */
-.tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
-}
 
-.tool-card {
-    background-color: var(--surface);
-    border-radius: var(--border-radius);
-    padding: 1.5rem;
-    box-shadow: var(--box-shadow);
-    text-align: center;
-    transition: var(--transition);
-    border: 2px solid transparent;
-}
-
-.tool-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--primary-light);
-}
-
-.tool-icon {
-    font-size: 2.5rem;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-}
-
-.tool-card h3 {
-    margin-bottom: 0.5rem;
-}
-
-.tool-card p {
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
-}
 
 /* Pomodoro Timer */
 .pomodoro-container {
@@ -1104,13 +994,7 @@ footer {
 
 /* Responsive Overrides */
 @media (max-width: 768px) {
-    nav .container {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
+
     
     .user-switcher {
         width: 100%;
@@ -1143,78 +1027,6 @@ footer {
         margin-top: 0.5rem;
     }
 
-
-    .hamburger-menu {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: static;
-        transform: none;
-        align-self: center;
-        background-color: var(--surface);
-        width: 44px;
-        height: 44px;
-        border-radius: 4px;
-    }
-
-    #prefs-toggle-btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: static;
-        transform: none;
-        align-self: center;
-        background-color: var(--surface);
-        width: 44px;
-        height: 44px;
-        border-radius: 4px;
-    }
-
-    nav {
-        position: sticky;
-        /* Keep navigation accessible while scrolling */
-        top: 0;
-        z-index: 100;
-    }
-
-    nav .container {
-        position: relative;
-        /* Ensure container is positioned */
-    }
-
-    nav ul#main-nav-links {
-        display: none;
-        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-        gap: 0.5rem;
-        position: static;
-        background: var(--surface);
-        box-shadow: var(--box-shadow);
-        padding: 10px 0;
-        z-index: 99;
-        width: 100%;
-    }
-
-    nav ul#main-nav-links.nav-open {
-        display: grid;
-    }
-
-    nav ul#main-nav-links li {
-        margin: 0;
-    }
-
-    nav ul#main-nav-links li a {
-        padding: 12px 20px;
-        width: 100%;
-        border-bottom: none;
-        border-left: 3px solid transparent;
-        text-align: center;
-    }
-
-    nav ul#main-nav-links li a:hover,
-    nav ul#main-nav-links li a.active {
-        border-bottom: none;
-        border-left: 3px solid var(--primary-color);
-    }
 
     .matrix-grid {
         grid-template-columns: 80px 1fr 1fr;
@@ -1277,24 +1089,6 @@ footer {
         margin-top: 0.25rem;
     }
 
-    .tools-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
-    }
-
-    .tool-card {
-        padding: 0.75rem;
-    }
-
-    .tool-icon {
-        font-size: 1.5rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .tool-card h3 {
-        font-size: 0.9rem;
-        margin-bottom: 0.25rem;
-    }
 
     /* Eisenhower small tweaks */
     .matrix-grid {
@@ -2742,12 +2536,6 @@ input:checked + .slider:before {
     gap: 1rem;
 }
 
-
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    color: var(--secondary-dark);
-}
-
 .voice-options {
     display: flex;
     flex-direction: column;
@@ -2912,6 +2700,9 @@ input:checked + .slider:before {
 
 .guide-modal-content h2 {
     padding: 1.5rem;
+    margin: 0;
+}
+
 .guide-content li {
     margin-bottom: 0.5rem;
 }
@@ -2933,36 +2724,6 @@ input:checked + .slider:before {
     .calendar-main {
         order: 1;
         min-height: 500px;
-    }
-}
-
-/* Family overview and responsive helpers for Today View */
-.today-family {
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 8px;
-    background: #f9fbff;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 10px;
-}
-
-.family-card {
-    padding: 10px;
-    border-radius: 6px;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    font-size: 0.9rem;
-}
-
-@media (max-width: 640px) {
-    .today-actions {
-        flex-direction: column;
-        gap: 8px;
-    }
-    .today-family {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -3137,92 +2898,11 @@ input:checked + .slider:before {
     font-size: 0.9rem;
     font-weight: 500;
 
-/* Today view & responsive tweaks */
-.today-view {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 20px 0;
-}
-
-.today-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 4px 12px rgba(98, 0, 238, 0.12);
-    border-left: 6px solid var(--primary-color);
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    word-break: break-word;
-}
-
-.today-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-
-.today-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.today-list li {
-    padding: 12px 16px;
-    background: #fff;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    border-left: 3px solid #03dac6;
-    word-break: break-word;
-}
-
 @media (max-width: 820px) {
-    nav .container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    #main-nav-links {
-        display: none;
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    #main-nav-links.nav-open {
-        display: flex;
-    }
-
-    nav ul li {
-        width: 100%;
-        margin: 4px 0;
-    }
-
     .modal-content {
         width: 95%;
     }
-
-    .today-view {
-        grid-template-columns: 1fr;
-    }
 }
-
-
-/* Today View enhancements */
-.today-blocked {
-    margin-top: 10px;
-    padding: 0.75rem;
-    border-radius: 8px;
-    background: #fff4e5;
-    border: 1px solid #f5c97a;
-}
-
-.today-list.muted-list li {
-    color: #555;
-    font-size: 0.95rem;
 
 /* User switching */
 .user-switcher {

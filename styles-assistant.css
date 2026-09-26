@@ -1,56 +1,5 @@
-/* Assistant layer: context banner, quick capture, daily progress, AI settings */
+/* Assistant layer: quick capture, daily progress, AI settings */
 
-/* --- Context banner --- */
-.context-banner {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: var(--surface);
-    border-left: 5px solid var(--primary-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem;
-}
-
-.context-banner-icon {
-    font-size: 1.6rem;
-    color: var(--primary-color);
-    flex-shrink: 0;
-}
-
-.context-banner-body {
-    flex: 1;
-    min-width: 0;
-}
-
-.context-banner-body strong {
-    display: block;
-    font-size: 1.05rem;
-}
-
-.context-banner-body p {
-    margin: 0.15rem 0 0;
-    font-size: 0.9rem;
-    opacity: 0.85;
-}
-
-.context-banner-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
-.context-routine { border-left-color: #ff9800; }
-.context-routine .context-banner-icon { color: #ff9800; }
-.context-task { border-left-color: var(--primary-color); }
-.context-review { border-left-color: #5c6bc0; }
-.context-review .context-banner-icon { color: #5c6bc0; }
-.context-plan { border-left-color: #fbc02d; }
-.context-plan .context-banner-icon { color: #fbc02d; }
-
-/* --- Quick capture --- */
 .quick-capture {
     margin-bottom: 1.25rem;
 }
@@ -170,17 +119,6 @@
 
 /* --- Mobile --- */
 @media (max-width: 600px) {
-    .context-banner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.6rem;
-    }
-
-    .context-banner-actions {
-        width: 100%;
-        justify-content: flex-end;
-    }
-
     .quick-capture-form {
         flex-wrap: wrap;
     }

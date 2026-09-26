@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#6200ee">
     <link rel="icon" type="image/svg+xml" href="icons/home.svg" id="favicon">
     <link rel="apple-touch-icon" href="icons/home.svg" id="apple-touch-icon">
     <title>ADHD Tools Hub</title>
@@ -13,6 +14,7 @@
     <link rel="stylesheet" href="styles-routine-mobile.css">
     <link rel="stylesheet" href="mobile-optimization.css">
     <link rel="stylesheet" href="styles-assistant.css">
+    <link rel="stylesheet" href="styles-app-shell.css">
     <script src="timestamp-storage.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="app.js" defer></script>
@@ -24,7 +26,8 @@
     <script src="cross-tool-interaction.js" defer></script>
     <script src="core/ai-provider.js" defer></script>
     <script src="core/task-parser.js" defer></script>
-    <script src="core/context-engine.js" defer></script>
+    <script src="core/now-state.js" defer></script>
+    <script src="capabilities.js" defer></script>
     <script src="api-settings.js" defer></script>
     <script src="settings.js" defer></script>
     <script src="pomodoro.js" defer></script>
@@ -38,31 +41,55 @@
     <script src="habit-tracker.js" defer></script>
     <script src="focus-mode.js" defer></script>
     <script src="reward-system.js" defer></script>
-    <script src="today-view.js" defer></script>
+    <script src="now-view.js" defer></script>
     <script src="assistant-dashboard.js" defer></script>
     <script src="calendar-tool.js" defer></script>
     <script src="calendar-settings.js" defer></script>
     <script src="calendar-integration.js" defer></script>
     <script src="routine.js" defer></script>
-    <script src="script-loader.js" defer></script>
     <script src="i18n.js" defer></script>
     <script src="credentials-sync.js" defer></script>
 </head>
 
 <body>
-    <div id="top-preferences-drawer" style="display: none; background-color: var(--primary-color);">
-        <header style="padding-bottom: 0;">
-            <div class="container">
-                <h1 id="site-title" data-i18n="site-title"><i class="fas fa-brain"></i> ADHD Tools Hub</h1>
-                <p data-i18n="tagline">Interactive tools to help manage ADHD symptoms and improve productivity</p>
-                <span id="current-time-display" class="current-time"></span>
-            </div>
-        </header>
-        <div class="container preferences-container" style="display: flex; justify-content: center; gap: 1rem; padding: 1rem 0; flex-wrap: wrap;">
+    <nav class="app-nav" aria-label="Main">
+        <div class="container app-nav-inner">
+            <a href="#" class="app-brand" data-tool="home" aria-label="ADHD Tools Hub — Now">
+                <i class="fas fa-brain"></i><span>ADHD Tools</span>
+            </a>
+            <ul class="app-tabs" role="list">
+                <li><a href="#" class="app-tab active" data-tool="home"><i class="fas fa-stopwatch"></i><span data-i18n="tab-now">Now</span></a></li>
+                <li><a href="#" class="app-tab" data-tool="planner"><i class="fas fa-calendar-day"></i><span data-i18n="tab-plan">Plan</span></a></li>
+                <li class="app-tab-add-item"><button type="button" id="nav-add-btn" class="app-tab app-tab-add" aria-haspopup="dialog" aria-controls="capture-sheet"><i class="fas fa-plus"></i><span data-i18n="tab-add">Add</span></button></li>
+                <li><a href="#" class="app-tab" data-tool="routine"><i class="fas fa-redo-alt"></i><span data-i18n="tab-routines">Routines</span></a></li>
+                <li><button type="button" class="app-tab hamburger-menu" aria-label="More tools" aria-expanded="false" aria-controls="more-menu"><i class="fas fa-th-large"></i><span data-i18n="tab-more">More</span></button></li>
+            </ul>
+            <span id="current-time-display" class="app-clock" aria-hidden="true"></span>
+        </div>
+    </nav>
+
+    <!-- "More" menu: every other tool + profile & language -->
+    <div id="more-menu-backdrop" class="sheet-backdrop hidden"></div>
+    <div id="more-menu" class="app-sheet more-menu hidden" role="dialog" aria-modal="true" aria-label="More tools">
+        <div class="app-sheet-header">
+            <h3 data-i18n="more-heading">More tools</h3>
+            <button type="button" class="close-btn" data-close-sheet aria-label="Close"><i class="fas fa-times"></i></button>
+        </div>
+        <ul id="main-nav-links" class="more-grid">
+            <li><a href="#" data-tool="breakdown"><i class="fas fa-project-diagram"></i><span data-i18n="nav-breakdown">Task Breakdown</span></a></li>
+            <li><a href="#" data-tool="focus"><i class="fas fa-eye"></i><span data-i18n="nav-focus">Focus Mode</span></a></li>
+            <li><a href="#" data-tool="pomodoro"><i class="fas fa-clock"></i><span data-i18n="nav-pomodoro">Pomodoro Timer</span></a></li>
+            <li><a href="#" data-tool="calendar"><i class="fas fa-calendar"></i><span data-i18n="nav-calendar">Calendar</span></a></li>
+            <li><a href="#" data-tool="habits"><i class="fas fa-check-square"></i><span data-i18n="nav-habits">Habit Tracker</span></a></li>
+            <li><a href="#" data-tool="rewards"><i class="fas fa-trophy"></i><span data-i18n="nav-rewards">Rewards</span></a></li>
+            <li><a href="#" data-tool="settings"><i class="fas fa-cog"></i><span data-i18n="nav-settings">Settings</span></a></li>
+            <li><a href="#" data-tool="about"><i class="fas fa-info-circle"></i><span data-i18n="nav-about">About</span></a></li>
+        </ul>
+        <div class="more-prefs">
             <div class="user-switcher">
-                <label for="active-user-select" style="color: var(--on-primary);" data-i18n="user-label">User:</label>
+                <label for="active-user-select" data-i18n="user-label">User:</label>
                 <select id="active-user-select" aria-label="Select active user"></select>
-                <button id="add-user-btn" class="btn btn-secondary btn-compact" aria-label="Add user" data-i18n="add-btn-compact">+</button>
+                <button id="add-user-btn" class="btn btn-secondary btn-compact" aria-label="Add user">+</button>
             </div>
             <div id="language-flags" class="language-flags" aria-label="Select language">
                 <button class="lang-flag" data-lang="en" aria-label="English" title="English">🇬🇧</button>
@@ -73,134 +100,58 @@
         </div>
     </div>
 
-    <nav>
-        <div class="container" style="justify-content: flex-start; gap: 1rem;">
-            <button class="hamburger-menu" aria-label="Toggle menu" aria-expanded="false"><i
-                    class="fas fa-bars"></i></button>
-            <button id="prefs-toggle-btn" aria-label="Toggle preferences">
-                <i class="fas fa-sliders-h"></i>
-            </button>
-            <ul id="main-nav-links">
-                <li><a href="#" class="active" data-tool="home" data-i18n="nav-home"><i class="fas fa-home"></i>
-                        Home</a></li>
-                <li><a href="#" data-tool="pomodoro" data-i18n="nav-pomodoro"><i class="fas fa-clock"></i> Pomodoro
-                        Timer</a></li>
-                <li><a href="#" data-tool="planner" data-i18n="nav-planner"><i class="fas fa-calendar-alt"></i> Day
-                        Planner</a></li>
-                <li><a href="#" data-tool="calendar" data-i18n="nav-calendar"><i class="fas fa-calendar"></i>
-                        Calendar</a></li>
-                <li><a href="#" data-tool="breakdown" data-i18n="nav-breakdown"><i class="fas fa-project-diagram"></i>
-                        Task Breakdown</a></li>
-                <li><a href="#" data-tool="habits" data-i18n="nav-habits"><i class="fas fa-check-square"></i> Habit
-                        Tracker</a></li>
-                <li><a href="#" data-tool="routine" data-i18n="nav-routine"><i class="fas fa-tasks-alt"></i> Routine
-                        Tool</a></li>
-                <li><a href="#" data-tool="focus" data-i18n="nav-focus"><i class="fas fa-eye"></i> Focus Mode</a></li>
-                <li><a href="#" data-tool="rewards" data-i18n="nav-rewards"><i class="fas fa-trophy"></i> Rewards</a>
-                </li>
-                <li><a href="#" data-tool="settings" data-i18n="nav-settings"><i class="fas fa-cog"></i> Settings</a>
-                </li>
-                <li><a href="#" data-tool="about" data-i18n="nav-about"><i class="fas fa-info-circle"></i> About</a>
-                </li>
-            </ul>
+    <!-- Quick capture: add or speak a task naturally (works offline, AI optional) -->
+    <div id="capture-sheet-backdrop" class="sheet-backdrop hidden"></div>
+    <div id="capture-sheet" class="app-sheet capture-sheet hidden" role="dialog" aria-modal="true" aria-labelledby="capture-sheet-title">
+        <div class="app-sheet-header">
+            <h3 id="capture-sheet-title" data-i18n="capture-heading">Add a task</h3>
+            <button type="button" class="close-btn" data-close-sheet aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
-    </nav>
+        <div class="quick-capture">
+            <form id="quick-capture-form" class="quick-capture-form">
+                <input type="text" id="quick-capture-input"
+                    placeholder="e.g. “Call mom tomorrow at 5pm for 20 min !7”"
+                    aria-label="Add a task in natural language" autocomplete="off" enterkeyhint="done">
+                <button type="button" id="quick-capture-voice" class="btn btn-secondary" title="Speak a task"
+                    aria-label="Speak a task"><i class="fas fa-microphone"></i></button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> <span data-i18n="add-btn-label">Add</span></button>
+            </form>
+            <p class="quick-capture-hint">Say when (“at 5pm”, “tomorrow”), how long (“for 20 min”) and how important (“!7”). No time = the app fits it into a free slot.</p>
+            <p id="quick-capture-status" class="quick-capture-status" aria-live="polite"></p>
+        </div>
+    </div>
 
     <main>
         <div class="container">
-            <!-- Home Section -->
-            <section id="home" class="tool-section active">
-                <h2 data-i18n="home-heading">Welcome to ADHD Tools Hub</h2>
-                <p data-i18n="home-text">This website provides a collection of interactive tools designed specifically
-                    to help individuals with ADHD manage their symptoms, improve productivity, and enhance focus.</p>
-
-                <!-- Context banner: what should I be doing right now? -->
-                <div id="context-banner" class="context-banner" style="display:none"></div>
-
-                <!-- Quick capture: add or speak a task naturally -->
-                <div class="quick-capture">
-                    <form id="quick-capture-form" class="quick-capture-form">
-                        <input type="text" id="quick-capture-input"
-                            placeholder="Add a task naturally… e.g. “Call mom tomorrow at 5pm for 20 min !7”"
-                            aria-label="Add a task in natural language" autocomplete="off">
-                        <button type="button" id="quick-capture-voice" class="btn btn-secondary" title="Speak a task"
-                            aria-label="Speak a task"><i class="fas fa-microphone"></i></button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add</button>
-                    </form>
-                    <p id="quick-capture-status" class="quick-capture-status" aria-live="polite"></p>
-                </div>
-
-                <div id="today-view" class="today-view">
-                    <div class="today-current">
-                        <h3 style="color: var(--primary-color); font-size: 1.5rem; margin-bottom: 1rem;" data-i18n="now-heading">NOW</h3>
-                        <div id="today-current-task" class="today-card" data-i18n="today-no-task">No active task yet.</div>
-                        <div class="today-actions">
-                            <button id="today-start-focus" class="btn btn-primary btn-large" style="flex: 1; justify-content: center; font-size: 1.1rem; padding: 12px;"><i class="fas fa-play"></i> <span data-i18n="start-focus-btn">Start Focus</span></button>
-                            <button id="today-mark-done" class="btn btn-secondary btn-large" style="flex: 1; justify-content: center; font-size: 1.1rem; padding: 12px;"><i class="fas fa-check"></i> <span data-i18n="complete-btn">Complete</span></button>
-                            <button id="today-skip" class="btn btn-outline btn-large" style="flex: 1; justify-content: center; font-size: 1.1rem; padding: 12px;"><i class="fas fa-forward"></i> <span data-i18n="skip-btn">Skip</span></button>
+            <!-- Now: what to do right now (default view) -->
+            <section id="home" class="tool-section now-section active" aria-labelledby="now-title">
+                <div id="now-view" class="now-view" data-mode="free">
+                    <div class="now-card" id="now-card">
+                        <p class="now-kicker" id="now-kicker">NOW</p>
+                        <h2 class="now-title" id="now-title">Nothing scheduled right now</h2>
+                        <p class="now-meta" id="now-meta"></p>
+                        <div class="now-timer" id="now-timer" hidden>
+                            <svg class="now-ring" viewBox="0 0 200 200" aria-hidden="true">
+                                <circle class="now-ring-bg" cx="100" cy="100" r="90"></circle>
+                                <circle class="now-ring-fg" id="now-ring-fg" cx="100" cy="100" r="90"></circle>
+                            </svg>
+                            <div class="now-timer-text">
+                                <span class="now-time-left" id="now-time-left" role="timer" aria-live="off">--:--</span>
+                                <span class="now-time-label" id="now-time-label">left</span>
+                            </div>
                         </div>
+                        <ol class="now-steps" id="now-steps" hidden></ol>
+                        <div class="now-actions" id="now-actions"></div>
+                        <div class="now-skip-choices" id="now-skip-choices" hidden></div>
                     </div>
-                    <div class="today-next">
-                        <h3 style="color: var(--text-color); font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;" data-i18n="next-up-heading">NEXT UP</h3>
-                        <ul id="today-next-list" class="today-list" style="margin-top: 1rem;"></ul>
-                        <div id="today-blocked" class="today-blocked" style="display:none;">
-                            <h4 data-i18n="blocked-tasks-heading">Blocked Tasks</h4>
-                            <ul id="today-blocked-list" class="today-list muted-list"></ul>
+                    <aside class="now-side">
+                        <div class="now-next">
+                            <h3 data-i18n="next-up-heading">NEXT UP</h3>
+                            <ol class="now-next-list" id="now-next-list"></ol>
+                            <button type="button" class="btn btn-outline btn-block" data-go-tool="planner"><i class="fas fa-calendar-day"></i> <span data-i18n="see-full-day">See the full day</span></button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Daily progress summary (evening review) -->
-                <div id="daily-progress" class="daily-progress"></div>
-
-                <div class="tools-grid">
-                    <div class="tool-card" data-tool="pomodoro">
-                        <div class="tool-icon"><i class="fas fa-clock"></i></div>
-                        <h3 data-i18n="card-pomodoro">Pomodoro Timer</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="planner">
-                        <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
-                        <h3 data-i18n="card-planner">Day Planner</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="calendar">
-                        <div class="tool-icon"><i class="fas fa-calendar"></i></div>
-                        <h3 data-i18n="card-calendar">Calendar</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="breakdown">
-                        <div class="tool-icon"><i class="fas fa-project-diagram"></i></div>
-                        <h3 data-i18n="card-breakdown">Task Breakdown</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="habits">
-                        <div class="tool-icon"><i class="fas fa-check-square"></i></div>
-                        <h3 data-i18n="card-habits">Habit Tracker</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="routine">
-                        <div class="tool-icon"><i class="fas fa-tasks-alt"></i></div>
-                        <h3 data-i18n="card-routine">Routine Tool</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="focus">
-                        <div class="tool-icon"><i class="fas fa-eye"></i></div>
-                        <h3 data-i18n="card-focus">Focus Mode</h3>
-                    </div>
-
-                    <div class="tool-card" data-tool="rewards">
-                        <div class="tool-icon"><i class="fas fa-trophy"></i></div>
-                        <h3 data-i18n="card-rewards">Rewards</h3>
-                    </div>
-                    <div class="tool-card" data-tool="settings">
-                        <div class="tool-icon"><i class="fas fa-cog"></i></div>
-                        <h3 data-i18n="card-settings">Settings</h3>
-                    </div>
-                    <div class="tool-card" data-tool="about">
-                        <div class="tool-icon"><i class="fas fa-info-circle"></i></div>
-                        <h3 data-i18n="card-about">About</h3>
-                    </div>
+                        <div id="daily-progress" class="daily-progress"></div>
+                    </aside>
                 </div>
             </section>
 
@@ -236,50 +187,45 @@
                     </div>
                     <div id="mode-change-message" class="mode-change-message"></div>
 
-                    <details class="pomodoro-settings-collapsible">
-                        <summary>Settings <i class="fas fa-cog"></i></summary>
-                        <p>Pomodoro settings are now managed in the global <span class="settings-link-icon">⚙️</span> Settings tab.</p>
-                    </details>
                 </div>
             </section>
 
             <!-- Day Planner Section -->
             <section id="planner" class="tool-section">
-                <h2 data-i18n="planner-heading">Day Planner</h2>
-                <p data-i18n="planner-text">Visualize your day with time blocks for better time management. Plan your
-                    activities hour by hour to stay organized.</p>
+                <div id="plan-next-strip" class="plan-next-strip" hidden></div>
 
+                <div class="plan-layout">
                 <div class="day-planner-container">
                     <div class="planner-header">
-                        <h3 id="current-date" data-i18n="todays-date">Today's Date</h3>
+                        <h2 id="current-date" class="planner-date">Today</h2>
                         <div class="planner-controls">
-                            <button id="add-event-btn" class="btn">
+                            <button id="add-event-btn" class="btn btn-primary" title="Add an event at a time">
                                 <i class="fas fa-plus"></i> <span class="btn-text" data-i18n="add-event-btn">Add Event</span>
                             </button>
-                            <button id="clear-events-btn" class="btn btn-secondary">
-                                <i class="fas fa-trash"></i> <span class="btn-text" data-i18n="clear-all-btn">Clear All</span>
+                            <button id="generate-schedule-btn" class="btn btn-secondary" title="Pin today's automatic plan so times stop moving">
+                                <i class="fas fa-thumbtack"></i> <span class="btn-text" data-i18n="lock-plan-btn">Lock plan</span>
                             </button>
-                            <button id="generate-schedule-btn" class="btn btn-secondary">
-                                <i class="fas fa-calendar-check"></i> <span class="btn-text" data-i18n="generate-schedule-btn">Generate schedule for today</span>
-                            </button>
-                            <button id="ai-plan-day-btn" class="btn btn-secondary">
+                            <button id="ai-plan-day-btn" class="btn btn-secondary" data-cap="ai" title="Ask your AI provider to plan the day">
                                 <i class="fas fa-magic"></i> <span class="btn-text" data-i18n="ai-plan-btn">AI Plan</span>
                             </button>
-                            <button id="fill-day-tasks-btn" class="btn btn-secondary">
-                                <i class="fas fa-layer-group"></i> <span class="btn-text" data-i18n="fill-tasks-btn">Fill from Calendar &amp; Tasks</span>
-                            </button>
-                            <button id="record-event-btn" class="btn btn-secondary">
+                            <button id="record-event-btn" class="btn btn-secondary" data-cap="speech" title="Speak an event">
                                 <i class="fas fa-microphone"></i> <span class="btn-text" data-i18n="record-btn">Record</span>
                             </button>
-                            <button id="start-focus-from-planner" class="btn btn-primary">
-                                <i class="fas fa-play"></i> <span class="btn-text" data-i18n="start-focus-session-btn">Start Focus Session for Current Task</span>
+                            <button id="clear-events-btn" class="btn btn-outline" title="Unschedule every task of this day">
+                                <i class="fas fa-eraser"></i> <span class="btn-text" data-i18n="clear-all-btn">Clear day</span>
                             </button>
                         </div>
+                        <p class="planner-legend"><span class="legend routine">Routine (booked + buffer)</span><span class="legend fixed">Fixed</span><span class="legend flexible">Auto-placed</span><span class="legend calendar">Calendar</span></p>
                     </div>
 
                     <div class="time-blocks-container" id="time-blocks">
                         <!-- Time blocks will be generated by JavaScript -->
                     </div>
+                </div>
+
+                <aside class="plan-side">
+                    <div id="plan-deadlines" class="plan-deadlines"></div>
+                </aside>
                 </div>
 
                 <!-- Modal for Adding/Editing an Event -->
@@ -325,11 +271,10 @@
                              now live in the Settings tab under the "Calendar Imports" panel.  -->
 
                         <div class="calendar-settings-panel">
-                            <h3 data-i18n="settings-heading">Settings</h3>
-                            <p data-i18n="calendar-settings-moved-text">Calendar notifications and Google Calendar API settings are now managed in the global <span class="settings-link-icon">⚙️</span> Settings tab.</p>
+                            <p class="small-note"><a href="#" data-go-tool="settings">Calendar settings</a> — Google sync, alerts and imports.</p>
                         </div>
 
-                        <div class="calendar-guide-link">
+                        <div class="calendar-guide-link" data-cap-hide="gcal">
                             <button id="show-calendar-guide-btn" class="btn btn-outline btn-block">
                                 <i class="fas fa-question-circle"></i> How to Link Calendar
                             </button>
@@ -426,7 +371,7 @@
                 <div class="task-breakdown-container">
                     <div class="project-input">
                         <button id="select-task-btn" class="btn">Select Task</button>
-                        <button id="ai-breakdown" class="btn">✨ AI Breakdown</button>
+                        <button id="ai-breakdown" class="btn" data-cap="ai">✨ AI Breakdown</button>
                     </div>
 
                     <div class="progress-container" aria-label="Project progress">
@@ -505,67 +450,6 @@
                 </div>
             </section>
 
-            <section id="family" class="tool-section">
-                <h2 data-i18n="family-heading">Family Routine (Big Screen)</h2>
-                <p data-i18n="family-description">
-                    This view shows, for each family member, what they should be doing during the current routine window.
-                </p>
-
-                <!-- Controls at the top: time window + display mode + preferences -->
-                <div id="family-controls" class="family-controls">
-                    <!-- Time window controls (optional simple inputs) -->
-                    <div class="family-window-settings">
-                        <label>
-                            <span data-i18n="family-start-time-label">Window start:</span>
-                            <input type="time" id="family-window-start">
-                        </label>
-                        <label>
-                            <span data-i18n="family-end-time-label">Window end:</span>
-                            <input type="time" id="family-window-end">
-                        </label>
-                        <button id="family-refresh" class="btn btn-primary" data-i18n="family-refresh">Refresh</button>
-                    </div>
-
-                    <!-- Display mode toggle -->
-                    <div class="family-display-mode">
-                        <label>
-                            <input type="checkbox" id="family-display-mode-toggle">
-                            <span data-i18n="family-display-mode-label">Big-screen display mode</span>
-                        </label>
-                    </div>
-
-                    <!-- User reading prefs -->
-                    <div id="family-user-prefs" class="family-user-prefs">
-                        <!-- dynamically filled with per-user canRead checkboxes -->
-                    </div>
-
-                    <!-- Task-name to image mappings -->
-                    <div id="family-task-image-mapping" class="family-task-image-mapping">
-                        <h3 data-i18n="family-image-mapping-heading">Task images</h3>
-                        <p data-i18n="family-image-mapping-description">
-                            Link task names to images so non-readers can see what to do.
-                        </p>
-                        <label>
-                            <span data-i18n="family-task-name-label">Task name:</span>
-                            <input type="text" id="family-task-name-input" list="family-task-name-list">
-                            <datalist id="family-task-name-list"></datalist>
-                        </label>
-                        <label>
-                            <span data-i18n="family-task-image-label">Image:</span>
-                            <input type="file" id="family-task-image-input" accept="image/*">
-                        </label>
-                        <button id="family-save-image-mapping" class="btn btn-secondary" data-i18n="family-save-image-mapping">
-                            Save mapping
-                        </button>
-                        <div id="family-image-mapping-list"></div>
-                    </div>
-                </div>
-
-                <!-- Main big-screen view -->
-                <div id="family-view-container" class="family-view-container">
-                    <!-- columns for each user will be injected here -->
-                </div>
-            </section>
 
             <!-- Rewards Section -->
             <section id="rewards" class="tool-section">
@@ -653,6 +537,26 @@
                                         <label for="setting-day-end">End of day</label>
                                         <input type="time" id="setting-day-end" name="dayEnd" value="22:00">
                                     </div>
+                                    <div class="setting-group">
+                                        <label for="setting-routine-buffer">Routine buffer (% added to booked time)</label>
+                                        <input type="number" id="setting-routine-buffer" name="routineBufferPercent" min="0" max="100" step="5" value="10">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="setting-task-buffer">Pause between tasks (minutes)</label>
+                                        <input type="number" id="setting-task-buffer" name="bufferDurationMinutes" min="0" max="60" step="1" value="5">
+                                    </div>
+                                    <div class="setting-group">
+                                        <label for="setting-break-window">Show the “next task” countdown when it starts within (minutes)</label>
+                                        <input type="number" id="setting-break-window" name="breakWindowMinutes" min="0" max="120" step="5" value="15">
+                                    </div>
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-context-autoswitch" name="contextAutoSwitch">
+                                        <label for="setting-context-autoswitch">Start the routine player by itself when a routine’s time begins</label>
+                                    </div>
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-show-all-options" name="showAllOptions">
+                                        <label for="setting-show-all-options">Show all options (also the ones your setup does not need)</label>
+                                    </div>
                                 </div>
                             </details>
                         </div>
@@ -661,7 +565,11 @@
                             <details class="settings-toggle">
                                 <summary>Calendar</summary>
                                 <div class="settings-content">
-                                    <div class="setting-group">
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
+                                        <label for="setting-include-calendar">Calendar events block time in the plan</label>
+                                    </div>
+                                    <div class="setting-group" data-cap-hide="gcal">
                                         <label for="setting-ics-refresh">ICS refresh interval (seconds)</label>
                                         <input type="number" id="setting-ics-refresh" name="icsRefreshSeconds" min="10" step="5"
                                             value="30">
@@ -687,27 +595,6 @@
                                         <input type="number" id="setting-default-task-minutes" name="defaultTaskMinutes" min="5"
                                             max="240" value="25">
                                     </div>
-                                </div>
-                            </details>
-                        </div>
-
-                        <div class="settings-panel">
-                            <details class="settings-toggle">
-                                <summary>Experimental</summary>
-                                <div class="settings-content">
-                                    <div class="setting-group checkbox-group">
-                                        <input type="checkbox" id="setting-unified-scheduler" name="enableUnifiedScheduler">
-                                        <label for="setting-unified-scheduler">Enable experimental unified scheduler (WIP)</label>
-                                    </div>
-                                    <div class="setting-group checkbox-group">
-                                        <input type="checkbox" id="setting-include-calendar" name="includeCalendarInSchedule" checked>
-                                        <label for="setting-include-calendar">Include calendar events in unified scheduler</label>
-                                    </div>
-                                    <div class="setting-group checkbox-group">
-                                        <input type="checkbox" id="setting-context-autoswitch" name="contextAutoSwitch">
-                                        <label for="setting-context-autoswitch">Auto-open the routine player when a routine window starts (context-aware mode)</label>
-                                    </div>
-                                    <p class="coming-soon">More experimental features coming soon.</p>
                                 </div>
                             </details>
                         </div>
@@ -839,10 +726,10 @@
                             </details>
                         </div>
 
-                        <!-- Calendar Imports Panel -->
-                        <div class="settings-panel">
+                        <!-- Calendar Imports Panel (offline / ICS users; tucked away once Google Calendar is connected) -->
+                        <div class="settings-panel" data-cap-hide="gcal">
                             <details class="settings-toggle">
-                                <summary>Calendar Imports</summary>
+                                <summary>Calendar file / link import (.ics)</summary>
                                 <div class="settings-content">
                                     <div class="setting-group">
                                         <button id="import-ics-btn" class="btn btn-secondary" type="button">
@@ -915,19 +802,18 @@
                     <h3 data-i18n="about-feedback-heading">Feedback</h3>
                     <p data-i18n="about-feedback-text">We're constantly working to improve these tools. If you have
                         suggestions or feedback, please let us know!</p>
-                    <p class="small-note">API and AI key settings have moved to the ⚙️ Settings tab.</p>
                 </div>
             </section>
 
             <!-- Routine Tool Section -->
             <section id="routine" class="tool-section">
-                <h2 data-i18n="routine-heading">Routine Tool</h2>
+                <h2 data-i18n="routine-heading">Routines</h2>
                 <p data-i18n="routine-text">Create, manage, and run daily routines with timed tasks.</p>
 
                 <div class="routine-container routine-layout">
                     <div class="routine-view-controls" role="tablist" aria-label="Routine views">
-                        <button type="button" id="routine-view-player-btn" class="btn routine-view-btn active"
-                            aria-selected="true" role="tab">
+                        <button type="button" id="routine-view-player-btn" class="btn routine-view-btn"
+                            aria-selected="false" role="tab">
                             <i class="fas fa-play"></i>
                             <span data-i18n="routine-player-tab">Play</span>
                         </button>
@@ -941,14 +827,13 @@
                     <div id="routine-view-player" class="routine-view routine-player">
                         <h3 data-i18n="routine-active-heading">Active Routine</h3>
                         <div id="active-routine-display">
-                            <h4 id="player-current-routine-name" data-i18n="routine-none-active">No routine
+                            <h4 id="player-current-routine-name">No routine
                                 selected/active</h4>
                             <ul id="player-routine-tasks" class="routine-task-list">
                                 <!-- Tasks will be listed here -->
                             </ul>
-                            <p data-i18n="routine-finish-time">Expected Finish Time: <span
+                            <p>Expected Finish Time: <span
                                     id="expected-finish-time">-</span></p>
-                            <p id="routine-calendar-conflicts" class="routine-calendar-conflicts" style="display: none;"></p>
                         </div>
 
                         <div class="routine-controls">
@@ -967,9 +852,9 @@
                         </div>
 
                         <div id="current-task-display">
-                            <h4 data-i18n="routine-current-task">Current Task: <span id="current-task-name">-</span>
+                            <h4>Current Task: <span id="current-task-name">-</span>
                             </h4>
-                            <p data-i18n="routine-time-left">Time Remaining: <span id="current-task-time-left">-</span>
+                            <p>Time Remaining: <span id="current-task-time-left">-</span>
                             </p>
                         </div>
 
@@ -989,47 +874,6 @@
                             </button>
                         </div>
                         <div id="routine-list-cards" class="routine-cards"></div>
-
-                        <div id="setting-routine-editor" class="routine-editor hidden">
-                            <div class="routine-editor-body">
-                                <div class="setting-group flex-row gap-sm routine-editor-tools">
-                                    <button type="button" id="setting-export-routine-btn" class="btn btn-secondary btn-sm" title="Export to CSV"><i class="fas fa-file-export"></i> Export</button>
-                                    <button type="button" id="setting-import-routine-btn" class="btn btn-secondary btn-sm" title="Import from CSV"><i class="fas fa-file-import"></i> Import</button>
-                                    <input type="file" id="setting-import-routine-file" accept=".csv" style="display:none">
-                                </div>
-
-                                <div class="setting-group">
-                                    <label for="setting-routine-name">Routine Name</label>
-                                    <input type="text" id="setting-routine-name">
-                                </div>
-
-                                <div class="setting-group">
-                                    <label for="setting-routine-start-time">Preferred Start Time</label>
-                                    <input type="time" id="setting-routine-start-time">
-                                </div>
-
-                                <div class="setting-group">
-                                    <label>Preferred Week Days</label>
-                                    <div class="week-days-selector" id="setting-routine-weekdays">
-                                        <label><input type="checkbox" value="1"> Mon</label>
-                                        <label><input type="checkbox" value="2"> Tue</label>
-                                        <label><input type="checkbox" value="3"> Wed</label>
-                                        <label><input type="checkbox" value="4"> Thu</label>
-                                        <label><input type="checkbox" value="5"> Fri</label>
-                                        <label><input type="checkbox" value="6"> Sat</label>
-                                        <label><input type="checkbox" value="0"> Sun</label>
-                                    </div>
-                                </div>
-
-                                <div class="setting-group">
-                                    <label>Tasks</label>
-                                    <div id="setting-routine-tasks-list" class="routine-tasks-editor-list"></div>
-                                    <button type="button" id="setting-add-task-btn" class="btn btn-outline btn-sm btn-block routine-add-task-btn">
-                                        <i class="fas fa-plus"></i> Add Task
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
 
                         <div class="settings-content">
                             <div class="setting-group checkbox-group">
@@ -1088,6 +932,7 @@
                     </button>
                 </div>
                 <div class="routine-sheet-body">
+                    <p class="routine-booking-note">A routine books its time in your day plan (steps + buffer from Settings). Nothing else can be scheduled on top of it.</p>
                     <div class="setting-group">
                         <label for="routine-edit-modal-name" data-i18n="routine-name-label-2">Routine Name</label>
                         <input type="text" id="routine-edit-modal-name">
@@ -1115,6 +960,11 @@
                             <i class="fas fa-plus"></i> Add Task
                         </button>
                     </div>
+                </div>
+                <div class="routine-editor-tools">
+                    <button type="button" id="setting-export-routine-btn" class="btn btn-outline btn-sm" title="Export steps to CSV"><i class="fas fa-file-export"></i> Export CSV</button>
+                    <button type="button" id="setting-import-routine-btn" class="btn btn-outline btn-sm" title="Import steps from CSV"><i class="fas fa-file-import"></i> Import CSV</button>
+                    <input type="file" id="setting-import-routine-file" accept=".csv" hidden>
                 </div>
                 <div class="routine-sheet-actions">
                     <button id="routine-edit-modal-delete-btn" class="btn btn-danger" data-i18n="routine-delete-btn">Delete</button>

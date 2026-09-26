@@ -207,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             localStorage.setItem(CONNECTED_FLAG_KEY, 'true');
             localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString());
+            window.dispatchEvent(new Event('capabilitiesChanged'));
             refreshUIState();
             setStatus(`Synced ${total} events (${pastDays} days back, ${futureDays} ahead) at ${new Date().toLocaleTimeString()}.`);
         } catch (err) {
@@ -219,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await window.GoogleAuth.revoke(SCOPES);
         localStorage.removeItem(CONNECTED_FLAG_KEY);
         localStorage.removeItem(LAST_SYNC_KEY);
+        window.dispatchEvent(new Event('capabilitiesChanged'));
         refreshUIState();
         setStatus('Disconnected. Synced events stay until you clear them.');
     }

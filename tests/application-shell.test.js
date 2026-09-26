@@ -33,3 +33,19 @@ describe('Application shell', () => {
     }
   });
 });
+
+describe('Now view shell', () => {
+  it('has the Now view, the Add sheet and the main tabs', () => {
+    for (const id of ['now-view', 'now-actions', 'now-next-list', 'capture-sheet', 'more-menu', 'plan-deadlines', 'plan-next-strip']) {
+      assert.match(indexHtml, new RegExp(`id=["']${id}["']`));
+    }
+    for (const tool of ['home', 'planner', 'routine']) {
+      assert.match(indexHtml, new RegExp(`class="app-tab[^"]*" data-tool="${tool}"`));
+    }
+  });
+
+  it('marks optional integrations so the UI can adapt to the setup', () => {
+    assert.match(indexHtml, /id="ai-plan-day-btn"[^>]*data-cap="ai"/);
+    assert.match(indexHtml, /data-cap-hide="gcal"/);
+  });
+});

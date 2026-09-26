@@ -26,7 +26,6 @@ The long-term goal: a unified personal assistant where you just add or speak a t
 | [**Optional AI assistance**](docs/ai-providers.md) | Bring your own provider — OpenAI, Gemini, Claude, Mistral, Groq, OpenRouter, or a local model. Every feature also works without AI. |
 | [**Vision, roadmap & status**](docs/vision-roadmap.md) | Where the project is heading and what already works. |
 | [**Data model & scheduler**](docs/task-model.md) | The unified Task object, TaskStore, and how the scheduler prioritizes your day. |
-| [**Family routine view**](docs/family-view.md) | One column per family member on a shared big screen. |
 | [**Manual test cases**](docs/testing.md) | Scenarios to verify behavior after changes. |
 | [**Contributing**](docs/contributing.md) | How to set up locally and submit changes. |
 
@@ -37,13 +36,14 @@ The long-term goal: a unified personal assistant where you just add or speak a t
 *   **Day Planner:** Visualize your day with time blocks.
 *   **Task Manager & Breakdown:** Track to-dos and split complex tasks into manageable steps.
 *   **Habit Tracker:** Build consistency with daily habit tracking and streaks.
-*   **Routine Tool:** Create and run daily routines with timed tasks.
+*   **Routines:** Create and run daily routines with timed steps. A routine books its time in your day (steps + a 10 % buffer, configurable), so nothing else can be scheduled on top of it.
 *   **Focus Mode:** Minimize distractions with a clean, focused interface.
 *   **Rewards:** Celebrate your accomplishments with visual rewards.
 *   **Calendar:** Sync privately with [Google Calendar](docs/google-calendar-sync.md) or import ICS files.
-*   **Unified Scheduler & Today View:** One prioritized plan across all tools, surfacing the current task and what's next.
+*   **Now view (default):** The app opens on what to do *now* — the current task, routine step or event with a big countdown, and what comes next. When nothing is planned, it opens the Day Planner instead.
+*   **Unified Scheduler:** One plan across tasks, routines and calendar events, with no double booking.
 *   **Quick Capture:** Add or speak tasks in natural language — works offline, enhanced by [AI](docs/ai-providers.md) when configured.
-*   **Context Banner:** The Home view suggests the right tool for right now.
+*   **Adapts to your setup:** Options you don't need are tucked away (e.g. `.ics` import once Google Calendar is connected, AI buttons without an AI provider). *Settings → General → Show all options* brings them back.
 *   **Cross-device sync:** [Back up to Google Drive or move a file](docs/sync-across-devices.md) — you choose.
 
 ## 🔒 Privacy

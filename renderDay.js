@@ -3,7 +3,7 @@ import { formatTime, getCalendarEvents, getDayBounds, getPlannerTasksForDay, loc
 export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize }) {
     if (!window.DataManager) return;
 
-    dateDisplay.textContent = currentDate.toLocaleDateString('en-US', {
+    dateDisplay.textContent = currentDate.toLocaleDateString(document.documentElement.lang || undefined, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -59,9 +59,11 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         }
     });
 
-    const todaysTasks = getPlannerTasksForDay(currentDate);
+    // Calendar events are drawn above; the schedule only adds tasks and routines.
+    const todaysTasks = getPlannerTasksForDay(currentDate).filter(task => task.source !== 'calendar');
 
     todaysTasks.forEach(task => {
+        const isRoutine = task.source === 'routine';
         const startHour = parseInt(task.plannerDate.slice(11, 13));
         const startMin = parseInt(task.plannerDate.slice(14, 16));
         const start = startHour * 60 + startMin;
@@ -78,10 +80,19 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
             const segOffset = segStart - hourStart;
 
             const eventDiv = document.createElement('div');
-            eventDiv.className = 'event';
-            eventDiv.textContent = task.text;
+            eventDiv.className = isRoutine ? 'event routine-event' : (task.autoPinned || !task.isFixed ? 'event flexible-event' : 'event');
+            eventDiv.textContent = isRoutine ? `↻ ${task.text}` : task.text;
+            eventDiv.title = isRoutine
+                ? `Routine: ${task.stepsMinutes} min of steps + buffer`
+                : task.text;
             eventDiv.style.top = `calc(${segOffset} * var(--minute-height))`;
             eventDiv.style.height = `calc(${segMinutes} * var(--minute-height))`;
+
+            if (isRoutine) {
+                eventDiv.addEventListener('click', () => window.switchTool?.('routine'));
+                hourContent.appendChild(eventDiv);
+                continue;
+            }
 
             eventDiv.addEventListener('click', () => openModal(task));
 
@@ -102,7 +113,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
 
                 const resizer = document.createElement('div');
                 resizer.className = 'event-resizer';
-                resizer.addEventListener('mousedown', e => {
+                resizer.addEventListener('pointerdown', e => {
                     e.stopPropagation();
                     startResize(e, task, eventDiv);
                 });

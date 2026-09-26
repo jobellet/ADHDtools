@@ -12,35 +12,13 @@
     }
 
     /* Compact Header */
-    header {
-        flex: 0 0 auto;
-        padding: 0.5rem 0;
-        background-color: var(--primary-color);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        z-index: 200;
-    }
 
-    header h1 {
-        font-size: 1.2rem;
-        margin: 0;
-    }
 
     /* Hide tagline to save space */
-    header p[data-i18n="tagline"] {
-        display: none;
-    }
 
-    .current-time {
-        font-size: 0.8rem;
-        margin-top: 0;
-    }
 
     /* Nav */
-    nav {
-        flex: 0 0 auto;
-        position: relative; /* Ensure it stays in flow or sticky if needed */
-        z-index: 100;
-    }
+
 
     /* Main Container */
     main {
@@ -367,38 +345,6 @@
     #calendar-view {
         flex: 1;
         overflow-y: auto;
-    }
-
-    /* --- Home / Today View --- */
-    #home {
-        overflow-y: auto; /* Home allows scrolling because grid needs space */
-    }
-
-    #home .tools-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    #today-view {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .today-current {
-        order: 1;
-    }
-
-    .today-actions {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
-
-    #today-start-focus {
-        grid-column: 1 / -1; /* Full width */
-        padding: 1rem;
-        font-size: 1.1rem;
     }
 
     /* Common Elements */

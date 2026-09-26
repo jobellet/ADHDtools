@@ -8,8 +8,21 @@
     fixedTag: "[FIX]",
     flexibleTag: "[FLEX]",
     defaultTaskMinutes: 25,
-    enableUnifiedScheduler: true,
     includeCalendarInSchedule: true,
+
+    // Routines book their time in the schedule plus this margin (percent).
+    routineBufferPercent: 10,
+
+    // Minutes before the next fixed item during which the Now view shows a
+    // "break" countdown instead of switching to the planner.
+    breakWindowMinutes: 15,
+
+    // Pause kept between two scheduled tasks (minutes).
+    bufferDurationMinutes: 5,
+
+    // Options not needed by the current setup (e.g. .ics import once Google
+    // Calendar is connected) are tucked away unless this is on.
+    showAllOptions: false,
 
     // Google Calendar private sync window (days before/after today).
     gcalPastDays: 7,

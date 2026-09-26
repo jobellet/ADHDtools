@@ -30,9 +30,7 @@ let dateDisplay,
     clearBtn,
     generateScheduleBtn,
     aiPlanBtn,
-    fillDayBtn,
     recordBtn,
-    focusFromPlannerBtn,
     eventModal,
     closeButton,
     eventForm,
@@ -150,11 +148,11 @@ async function handleVoiceCommand(text) {
         alert('Could not understand that. Try e.g. "Team meeting tomorrow at 10am for 45 minutes".');
         return;
     }
-    const todayStr = localDateString(currentDate);
-    const plannerDate = parsed.plannerDate || parsed.deadline || `${todayStr}T09:00`;
+    const plannerDate = parsed.plannerDate || null;
     window.DataManager.addTask({
         text: parsed.name,
         plannerDate,
+        deadline: parsed.deadline || null,
         duration: parsed.durationMinutes || getDefaultDurationMinutes(),
         importance: parsed.importance || undefined,
         originalTool: 'planner'
@@ -162,31 +160,23 @@ async function handleVoiceCommand(text) {
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
 }
 
-function checkOverlap(newStartMinutes, newDurationMinutes, taskIdToIgnore) {
-    const todayStr = localDateString(currentDate);
-    const tasks = (window.TaskStore?.getAllTasks?.() || window.DataManager?.getTasks?.() || []).map(wrapTask);
-    const todaysActionableTasks = tasks.filter(t =>
-        t.plannerDate &&
-        t.plannerDate.startsWith(todayStr) &&
-        !t.isCalendarEvent &&
-        t.isActionable !== false &&
-        t.type !== 'event'
-    );
-
-    const newEndMinutes = newStartMinutes + newDurationMinutes;
-
-    for (const t of todaysActionableTasks) {
-        if (t.id === taskIdToIgnore || t.hash === taskIdToIgnore) continue;
-        const start = parseTimeToMinutes(t.plannerDate.slice(11, 16));
-        if (start === null) continue;
-        const duration = t.duration || t.durationMinutes || getDefaultDurationMinutes();
-        const end = start + duration;
-
-        if (newStartMinutes < end && newEndMinutes > start) {
-            return true;
-        }
-    }
-    return false;
+// Returns a message when [start, start+duration) collides with a routine,
+// a calendar event or another pinned task on the planner's day; else null.
+function describeConflict(newStartMinutes, newDurationMinutes, ignoreId) {
+    const scheduler = window.UnifiedScheduler;
+    if (!scheduler?.findConflicts) return null;
+    const dateStr = localDateString(currentDate);
+    const clashes = scheduler.findConflicts({
+        dateStr,
+        startMinutes: newStartMinutes,
+        durationMinutes: newDurationMinutes,
+        ignore: ignoreId ? [ignoreId] : [],
+    });
+    if (!clashes.length) return null;
+    const names = clashes.map(c => `“${c.name}” (${minutesToTime(c.start)}–${minutesToTime(c.end)})`).join(', ');
+    const free = scheduler.findNextFreeSlot({ dateStr, fromMinutes: newStartMinutes, durationMinutes: newDurationMinutes, ignore: ignoreId ? [ignoreId] : [] });
+    const hint = Number.isFinite(free) ? ` The next free slot is ${minutesToTime(free)}.` : '';
+    return `This time is already taken by ${names}.${hint}`;
 }
 
 function startResize(e, task, eventDiv) {
@@ -194,28 +184,26 @@ function startResize(e, task, eventDiv) {
     const startY = e.clientY;
     const startDuration = task.duration || getDefaultDurationMinutes();
     const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
+    const minutesFor = ev => Math.max(5, startDuration + Math.round((ev.clientY - startY) / minuteHeight / 5) * 5);
     function onMove(ev) {
-        const diff = ev.clientY - startY;
-        const minutes = Math.max(5, startDuration + Math.round(diff / minuteHeight / 5) * 5);
-        eventDiv.style.height = `calc(${minutes} * var(--minute-height))`;
+        eventDiv.style.height = `calc(${minutesFor(ev)} * var(--minute-height))`;
     }
     function onUp(ev) {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        const diff = ev.clientY - startY;
-        const minutes = Math.max(5, startDuration + Math.round(diff / minuteHeight / 5) * 5);
-
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        const minutes = minutesFor(ev);
         const startMins = parseTimeToMinutes(task.plannerDate.slice(11, 16));
-        if (startMins !== null && checkOverlap(startMins, minutes, task.id || task.hash)) {
-            alert('Cannot resize task: overlaps with another scheduled task.');
+        const conflict = startMins !== null ? describeConflict(startMins, minutes, task.hash || task.id) : null;
+        if (conflict) {
+            alert(conflict);
             eventDiv.style.height = `calc(${startDuration} * var(--minute-height))`;
             return;
         }
-
-        window.DataManager.updateTask(task.id, { duration: minutes });
+        updateTaskInStore(task.hash || task.id, { duration: minutes, durationMinutes: minutes });
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
     }
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
 }
 
 let zoomLevel = 1;
@@ -235,7 +223,12 @@ function scrollToCurrent() {
     const scrollPosition = ((boundedMinutes - startMinutes) * minuteHeight) - (paddingMinutes * minuteHeight);
 
     const containerHeight = timeBlocksContainer.clientHeight;
-    timeBlocksContainer.scrollTop = Math.max(0, Math.min(timeBlocksContainer.scrollHeight - containerHeight, scrollPosition));
+    // Hidden planner (other tool open): try again when it is shown.
+    if (!containerHeight) return;
+    timeBlocksContainer.scrollTo({
+        top: Math.max(0, Math.min(timeBlocksContainer.scrollHeight - containerHeight, scrollPosition)),
+        behavior: 'instant',
+    });
 }
 
 function getBreakdownTasks() {
@@ -255,25 +248,20 @@ function getBreakdownTasks() {
     return tasks;
 }
 
-function getEisenhowerTasks() {
-    const data = JSON.parse(localStorage.getItem('eisenhowerTasks')) || { q1: [], q2: [], q3: [], q4: [] };
-    const tasks = [];
-    ['q1', 'q2'].forEach(q => {
-        (data[q] || []).forEach(t => {
-            if (!t.completed && t.text) tasks.push(t.text);
-        });
-    });
-    return tasks;
+function getUnscheduledTaskNames() {
+    return (window.TaskStore?.getPendingTasks?.() || [])
+        .filter(t => !t.plannerDate)
+        .map(t => t.name || t.text)
+        .filter(Boolean);
 }
 
 async function autoPlanDay() {
     try {
         aiPlanBtn.disabled = true;
         const breakdownTasks = getBreakdownTasks();
-        const eisenhowerTasks = getEisenhowerTasks();
-        const tasks = [...breakdownTasks, ...eisenhowerTasks];
+        const tasks = [...new Set([...getUnscheduledTaskNames(), ...breakdownTasks])];
         if (tasks.length === 0) {
-            alert('No tasks found in Breakdown or Eisenhower tools.');
+            alert('No unscheduled tasks to plan.');
             return;
         }
         const events = getCalendarEvents(currentDate);
@@ -327,10 +315,10 @@ async function autoPlanDay() {
                 text: item.text,
                 plannerDate: plannerDateTime,
                 duration,
-                originalTool: 'Gemini'
+                originalTool: 'AI'
             });
         });
-        alert('Day planned with Gemini.');
+        alert('Day planned with AI.');
     } finally {
         aiPlanBtn.disabled = false;
     }
@@ -347,78 +335,6 @@ function minutesToTime(minutes) {
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
-function fillDayFromCalendarAndTasks(isAuto = false) {
-    if (!window.DataManager) return;
-    const defaultDuration = getDefaultDurationMinutes();
-    const { startMinutes, endMinutes } = getDayBounds();
-    const dayStr = localDateString(currentDate);
-
-    const busyBlocks = getCalendarEvents(currentDate)
-        .map(ev => {
-            const start = parseTimeToMinutes(ev.start);
-            let end = parseTimeToMinutes(ev.end);
-            if (start === null) return null;
-            if (end === null) end = start + defaultDuration;
-            return {
-                start: Math.max(startMinutes, start),
-                end: Math.min(endMinutes, end),
-            };
-        })
-        .filter(Boolean)
-        .sort((a, b) => a.start - b.start);
-
-    const tasks = window.DataManager.getTasks()
-        .filter(t => !t.plannerDate && !t.isCompleted)
-        .sort((a, b) => {
-            const impA = Number.isFinite(a.importance) ? a.importance : 5;
-            const impB = Number.isFinite(b.importance) ? b.importance : 5;
-            const urgA = Number.isFinite(a.urgency) ? a.urgency : 5;
-            const urgB = Number.isFinite(b.urgency) ? b.urgency : 5;
-            const bucket = (imp, urg) => (imp >= 7 && urg >= 7 ? 3 : imp >= 7 ? 2 : urg >= 7 ? 1 : 0);
-            const bucketDiff = bucket(impB, urgB) - bucket(impA, urgA);
-            if (bucketDiff !== 0) return bucketDiff;
-            return (impB + urgB) - (impA + urgA);
-        });
-
-    const gaps = [];
-    let cursor = startMinutes;
-    busyBlocks.forEach(block => {
-        if (block.start > cursor) {
-            gaps.push({ start: cursor, end: block.start });
-        }
-        cursor = Math.max(cursor, block.end);
-    });
-    if (cursor < endMinutes) {
-        gaps.push({ start: cursor, end: endMinutes });
-    }
-
-    const unscheduled = [...tasks];
-    gaps.forEach(gap => {
-        let pointer = gap.start;
-        let idx = 0;
-        while (idx < unscheduled.length) {
-            const task = unscheduled[idx];
-            const duration = task.duration || task.durationMinutes || task.estimatedMinutes || defaultDuration;
-            if (pointer + duration <= gap.end) {
-                const timeStr = minutesToTime(pointer);
-                window.DataManager.updateTask(task.id, {
-                    plannerDate: `${dayStr}T${timeStr}`,
-                    duration,
-                });
-                unscheduled.splice(idx, 1);
-                pointer += duration;
-            } else {
-                idx++;
-            }
-        }
-    });
-
-    renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
-    if (!isAuto) {
-        alert('Day filled from calendar events and prioritized tasks.');
-    }
 }
 
 function handleReceivedTaskForDayPlanner(event) {
@@ -440,10 +356,8 @@ function initDayPlanner() {
     addEventBtn = document.getElementById('add-event-btn');
     clearBtn = document.getElementById('clear-events-btn');
     aiPlanBtn = document.getElementById('ai-plan-day-btn');
-    fillDayBtn = document.getElementById('fill-day-tasks-btn');
     recordBtn = document.getElementById('record-event-btn');
     generateScheduleBtn = document.getElementById('generate-schedule-btn');
-    focusFromPlannerBtn = document.getElementById('start-focus-from-planner');
     eventModal = document.getElementById('event-modal');
     closeButton = eventModal.querySelector('.close-button');
     eventForm = document.getElementById('event-form');
@@ -513,8 +427,9 @@ function initDayPlanner() {
 
         const startMins = parseTimeToMinutes(time);
         const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
-        if (startMins !== null && checkOverlap(startMins, duration, taskIdToIgnore)) {
-            alert('Cannot schedule task: overlaps with another scheduled task.');
+        const conflict = startMins !== null ? describeConflict(startMins, duration, taskIdToIgnore) : null;
+        if (conflict) {
+            alert(conflict);
             return;
         }
 
@@ -591,17 +506,19 @@ function initDayPlanner() {
             const fixedTag = cfg.fixedTag || '[FIX]';
             const flexTag = cfg.flexibleTag || '[FLEX]';
             schedule.forEach(slot => {
+                // Routine blocks and calendar events already own their time.
+                if (slot.task.source === 'routine' || slot.task.source === 'calendar') return;
                 const startMinutes = slot.scheduledStart ?? slot.startMinutes;
                 const hours = String(Math.floor(startMinutes / 60)).padStart(2, '0');
                 const minutes = String(startMinutes % 60).padStart(2, '0');
                 const plannerDate = `${todayStr}T${hours}:${minutes}`;
                 const duration = Math.max(5, (slot.scheduledEnd ?? slot.endMinutes) - (slot.scheduledStart ?? slot.startMinutes));
-                const deadline = slot.task.deadline || slot.task.plannerDate || plannerDate;
+                const deadline = slot.task.deadline || null;
                 const name = slot.task.name || slot.task.text || 'Task';
                 const isFlexTagged = name.includes(flexTag);
                 const isFixed = isFlexTagged ? false : (slot.task.isFixed || name.includes(fixedTag));
                 if (slot.task.hash) {
-                    updateTaskInStore(slot.task.hash, { plannerDate, deadline, durationMinutes: duration, duration, isFixed });
+                    updateTaskInStore(slot.task.hash, { plannerDate, deadline, durationMinutes: duration, duration, isFixed, autoPinned: false });
                 } else {
                     addTaskToStore({
                         name,
@@ -626,20 +543,6 @@ function initDayPlanner() {
         aiPlanBtn.addEventListener('click', autoPlanDay);
     }
 
-    if (focusFromPlannerBtn) {
-        focusFromPlannerBtn.addEventListener('click', () => {
-            const scheduler = window.UnifiedScheduler || window.TaskScheduler;
-            const slot = scheduler?.getCurrentTask ? scheduler.getCurrentTask(new Date()) : null;
-            if (!slot) {
-                alert('No current task to focus on right now.');
-                return;
-            }
-            const goalInput = document.getElementById('focus-goal');
-            if (goalInput) goalInput.value = slot.task.name || slot.task.text || 'Focus task';
-            document.getElementById('enter-focus-mode')?.click();
-        });
-    }
-
     applyZoom();
 
     window.EventBus.addEventListener('dataChanged', () => {
@@ -656,20 +559,22 @@ function initDayPlanner() {
 
     window.EventBus.addEventListener('ef-receiveTaskFor-DayPlanner', handleReceivedTaskForDayPlanner);
 
-    // Auto-fill check
-    const todayStr = localDateString(currentDate);
-    const autofillKey = `adhd_planner_autofilled_${todayStr}`;
-    if (!localStorage.getItem(autofillKey)) {
-        const tasks = window.DataManager ? window.DataManager.getTasks() : (window.TaskStore?.getAllTasks ? window.TaskStore.getAllTasks() : []);
-        const todaysTasks = tasks.filter(t => t.plannerDate && t.plannerDate.startsWith(todayStr));
-        if (todaysTasks.length === 0) {
-            fillDayFromCalendarAndTasks(true);
-        }
-        localStorage.setItem(autofillKey, 'true');
-    }
+    const rerender = () => {
+        const prev = timeBlocksContainer.scrollTop;
+        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+        timeBlocksContainer.scrollTop = prev;
+    };
+    window.addEventListener('scheduleNeedsRefresh', rerender);
+    window.addEventListener('routinesChanged', rerender);
+    window.addEventListener('configUpdated', rerender);
+    setInterval(rerender, 60000);
 
     renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
     scrollToCurrent();
+    window.DayPlanner = { scrollToCurrent, rerender };
+    window.addEventListener('toolChanged', (e) => {
+        if (e.detail?.tool === 'planner') requestAnimationFrame(scrollToCurrent);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

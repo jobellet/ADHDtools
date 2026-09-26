@@ -1,5 +1,7 @@
 # Transition Plan: Context-Aware Dashboard
 
+> Status: Steps 1–2 are done — the app opens on the Now view (`now-view.js`, `core/now-state.js`) while something is scheduled, and on the Day Planner otherwise. Routines book their time in the unified scheduler.
+
 This document outlines the implementation steps to transition from the current system to a webpage that automatically displays the appropriate tool based on the time of the day and the user habits.
 
 ## Goal
