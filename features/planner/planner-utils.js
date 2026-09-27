@@ -148,7 +148,20 @@ export function getDefaultTime() {
     // Round up to the next 15 minutes for easier scheduling
     const rounded = Math.ceil(minutes / 15) * 15;
     const { startMinutes, endMinutes } = getDayBounds();
-    const clamped = clamp(rounded, startMinutes, Math.max(startMinutes, endMinutes - 5));
+    let clamped = clamp(rounded, startMinutes, Math.max(startMinutes, endMinutes - 5));
+    // A pre-filled time that is already taken (the running task is pinned on
+    // "now", routines and calendar events book theirs) can't be saved: offer
+    // the first free slot instead so the form works on the first try.
+    const scheduler = typeof window !== 'undefined' ? window.UnifiedScheduler : null;
+    const duration = 30; // the form's default duration (setDuration(30) in day-planner.js)
+    if (scheduler?.findConflicts && scheduler.findConflicts({
+        dateStr: localDateString(now), startMinutes: clamped, durationMinutes: duration,
+    }).length) {
+        const free = scheduler.findNextFreeSlot({
+            dateStr: localDateString(now), fromMinutes: clamped, durationMinutes: duration,
+        });
+        if (Number.isFinite(free)) clamped = clamp(free, startMinutes, Math.max(startMinutes, endMinutes - 5));
+    }
     const h = Math.floor(clamped / 60) % 24;
     const m = clamped % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
