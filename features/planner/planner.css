@@ -211,7 +211,7 @@
     font-size: 0.85rem;
     line-height: 1.25;
     overflow: hidden;
-    min-height: 12px;
+    min-height: 18px;
     border-bottom: none;
     margin: 0;
     transition: none; /* follow the zoom at once (base.css animates .event) */
