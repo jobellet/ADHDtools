@@ -79,7 +79,8 @@ function collectItems(currentDate, dayStart, dayEnd) {
             items.push({ kind, title: task.text || task.name || '', start, end: start + duration, task });
         });
     return items
-        .map(item => ({ ...item, start: Math.max(item.start, dayStart), end: Math.min(item.end, dayEnd) }))
+        .filter(item => item.end > dayStart)
+        .map(item => ({ ...item, start: Math.max(item.start, dayStart), end: Math.max(item.end, Math.max(item.start, dayStart) + 5) }))
         .filter(item => item.end > item.start);
 }
 
@@ -94,13 +95,17 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
     });
 
     const { startMinutes: dayStart, endMinutes: dayEnd } = getDayBounds();
+    // Anything saved past the day's end must still be drawn, so the timeline
+    // grows to fit it instead of cutting it out of the view.
+    const items = assignColumns(collectItems(currentDate, dayStart, dayEnd));
+    const timelineEnd = Math.max(dayEnd, ...items.map(item => item.end), dayStart);
     const at = minutes => `calc(${minutes - dayStart} * var(--minute-height))`;
     const span = minutes => `calc(${minutes} * var(--minute-height))`;
 
     timeBlocksContainer.innerHTML = '';
     const timeline = document.createElement('div');
     timeline.className = 'timeline';
-    timeline.style.height = span(dayEnd - dayStart);
+    timeline.style.height = span(timelineEnd - dayStart);
     timeline.dataset.date = localDateString(currentDate);
     const grid = document.createElement('div');
     grid.className = 'timeline-grid';
@@ -117,7 +122,6 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         grid.appendChild(line);
     }
 
-    const items = assignColumns(collectItems(currentDate, dayStart, dayEnd));
     items.forEach(item => {
         const el = document.createElement('div');
         el.className = {

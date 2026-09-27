@@ -161,3 +161,55 @@ test('add-event form refuses a taken time and offers the next free one', async (
     await context.close();
   }
 });
+
+test('add-event form saves at the default time while a task is running', async () => {
+  // The Now view pins the running task on "now"; the form's pre-filled time
+  // must not fall inside it, or saving is refused and the event never appears.
+  const { page, context, errors } = await openPlanner('desktop', `${DAY}T10:00:00`);
+  try {
+    await page.click('#add-event-btn');
+    const suggested = await page.inputValue('#event-time');
+    const busy = await page.evaluate(() => window.UnifiedScheduler.getBusyBlocks(document.querySelector('#time-blocks .timeline').dataset.date));
+    const clash = busy.find(b => {
+      const [h, m] = suggested.split(':').map(Number);
+      const start = h * 60 + m;
+      return start < b.end && start + 30 > b.start;
+    });
+    assert.ok(!clash, `suggested ${suggested} is inside "${clash?.name}"`);
+    await page.fill('#event-title', 'Dentist');
+    await page.click('.event-save');
+    await page.clock.runFor(300);
+    assert.ok(!(await page.evaluate(() => document.getElementById('event-modal').classList.contains('active'))), 'form is still open');
+    const drawn = await page.evaluate(() => [...document.querySelectorAll('#time-blocks .timeline-lane .event')].map(el => el.dataset.title));
+    assert.ok(drawn.includes('Dentist'), `"Dentist" missing from the timeline; drawn: ${drawn.join(', ')}`);
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});
+
+test('an event saved after the day end is still drawn', async () => {
+  const { page, context, errors } = await openPlanner('desktop', `${DAY}T20:00:00`);
+  try {
+    await page.click('#add-event-btn');
+    await page.fill('#event-title', 'Night owl');
+    await page.fill('#event-time', '22:30'); // past the default 22:00 day end
+    await page.click('.event-save');
+    await page.clock.runFor(300);
+    const block = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('#time-blocks .timeline-lane .event')].find(el => el.dataset.title === 'Night owl');
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      const tl = document.querySelector('#time-blocks .timeline').getBoundingClientRect();
+      const mh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height'));
+      return { start: Number(el.dataset.start), end: Number(el.dataset.end), visible: r.bottom > tl.top && r.top < tl.bottom, offset: r.top - tl.top };
+    });
+    assert.ok(block, '"Night owl" missing from the timeline');
+    assert.equal(block.start, 22 * 60 + 30);
+    assert.ok(block.visible, 'the block is not visible inside the timeline');
+    assert.ok(block.offset > 0, 'the block is drawn above the timeline top');
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});
