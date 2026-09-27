@@ -74,7 +74,7 @@ function collectItems(currentDate, dayStart, dayEnd) {
         .forEach(task => {
             const start = toMinutes(task.plannerDate?.slice(11, 16));
             if (start === null) return;
-            const duration = task.duration || task.durationMinutes || 60;
+            const duration = Number(task.duration ?? task.durationMinutes ?? 60);
             const kind = task.source === 'routine' ? 'routine' : (task.autoPinned || !task.isFixed ? 'flexible' : 'fixed');
             items.push({ kind, title: task.text || task.name || '', start, end: start + duration, task });
         });
