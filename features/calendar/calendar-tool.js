@@ -66,6 +66,14 @@
     return validSeconds * 1000;
   }
 
+  // Local naive "YYYY-MM-DDTHH:MM" — the format every other module uses for
+  // stored times (planner, scheduler, Google sync, ICS). Never toISOString():
+  // it shifts the time to UTC and the planner then misses the event.
+  const pad = n => String(n).padStart(2, '0');
+  function naiveLocal(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
   function getPlannerEvents() {
     if (!window.DataManager) return [];
     return window.DataManager
@@ -78,7 +86,7 @@
         if (t.duration) {
           const s = new Date(start);
           const e = new Date(s.getTime() + t.duration * 60000);
-          end = e.toISOString().slice(0, 16);
+          end = naiveLocal(e);
         }
         return {
           id: t.id,
@@ -130,8 +138,8 @@
     const ev = normalizeEvent({
       id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
       title,
-      start: start.toISOString().slice(0, 16),
-      end: end.toISOString().slice(0, 16)
+      start: naiveLocal(start),
+      end: naiveLocal(end)
     });
     events.push(ev);
     saveEvents(events);
@@ -143,12 +151,12 @@
       if (!ev.instanceStart) ev.instanceStart = ev.start;
       const start = new Date(ev.start);
       start.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-      ev.start = start.toISOString().slice(0, 16);
+      ev.start = naiveLocal(start);
     }
     if (ev.end) {
       const end = new Date(ev.end);
       end.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-      ev.end = end.toISOString().slice(0, 16);
+      ev.end = naiveLocal(end);
     }
     ev.localOverride = true;
     normalizeEvent(ev);
@@ -517,7 +525,7 @@
 
 
   function renderDay(events, container) {
-    const dayStr = referenceDate.toISOString().split('T')[0];
+    const dayStr = `${referenceDate.getFullYear()}-${pad(referenceDate.getMonth() + 1)}-${pad(referenceDate.getDate())}`;
     const dayEvents = events.filter(ev => ev.start && ev.start.startsWith(dayStr));
     const table = document.createElement('table');
     table.className = 'calendar-table';
@@ -566,9 +574,10 @@
       const cellDate = new Date(start);
       cellDate.setDate(start.getDate() + i);
       const cell = document.createElement('td');
-      const dayStr = cellDate.toISOString().split('T')[0];
+      const dayStr = `${cellDate.getFullYear()}-${pad(cellDate.getMonth() + 1)}-${pad(cellDate.getDate())}`;
       cell.dataset.date = dayStr;
-      if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
+      const today = new Date();
+      if (dayStr === `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`) cell.classList.add('today');
       const list = document.createElement('ul');
       events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
         const li = createEventElement(ev, 'li', true);
@@ -613,7 +622,7 @@
         const cellDate = new Date(year, month, current);
         const cell = document.createElement('td');
         if (current >= 1 && current <= daysInMonth) {
-          const dayStr = cellDate.toISOString().split('T')[0];
+          const dayStr = `${cellDate.getFullYear()}-${pad(cellDate.getMonth() + 1)}-${pad(cellDate.getDate())}`;
           cell.dataset.date = dayStr;
           const num = document.createElement('div');
           num.textContent = cellDate.getDate();
@@ -627,7 +636,8 @@
           cell.addEventListener('dblclick', () => createEventAt(cellDate));
           cell.addEventListener('dragover', e => e.preventDefault());
           cell.addEventListener('drop', e => handleDrop(e, cellDate));
-          if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
+          const today = new Date();
+          if (dayStr === `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`) cell.classList.add('today');
         }
         tr.appendChild(cell);
         current++;
