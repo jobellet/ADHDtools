@@ -46,6 +46,29 @@
     text-align: center;
     min-height: 60vh;
     justify-content: center;
+    position: relative;
+}
+
+.now-pip-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.now-pip-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--on-surface);
 }
 
 .now-kicker {

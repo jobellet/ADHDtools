@@ -36,6 +36,8 @@
     let state = null;
     let renderedKey = '';
     let lastMode = null;
+    let miniPlayerUpdate = null;
+    let lastSlotKey = null;
 
     const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
     const locale = () => document.documentElement.lang || undefined;
@@ -45,6 +47,63 @@
     let lastDeleted = null; // { tasks, at } for the Undo bar
     const fmt = seconds => window.NowState.formatDuration(seconds);
     const isToolActive = id => document.getElementById(id)?.classList.contains('active');
+
+    function openMiniPlayer() {
+      if (!window.AttentionService?.openMiniPlayer) return;
+      window.AttentionService.openMiniPlayer((container, win) => {
+        container.innerHTML = `
+          <div style="padding: 1rem; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--surface); color: var(--on-surface);">
+            <div id="pip-title" style="font-weight: 700; margin-bottom: 0.5rem; text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></div>
+            <div id="pip-time" style="font-size: 2.5rem; font-variant-numeric: tabular-nums; font-weight: 800; margin-bottom: 1rem; line-height: 1;"></div>
+            <button id="pip-done" class="btn btn-primary btn-sm"><i class="fas fa-check"></i> ${t('now.btn.done')}</button>
+          </div>
+        `;
+
+        const titleEl = container.querySelector('#pip-title');
+        const timeEl = container.querySelector('#pip-time');
+        const doneBtn = container.querySelector('#pip-done');
+
+        doneBtn.addEventListener('click', () => {
+          if (state?.mode === 'doing' && state.current) {
+            completeTask(state.current);
+          } else if (win?.close) {
+            win.close();
+          }
+        });
+
+        miniPlayerUpdate = () => {
+          if (!state || state.mode !== 'doing' || !state.current) {
+            titleEl.textContent = t('now.free.title');
+            timeEl.textContent = '--:--';
+            doneBtn.hidden = true;
+            return;
+          }
+          doneBtn.hidden = false;
+
+          const running = window.RoutinePlayer?.getState?.();
+          if (kindOf(state.current) === 'routine' && running && running.routineId === state.current.task.routineId) {
+            titleEl.textContent = running.stepName || taskName(state.current.task);
+            timeEl.textContent = fmt(Math.abs(running.secondsLeft));
+          } else {
+            titleEl.textContent = taskName(state.current.task);
+            timeEl.textContent = fmt((state.current.endTime - new Date()) / 1000);
+          }
+        };
+        miniPlayerUpdate();
+      });
+    }
+
+    if (window.AttentionService?.isNative() || ('documentPictureInPicture' in window)) {
+      const card = document.getElementById('now-card');
+      if (card) {
+        const pipBtn = document.createElement('button');
+        pipBtn.className = 'now-pip-btn';
+        pipBtn.title = t('now.miniPlayer');
+        pipBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+        pipBtn.addEventListener('click', openMiniPlayer);
+        card.appendChild(pipBtn);
+      }
+    }
 
     function kindOf(slot) {
       const source = slot?.task?.source;
@@ -543,7 +602,21 @@
       }
       tick();
 
+      const slotKey = state.current ? state.current.task.hash : (state.next ? state.next.task.hash : null);
+      if (lastSlotKey && slotKey !== lastSlotKey) {
+        if (state.mode === 'doing' && state.current) {
+          window.AttentionService?.notify?.(t('now.notify.next', { name: taskName(state.current.task) }), '');
+        } else if (state.mode === 'break' || state.mode === 'free') {
+          window.AttentionService?.notify?.(t('now.notify.transition'), '');
+        }
+      }
+      lastSlotKey = slotKey;
+
       if (state.mode !== lastMode) {
+        if (lastMode === 'doing') {
+          window.AttentionService?.releaseWakeLock?.('now');
+          window.AttentionService?.clearCountdownStatus?.('now');
+        }
         lastMode = state.mode;
         window.AppRouter?.autoRoute?.(state);
       }
@@ -566,22 +639,35 @@
       if (!state) return;
       const now = new Date();
       if (state.mode === 'doing' && state.current) {
+        window.AttentionService?.acquireWakeLock?.('now');
         const running = window.RoutinePlayer?.getState?.();
-        if (kindOf(state.current) === 'routine' && running && running.routineId === state.current.task.routineId) {
+        const isRunningRoutine = kindOf(state.current) === 'routine' && running && running.routineId === state.current.task.routineId;
+
+        if (isRunningRoutine) {
           el.title.textContent = running.stepName || taskName(state.current.task);
           el.kicker.textContent = t('now.kicker.step', { routine: running.name.toUpperCase(), n: Math.min(running.stepIndex + 1, running.stepCount), total: running.stepCount });
           setTimer(Math.abs(running.secondsLeft), running.stepSeconds, t(running.secondsLeft < 0 ? 'now.timer.over' : 'now.timer.stepLeft'), running.secondsLeft < 0);
         } else {
           const left = (state.current.endTime - now) / 1000;
           setTimer(left, (state.current.endTime - state.current.startTime) / 1000, t('now.timer.left'));
+
+          if (!window.RoutinePlayer?.isRunning?.()) {
+            window.AttentionService?.setCountdownStatus?.({
+              source: 'now',
+              label: taskName(state.current.task),
+              remainingSeconds: Math.max(0, left),
+              isRunning: true
+            });
+          }
         }
-        if (isToolActive('home')) document.title = `${fmt((state.current.endTime - now) / 1000)} · ${taskName(state.current.task)}`;
       } else if (state.mode === 'break' && state.next) {
         const until = (state.next.startTime - now) / 1000;
         setTimer(until, (Number(window.ConfigManager?.getConfig?.().breakWindowMinutes) || 15) * 60, t('now.timer.until'));
         if (isToolActive('home')) document.title = t('now.doc.break', { name: taskName(state.next.task), time: fmt(until) });
       }
       tickStrip();
+      miniPlayerUpdate?.();
+
       // Slot boundary passed: recompute right away instead of waiting.
       if ((state.current && now >= state.current.endTime) || (state.next && now >= state.next.startTime)) {
         computeState();
