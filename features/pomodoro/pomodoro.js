@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let timer = null;
     let minutes;
     let seconds;
-    let endTime = null; // Timestamp when current session should end
+    let targetEndTimeMs = null; // Timestamp when current session should end
     let isRunning = false;
     let isPaused = false;
     let currentMode = 'focus'; // 'focus', 'shortBreak', 'longBreak'
@@ -122,12 +122,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }));
     }
 
+    // Initialize timer variables
+    minutes = settings.focusDuration;
+    seconds = 0;
+
     // Initialize timer display
-    updateTimerDisplay(settings.focusDuration, 0);
+    updateTimerDisplay(minutes, seconds);
     sessionCountDisplay.textContent = sessionCount;
     updateLongBreakInfo();
     // Persist session count
     localStorage.setItem('pomodoroSessionsCompleted', sessionCount);
+
+    // Handle visibility changes for tab throttling
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && isRunning && !isPaused && targetEndTimeMs) {
+            updateTimer();
+        }
+    });
 
     // Event listeners
     startButton.addEventListener('click', startTimer);
@@ -137,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (testSoundButton) testSoundButton.addEventListener('click', testSelectedSound);
 
     // Functions
-    function recalculateNextChime() {
+    function recalculateNextChime(currentElapsedSeconds) {
         if (currentMode !== 'focus' || !chimeCheckbox.checked) {
             nextChimeSeconds = null;
             return;
@@ -148,9 +159,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Calculate how much time has passed in the current session
         const remainingTimeSeconds = minutes * 60 + seconds;
-        const elapsedSeconds = totalDuration - remainingTimeSeconds;
+        const elapsedSeconds = currentElapsedSeconds !== undefined ? currentElapsedSeconds : (totalDuration - remainingTimeSeconds);
 
-        // Calculate the next threshold
+        // Calculate the next threshold, but ensure it is strictly *after* the current elapsed time.
         const nextThreshold = Math.floor(elapsedSeconds / intervalSeconds) * intervalSeconds + intervalSeconds;
 
         // Only set next chime if it falls within the session duration
@@ -167,6 +178,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!isRunning || isPaused) {
             const wasPaused = isPaused;
             isRunning = true;
+
+            // Integrate AttentionService wake lock and permissions
+            if (window.AttentionService) {
+                window.AttentionService.requestNotificationPermission();
+                window.AttentionService.acquireWakeLock('pomodoro');
+            }
             isPaused = false;
             startButton.disabled = true;
             pauseButton.disabled = false;
@@ -198,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Calculate end time based on current minutes/seconds
             const remaining = minutes * 60 + seconds;
-            endTime = Date.now() + remaining * 1000;
+            targetEndTimeMs = Date.now() + remaining * 1000;
 
             recalculateNextChime();
 
@@ -210,13 +227,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (isRunning && !isPaused) {
             clearInterval(timer);
             // Recalculate remaining time based on endTime
-            const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+            const remaining = Math.max(0, Math.ceil((targetEndTimeMs - Date.now()) / 1000));
             minutes = Math.floor(remaining / 60);
             seconds = remaining % 60;
             updateTimerDisplay(minutes, seconds);
             isPaused = true;
             startButton.disabled = false;
             pauseButton.disabled = true;
+
+            if (window.AttentionService) {
+                window.AttentionService.releaseWakeLock('pomodoro');
+                window.AttentionService.clearCountdownStatus('pomodoro');
+            }
         }
     }
 
@@ -224,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(timer);
         isRunning = false;
         isPaused = false;
-        endTime = null;
+        targetEndTimeMs = null;
         nextChimeSeconds = null;
         currentMode = 'focus';
         minutes = settings.focusDuration;
@@ -238,18 +260,33 @@ document.addEventListener('DOMContentLoaded', function () {
         pauseButton.disabled = true;
         if (modeChangeMessage) modeChangeMessage.textContent = '';
         updateLongBreakInfo();
+
+        if (window.AttentionService) {
+            window.AttentionService.releaseWakeLock('pomodoro');
+            window.AttentionService.clearCountdownStatus('pomodoro');
+        }
     }
 
     function updateTimer() {
-        const remainingTotal = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+        const remainingTotal = Math.max(0, Math.ceil((targetEndTimeMs - Date.now()) / 1000));
         minutes = Math.floor(remainingTotal / 60);
         seconds = remainingTotal % 60;
+
+        if (window.AttentionService) {
+            window.AttentionService.setCountdownStatus({
+                source: 'pomodoro',
+                label: timerLabel.textContent || 'Pomodoro',
+                remainingSeconds: remainingTotal,
+                isRunning: true
+            });
+        }
 
         if (currentMode === 'focus' && nextChimeSeconds !== null) {
             const elapsed = (settings.focusDuration * 60) - remainingTotal;
             if (elapsed >= nextChimeSeconds) {
+                // If it jumped way ahead, only play ONE chime but still catch up the threshold
                 playIntervalChime();
-                recalculateNextChime();
+                recalculateNextChime(elapsed);
             }
         }
 
@@ -257,8 +294,13 @@ document.addEventListener('DOMContentLoaded', function () {
             // Timer completed
             clearInterval(timer);
             isRunning = false;
-            endTime = null;
+            targetEndTimeMs = null;
             playNotification();
+
+            if (window.AttentionService) {
+                window.AttentionService.releaseWakeLock('pomodoro');
+                window.AttentionService.clearCountdownStatus('pomodoro');
+            }
 
             // Switch modes
             if (currentMode === 'focus') {
@@ -407,6 +449,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function playSound(kind) {
         if (!kind || kind === 'none') return;
+
+        if (window.AttentionService && window.AttentionService.playNativeSound) {
+            window.AttentionService.playNativeSound(kind);
+        }
+
         try {
             const ctx = getAudioContext();
             const t = ctx.currentTime + 0.02;
@@ -438,10 +485,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function playNotification() {
         playSound(settings.audioNotification);
 
-        // Show browser notification if supported
-        if ('Notification' in window && Notification.permission === 'granted') {
-            const title = currentMode === 'focus' ? 'Focus Session Complete!' : 'Break Over!';
-            const body = currentMode === 'focus' ? 'Time for a break!' : 'Time to focus!';
+        const title = currentMode === 'focus' ? 'Focus Session Complete!' : 'Break Over!';
+        const body = currentMode === 'focus' ? 'Time for a break!' : 'Time to focus!';
+
+        if (window.AttentionService) {
+            window.AttentionService.notify(title, body, {
+                sound: settings.audioNotification,
+                tag: 'pomodoro-complete'
+            });
+        } else if ('Notification' in window && Notification.permission === 'granted') {
+            // Show browser notification if supported and AttentionService is not available
             new Notification(title, { body });
         }
     }
