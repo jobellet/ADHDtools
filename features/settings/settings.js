@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     includeCalendarInSchedule: document.getElementById('setting-include-calendar'),
     routineAutoRunDefault: document.getElementById('setting-routine-auto-run'),
     contextAutoSwitch: document.getElementById('setting-context-autoswitch'),
+    desktopNotifications: document.getElementById('setting-desktop-notifications'),
+    keepScreenAwake: document.getElementById('setting-keep-screen-awake'),
+    titleBarCountdown: document.getElementById('setting-title-countdown'),
 
     // Default focus session duration in minutes. Defined in the Settings panel as
     // "focus-duration-setting". This mirrors ConfigManager.focusDefaultMinutes.
@@ -37,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.includeCalendarInSchedule) fields.includeCalendarInSchedule.checked = values.includeCalendarInSchedule;
     if (fields.routineAutoRunDefault) fields.routineAutoRunDefault.checked = values.routineAutoRunDefault;
     if (fields.contextAutoSwitch) fields.contextAutoSwitch.checked = values.contextAutoSwitch;
+    if (fields.desktopNotifications) fields.desktopNotifications.checked = values.desktopNotifications ?? true;
+    if (fields.keepScreenAwake) fields.keepScreenAwake.checked = values.keepScreenAwake ?? true;
+    if (fields.titleBarCountdown) fields.titleBarCountdown.checked = values.titleBarCountdown ?? true;
 
     // Populate focus session duration if the field exists
     if (fields.focusDefaultMinutes) fields.focusDefaultMinutes.value = values.focusDefaultMinutes ?? window.ConfigManager.DEFAULT_CONFIG.focusDefaultMinutes;
@@ -54,6 +60,39 @@ document.addEventListener('DOMContentLoaded', () => {
   fields.showAllOptions?.addEventListener('change', () => {
     window.ConfigManager.updateConfig({ showAllOptions: fields.showAllOptions.checked });
   });
+
+  fields.desktopNotifications?.addEventListener('change', () => {
+    window.ConfigManager.updateConfig({ desktopNotifications: fields.desktopNotifications.checked });
+  });
+
+  fields.keepScreenAwake?.addEventListener('change', () => {
+    window.ConfigManager.updateConfig({ keepScreenAwake: fields.keepScreenAwake.checked });
+  });
+
+  fields.titleBarCountdown?.addEventListener('change', () => {
+    window.ConfigManager.updateConfig({ titleBarCountdown: fields.titleBarCountdown.checked });
+  });
+
+  const enableNotificationsBtn = document.getElementById('setting-enable-notifications-btn');
+  const notificationStatus = document.getElementById('setting-notification-status');
+  if (enableNotificationsBtn) {
+    enableNotificationsBtn.addEventListener('click', async () => {
+      if (!window.AttentionService) return;
+      const permission = await window.AttentionService.requestNotificationPermission();
+      if (permission === 'granted') {
+        window.AttentionService.notify('Notification Test', 'Notifications are enabled and working.', { tag: 'settings-test' });
+        if (notificationStatus) {
+          notificationStatus.textContent = 'Tested successfully!';
+          notificationStatus.style.color = 'var(--text-color)';
+        }
+      } else {
+        if (notificationStatus) {
+          notificationStatus.textContent = `Status: ${permission}`;
+          notificationStatus.style.color = 'var(--danger-color)';
+        }
+      }
+    });
+  }
 
   const form = document.getElementById('settings-form');
   const status = document.getElementById('settings-status');
@@ -122,6 +161,9 @@ document.addEventListener('DOMContentLoaded', () => {
         includeCalendarInSchedule: fields.includeCalendarInSchedule?.checked || false,
         routineAutoRunDefault: fields.routineAutoRunDefault?.checked || false,
         contextAutoSwitch: fields.contextAutoSwitch?.checked || false,
+        desktopNotifications: fields.desktopNotifications?.checked ?? true,
+        keepScreenAwake: fields.keepScreenAwake?.checked ?? true,
+        titleBarCountdown: fields.titleBarCountdown?.checked ?? true,
 
         // Persist the default focus session duration from the Settings panel
         focusDefaultMinutes: Number(fields.focusDefaultMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.focusDefaultMinutes,

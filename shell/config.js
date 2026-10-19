@@ -42,6 +42,10 @@
     // Context-aware mode: when a routine window opens, automatically switch to the
     // routine player instead of only showing a suggestion banner on the Home view.
     contextAutoSwitch: false,
+
+    desktopNotifications: true,
+    keepScreenAwake: true,
+    titleBarCountdown: true,
   };
 
   function getConfig() {
