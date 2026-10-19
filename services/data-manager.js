@@ -634,6 +634,56 @@
 
   document.addEventListener('DOMContentLoaded', createDataManagementUI);
 
+  async function syncToNativeDisk() {
+    if (!window.AttentionService?.isNative?.()) return;
+
+    try {
+      const payload = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('adhd-') || key === 'adhd-storage-log') && !isSensitiveKey(key)) {
+          let value = localStorage.getItem(key);
+          try {
+            value = JSON.parse(value);
+          } catch {
+            // Keep as string
+          }
+          payload[key] = value;
+        }
+      }
+
+      if (window.AttentionService?.invokeNative) {
+        await window.AttentionService.invokeNative('native_save_storage', { data: JSON.stringify(payload) });
+      }
+    } catch (err) {
+      console.error('Failed to sync to native disk:', err);
+    }
+  }
+
+  async function restoreFromNativeDisk() {
+    if (!window.AttentionService?.isNative?.()) return;
+
+    try {
+      if (window.AttentionService?.invokeNative) {
+        const json = await window.AttentionService.invokeNative('native_load_storage');
+        if (json) {
+          const imported = typeof json === 'string' ? JSON.parse(json) : json;
+          if (Object.keys(imported).length > 0) {
+            mergeFromBackup(imported);
+            if (window.EventBus) {
+              window.EventBus.dispatchEvent(new CustomEvent('dataChanged', { detail: { source: 'native-sync' } }));
+            }
+            if (typeof window.scheduleNeedsRefresh === 'function') {
+              window.scheduleNeedsRefresh();
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to restore from native disk:', err);
+    }
+  }
+
   // Expose helpers
   DataManager.exportDataToFile = exportDataToFile;
   DataManager.importDataFromFile = importDataFromFile;
@@ -642,9 +692,15 @@
   DataManager.mergeFromBackup = mergeFromBackup;
   DataManager.getDeviceId = getDeviceId;
   DataManager.showNotification = showNotification;
+  DataManager.syncToNativeDisk = syncToNativeDisk;
+  DataManager.restoreFromNativeDisk = restoreFromNativeDisk;
 
   // Initial load
   loadData();
+
+  if (window.AttentionService?.isNative?.()) {
+    restoreFromNativeDisk();
+  }
 
   // Expose the DataManager to the window
   window.DataManager = DataManager;

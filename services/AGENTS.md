@@ -4,8 +4,8 @@ Classic scripts, no screen of their own (they add small UI blocks into Settings 
 
 | File | Role | Adds UI to |
 | --- | --- | --- |
-| `timestamp-storage.js` | Wraps `localStorage.setItem` to log when each key changed (`adhd-storage-log`, used to merge backups). Must load first. | — |
-| `data-manager.js` | `window.EventBus` (created here), `window.DataManager` (legacy task API over `TaskStore`), export/import JSON, email export, conflict dialog, `showNotification()`. Excludes secrets via `isSensitiveKey()`. | About → Data Management |
+| `timestamp-storage.js` | Wraps `localStorage.setItem` and `localStorage.removeItem` to log when each key changed (`adhd-storage-log`, used to merge backups). Debounces a background native sync callback via `DataManager.syncToNativeDisk()`. Must load first. | — |
+| `data-manager.js` | `window.EventBus` (created here), `window.DataManager` (legacy task API over `TaskStore`), export/import JSON, email export, conflict dialog, `showNotification()`, `syncToNativeDisk()` / `restoreFromNativeDisk()` (Tauri native bridge mirroring). Excludes secrets via `isSensitiveKey()`. | About → Data Management |
 | `google-auth.js` | `window.GoogleAuth`: OAuth token client (Client ID only, no API key); tokens in `sessionStorage`. | — |
 | `google-calendar-sync.js` | Private Google Calendar sync → `CalendarTool.ingestExternalEvents()`; export button on each planned task in the day planner (only when connected). Fires `capabilitiesChanged` on connect/disconnect. | Settings → Calendar Notifications & Google Sync |
 | `drive-sync.js` | `window.DriveSync`: backup/restore/auto-sync with Google Drive app folder, using `DataManager.mergeFromBackup` (→ `core/sync-merge.js`). Backs up when the tab is hidden if data changed (so the AI assistant sees fresh data). `readAppFile(name)` reads another app-folder file (the assistant inbox). **Back up now** first applies the assistant inbox. | About → Sync Across Devices |

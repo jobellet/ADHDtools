@@ -115,6 +115,14 @@ You can let an AI assistant (Mistral, Claude…) read your day, add tasks, give 
 
 Pick English, Deutsch, Français or Español in **More** (flags at the bottom). The Now view, the planner, Add and the routine player follow the language. Some older tools (Pomodoro, Habits, Rewards…) are still partly in English. Without an AI provider, write new tasks in English (the offline parser only understands English); with AI you can write in your language.
 
+## Native Desktop & Mobile App (Tauri)
+
+If you run the app inside the native Tauri wrapper (`cargo tauri dev` or `cargo tauri build`):
+- **Background Timer Notifications:** You get system notifications when timers or routines finish, even if the app is in the background.
+- **Screen Wake Lock:** While you are in a Focus or Routine session, your screen stays awake automatically.
+- **Floating Mini-player:** On desktop, you can switch to a floating mini-player via Picture-in-Picture mode to keep your current task visible over other windows.
+- **Background Disk Mirroring:** All your settings, tasks, and routines are automatically saved to disk securely. If you clear the webview cache or the OS evicts web storage, your data stays safe and reloads automatically on startup.
+
 ## The app adapts to your setup
 
 You only see the options you use:
