@@ -24,6 +24,10 @@
       ai: Boolean(window.AIAssistant?.isEnabled?.()),
       speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
       showAll: Boolean(cfg.showAllOptions),
+      notifications: typeof Notification !== 'undefined' && Notification.permission === 'granted',
+      wakelock: typeof navigator !== 'undefined' && 'wakeLock' in navigator,
+      pip: typeof window !== 'undefined' && 'documentPictureInPicture' in window,
+      native: Boolean(typeof window !== 'undefined' && (window.__TAURI_INTERNALS__ || window.__TAURI__)),
     };
   }
 
@@ -31,7 +35,7 @@
     const caps = detect();
     const body = document.body;
     if (!body) return caps;
-    ['gcal', 'ics', 'ai', 'speech'].forEach(name => body.classList.toggle(`cap-${name}`, caps[name]));
+    ['gcal', 'ics', 'ai', 'speech', 'notifications', 'wakelock', 'pip', 'native'].forEach(name => body.classList.toggle(`cap-${name}`, caps[name]));
     body.classList.toggle('show-all-options', caps.showAll);
     window.dispatchEvent(new CustomEvent('capabilitiesApplied', { detail: caps }));
     return caps;
