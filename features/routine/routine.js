@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeRoutineStartTime = null;
     let activeRoutineEndTime = null;
     let autoRunEnabled = false;
+    let stepEndTimeMs = 0;
 
     // Load config
     try {
@@ -932,8 +933,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         startBtn.style.display = 'inline-block';
 
-        const newBtn = startBtn.cloneNode(true);
-        startBtn.parentNode.replaceChild(newBtn, startBtn);
+        const newBtn = startBtn.cloneNode ? startBtn.cloneNode(true) : startBtn;
+        startBtn.parentNode?.replaceChild?.(newBtn, startBtn);
         startBtn = newBtn;
 
         startBtn.addEventListener('click', () => {
@@ -951,8 +952,8 @@ document.addEventListener('DOMContentLoaded', () => {
             activeRoutineDisplay.appendChild(runOtherBtn);
         }
         if (runOtherBtn) {
-            const newRunBtn = runOtherBtn.cloneNode(true);
-            runOtherBtn.parentNode.replaceChild(newRunBtn, runOtherBtn);
+            const newRunBtn = runOtherBtn.cloneNode ? runOtherBtn.cloneNode(true) : runOtherBtn;
+            runOtherBtn.parentNode?.replaceChild?.(newRunBtn, runOtherBtn);
             newRunBtn.addEventListener('click', openRoutinePicker);
             newRunBtn.style.display = '';
         }
@@ -985,6 +986,9 @@ document.addEventListener('DOMContentLoaded', () => {
         playerRoutineNameDisplay.style.display = 'block';
         renderActiveRoutineTaskList();
 
+        window.AttentionService?.requestNotificationPermission();
+        window.AttentionService?.acquireWakeLock('routine');
+
         startNextTask();
         enterFocusMode();
         window.dispatchEvent(new Event('routinePlayerChanged'));
@@ -1005,11 +1009,65 @@ document.addEventListener('DOMContentLoaded', () => {
         playerRoutineTasksList.style.display = 'block';
     }
 
+    function handleTick() {
+        if (!activeRoutine || !currentTaskTimer) return;
+        const task = activeRoutine.tasks[currentTaskIndex];
+
+        activeTaskTimeLeftSeconds = Math.ceil((stepEndTimeMs - Date.now()) / 1000);
+
+        if (activeTaskTimeLeftSeconds <= 0) {
+            activeTaskTimeLeftSeconds = 0;
+            if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
+            drawPieChart(0, true);
+            updateExpectedFinishTime();
+            updateFocusUI();
+
+            window.clearInterval(currentTaskTimer);
+            currentTaskTimer = null;
+
+            window.AttentionService?.playNativeSound('chime');
+
+            let nextStepName = '';
+            let bodyKey = 'player.stepTimeUpBodyLast';
+            let notifyArgs = { step: task.name };
+
+            if (currentTaskIndex + 1 < activeRoutine.tasks.length) {
+                nextStepName = activeRoutine.tasks[currentTaskIndex + 1].name;
+                bodyKey = 'player.stepTimeUpBody';
+                notifyArgs.next = nextStepName;
+            }
+
+            window.AttentionService?.notify(
+                tr('player.stepTimeUpTitle', { step: task.name }),
+                tr(bodyKey, notifyArgs),
+                { tag: 'routine-step' }
+            );
+
+            if (autoRunEnabled) {
+                manualAdvanceTask();
+            }
+            return;
+        }
+
+        if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
+        const pct = Math.max(0, activeTaskTimeLeftSeconds / activeTaskTotalDurationSeconds);
+        drawPieChart(pct, false);
+        updateExpectedFinishTime();
+        updateFocusUI();
+
+        window.AttentionService?.setCountdownStatus({
+            source: 'routine',
+            label: `${activeRoutine.name}: ${task.name}`,
+            remainingSeconds: activeTaskTimeLeftSeconds,
+            isRunning: true
+        });
+    }
+
     function startNextTask() {
         if (!activeRoutine) return;
 
         if (currentTaskTimer) {
-            clearInterval(currentTaskTimer);
+            window.clearInterval(currentTaskTimer);
             currentTaskTimer = null;
         }
 
@@ -1019,37 +1077,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const task = activeRoutine.tasks[currentTaskIndex];
-        currentTaskNameDisplay.textContent = task.name;
+        if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = task.name;
 
         activeTaskTimeLeftSeconds = task.duration * 60;
         activeTaskTotalDurationSeconds = activeTaskTimeLeftSeconds;
+        stepEndTimeMs = Date.now() + activeTaskTotalDurationSeconds * 1000;
 
-        currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
-
+        if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
         drawPieChart(1, false);
-
         renderActiveRoutineTaskList();
 
-        currentTaskTimer = setInterval(() => {
-            activeTaskTimeLeftSeconds--;
-            currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
+        window.AttentionService?.setCountdownStatus({
+            source: 'routine',
+            label: `${activeRoutine.name}: ${task.name}`,
+            remainingSeconds: activeTaskTimeLeftSeconds,
+            isRunning: true
+        });
 
-            const pct = Math.max(0, activeTaskTimeLeftSeconds / activeTaskTotalDurationSeconds);
-            drawPieChart(pct, activeTaskTimeLeftSeconds < 0);
-
-            updateExpectedFinishTime();
-
-            if (activeTaskTimeLeftSeconds <= 0) {
-                 if (autoRunEnabled) {
-                     manualAdvanceTask();
-                 }
-            }
-
-            updateFocusUI();
-        }, 1000);
-
-        updateExpectedFinishTime();
-        updateFocusUI();
+        currentTaskTimer = window.setInterval(handleTick, 1000);
+        handleTick(); // Initial draw/update
     }
 
     function formatTimeLeft(seconds) {
@@ -1061,10 +1107,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function finishRoutine() {
-        if (currentTaskTimer) clearInterval(currentTaskTimer);
+        if (currentTaskTimer) window.clearInterval(currentTaskTimer);
         if (currentTaskDisplay) currentTaskDisplay.style.display = 'none';
         if (pieChartContainer) pieChartContainer.style.display = 'none';
         if (routineControls) routineControls.style.display = 'none';
+
+        const completedRoutineName = activeRoutine?.name;
+
+        window.AttentionService?.clearCountdownStatus('routine');
+        window.AttentionService?.releaseWakeLock('routine');
 
         const hasChanges = JSON.stringify(activeRoutine.tasks.map(t => ({n:t.name, d:t.duration}))) !==
                            JSON.stringify(originalRoutineSnapshot.tasks.map(t => ({n:t.name, d:t.duration})));
@@ -1081,13 +1132,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        if (completedRoutineName) {
+            window.AttentionService?.notify(
+                tr('player.routineDoneNotifyTitle'),
+                tr('player.routineDoneNotifyBody', { name: completedRoutineName }),
+                { tag: 'routine-done', sound: 'bell' }
+            );
+        }
+
         markRoutineDoneToday(activeRoutine.id);
         activeRoutine = null;
         window.dispatchEvent(new Event('routinePlayerChanged'));
-        playerRoutineNameDisplay.textContent = "Routine Finished!";
+        if (playerRoutineNameDisplay) playerRoutineNameDisplay.textContent = "Routine Finished!";
         if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = "Routine Finished!";
-        playerRoutineTasksList.innerHTML = '';
-        playerRoutineTasksList.style.display = 'block';
+        if (playerRoutineTasksList) {
+            playerRoutineTasksList.innerHTML = '';
+            playerRoutineTasksList.style.display = 'block';
+        }
         if (expectedFinishTimeDisplay) expectedFinishTimeDisplay.textContent = '-';
 
         exitFocusMode();
@@ -1340,7 +1401,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Chart ---
     function drawPieChart(percentage, isLate) {
         if (!routinePieChartCanvas) return;
-        const ctx = routinePieChartCanvas.getContext('2d');
+        const ctx = routinePieChartCanvas.getContext?.('2d');
+        if (!ctx) return;
         const centerX = routinePieChartCanvas.width / 2;
         const centerY = routinePieChartCanvas.height / 2;
         const radius = Math.min(centerX, centerY) - 10;
@@ -1439,6 +1501,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupSpacebarHandler();
     setupTouchHandler();
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && activeRoutine && currentTaskTimer) {
+            handleTick();
+        }
+    });
 
     // Public API for the Now view.
     window.activateRoutine = activateRoutine;
