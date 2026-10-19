@@ -10,6 +10,10 @@ I18n.register({
     "settings.showAll": "Show all options (also the ones your setup does not need)",
     "settings.calBlock": "Calendar events block time in the plan",
     "settings.icsImport": "Calendar file / link import (.ics)",
+    "settings.desktopNotifications": "Desktop / Background Notifications",
+    "settings.testNotification": "Enable / Test Notification",
+    "settings.keepScreenAwake": "Keep Screen Awake During Timers",
+    "settings.titleBarCountdown": "Show Live Countdown in Tab Title / Tray",
   },
   fr: {
     "settings.routineBuffer": "Marge des routines (% ajouté au temps réservé)",
@@ -19,6 +23,10 @@ I18n.register({
     "settings.showAll": "Afficher toutes les options (même celles dont votre configuration n’a pas besoin)",
     "settings.calBlock": "Les événements de l’agenda bloquent du temps dans le planning",
     "settings.icsImport": "Import de fichier / lien d’agenda (.ics)",
+    "settings.desktopNotifications": "Notifications bureau / arrière-plan",
+    "settings.testNotification": "Activer / Tester la notification",
+    "settings.keepScreenAwake": "Garder l'écran allumé pendant les minuteurs",
+    "settings.titleBarCountdown": "Afficher le compte à rebours dans l'onglet / la zone de notification",
   },
   de: {
     "settings.routineBuffer": "Routine-Puffer (% zur reservierten Zeit)",
@@ -28,6 +36,10 @@ I18n.register({
     "settings.showAll": "Alle Optionen zeigen (auch die, die deine Einrichtung nicht braucht)",
     "settings.calBlock": "Kalendertermine blockieren Zeit im Plan",
     "settings.icsImport": "Kalender-Datei / Link importieren (.ics)",
+    "settings.desktopNotifications": "Desktop- / Hintergrundbenachrichtigungen",
+    "settings.testNotification": "Benachrichtigung aktivieren / testen",
+    "settings.keepScreenAwake": "Bildschirm während Timern wach halten",
+    "settings.titleBarCountdown": "Live-Countdown in Tab-Titel / Tray anzeigen",
   },
   es: {
     "settings.routineBuffer": "Margen de las rutinas (% añadido al tiempo reservado)",
@@ -37,5 +49,9 @@ I18n.register({
     "settings.showAll": "Mostrar todas las opciones (también las que tu configuración no necesita)",
     "settings.calBlock": "Los eventos del calendario bloquean tiempo en el plan",
     "settings.icsImport": "Importar archivo / enlace de calendario (.ics)",
+    "settings.desktopNotifications": "Notificaciones de escritorio / fondo",
+    "settings.testNotification": "Habilitar / Probar notificación",
+    "settings.keepScreenAwake": "Mantener la pantalla encendida durante los temporizadores",
+    "settings.titleBarCountdown": "Mostrar cuenta regresiva en el título de la pestaña / bandeja",
   },
 });
