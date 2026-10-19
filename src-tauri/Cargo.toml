@@ -1,0 +1,21 @@
+[package]
+name = "adhdtools"
+version = "1.0.0"
+description = "A native wrapper for ADHD Tools Hub"
+authors = ["you"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0", features = ["tray-icon"] }
+tauri-plugin-notification = "2.0.0"
+tauri-plugin-global-shortcut = "2.0.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+keepawake = "0.4.3"
+rodio = "0.19.0"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
