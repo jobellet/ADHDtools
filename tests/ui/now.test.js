@@ -38,6 +38,10 @@ for (const device of ['phone', 'desktop']) {
       assert.match(now.title, /Morning routine/);
       assert.ok(now.timer, 'timer is shown');
       assert.ok(now.pageWidth <= now.windowWidth + 1, 'page scrolls sideways');
+
+      const docTitle = await page.title();
+      assert.match(docTitle, /^\d{2}:\d{2} — Morning routine · ADHD Tools$/, 'document title updates with countdown');
+
       assert.deepEqual(errors, []);
       assert.deepEqual(external, []);
     } finally {

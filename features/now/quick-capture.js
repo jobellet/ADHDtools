@@ -211,6 +211,15 @@
     window.addEventListener('aiSettingsChanged', renderProgress);
     window.addEventListener('languageChanged', renderProgress);
 
+    window.addEventListener('native:quick-capture', () => {
+      setTimeout(() => {
+        if (captureInput) {
+          captureInput.focus();
+          captureInput.select();
+        }
+      }, 50);
+    });
+
     renderProgress();
   });
 })();

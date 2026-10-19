@@ -13,7 +13,9 @@ Read first: [../AGENTS.md](../AGENTS.md). Logic lives in `core/now-state.js` (mo
   `routinePlayerChanged`, `configUpdated`, `languageChanged`, `activeUserChanged`); `tick()` every second only
   updates countdowns. Re-render only when the state key changes.
 - **Side effects:** pins the current auto-placed task (`autoPinned`); auto-starts a routine if
-  `contextAutoSwitch`; calls `AppRouter.autoRoute(state)` when the mode changes.
+  `contextAutoSwitch`; calls `AppRouter.autoRoute(state)` when the mode changes;
+  uses `AttentionService` to hold wake locks, trigger transition notifications, provide a mini-player (PiP), and update the tray/document title countdown.
+- **Listeners:** `native:quick-capture` in `quick-capture.js` to auto-focus the input field when launched via the global shortcut.
 - **Actions:** event → `CalendarTool.postponeEvent` (+15/+60 min, refused on conflict) / `markEventPassive`
   (“it’s an event, not a task”: stays in the calendar, frees its time); Done → `TaskStore.markComplete`;
   Not now → snooze 60 min / tomorrow / send to Breakdown;
