@@ -92,6 +92,7 @@ arrive after a classic script: listen to `schedulerReady`.
 | `DurationLearning` | `core/duration-learning.js` | Learned task durations |
 | `TaskParser` | `core/task-parser.js` | Natural-language task parsing (offline; AI if set) |
 | `AIAssistant` | `core/ai-provider.js` | Optional AI: `isEnabled()`, `complete()`, `completeJSON()` |
+| `AttentionService` | `services/attention-service.js` | Background attention & native bridge service |
 | `UserContext` | `core/user-context.js` | Active user / profiles |
 | `ConfigManager` | `shell/config.js` | `getConfig()`, `updateConfig(partial)` |
 | `I18n` | `shell/i18n.js` | `t(key, vars, fallback)`, `getLang()`, `register(dict)` |

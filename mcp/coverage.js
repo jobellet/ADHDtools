@@ -91,6 +91,7 @@ export const storageKeys = {
   'adhd-calendar-voice-early': 'no: sound setting of one device',
   'adhd-ai-settings': 'no: API keys never leave the device',
   'adhd-ai-': 'no: prefix of AI settings keys, API keys never leave the device',
+  'adhd-timer': 'no: notification tag, not real data',
 };
 
 // Every row of the globals table in AGENTS.md.
@@ -100,6 +101,7 @@ export const globals = {
   TaskStore: 'tool:list_tasks',
   TaskModel: 'tool:add_task',
   UnifiedScheduler: 'tool:get_schedule',
+  AttentionService: 'no: browser and native attention UI bridge',
   NowState: 'tool:get_overview',
   UrgencyHelpers: 'no: internal urgency bookkeeping',
   DurationLearning: 'no: the app learns durations by itself',

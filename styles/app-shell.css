@@ -22,6 +22,10 @@
 
 body:not(.show-all-options):not(.cap-ai) [data-cap~="ai"],
 body:not(.show-all-options):not(.cap-speech) [data-cap~="speech"],
+body:not(.show-all-options):not(.cap-notifications) [data-cap~="notifications"],
+body:not(.show-all-options):not(.cap-wakelock) [data-cap~="wakelock"],
+body:not(.show-all-options):not(.cap-pip) [data-cap~="pip"],
+body:not(.show-all-options):not(.cap-native) [data-cap~="native"],
 body.cap-gcal:not(.show-all-options) [data-cap-hide~="gcal"] {
     display: none !important;
 }
