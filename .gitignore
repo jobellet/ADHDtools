@@ -22,3 +22,4 @@ test_tz.js
 test_tools.py
 test_csv_logic.js
 routine_running.png
+/src-tauri/target

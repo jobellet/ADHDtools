@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/@tauri-apps/cli/schema.json",
+  "identifier": "default",
+  "description": "Default capabilities for ADHD Tools Hub",
+  "windows": [
+    "*"
+  ],
+  "permissions": [
+    "core:default",
+    "notification:default",
+    "global-shortcut:default"
+  ]
+}

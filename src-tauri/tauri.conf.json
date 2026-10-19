@@ -1,0 +1,27 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+  "productName": "adhdtools",
+  "version": "1.0.0",
+  "identifier": "com.adhdtools.app",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devUrl": "http://localhost:8422",
+    "frontendDist": ".."
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ADHD Tools Hub",
+        "width": 1100,
+        "height": 800,
+        "minWidth": 360,
+        "minHeight": 500
+      }
+    ],
+    "withGlobalTauri": true,
+    "security": {
+      "csp": null
+    }
+  }
+}
