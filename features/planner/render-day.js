@@ -152,6 +152,25 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         } else if (item.task) {
             el.classList.add('task-event');
             el.addEventListener('click', () => openModal(item.task));
+            const doneBtn = document.createElement('button');
+            doneBtn.type = 'button';
+            doneBtn.className = 'event-done-btn';
+            const doneLabel = window.I18n ? window.I18n.t('plan.done') : 'Mark as done';
+            doneBtn.title = doneLabel;
+            doneBtn.setAttribute('aria-label', `${doneLabel}: ${item.title}`);
+            doneBtn.innerHTML = '<i class="fas fa-check"></i>';
+            doneBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                const id = item.task.hash || item.task.id;
+                if (!id) return;
+                if (window.TaskStore?.markComplete) window.TaskStore.markComplete(id);
+                if (window.I18n) {
+                    window.DataManager?.showNotification?.(window.I18n.t('now.toast.done', { name: item.title }), 'success');
+                }
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+            });
+            el.appendChild(doneBtn);
             if (!item.task._continuation) {
                 const resizer = document.createElement('div');
                 resizer.className = 'event-resizer';

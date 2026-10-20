@@ -77,7 +77,33 @@ describe('Task Parser', () => {
   test('parses specific time', () => {
     const result = parse('Meeting at 5pm', { now });
     assert.ok(result.plannerDate.startsWith('2023-10-15T17:00'));
+    assert.strictEqual(result.deadline, null); // A scheduled start time is not a deadline
     assert.strictEqual(result.isFixed, true); // Specific time means it's fixed
+  });
+
+  test('parses French voice commands with start time, duration, recurrence, event type and dependency', () => {
+    const frTime = parse('Mettre la brosse à dents de Jeanne dans mon sac à dos commence à 12h50 pendant 15 minutes', { now });
+    assert.strictEqual(frTime.name, 'Mettre la brosse à dents de Jeanne dans mon sac à dos');
+    assert.strictEqual(frTime.plannerDate, '2023-10-15T12:50');
+    assert.strictEqual(frTime.durationMinutes, 15);
+    assert.strictEqual(frTime.deadline, null);
+    assert.strictEqual(frTime.isFixed, true);
+
+    const range = parse('Prendre une pause de 12h50 à 13h20 tous les jours, comme événement', { now });
+    assert.strictEqual(range.name, 'Prendre une pause');
+    assert.strictEqual(range.plannerDate, '2023-10-15T12:50');
+    assert.strictEqual(range.durationMinutes, 30);
+    assert.strictEqual(range.recurrence, 'daily');
+    assert.strictEqual(range.isEvent, true);
+
+    const afterItem = parse('Goûter avec Jeanne après Chercher Jeanne pendant 20 min', {
+      now,
+      existingItems: [{ hash: 'task-jeanne', name: 'Chercher Jeanne', dateStr: '2023-10-15', startMin: 13 * 60, endMin: 13 * 60 + 30 }],
+    });
+    assert.strictEqual(afterItem.name, 'Goûter avec Jeanne');
+    assert.strictEqual(afterItem.dependency, 'task-jeanne');
+    assert.strictEqual(afterItem.plannerDate, '2023-10-15T13:30');
+    assert.strictEqual(afterItem.durationMinutes, 20);
   });
 
   test('distinguishes deadline from schedule', () => {

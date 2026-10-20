@@ -227,6 +227,45 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-right: 48px;
+}
+
+.timeline .event-done-btn {
+    position: absolute;
+    top: 3px;
+    right: 26px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.22);
+    color: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    padding: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.timeline .event-done-btn:hover {
+    background: #2e7d32;
+    border-color: #2e7d32;
+    color: #fff;
+}
+
+.btn-icon-success {
+    background: transparent;
+    border: 1px solid rgba(46, 125, 50, 0.35);
+    color: #2e7d32;
+    padding: 0.25rem 0.5rem;
+    border-radius: 8px;
+}
+
+.btn-icon-success:hover {
+    background: #2e7d32;
+    color: #fff;
 }
 
 .timeline .event-time {

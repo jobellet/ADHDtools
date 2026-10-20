@@ -47,6 +47,7 @@ export const scheduler = {
 export const taskFields = {
   hash: 'read', id: 'read', user: 'read', createdAt: 'read',
   name: 'write', text: 'write', deadline: 'write', plannerDate: 'write', isFixed: 'write',
+  isEvent: 'write', recurrence: 'write',
   durationMinutes: 'write', importance: 'write', urgency: 'write', location: 'write', notes: 'write',
   dependency: 'read', parentId: 'read', completed: 'read', completedAt: 'read',
   isArchived: 'read', archivedReason: 'read', source: 'read', originalTool: 'read',

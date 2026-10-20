@@ -167,8 +167,10 @@ function undeleteTasks(removed) {
 
 // Pending tasks whose deadline has passed (optionally for one user).
 function getOverdueTasks(now = new Date(), user = null) {
-  // Calendar copies and all-day items are appointments, not deadlines.
+  // Calendar copies, events/appointments, and scheduled slots whose deadline merely mirrors plannerDate are not overdue deadlines.
   return tasks.filter(t => !t.completed && !t.isArchived && t.deadline && !isPassiveOrAllDay(t)
+    && !t.isEvent && !t.isCalendarEvent
+    && !(t.plannerDate && t.deadline.slice(0, 16) === t.plannerDate.slice(0, 16))
     && (!user || t.user === user)
     && !Number.isNaN(new Date(t.deadline).getTime())
     && new Date(t.deadline) < now);

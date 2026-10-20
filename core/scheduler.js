@@ -95,6 +95,18 @@ function dateFromString(dateStr) {
   return new Date(y, m - 1, d);
 }
 
+function taskMatchesDate(task, dateStr) {
+  const plannerDateStr = typeof task.plannerDate === 'string' ? task.plannerDate.slice(0, 10) : null;
+  if (!plannerDateStr) return true;
+  if (plannerDateStr === dateStr) return true;
+  if (!task.recurrence || plannerDateStr > dateStr) return false;
+  const day = dateFromString(dateStr).getDay();
+  if (task.recurrence === 'daily') return true;
+  if (task.recurrence === 'weekdays') return day >= 1 && day <= 5;
+  if (task.recurrence === 'weekly') return day === dateFromString(plannerDateStr).getDay();
+  return false;
+}
+
 // Routine blocks booked for a given day (weekday matches and a start time is set).
 export function getRoutineBlocks(dateStr, config = {}, { includeDone = false } = {}) {
   const cfg = { ...DEFAULT_CONFIG, ...config };
@@ -291,9 +303,8 @@ export function buildSchedule({ tasks, now = new Date(), config = {} } = {}) {
     if (t.completed) return false;
     if (isPassiveOrAllDay(t)) return false;
     if (isDependencyBlocked(t, taskMap)) return false;
-    const plannerDateStr = typeof t.plannerDate === 'string' ? t.plannerDate.slice(0, 10) : null;
-    // Respect rescheduled tasks: only schedule items for today or unscheduled ones.
-    if (plannerDateStr && plannerDateStr !== todayStr) return false;
+    // Respect rescheduled and recurring tasks: schedule items matching today or unscheduled ones.
+    if (!taskMatchesDate(t, todayStr)) return false;
     return true;
   });
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -350,7 +361,7 @@ export function getBusyBlocks(dateStr, overrides = {}) {
   }
   const tasks = Array.isArray(cfg.tasks) ? cfg.tasks : (TaskStore.getPendingTasks?.() || []);
   tasks
-    .filter(t => !t.completed && !isPassiveOrAllDay(t) && typeof t.plannerDate === 'string' && t.plannerDate.startsWith(dateStr) && t.plannerDate.length >= 16)
+    .filter(t => !t.completed && !isPassiveOrAllDay(t) && typeof t.plannerDate === 'string' && t.plannerDate.length >= 16 && taskMatchesDate(t, dateStr))
     .forEach(t => {
       const start = parseTimeToMinutes(t.plannerDate.slice(11, 16), null);
       if (!Number.isFinite(start)) return;

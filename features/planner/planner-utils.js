@@ -73,7 +73,20 @@ export function getPlannerTasksForDay(currentDate) {
     const tasks = getUnifiedTasks();
     const defaultDuration = getDefaultDurationMinutes();
 
-    const todaysTasks = tasks.filter(task => task.plannerDate && task.plannerDate.startsWith(plannerDateStr));
+    const todaysTasks = tasks.filter(task => {
+        if (!task.plannerDate) return false;
+        if (task.plannerDate.startsWith(plannerDateStr)) return true;
+        const startDateStr = task.plannerDate.slice(0, 10);
+        if (!task.recurrence || startDateStr > plannerDateStr) return false;
+        const day = currentDate.getDay();
+        if (task.recurrence === 'daily') return true;
+        if (task.recurrence === 'weekdays') return day >= 1 && day <= 5;
+        if (task.recurrence === 'weekly') {
+            const [y, m, d] = startDateStr.split('-').map(Number);
+            return day === new Date(y, m - 1, d).getDay();
+        }
+        return false;
+    });
 
     const prevDate = new Date(currentDate);
     prevDate.setDate(currentDate.getDate() - 1);

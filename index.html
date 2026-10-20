@@ -256,8 +256,11 @@
                         </div>
                         <form id="event-form" novalidate>
                             <label for="event-title" class="event-label" data-i18n="event.what">What?</label>
-                            <input type="text" id="event-title" required autocomplete="off" enterkeyhint="done"
-                                placeholder="e.g. Call the dentist" data-i18n-placeholder="event.whatPlaceholder">
+                            <div class="event-time-row">
+                                <input type="text" id="event-title" required autocomplete="off" enterkeyhint="done"
+                                    placeholder="e.g. Call the dentist" data-i18n-placeholder="event.whatPlaceholder">
+                                <button type="button" id="event-voice-btn" class="btn btn-secondary btn-sm event-now-btn" data-cap="speech" data-i18n-title="record-btn" aria-label="Voice"><i class="fas fa-microphone"></i></button>
+                            </div>
 
                             <div class="event-when">
                                 <div>
@@ -286,6 +289,24 @@
 
                             <details class="event-more">
                                 <summary data-i18n="event.more">More options</summary>
+                                <div class="event-more-grid">
+                                    <div>
+                                        <label for="event-type" class="event-label" data-i18n="event.type">Type</label>
+                                        <select id="event-type">
+                                            <option value="task" data-i18n="event.typeTask">Task (to do)</option>
+                                            <option value="event" data-i18n="event.typeEvent">Event / Appointment (never overdue)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="event-recurrence" class="event-label" data-i18n="event.recurrence">Repeat</label>
+                                        <select id="event-recurrence">
+                                            <option value="none" data-i18n="event.recurNone">Once</option>
+                                            <option value="daily" data-i18n="event.recurDaily">Every day</option>
+                                            <option value="weekdays" data-i18n="event.recurWeekdays">Weekdays (Mon–Fri)</option>
+                                            <option value="weekly" data-i18n="event.recurWeekly">Every week</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <label for="event-task" class="event-label" data-i18n="event.fromList">Or pick a task from your list</label>
                                 <select id="event-task">
                                     <option value="">—</option>
@@ -323,6 +344,7 @@
 
                             <div class="event-actions">
                                 <button type="button" id="event-remove-btn" class="btn btn-outline event-remove" hidden><i class="fas fa-trash-alt"></i> <span data-i18n="event.remove">Delete</span></button>
+                                <button type="button" id="event-done-btn" class="btn btn-secondary event-done" hidden><i class="fas fa-check"></i> <span data-i18n="now.btn.done">Done</span></button>
                                 <button type="button" class="btn btn-outline event-cancel" data-i18n="event.cancel">Cancel</button>
                                 <button type="submit" class="btn btn-primary event-save" data-i18n="event.save">Save</button>
                             </div>

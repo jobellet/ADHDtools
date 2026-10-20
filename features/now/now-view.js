@@ -479,8 +479,8 @@
       if (!box) return;
       const now = new Date();
       const user = window.UserContext?.getActiveUser?.();
-      // Calendar copies and all-day items are appointments, not work to plan.
-      const isAppointment = task => window.TaskModel?.isPassiveOrAllDay?.(task);
+      // Calendar copies, events/appointments and all-day items are not deadlines to plan for.
+      const isAppointment = task => window.TaskModel?.isPassiveOrAllDay?.(task) || task.isEvent || task.isCalendarEvent;
       const pending = (window.TaskStore?.getPendingTasks?.() || [])
         .filter(task => (!user || task.user === user) && !isAppointment(task));
       const overdue = window.TaskStore?.getOverdueTasks?.(now, user) || [];
@@ -559,6 +559,9 @@
         if (task.needsBreakdown || Number(task.durationMinutes) > 30) {
           actions.appendChild(button(t('plan.split'), 'fa-project-diagram', 'btn-outline btn-sm', () => sendToBreakdown(task), t('plan.splitTitle')));
         }
+        const doneBtn = button('', 'fa-check', 'btn-icon-success btn-sm', () => markDone(task), t('plan.done'));
+        doneBtn.setAttribute('aria-label', `${t('plan.done')}: ${taskName(task)}`);
+        actions.appendChild(doneBtn);
         const del = button('', 'fa-trash-alt', 'btn-icon-danger btn-sm', () => deleteTasks([task]), t('plan.delete'));
         del.setAttribute('aria-label', `${t('plan.delete')}: ${taskName(task)}`);
         actions.appendChild(del);

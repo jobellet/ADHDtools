@@ -25,10 +25,12 @@ describe('TaskStore delete / overdue', () => {
     assert.deepStrictEqual(TaskStore.getOverdueTasks(now, 'main').map(t => t.hash), ['late']);
   });
 
-  test('calendar copies and all-day events are never overdue', () => {
+  test('calendar copies, events and scheduled slots without a separate deadline are never overdue', () => {
     const now = new Date(2026, 8, 26, 9, 0);
     TaskStore.addTask({ hash: 'bday', name: 'Birthday', plannerDate: '2026-09-20', deadline: '2026-09-20', isAllDay: true, isCalendarEvent: true });
     TaskStore.addTask({ hash: 'mtg', name: 'Meeting', deadline: '2026-09-20T10:00', isCalendarEvent: true, isActionable: false });
+    TaskStore.addTask({ hash: 'pause', name: 'Pause déjeuner', plannerDate: '2026-09-20T11:52', deadline: '2026-09-20T11:52', isFixed: true });
+    TaskStore.addTask({ hash: 'ev', name: 'Rendez-vous', plannerDate: '2026-09-20T14:00', deadline: '2026-09-21T18:00', isEvent: true });
     TaskStore.addTask({ hash: 'late', name: 'Late', deadline: '2026-09-20T10:00' });
     assert.deepStrictEqual(TaskStore.getOverdueTasks(now).map(t => t.hash), ['late']);
   });

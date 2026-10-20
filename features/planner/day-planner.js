@@ -48,6 +48,9 @@ let dateDisplay,
     eventLocationSuggestions,
     eventTravelModeContainer,
     eventTravelModeSelect,
+    eventTypeSelect,
+    eventRecurrenceSelect,
+    eventVoiceBtn,
     eventModalTitle;
 
 let selectedLocationCoords = null;
@@ -99,6 +102,8 @@ function openModal(task, presetTime, externalTask) {
     eventModal.querySelector('.event-more').open = false;
     const removeBtn = eventModal.querySelector('#event-remove-btn');
     removeBtn.hidden = !task;
+    const doneBtn = eventModal.querySelector('#event-done-btn');
+    if (doneBtn) doneBtn.hidden = !task;
     pendingExternalTask = null;
     if (task) {
         editingTaskId = task.hash || task.id;
@@ -106,6 +111,8 @@ function openModal(task, presetTime, externalTask) {
         eventTitleInput.value = (task.name || task.text || '').replace(/\[(FIX|FLEX)\]\s*/gi, '').trim();
         eventTimeSelect.value = task.plannerDate.slice(11, 16);
         setDuration(task.duration || task.durationMinutes || getDefaultDurationMinutes());
+        if (eventTypeSelect) eventTypeSelect.value = task.isEvent ? 'event' : 'task';
+        if (eventRecurrenceSelect) eventRecurrenceSelect.value = task.recurrence || 'none';
         eventImportanceInput.value = task.importance || 5;
         eventUrgencyInput.value = task.urgency || 5;
         const realDeadline = task.deadline && task.deadline.slice(0, 16) !== (task.plannerDate || '').slice(0, 16) ? task.deadline : '';
@@ -129,6 +136,8 @@ function openModal(task, presetTime, externalTask) {
         eventTitleInput.value = externalTask.text || '';
         eventTimeSelect.value = presetTime || getDefaultTime();
         setDuration(externalTask.duration || getDefaultDurationMinutes());
+        if (eventTypeSelect) eventTypeSelect.value = externalTask.isEvent ? 'event' : 'task';
+        if (eventRecurrenceSelect) eventRecurrenceSelect.value = externalTask.recurrence || 'none';
         eventImportanceInput.value = externalTask.importance || externalTask.priority || 5;
         eventUrgencyInput.value = externalTask.urgency || externalTask.priority || 5;
         eventDeadlineInput.value = externalTask.deadline ? externalTask.deadline.slice(0, 16) : '';
@@ -150,6 +159,8 @@ function openModal(task, presetTime, externalTask) {
         eventTitleInput.value = '';
         eventTimeSelect.value = presetTime || getDefaultTime();
         setDuration(30);
+        if (eventTypeSelect) eventTypeSelect.value = 'task';
+        if (eventRecurrenceSelect) eventRecurrenceSelect.value = 'none';
         eventImportanceInput.value = 5;
         eventUrgencyInput.value = 5;
         eventDeadlineInput.value = '';
@@ -219,18 +230,20 @@ async function startVoiceRecognition() {
             plannerSpeechPollTimer = null;
         }
         activePlannerRecognition = null;
-        if (!recordBtn) return;
-        recordBtn.classList.remove('listening');
-        const icon = recordBtn.querySelector('i');
-        if (icon) {
-            icon.className = 'fas fa-microphone';
-            icon.style.color = '';
-        }
-        const textSpan = recordBtn.querySelector('.btn-text');
-        if (textSpan) textSpan.textContent = tr('record-btn');
+        [recordBtn, eventVoiceBtn].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove('listening');
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-microphone';
+                icon.style.color = '';
+            }
+            const textSpan = btn.querySelector('.btn-text');
+            if (textSpan) textSpan.textContent = tr('record-btn');
+        });
     };
 
-    if (recordBtn?.classList.contains('listening')) {
+    if (recordBtn?.classList.contains('listening') || eventVoiceBtn?.classList.contains('listening')) {
         if (isNative) {
             const res = await window.AttentionService.invokeNative('native_stop_speech', {});
             resetBtn();
@@ -241,16 +254,17 @@ async function startVoiceRecognition() {
         return;
     }
 
-    if (recordBtn) {
-        recordBtn.classList.add('listening');
-        const icon = recordBtn.querySelector('i');
+    [recordBtn, eventVoiceBtn].forEach(btn => {
+        if (!btn) return;
+        btn.classList.add('listening');
+        const icon = btn.querySelector('i');
         if (icon) {
             icon.className = 'fas fa-microphone fa-beat';
             icon.style.color = '#ff3b30';
         }
-        const textSpan = recordBtn.querySelector('.btn-text');
+        const textSpan = btn.querySelector('.btn-text');
         if (textSpan) textSpan.textContent = tr('planner.listening');
-    }
+    });
 
     if (isNative) {
         await window.AttentionService.invokeNative('native_start_speech', { lang: getSpeechLang() });
@@ -306,23 +320,43 @@ async function handleVoiceCommand(text) {
     }
     const parsed = await window.TaskParser.parseSmart(text);
     const title = parsed?.name || text;
-    const presetTime = parsed?.plannerDate ? parsed.plannerDate.slice(11, 16) : getDefaultTime();
-    const duration = parsed?.durationMinutes || getDefaultDurationMinutes();
+    const presetTime = (parsed?.plannerDate && parsed.plannerDate.length >= 16)
+        ? parsed.plannerDate.slice(11, 16)
+        : (eventModal?.classList.contains('active') && eventTimeSelect?.value ? eventTimeSelect.value : getDefaultTime());
+    const duration = parsed?.durationMinutes || (eventModal?.classList.contains('active') && Number(eventDurationInput?.value)) || getDefaultDurationMinutes();
 
-    // Open the event modal prefilled with transcription and parsed fields so the user can review and edit!
-    openModal(null, presetTime);
+    // Open the event modal (if not already open) prefilled with transcription and parsed fields so the user can review and edit!
+    if (!eventModal?.classList.contains('active')) {
+        openModal(null, presetTime);
+    } else if (eventTimeSelect) {
+        eventTimeSelect.value = presetTime;
+    }
     if (eventTitleInput) {
         eventTitleInput.value = title;
         eventTitleInput.focus();
     }
     setDuration(duration);
-    if (parsed?.importance) eventImportanceInput.value = parsed.importance;
-    if (parsed?.urgency) eventUrgencyInput.value = parsed.urgency;
-    if (parsed?.deadline) eventDeadlineInput.value = parsed.deadline.slice(0, 16);
+    if (eventTypeSelect) eventTypeSelect.value = parsed?.isEvent ? 'event' : 'task';
+    if (eventRecurrenceSelect) eventRecurrenceSelect.value = parsed?.recurrence || 'none';
+    if (parsed?.importance && eventImportanceInput) eventImportanceInput.value = parsed.importance;
+    if (parsed?.urgency && eventUrgencyInput) eventUrgencyInput.value = parsed.urgency;
+    if (parsed?.deadline && eventDeadlineInput) eventDeadlineInput.value = parsed.deadline.slice(0, 16);
+    if (parsed?.dependency && eventDependencySelect) eventDependencySelect.value = parsed.dependency;
+    if (parsed?.location && eventLocationInput) eventLocationInput.value = parsed.location;
+    if (parsed?.travelMode && eventTravelModeSelect) {
+        eventTravelModeSelect.value = parsed.travelMode;
+        if (eventTravelModeContainer) eventTravelModeContainer.style.display = 'block';
+    }
+    if (parsed?.isEvent || parsed?.recurrence || parsed?.dependency || parsed?.deadline || parsed?.location || parsed?.travelMode) {
+        const moreDetails = eventModal?.querySelector('.event-more');
+        if (moreDetails) moreDetails.open = true;
+    }
 
     const minutes = parseTimeToMinutes(eventTimeSelect.value);
     if (minutes !== null) {
-        showConflict(describeConflict(minutes, duration, null));
+        const conflict = findConflict(minutes, duration, editingTaskId);
+        if (conflict) showConflict(conflict.message, conflict.free);
+        else showConflict(null);
     }
 }
 
@@ -530,6 +564,9 @@ function initDayPlanner() {
     eventLocationSuggestions = document.getElementById('event-location-suggestions');
     eventTravelModeContainer = document.getElementById('event-travel-mode-container');
     eventTravelModeSelect = document.getElementById('event-travel-mode');
+    eventTypeSelect = document.getElementById('event-type');
+    eventRecurrenceSelect = document.getElementById('event-recurrence');
+    eventVoiceBtn = document.getElementById('event-voice-btn');
     eventModalTitle = document.getElementById('event-modal-title');
 
     if (!eventModal || !eventForm) {
@@ -599,6 +636,11 @@ function initDayPlanner() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition || window.AttentionService?.isNative?.();
         if (!SR) recordBtn.disabled = true;
     }
+    if (eventVoiceBtn) {
+        eventVoiceBtn.addEventListener('click', startVoiceRecognition);
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition || window.AttentionService?.isNative?.();
+        if (!SR) eventVoiceBtn.disabled = true;
+    }
     closeButton.addEventListener('click', closeModal);
     eventModal.querySelector('.event-cancel')?.addEventListener('click', closeModal);
     window.addEventListener('click', e => { if (e.target === eventModal) closeModal(); });
@@ -632,6 +674,17 @@ function initDayPlanner() {
         if (window.TaskStore?.deleteTasks) window.TaskStore.deleteTasks([editingTaskId]);
         else window.DataManager?.deleteTask?.(editingTaskId);
         window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        closeModal();
+    });
+    eventModal.querySelector('#event-done-btn')?.addEventListener('click', () => {
+        if (!editingTaskId) return;
+        const t = getTaskFromStore(editingTaskId);
+        const name = (t?.name || t?.text || '').replace(/\[(FIX|FLEX)\]\s*/gi, '').trim();
+        if (window.TaskStore?.markComplete) window.TaskStore.markComplete(editingTaskId);
+        else updateTaskInStore(editingTaskId, { completed: true });
+        if (name) window.DataManager?.showNotification?.(tr('now.toast.done', { name }), 'success');
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
         closeModal();
     });
 
@@ -679,6 +732,8 @@ function initDayPlanner() {
         const deadline = deadlineVal ? new Date(deadlineVal.getTime() - (deadlineVal.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : null;
         const dependency = eventDependencySelect?.value || null;
         const locationStr = eventLocationInput ? eventLocationInput.value.trim() : '';
+        const isEvent = eventTypeSelect ? eventTypeSelect.value === 'event' : false;
+        const recurrence = (eventRecurrenceSelect && eventRecurrenceSelect.value !== 'none') ? eventRecurrenceSelect.value : null;
 
         const startMins = parseTimeToMinutes(time);
         const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
@@ -691,7 +746,7 @@ function initDayPlanner() {
         let savedTask = null;
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
-            savedTask = updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, importance, urgency, dependency, location: locationStr, locationCoords: selectedLocationCoords });
+            savedTask = updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, importance, urgency, dependency, isEvent, recurrence, location: locationStr, locationCoords: selectedLocationCoords });
         } else if (pendingExternalTask) {
             const title = eventTitleInput.value.trim() || pendingExternalTask.text;
             savedTask = addTaskToStore(createTask({
@@ -707,6 +762,8 @@ function initDayPlanner() {
                 durationMinutes: duration,
                 duration,
                 dependency,
+                isEvent,
+                recurrence,
                 location: locationStr,
                 locationCoords: selectedLocationCoords,
                 isFixed: true,
@@ -714,7 +771,7 @@ function initDayPlanner() {
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
-                savedTask = updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency, location: locationStr, locationCoords: selectedLocationCoords });
+                savedTask = updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency, isEvent, recurrence, location: locationStr, locationCoords: selectedLocationCoords });
             } else {
                 const title = eventTitleInput.value.trim();
                 if (!title) return;
@@ -728,6 +785,8 @@ function initDayPlanner() {
                     duration,
                     isFixed: true,
                     dependency,
+                    isEvent,
+                    recurrence,
                     importance,
                     urgency,
                     location: locationStr,

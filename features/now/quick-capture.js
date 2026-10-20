@@ -49,10 +49,16 @@
         deadline: parsed.deadline || null,
         plannerDate: parsed.plannerDate || null,
         isFixed: parsed.isFixed || false,
+        isEvent: parsed.isEvent || false,
+        recurrence: parsed.recurrence || null,
+        dependency: parsed.dependency || null,
+        location: parsed.location || null,
+        travelMode: parsed.travelMode || null,
         source: 'quick-capture',
       };
       if (parsed.durationMinutes) raw.durationMinutes = parsed.durationMinutes;
       if (parsed.importance) raw.importance = parsed.importance;
+      if (parsed.urgency) raw.urgency = parsed.urgency;
 
       // No double booking: a timed task that hits a routine, an event or
       // another task moves to the next free slot of that day.

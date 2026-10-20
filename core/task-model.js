@@ -88,6 +88,8 @@ export function createTask(raw = {}, overrides = {}) {
     completedAt: raw.completedAt || null,
     achievementScore: normalizeNumber(raw.achievementScore, 0),
     isFixed: raw.isFixed ?? false,
+    isEvent: Boolean(raw.isEvent || raw.itemType === 'event'),
+    recurrence: raw.recurrence && raw.recurrence !== 'none' ? raw.recurrence : null,
     needsBreakdown: typeof raw.needsBreakdown === 'boolean' ? raw.needsBreakdown : false,
     source: raw.source || raw.originalTool || 'manual',
     originalTool: raw.originalTool || raw.source || 'manual',
