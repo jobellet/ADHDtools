@@ -262,7 +262,10 @@
                             <div class="event-when">
                                 <div>
                                     <label for="event-time" class="event-label" data-i18n="event.when">Start</label>
-                                    <input type="time" id="event-time" step="300" required>
+                                    <div class="event-time-row">
+                                        <input type="time" id="event-time" step="300" required>
+                                        <button type="button" id="event-start-now-btn" class="btn btn-secondary btn-sm event-now-btn" data-i18n="event.startNow">Start now</button>
+                                    </div>
                                 </div>
                             </div>
 

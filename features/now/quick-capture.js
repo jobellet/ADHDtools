@@ -118,23 +118,107 @@
 
     if (captureVoiceBtn) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
+      const isNative = () => Boolean(window.AttentionService?.isNative?.());
+      if (!SpeechRecognition && !isNative()) {
         captureVoiceBtn.style.display = 'none';
       } else {
-        captureVoiceBtn.addEventListener('click', () => {
+        let nativePollTimer = null;
+        let activeRecognition = null;
+
+        const getCaptureSpeechLang = () => {
+          const lang = (window.I18n?.getLang?.() || document.documentElement.lang || 'en').toLowerCase();
+          const map = { fr: 'fr-FR', de: 'de-DE', es: 'es-ES', en: 'en-US' };
+          return map[lang] || `${lang}-${lang.toUpperCase()}`;
+        };
+
+        const resetVoiceBtn = () => {
+          if (nativePollTimer) {
+            clearInterval(nativePollTimer);
+            nativePollTimer = null;
+          }
+          activeRecognition = null;
+          captureVoiceBtn.classList.remove('listening');
+          captureVoiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+          if (captureInput) captureInput.placeholder = t('capture.placeholder');
+        };
+
+        captureVoiceBtn.addEventListener('click', async () => {
+          if (captureVoiceBtn.classList.contains('listening')) {
+            if (isNative()) {
+              const res = await window.AttentionService.invokeNative('native_stop_speech', {});
+              resetVoiceBtn();
+              if (res?.transcript && captureInput) {
+                captureInput.value = res.transcript;
+                captureInput.focus();
+                showCaptureStatus(t('capture.transcribed'));
+              } else {
+                showCaptureStatus('');
+              }
+            } else if (activeRecognition) {
+              activeRecognition.stop();
+            }
+            return;
+          }
+
+          captureVoiceBtn.classList.add('listening');
+          captureVoiceBtn.innerHTML = '<i class="fas fa-microphone fa-beat" style="color: #ff3b30"></i>';
+          showCaptureStatus(t('capture.listening'));
+          if (captureInput) captureInput.placeholder = t('capture.listening');
+
+          if (isNative()) {
+            await window.AttentionService.invokeNative('native_start_speech', {
+              lang: getCaptureSpeechLang()
+            });
+            nativePollTimer = setInterval(async () => {
+              const res = await window.AttentionService.invokeNative('native_poll_speech', {});
+              if (!res) return;
+              if (res.transcript && captureInput) {
+                captureInput.value = res.transcript;
+              }
+              if (res.status === 'done') {
+                resetVoiceBtn();
+                if (res.transcript && captureInput) {
+                  captureInput.value = res.transcript;
+                  captureInput.focus();
+                  showCaptureStatus(t('capture.transcribed'));
+                } else {
+                  showCaptureStatus('');
+                }
+              } else if (res.status === 'error') {
+                resetVoiceBtn();
+                const isDenied = res.error === 'mic-denied' || res.error === 'speech-denied' || res.error === 'not-allowed';
+                const msg = isDenied
+                  ? t('capture.micDenied')
+                  : t('capture.voiceError', { error: res.error || 'unknown' });
+                showCaptureStatus(msg, true);
+              }
+            }, 250);
+            return;
+          }
+
           const recognition = new SpeechRecognition();
-          recognition.lang = document.documentElement.lang === 'fr' ? 'fr-FR' : 'en-US';
+          activeRecognition = recognition;
+          recognition.lang = getCaptureSpeechLang();
           recognition.interimResults = false;
           recognition.maxAlternatives = 1;
-          captureVoiceBtn.classList.add('listening');
-          showCaptureStatus(t('capture.listening'));
-          recognition.onresult = async (event) => {
-            const transcript = event.results[0][0].transcript;
-            if (captureInput) captureInput.value = transcript;
-            await captureTask(transcript);
+
+          recognition.onresult = (event) => {
+            resetVoiceBtn();
+            const transcript = event.results?.[0]?.[0]?.transcript;
+            if (transcript && captureInput) {
+              captureInput.value = transcript;
+              captureInput.focus();
+              showCaptureStatus(t('capture.transcribed'));
+            }
           };
-          recognition.onerror = (e) => showCaptureStatus(`Voice input failed: ${e.error}`, true);
-          recognition.onend = () => captureVoiceBtn.classList.remove('listening');
+          recognition.onerror = (e) => {
+            resetVoiceBtn();
+            const msg = e.error === 'not-allowed' || e.error === 'service-not-allowed'
+              ? t('capture.micDenied')
+              : t('capture.voiceError', { error: e.error || 'unknown' });
+            showCaptureStatus(msg, true);
+          };
+          recognition.onend = resetVoiceBtn;
           recognition.start();
         });
       }

@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
       <label for="gcal-client-id-input" style="display:block; font-size: 0.85rem;">Client ID:</label>
       <input type="text" id="gcal-client-id-input" placeholder="xxxx.apps.googleusercontent.com — or paste JSON" style="width: 100%; padding: 0.4rem;" />
     </div>
+    <div class="api-setting" id="gcal-client-secret-row" style="margin-bottom: 0.5rem; display: none;">
+      <label for="gcal-client-secret-input" style="display:block; font-size: 0.85rem;">Client secret (desktop app: use a Desktop-type client; optional if the AI assistant is already set up):</label>
+      <input type="password" id="gcal-client-secret-input" placeholder="GOCSPX-…" autocomplete="off" style="width: 100%; padding: 0.4rem;" />
+    </div>
     <div class="api-actions" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
         <button id="save-gcal-keys" class="btn btn-primary btn-sm">Save</button>
         <button id="clear-gcal-keys" class="btn btn-secondary btn-sm">Clear</button>
@@ -24,6 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const clientInput = settingsContainer.querySelector('#gcal-client-id-input');
   const status = settingsContainer.querySelector('#gcal-key-status');
+  const secretInput = settingsContainer.querySelector('#gcal-client-secret-input');
+  if (window.AttentionService?.isNative?.()) {
+    settingsContainer.querySelector('#gcal-client-secret-row').style.display = '';
+  }
 
   // The old integration also stored an API key; it is no longer needed.
   localStorage.removeItem('gcalApiKey');
@@ -45,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (clientId) {
         e.preventDefault();
         clientInput.value = clientId;
+        const clientSecret = data.client_secret || data.clientSecret || data.web?.client_secret || data.installed?.client_secret;
+        if (clientSecret) secretInput.value = clientSecret;
         status.textContent = 'Client ID extracted from JSON — click Save';
         status.style.color = 'var(--success-color)';
       }
@@ -59,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     window.GoogleAuth ? window.GoogleAuth.setClientId(clientId) : localStorage.setItem('gcalClientId', clientId);
+    if (secretInput.value.trim()) window.GoogleAuth?.setClientSecret(secretInput.value.trim());
+    secretInput.value = '';
     clientInput.value = '';
     status.textContent = 'Client ID saved';
     status.style.color = 'var(--success-color)';
@@ -68,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
   settingsContainer.querySelector('#clear-gcal-keys').addEventListener('click', () => {
     localStorage.removeItem('gcalClientId');
     localStorage.removeItem('gcalApiKey');
+    localStorage.removeItem('gcalClientSecret');
     window.GoogleAuth?.clearTokens();
     status.textContent = 'Client ID cleared';
     status.style.color = 'var(--text-muted)';

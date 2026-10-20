@@ -22,7 +22,7 @@
       gcal: readFlag('gcalConnected') === 'true',
       ics: Boolean(readFlag('adhd-calendar-ics-url')),
       ai: Boolean(window.AIAssistant?.isEnabled?.()),
-      speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+      speech: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition || window.__TAURI_INTERNALS__ || window.__TAURI__),
       showAll: Boolean(cfg.showAllOptions),
       notifications: typeof Notification !== 'undefined' && Notification.permission === 'granted',
       wakelock: typeof navigator !== 'undefined' && 'wakeLock' in navigator,

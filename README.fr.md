@@ -56,6 +56,34 @@ Si 17:00 est déjà pris (par exemple par votre routine du soir), la tâche pass
 
 L’application ne montre que les options que vous utilisez. Par exemple, l’import `.ics` est masqué dès que Google Agenda est connecté, et les boutons IA sont masqués sans fournisseur d’IA. *Paramètres → General → Afficher toutes les options* réaffiche tout.
 
+## 🖥️ Application de bureau (facultatif)
+
+Une application native ajoute des notifications système à la fin d’un minuteur, un minuteur dans la barre de menus, un écran qui reste allumé pendant Focus/Routine, un mini-lecteur flottant et une copie de vos données sur disque. Le reste fonctionne comme dans le navigateur. Elle se construit sur votre ordinateur (environ 5 minutes la première fois).
+
+**macOS (Apple silicon ou Intel) :**
+
+1. Installez les outils une seule fois : [Node.js](https://nodejs.org), puis dans le Terminal :
+   ```bash
+   xcode-select --install
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+   . "$HOME/.cargo/env"
+   ```
+2. Récupérez l’application et construisez-la :
+   ```bash
+   git clone https://github.com/jobellet/ADHDtools.git
+   cd ADHDtools
+   npm ci
+   npm run desktop:install
+   ```
+3. **ADHD Tools** est maintenant dans votre dossier *Applications* et s’ouvre tout seul. Double-cliquez dessus depuis le Launchpad ou le Finder. Pour la garder dans le Dock : clic droit sur son icône → *Options* → *Garder dans le Dock*. Autorisez les notifications quand macOS le demande.
+4. **Saisie vocale (microphone) sous macOS :** au premier clic sur le bouton microphone, macOS demande l’autorisation d’accéder au **Microphone** et à la **Reconnaissance vocale**. Si le micro ne répond pas, ouvrez **Réglages Système → Confidentialité et sécurité** et vérifiez que **ADHD Tools** est bien coché dans **Microphone** *et* dans **Reconnaissance vocale** (si besoin, décochez puis recochez-le après une mise à jour). La langue attendue suit celle choisie dans le menu des langues de l’application (et l’IA détecte automatiquement la langue parlée).
+
+**Mettre à jour ou réinstaller :** pas besoin de désinstaller manuellement (vos tâches et vos clés restent sauvegardées). Lancez simplement `git pull && npm ci && npm run desktop:install` : le script ferme l’ancienne version en cours d’exécution, remplace `/Applications/ADHD Tools.app` et relance la nouvelle version.
+
+**Essayer sans installer :** `npm run desktop` ouvre l’application dans une fenêtre, avec vos fichiers sources locaux.
+
+Sous Windows et Linux, installez [les prérequis Tauri](https://tauri.app/start/prerequisites/), puis lancez `npm ci && npm run desktop:build` ; l’application est créée dans `src-tauri/target/release/bundle/`.
+
 ## 🤖 Parlez à votre planning avec votre assistant IA (MCP)
 
 Demandez à votre assistant IA (Mistral, Claude, ou toute application compatible MCP) de *« découper ma déclaration d’impôts en petites étapes »* ou *« trouver une heure pour le sport demain »*. Les changements apparaissent dans l’application. Votre propre Google Drive sert de stockage : pas de serveur à nous, pas de ngrok, pas de Tailscale.

@@ -7,6 +7,9 @@
     "test": "node --test tests/*.test.js",
     "test:ui": "node --test --test-concurrency=1 tests/ui/*.test.js",
     "test:all": "npm test && npm run test:ui",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "desktop:install": "node scripts/install-desktop-mac.cjs",
     "mcp": "node mcp/server.js",
     "mcp:auth": "node mcp/server.js auth",
     "mcp:http": "node mcp/server.js http",
@@ -20,6 +23,7 @@
     "jsdom": "^26.1.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.3",
     "playwright": "^1.64.1"
   }
 }

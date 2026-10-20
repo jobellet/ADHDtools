@@ -119,4 +119,42 @@ describe('Native Storage Mirroring', () => {
 
         assert.ok(events.includes('dataChanged'));
     });
+
+    it('syncSecretsToNativeDisk saves and restores secrets securely', async () => {
+        const nativeCalls = [];
+        sandbox.window.AttentionService.invokeNative = async (cmd, args) => {
+            nativeCalls.push({ cmd, args });
+            if (cmd === 'native_load_secrets') {
+                return JSON.stringify({
+                    gcalClientId: 'restored-client-id',
+                    gcalClientSecret: 'restored-secret',
+                    geminiApiKey: 'restored-gemini',
+                    gcalConnected: 'true'
+                });
+            }
+            return null;
+        };
+
+        sandbox.APP_NAME = 'ADHD Tools Hub';
+        runInNewContext(dataManagerCode, sandbox);
+        nativeCalls.length = 0;
+
+        // Restore missing secrets
+        await sandbox.window.DataManager.restoreSecretsFromNativeDisk();
+        assert.equal(sandbox.localStorage.getItem('gcalClientId'), 'restored-client-id');
+        assert.equal(sandbox.localStorage.getItem('gcalClientSecret'), 'restored-secret');
+        assert.equal(sandbox.localStorage.getItem('geminiApiKey'), 'restored-gemini');
+        assert.equal(sandbox.localStorage.getItem('gcalConnected'), 'true');
+
+        // Update secret and sync to disk
+        sandbox.localStorage.setItem('geminiApiKey', 'new-gemini-key');
+        await sandbox.window.DataManager.syncSecretsToNativeDisk();
+
+        const saveCall = nativeCalls.find(c => c.cmd === 'native_save_secrets');
+        assert.ok(saveCall, 'native_save_secrets was called');
+        const savedSecrets = JSON.parse(saveCall.args.data);
+        assert.equal(savedSecrets.geminiApiKey, 'new-gemini-key');
+        assert.equal(savedSecrets.gcalClientSecret, 'restored-secret');
+    });
+
 });

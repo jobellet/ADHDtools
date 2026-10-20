@@ -274,6 +274,10 @@
         if (document.visibilityState === 'hidden') maybeAutoBackup();
       });
     }
+    window.addEventListener('nativeSecretsRestored', () => {
+      refreshStatus();
+      if (autoSyncEnabled()) maybeAutoPull().then(maybeAutoBackup);
+    });
   }
 
   document.addEventListener('DOMContentLoaded', createUI);

@@ -203,13 +203,15 @@
     if (!(typeof window !== "undefined" ? window.AIAssistant : null)?.isEnabled?.()) return heuristic;
 
     try {
+      const currentLang = (typeof window !== "undefined" && window.I18n?.getLang?.()) || 'en';
       const prompt = [
         `Current local datetime: ${toLocalStamp(now)} (${WEEKDAYS[now.getDay()]}).`,
+        `Active user language: ${currentLang}. Auto-detect the language of the user input (e.g. French, English, German, Spanish, or any other).`,
         `Convert this spoken/typed todo into a task object: "${text}"`,
         'Return JSON with keys:',
-        'name (short imperative label, no dates in it),',
-        'deadline (local "YYYY-MM-DDTHH:MM" or null; when the user says by/before/due),',
-        'plannerDate (local "YYYY-MM-DDTHH:MM" or null; when the user names a specific slot to do it),',
+        'name (short imperative label in the same language as the user input, without dates or times in it),',
+        'deadline (local "YYYY-MM-DDTHH:MM" or null; when the user says by/before/due / avant/d\'ici / bis / para),',
+        'plannerDate (local "YYYY-MM-DDTHH:MM" or null; when the user names a specific slot to do it, e.g. at 2pm / à 14h / um 14 Uhr / a las 14),',
         'durationMinutes (number or null; if not specified by the user, estimate it based on the task name),',
         'importance (1-10 or null; only if the user implies priority),',
         'isFixed (true only for appointment-like items at a specific time),',

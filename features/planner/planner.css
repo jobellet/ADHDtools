@@ -707,8 +707,45 @@ body:not(.cap-gcal) .export-to-calendar-btn {
     box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.15);
 }
 
+.event-time-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .event-when input[type="time"] {
     max-width: 200px;
+}
+
+.event-now-btn {
+    padding: 0.45rem 0.85rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    border-radius: 8px;
+    white-space: nowrap;
+    cursor: pointer;
+    background: var(--surface-variant, #f0edf9);
+    border: 1.5px solid #d9d4e5;
+    color: var(--primary-color);
+    transition: all 0.15s ease;
+}
+
+.event-now-btn:hover {
+    background: var(--primary-color);
+    color: var(--on-primary, #fff);
+    border-color: var(--primary-color);
+}
+
+#record-event-btn.listening {
+    background: rgba(255, 59, 48, 0.15) !important;
+    border-color: #ff3b30 !important;
+    color: #ff3b30 !important;
+    animation: voice-pulse 1s infinite alternate;
+}
+
+@keyframes voice-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
+    100% { transform: scale(1.03); box-shadow: 0 0 0 6px rgba(255, 59, 48, 0); }
 }
 
 .event-duration-chips {

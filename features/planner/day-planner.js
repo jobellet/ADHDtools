@@ -196,21 +196,105 @@ function populateDependencyOptions() {
     if (current) eventDependencySelect.value = current;
 }
 
-function startVoiceRecognition() {
+function getSpeechLang() {
+    const lang = (window.I18n?.getLang?.() || document.documentElement.lang || 'en').toLowerCase();
+    const map = { fr: 'fr-FR', de: 'de-DE', es: 'es-ES', en: 'en-US' };
+    return map[lang] || `${lang}-${lang.toUpperCase()}`;
+}
+
+let plannerSpeechPollTimer = null;
+let activePlannerRecognition = null;
+
+async function startVoiceRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        alert('Speech recognition not supported in this browser.');
+    const isNative = Boolean(window.AttentionService?.isNative?.());
+    if (!SpeechRecognition && !isNative) {
+        window.DataManager?.showNotification?.(tr('planner.voiceError', { error: 'Speech recognition not supported in this browser' }), 'error');
         return;
     }
+
+    const resetBtn = () => {
+        if (plannerSpeechPollTimer) {
+            clearInterval(plannerSpeechPollTimer);
+            plannerSpeechPollTimer = null;
+        }
+        activePlannerRecognition = null;
+        if (!recordBtn) return;
+        recordBtn.classList.remove('listening');
+        const icon = recordBtn.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-microphone';
+            icon.style.color = '';
+        }
+        const textSpan = recordBtn.querySelector('.btn-text');
+        if (textSpan) textSpan.textContent = tr('record-btn');
+    };
+
+    if (recordBtn?.classList.contains('listening')) {
+        if (isNative) {
+            const res = await window.AttentionService.invokeNative('native_stop_speech', {});
+            resetBtn();
+            if (res?.transcript) await handleVoiceCommand(res.transcript);
+        } else if (activePlannerRecognition) {
+            activePlannerRecognition.stop();
+        }
+        return;
+    }
+
+    if (recordBtn) {
+        recordBtn.classList.add('listening');
+        const icon = recordBtn.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-microphone fa-beat';
+            icon.style.color = '#ff3b30';
+        }
+        const textSpan = recordBtn.querySelector('.btn-text');
+        if (textSpan) textSpan.textContent = tr('planner.listening');
+    }
+
+    if (isNative) {
+        await window.AttentionService.invokeNative('native_start_speech', { lang: getSpeechLang() });
+        plannerSpeechPollTimer = setInterval(async () => {
+            const res = await window.AttentionService.invokeNative('native_poll_speech', {});
+            if (!res) return;
+            if (res.transcript && recordBtn) {
+                const textSpan = recordBtn.querySelector('.btn-text');
+                if (textSpan) textSpan.textContent = res.transcript;
+            }
+            if (res.status === 'done') {
+                resetBtn();
+                if (res.transcript) await handleVoiceCommand(res.transcript);
+            } else if (res.status === 'error') {
+                resetBtn();
+                const isDenied = res.error === 'mic-denied' || res.error === 'speech-denied' || res.error === 'not-allowed';
+                const msg = isDenied
+                    ? tr('planner.micDenied')
+                    : tr('planner.voiceError', { error: res.error || 'unknown' });
+                window.DataManager?.showNotification?.(msg, 'error');
+            }
+        }, 250);
+        return;
+    }
+
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
+    activePlannerRecognition = recognition;
+    recognition.lang = getSpeechLang();
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
+
     recognition.onresult = async (event) => {
-        const transcript = event.results[0][0].transcript;
-        await handleVoiceCommand(transcript);
+        resetBtn();
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) await handleVoiceCommand(transcript);
     };
-    recognition.onerror = (e) => console.error('Speech recognition error:', e.error);
+    recognition.onerror = (e) => {
+        resetBtn();
+        const msg = e.error === 'not-allowed' || e.error === 'service-not-allowed'
+            ? tr('planner.micDenied')
+            : tr('planner.voiceError', { error: e.error || 'unknown' });
+        window.DataManager?.showNotification?.(msg, 'error');
+    };
+    recognition.onend = resetBtn;
     recognition.start();
 }
 
@@ -221,20 +305,25 @@ async function handleVoiceCommand(text) {
         return;
     }
     const parsed = await window.TaskParser.parseSmart(text);
-    if (!parsed || !parsed.name) {
-        alert('Could not understand that. Try e.g. "Team meeting tomorrow at 10am for 45 minutes".');
-        return;
+    const title = parsed?.name || text;
+    const presetTime = parsed?.plannerDate ? parsed.plannerDate.slice(11, 16) : getDefaultTime();
+    const duration = parsed?.durationMinutes || getDefaultDurationMinutes();
+
+    // Open the event modal prefilled with transcription and parsed fields so the user can review and edit!
+    openModal(null, presetTime);
+    if (eventTitleInput) {
+        eventTitleInput.value = title;
+        eventTitleInput.focus();
     }
-    const plannerDate = parsed.plannerDate || null;
-    window.DataManager.addTask({
-        text: parsed.name,
-        plannerDate,
-        deadline: parsed.deadline || null,
-        duration: parsed.durationMinutes || getDefaultDurationMinutes(),
-        importance: parsed.importance || undefined,
-        originalTool: 'planner'
-    });
-    renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+    setDuration(duration);
+    if (parsed?.importance) eventImportanceInput.value = parsed.importance;
+    if (parsed?.urgency) eventUrgencyInput.value = parsed.urgency;
+    if (parsed?.deadline) eventDeadlineInput.value = parsed.deadline.slice(0, 16);
+
+    const minutes = parseTimeToMinutes(eventTimeSelect.value);
+    if (minutes !== null) {
+        showConflict(describeConflict(minutes, duration, null));
+    }
 }
 
 // When [start, start+duration) collides with a routine, a calendar event or
@@ -507,7 +596,7 @@ function initDayPlanner() {
     addEventBtn.addEventListener('click', () => openModal(null, getDefaultTime()));
     if (recordBtn) {
         recordBtn.addEventListener('click', startVoiceRecognition);
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition || window.AttentionService?.isNative?.();
         if (!SR) recordBtn.disabled = true;
     }
     closeButton.addEventListener('click', closeModal);
@@ -521,6 +610,23 @@ function initDayPlanner() {
     });
     eventDurationInput.addEventListener('input', () => setDuration(eventDurationInput.value));
     eventTimeSelect.addEventListener('input', () => showConflict(null));
+    const startNowBtn = eventModal.querySelector('#event-start-now-btn');
+    if (startNowBtn) {
+        startNowBtn.addEventListener('click', () => {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            eventTimeSelect.value = `${hh}:${mm}`;
+            const dur = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
+            const startMins = now.getHours() * 60 + now.getMinutes();
+            const conflict = findConflict(startMins, dur, editingTaskId);
+            if (conflict) {
+                showConflict(conflict.message, conflict.free);
+            } else {
+                showConflict(null);
+            }
+        });
+    }
     eventModal.querySelector('#event-remove-btn')?.addEventListener('click', () => {
         if (!editingTaskId) return;
         if (window.TaskStore?.deleteTasks) window.TaskStore.deleteTasks([editingTaskId]);

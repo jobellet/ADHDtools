@@ -56,6 +56,34 @@ If 17:00 is already taken (for example by your evening routine), the task moves 
 
 The app only shows the options you use. For example, `.ics` import is hidden once Google Calendar is connected, and AI buttons are hidden without an AI provider. *Settings → General → Show all options* shows everything again.
 
+## 🖥️ Desktop app (optional)
+
+A native app adds system notifications when a timer ends, a menu-bar timer, a screen that stays awake during Focus/Routine, a floating mini-player, and a disk copy of your data. Everything else works the same as in the browser. It is built on your own computer (about 5 minutes the first time).
+
+**macOS (Apple silicon or Intel):**
+
+1. Install the tools once: [Node.js](https://nodejs.org), then in Terminal:
+   ```bash
+   xcode-select --install
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+   . "$HOME/.cargo/env"
+   ```
+2. Get the app and build it:
+   ```bash
+   git clone https://github.com/jobellet/ADHDtools.git
+   cd ADHDtools
+   npm ci
+   npm run desktop:install
+   ```
+3. **ADHD Tools** is now in your *Applications* folder and opens by itself. Double-click it from Launchpad or Finder. To keep it in the Dock, right-click its Dock icon → *Options* → *Keep in Dock*. Allow notifications when macOS asks.
+4. **Voice input (microphone) on macOS:** the first time you click the microphone button, macOS asks for permission to use the **Microphone** and **Speech Recognition**. If the microphone does not respond, open **System Settings → Privacy & Security** and make sure **ADHD Tools** is enabled under both **Microphone** *and* **Speech Recognition** (toggle it off and back on if needed after an update). The expected language matches the language chosen in the app's language menu (and AI automatically detects the spoken language).
+
+**Updating or reinstalling:** no need to uninstall manually (your tasks and keys are kept on disk). Just run `git pull && npm ci && npm run desktop:install` — the installer quits the running version, replaces `/Applications/ADHD Tools.app`, and opens the updated app.
+
+**Try it without installing:** `npm run desktop` opens the app in a window, using your local source files.
+
+On Windows and Linux, install [the Tauri prerequisites](https://tauri.app/start/prerequisites/), then run `npm ci && npm run desktop:build`; the app is created under `src-tauri/target/release/bundle/`.
+
 ## 🤖 Talk to your planner with your AI assistant (MCP)
 
 Ask your AI assistant (Mistral, Claude, or any app that supports MCP) to *"split my tax report into small steps"* or *"find an hour for sport tomorrow"*. The changes show up in the app. Your own Google Drive is the storage: no server of ours, no ngrok, no Tailscale.

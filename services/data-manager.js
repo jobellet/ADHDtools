@@ -244,9 +244,49 @@
       lowerKey.includes('clientid') ||
       lowerKey.startsWith('api-settings') ||
       lowerKey.startsWith('adhd-ai-') ||
+      lowerKey.includes('clientsecret') ||
+      lowerKey.includes('refreshtoken') ||
       lowerKey === 'geminiapikey' ||
       lowerKey === 'gcalclientid'
     );
+  }
+
+  // Desktop app: secrets plus the Google connection state are kept in a private file in the app
+  // data folder (never exported, never synced) so the user does not re-enter them or reconnect.
+  const NATIVE_EXTRA_KEYS = ['gcalConnected', 'gcalSelectedCalendars', 'gcalLastSyncAt'];
+  function isNativeSecretKey(key) {
+    return Boolean(key) && (isSensitiveKey(key) || NATIVE_EXTRA_KEYS.includes(key));
+  }
+  let nativeSecretsRestored = false;
+
+  async function syncSecretsToNativeDisk() {
+    if (!nativeSecretsRestored || !window.AttentionService?.invokeNative) return; // never overwrite before restoring
+    const secrets = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (isNativeSecretKey(key)) secrets[key] = localStorage.getItem(key);
+    }
+    await window.AttentionService.invokeNative('native_save_secrets', { data: JSON.stringify(secrets) });
+  }
+
+  async function restoreSecretsFromNativeDisk() {
+    try {
+      const json = await window.AttentionService.invokeNative('native_load_secrets');
+      const saved = json ? JSON.parse(json) : {};
+      let restored = 0;
+      for (const [key, value] of Object.entries(saved)) {
+        if (isNativeSecretKey(key) && typeof value === 'string' && localStorage.getItem(key) === null) {
+          localStorage.setItem(key, value);
+          restored++;
+        }
+      }
+      nativeSecretsRestored = true;
+      if (restored > 0) window.dispatchEvent(new CustomEvent('aiSettingsChanged'));
+      window.dispatchEvent(new CustomEvent('nativeSecretsRestored', { detail: { restored } }));
+      if (restored > 0) window.dispatchEvent(new CustomEvent('capabilitiesChanged'));
+    } catch (err) {
+      console.error('Failed to restore saved keys from native disk:', err);
+    }
   }
 
   function collectAllData() {
@@ -694,11 +734,15 @@
   DataManager.showNotification = showNotification;
   DataManager.syncToNativeDisk = syncToNativeDisk;
   DataManager.restoreFromNativeDisk = restoreFromNativeDisk;
+  DataManager.syncSecretsToNativeDisk = syncSecretsToNativeDisk;
+  DataManager.restoreSecretsFromNativeDisk = restoreSecretsFromNativeDisk;
+  DataManager.isNativeSecretKey = isNativeSecretKey;
 
   // Initial load
   loadData();
 
   if (window.AttentionService?.isNative?.()) {
+    restoreSecretsFromNativeDisk();
     restoreFromNativeDisk();
   }
 

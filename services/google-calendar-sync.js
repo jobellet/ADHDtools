@@ -337,9 +337,18 @@ document.addEventListener('DOMContentLoaded', function () {
     buildUI();
     initObservers();
 
-    // Silent auto-sync when a session token from this browser session is still valid
-    if (localStorage.getItem(CONNECTED_FLAG_KEY) === 'true' && window.GoogleAuth?.hasSession(SCOPES)) {
-        syncNow({ interactive: false, isAuto: true });
-        startAutoSync();
+    // Silent auto-sync when a session token from this browser session is still valid, or (desktop
+    // app) when a saved refresh token exists. The desktop app restores its saved keys a moment
+    // after load, so try again then.
+    let autoStarted = false;
+    function startSilentSync() {
+        if (autoStarted) return;
+        if (localStorage.getItem(CONNECTED_FLAG_KEY) === 'true' && window.GoogleAuth?.hasSession(SCOPES)) {
+            autoStarted = true;
+            syncNow({ interactive: false, isAuto: true });
+            startAutoSync();
+        }
     }
+    startSilentSync();
+    window.addEventListener('nativeSecretsRestored', () => { refreshUIState(); startSilentSync(); });
 });

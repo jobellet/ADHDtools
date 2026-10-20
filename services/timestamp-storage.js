@@ -4,11 +4,13 @@
   const originalRemoveItem = Storage.prototype.removeItem;
   let syncTimeout = null;
 
-  function scheduleSync() {
+  function scheduleSync(changedKey) {
     if (window.AttentionService?.isNative?.()) {
       if (syncTimeout) clearTimeout(syncTimeout);
       syncTimeout = setTimeout(() => {
-        if (window.DataManager?.syncToNativeDisk) {
+        if (changedKey && window.DataManager?.isNativeSecretKey?.(changedKey)) {
+          window.DataManager.syncSecretsToNativeDisk?.();
+        } else if (window.DataManager?.syncToNativeDisk) {
           window.DataManager.syncToNativeDisk();
         }
       }, 300);
@@ -30,13 +32,13 @@
   Storage.prototype.setItem = function(key, value) {
     updateLog(key);
     originalSetItem.call(this, key, value);
-    if (key.startsWith('adhd-')) scheduleSync();
+    if (key.startsWith('adhd-') || window.DataManager?.isNativeSecretKey?.(key)) scheduleSync(key);
   };
 
   Storage.prototype.removeItem = function(key) {
     updateLog(key);
     originalRemoveItem.call(this, key);
-    if (key.startsWith('adhd-')) scheduleSync();
+    if (key.startsWith('adhd-') || window.DataManager?.isNativeSecretKey?.(key)) scheduleSync(key);
   };
 
   window.getStorageLog = function() {

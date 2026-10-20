@@ -56,6 +56,34 @@ Ist 17:00 schon belegt (zum Beispiel durch deine Abendroutine), rutscht die Aufg
 
 Die App zeigt nur die Optionen, die du nutzt. Zum Beispiel wird der `.ics`-Import ausgeblendet, sobald Google Kalender verbunden ist, und KI-Knöpfe sind ohne KI-Anbieter ausgeblendet. *Einstellungen → General → Alle Optionen zeigen* zeigt wieder alles.
 
+## 🖥️ Desktop-App (optional)
+
+Eine native App bringt Systembenachrichtigungen, wenn ein Timer endet, einen Timer in der Menüleiste, einen Bildschirm, der bei Focus/Routine wach bleibt, einen schwebenden Mini-Player und eine Kopie deiner Daten auf der Festplatte. Alles andere funktioniert wie im Browser. Sie wird auf deinem eigenen Computer gebaut (beim ersten Mal etwa 5 Minuten).
+
+**macOS (Apple Silicon oder Intel):**
+
+1. Werkzeuge einmal installieren: [Node.js](https://nodejs.org), dann im Terminal:
+   ```bash
+   xcode-select --install
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+   . "$HOME/.cargo/env"
+   ```
+2. App holen und bauen:
+   ```bash
+   git clone https://github.com/jobellet/ADHDtools.git
+   cd ADHDtools
+   npm ci
+   npm run desktop:install
+   ```
+3. **ADHD Tools** liegt jetzt im Ordner *Programme* und öffnet sich von selbst. Doppelklick im Launchpad oder Finder. Im Dock behalten: Rechtsklick auf das Dock-Symbol → *Optionen* → *Im Dock behalten*. Erlaube Benachrichtigungen, wenn macOS fragt.
+4. **Spracheingabe (Mikrofon) unter macOS:** Beim ersten Klick auf das Mikrofon-Symbol fragt macOS nach Zugriff auf **Mikrofon** und **Spracherkennung**. Wenn das Mikrofon nicht reagiert, öffne **Systemeinstellungen → Datenschutz & Sicherheit** und stelle sicher, dass **ADHD Tools** sowohl unter **Mikrofon** als auch unter **Spracherkennung** aktiviert ist (nach einem Update ggf. kurz aus- und wieder einschalten). Die Sprache folgt der in der App gewählten Sprache (und die KI erkennt die gesprochene Sprache automatisch).
+
+**Aktualisieren oder neu installieren:** Kein manuelles Deinstallieren nötig (Aufgaben und Schlüssel bleiben erhalten). Führe einfach `git pull && npm ci && npm run desktop:install` aus — das Skript beendet die laufende Version, ersetzt `/Applications/ADHD Tools.app` und startet die neue Version.
+
+**Ausprobieren ohne Installation:** `npm run desktop` öffnet die App in einem Fenster, mit deinen lokalen Quelldateien.
+
+Unter Windows und Linux installierst du [die Tauri-Voraussetzungen](https://tauri.app/start/prerequisites/) und startest `npm ci && npm run desktop:build`; die App liegt dann unter `src-tauri/target/release/bundle/`.
+
 ## 🤖 Sprich mit deinem KI-Assistenten über deinen Tag (MCP)
 
 Bitte deinen KI-Assistenten (Mistral, Claude oder jede App mit MCP): *„Teile meine Steuererklärung in kleine Schritte“* oder *„Finde morgen eine Stunde für Sport“*. Die Änderungen erscheinen in der App. Dein eigenes Google Drive ist der Speicher: kein Server von uns, kein ngrok, kein Tailscale.

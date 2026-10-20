@@ -23,3 +23,17 @@ test_tools.py
 test_csv_logic.js
 routine_running.png
 /src-tauri/target
+/src-tauri/gen/schemas/macOS-schema.json
+/src-tauri/gen/schemas/windows-schema.json
+/dist-desktop
+
+# Private credentials and secrets
+*credentials*.json
+*secret*.json
+client_secret*.json
+*.pem
+*.key
+.env*
+adhd-secrets.json
+adhd-local-store.json
+gcal-*.json

@@ -70,6 +70,7 @@ Write or say the task the way you would tell a friend:
 | `Buy milk` | no time: the app fits it into a free slot |
 
 - `!1` … `!10` sets the importance.
+- **Voice input (microphone):** click the microphone button to speak your task. While listening, the microphone turns red and pulses; click it again (or pause speaking) to finish. Your spoken words are transcribed into the text box so you can review and edit them before clicking **Add**. The expected language matches the language chosen in the app's language selector, and AI automatically detects the spoken language.
 - **No double booking:** if the time you ask for is already taken (by a routine, an event or another task), the task goes to the next free slot, and the app tells you why.
 - This works offline. With an [AI provider](ai-providers.md) set up, the app understands more varied sentences.
 
@@ -97,7 +98,7 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
   - dashed — tasks the app placed for you (they move with the clock until they start),
   - blue — calendar events.
 - **All-day events** (birthdays, holidays…) are not drawn as blocks and never take time from your day.
-- **Add an event:** tap **+** (or an empty spot of the timeline, which pre-fills that time). The form asks only three things: **what**, **start** and **how long** (one tap: 15, 30, 45, 60, 90 min, or type another number). Importance, urgency, deadline, "do this after" and "pick a task from your list" are folded under **More options**.
+- **Add an event:** tap **+** (or an empty spot of the timeline, which pre-fills that time), or tap **Voice** to speak the event and review/edit the transcribed fields before saving. The form asks only three things: **what**, **start** (including a **Start now** button to set the current time in one click) and **how long** (one tap: 15, 30, 45, 60, 90 min, or type another number). Importance, urgency, deadline, "do this after" and "pick a task from your list" are folded under **More options**.
 - If the time is already taken (routine, event or another task), the form says by what and offers a **Use HH:MM** button with the next free time. Nothing is ever booked on top of something else.
 - Tap an event in the timeline to change it, or **Delete** it.
 - **Lock plan** pins today's automatic plan, so times stop moving.
@@ -117,11 +118,12 @@ Pick English, Deutsch, Français or Español in **More** (flags at the bottom). 
 
 ## Native Desktop & Mobile App (Tauri)
 
-If you run the app inside the native Tauri wrapper (`cargo tauri dev` or `cargo tauri build`):
+If you run the app inside the native Tauri wrapper (`npm run desktop` or `npm run desktop:install` on macOS; install steps in the [README](../README.md)):
 - **Background Timer Notifications:** You get system notifications when timers or routines finish, even if the app is in the background.
 - **Screen Wake Lock:** While you are in a Focus or Routine session, your screen stays awake automatically.
 - **Floating Mini-player:** On desktop, you can switch to a floating mini-player via Picture-in-Picture mode to keep your current task visible over other windows.
-- **Background Disk Mirroring:** All your settings, tasks, and routines are automatically saved to disk securely. If you clear the webview cache or the OS evicts web storage, your data stays safe and reloads automatically on startup.
+- **Background Disk Mirroring:** All your settings, tasks, routines, and Google/API keys are automatically saved to disk securely. If you clear the webview cache, restart, or update the app, your data and connections stay safe and reload automatically on startup.
+- **Native Voice Recognition (macOS):** Uses macOS Speech Recognition directly in the selected UI language (make sure **ADHD Tools** is allowed under **System Settings → Privacy & Security → Microphone** and **Speech Recognition**).
 
 ## The app adapts to your setup
 

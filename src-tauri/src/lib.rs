@@ -1,4 +1,6 @@
 pub mod audio;
+pub mod oauth;
+pub mod speech;
 pub mod storage;
 
 use std::sync::Mutex;
@@ -8,15 +10,17 @@ use tauri::tray::{TrayIconBuilder, MouseButton};
 use tauri::menu::{Menu, MenuItem};
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
-use keepawake::AwakeHandle;
+use keepawake::KeepAwake;
 
 use audio::{native_play_sound, play_sound};
-use storage::{native_save_storage, native_load_storage};
+use storage::{native_save_storage, native_load_storage, native_save_secrets, native_load_secrets};
+use oauth::{native_open_url, native_oauth_listen, native_oauth_wait, native_read_mcp_client};
+use speech::{native_start_speech, native_poll_speech, native_stop_speech};
 
 struct AppState {
     target_end_timestamp: Mutex<Option<i64>>,
     tray_running: Mutex<bool>,
-    keep_awake: Mutex<Option<AwakeHandle>>,
+    keep_awake: Mutex<Option<KeepAwake>>,
 }
 
 #[tauri::command]
@@ -85,7 +89,7 @@ fn native_set_keep_awake(app: AppHandle, active: bool) -> Result<(), String> {
 
     if active {
         if keep_awake.is_none() {
-            *keep_awake = keepawake::Builder::new().display(true).create().ok();
+            *keep_awake = keepawake::Builder::default().display(true).create().ok();
         }
     } else {
         *keep_awake = None;
@@ -143,6 +147,15 @@ pub fn run() {
             native_set_keep_awake,
             native_toggle_mini_player,
             native_save_storage,
+            native_save_secrets,
+            native_load_secrets,
+            native_open_url,
+            native_oauth_listen,
+            native_oauth_wait,
+            native_read_mcp_client,
+            native_start_speech,
+            native_poll_speech,
+            native_stop_speech,
             native_load_storage
         ])
         .setup(|app| {
