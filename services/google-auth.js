@@ -140,7 +140,7 @@
     const secret = getClientSecret();
     if (getSavedClientId() && secret) return { clientId: getSavedClientId(), clientSecret: secret };
     if (mcpClient) return mcpClient;
-    throw new Error('The desktop app needs a Desktop-type OAuth Client ID and secret — add the secret in the Calendar settings.');
+    throw new Error('Desktop/Android app needs an OAuth Client ID and Secret — enter them above in Google Calendar API and click Save.');
   }
 
   async function postToken(params) {

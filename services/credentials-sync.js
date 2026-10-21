@@ -18,6 +18,8 @@
     return (
       lk.includes('apikey') ||
       lk.includes('clientid') ||
+      lk.includes('clientsecret') ||
+      lk.includes('refreshtoken') ||
       lk.startsWith('api-settings') ||
       lk.startsWith('adhd-ai-') ||
       lk === 'geminiapikey' ||

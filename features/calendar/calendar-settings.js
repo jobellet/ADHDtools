@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <input type="text" id="gcal-client-id-input" placeholder="xxxx.apps.googleusercontent.com — or paste JSON" style="width: 100%; padding: 0.4rem;" />
     </div>
     <div class="api-setting" id="gcal-client-secret-row" style="margin-bottom: 0.5rem; display: none;">
-      <label for="gcal-client-secret-input" style="display:block; font-size: 0.85rem;">Client secret (desktop app: use a Desktop-type client; optional if the AI assistant is already set up):</label>
+      <label for="gcal-client-secret-input" style="display:block; font-size: 0.85rem;">Client secret (Desktop & Android app):</label>
       <input type="password" id="gcal-client-secret-input" placeholder="GOCSPX-…" autocomplete="off" style="width: 100%; padding: 0.4rem;" />
     </div>
     <div class="api-actions" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
@@ -41,25 +41,30 @@ document.addEventListener('DOMContentLoaded', () => {
     status.style.color = 'var(--success-color)';
   }
 
-  // Smart paste: accept a raw Client ID or a JSON blob (e.g. the credentials
-  // file downloaded from Google Cloud Console) and extract client_id from it.
-  clientInput.addEventListener('paste', (e) => {
+  // Smart paste: accept a raw Client ID/Secret or a JSON blob (e.g. credentials.json)
+  // and extract both client_id and client_secret from it.
+  function handleSmartPaste(e) {
     const pastedText = (e.clipboardData || window.clipboardData).getData('text');
     if (!pastedText.trim().startsWith('{')) return;
     try {
       const data = JSON.parse(pastedText);
       const clientId = data.client_id || data.clientId || data.CLIENT_ID
         || data.web?.client_id || data.installed?.client_id;
+      const clientSecret = data.client_secret || data.clientSecret || data.web?.client_secret || data.installed?.client_secret;
       if (clientId) {
         e.preventDefault();
         clientInput.value = clientId;
-        const clientSecret = data.client_secret || data.clientSecret || data.web?.client_secret || data.installed?.client_secret;
         if (clientSecret) secretInput.value = clientSecret;
-        status.textContent = 'Client ID extracted from JSON — click Save';
+        status.textContent = clientSecret
+          ? 'Client ID and Secret extracted from JSON — click Save'
+          : 'Client ID extracted from JSON — click Save';
         status.style.color = 'var(--success-color)';
       }
     } catch { /* not JSON, let the normal paste happen */ }
-  });
+  }
+
+  clientInput.addEventListener('paste', handleSmartPaste);
+  secretInput.addEventListener('paste', handleSmartPaste);
 
   settingsContainer.querySelector('#save-gcal-keys').addEventListener('click', () => {
     const clientId = clientInput.value.trim();
