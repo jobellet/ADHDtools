@@ -7,7 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // URL Routing Configuration
     // Dynamically support both GitHub Pages (/ADHDtools) and local development (/)
-    const BASE_PATH = window.location.pathname.startsWith('/ADHDtools') ? '/ADHDtools' : '';
+    const BASE_PATH = window.location.pathname.startsWith('/ADHDtools') ? '/ADHDtools'
+        : window.location.pathname.startsWith('/app') ? '/app' : '';
 
     // Handle Redirect from 404.html (GitHub Pages SPA Hack): 404.html sends
     // deep links (e.g. /ADHDtools/pomodoro) to index.html?redirect=/pomodoro.
@@ -45,7 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function getSlugFromUrl() {
         let slug = window.location.pathname.replace(/\/$/, '');
         if (slug.startsWith(BASE_PATH)) slug = slug.slice(BASE_PATH.length);
-        return slug.replace(/^\//, '');
+        slug = slug.replace(/^\//, '');
+        if (slug === 'index.html') slug = '';
+        return slug;
     }
 
     function updateUrl(toolName) {

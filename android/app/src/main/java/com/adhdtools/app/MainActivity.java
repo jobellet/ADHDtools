@@ -19,6 +19,7 @@ import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -92,7 +93,21 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return assets.shouldInterceptRequest(request.getUrl());
+                WebResourceResponse response = assets.shouldInterceptRequest(request.getUrl());
+                if (response != null) return response;
+                // SPA fallback: any internal navigation or reload on ORIGIN serves index.html
+                Uri url = request.getUrl();
+                if (ORIGIN.equals(url.getScheme() + "://" + url.getHost())) {
+                    return assets.shouldInterceptRequest(Uri.parse(START_URL));
+                }
+                return null;
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame()) {
+                    view.loadUrl(START_URL);
+                }
             }
 
             @Override

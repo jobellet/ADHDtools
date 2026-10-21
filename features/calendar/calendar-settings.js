@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <input type="password" id="gcal-client-secret-input" placeholder="GOCSPX-…" autocomplete="off" style="width: 100%; padding: 0.4rem;" />
     </div>
     <div class="api-actions" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-        <button id="save-gcal-keys" class="btn btn-primary btn-sm">Save</button>
-        <button id="clear-gcal-keys" class="btn btn-secondary btn-sm">Clear</button>
+        <button type="button" id="save-gcal-keys" class="btn btn-primary btn-sm">Save</button>
+        <button type="button" id="clear-gcal-keys" class="btn btn-secondary btn-sm">Clear</button>
     </div>
     <span id="gcal-key-status" class="status" style="display: block; margin-top: 0.5rem; font-size: 0.85rem;"></span>
   `;
@@ -66,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
   clientInput.addEventListener('paste', handleSmartPaste);
   secretInput.addEventListener('paste', handleSmartPaste);
 
-  settingsContainer.querySelector('#save-gcal-keys').addEventListener('click', () => {
+  settingsContainer.querySelector('#save-gcal-keys').addEventListener('click', (e) => {
+    e.preventDefault();
     const clientId = clientInput.value.trim();
     if (!clientId) {
       status.textContent = 'Client ID is empty';
@@ -77,17 +78,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (secretInput.value.trim()) window.GoogleAuth?.setClientSecret(secretInput.value.trim());
     secretInput.value = '';
     clientInput.value = '';
-    status.textContent = 'Client ID saved';
+    status.textContent = 'Client ID saved ✓';
     status.style.color = 'var(--success-color)';
-    setTimeout(() => location.reload(), 500);
+    window.dispatchEvent(new CustomEvent('capabilitiesChanged'));
   });
 
-  settingsContainer.querySelector('#clear-gcal-keys').addEventListener('click', () => {
+  settingsContainer.querySelector('#clear-gcal-keys').addEventListener('click', (e) => {
+    e.preventDefault();
     localStorage.removeItem('gcalClientId');
     localStorage.removeItem('gcalApiKey');
     localStorage.removeItem('gcalClientSecret');
     window.GoogleAuth?.clearTokens();
     status.textContent = 'Client ID cleared';
     status.style.color = 'var(--text-muted)';
+    window.dispatchEvent(new CustomEvent('capabilitiesChanged'));
   });
 });
