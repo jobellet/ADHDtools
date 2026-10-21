@@ -44,6 +44,7 @@
     contextAutoSwitch: false,
 
     desktopNotifications: true,
+    notificationStyle: 'intrusive', // 'intrusive' (bring to front + repeating alarm) | 'standard' (system notify + beep) | 'subtle' (visual only)
     keepScreenAwake: true,
     titleBarCountdown: true,
   };

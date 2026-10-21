@@ -12,15 +12,34 @@ use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 use keepawake::KeepAwake;
 
-use audio::{native_play_sound, play_sound};
+use audio::{native_play_sound, play_sound, native_start_alarm, native_stop_alarm};
 use storage::{native_save_storage, native_load_storage, native_save_secrets, native_load_secrets};
 use oauth::{native_open_url, native_oauth_listen, native_oauth_wait, native_read_mcp_client};
 use speech::{native_start_speech, native_poll_speech, native_stop_speech};
+
+#[cfg(target_os = "macos")]
+extern "C" {
+    fn macos_bring_app_to_front();
+}
 
 struct AppState {
     target_end_timestamp: Mutex<Option<i64>>,
     tray_running: Mutex<bool>,
     keep_awake: Mutex<Option<KeepAwake>>,
+}
+
+#[tauri::command]
+fn native_bring_to_front(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+    #[cfg(target_os = "macos")]
+    unsafe {
+        macos_bring_app_to_front();
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -143,6 +162,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             native_notify,
             native_play_sound,
+            native_start_alarm,
+            native_stop_alarm,
+            native_bring_to_front,
             native_update_tray,
             native_set_keep_awake,
             native_toggle_mini_player,

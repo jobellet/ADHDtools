@@ -1,7 +1,49 @@
 use rodio::source::Source;
 use rodio::{OutputStream, Sink};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
+
+static ALARM_RUNNING: AtomicBool = AtomicBool::new(false);
+
+#[tauri::command]
+pub fn native_start_alarm() -> Result<(), String> {
+    if ALARM_RUNNING.swap(true, Ordering::SeqCst) {
+        return Ok(());
+    }
+    thread::spawn(|| {
+        let (_stream, stream_handle) = match OutputStream::try_default() {
+            Ok(res) => res,
+            Err(_) => return,
+        };
+        while ALARM_RUNNING.load(Ordering::SeqCst) {
+            if let Ok(sink) = Sink::try_new(&stream_handle) {
+                let s1 = rodio::source::SineWave::new(880.0)
+                    .take_duration(Duration::from_millis(160))
+                    .amplify(0.35);
+                let s2 = rodio::source::SineWave::new(1320.0)
+                    .take_duration(Duration::from_millis(160))
+                    .amplify(0.35);
+                sink.append(s1);
+                sink.append(s2);
+                sink.sleep_until_end();
+            }
+            for _ in 0..8 {
+                if !ALARM_RUNNING.load(Ordering::SeqCst) {
+                    break;
+                }
+                thread::sleep(Duration::from_millis(100));
+            }
+        }
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub fn native_stop_alarm() -> Result<(), String> {
+    ALARM_RUNNING.store(false, Ordering::SeqCst);
+    Ok(())
+}
 
 #[tauri::command]
 pub fn native_play_sound(sound: String) -> Result<(), String> {

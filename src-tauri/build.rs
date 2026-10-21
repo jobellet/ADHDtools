@@ -22,6 +22,7 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=Speech");
         println!("cargo:rustc-link-lib=framework=AVFoundation");
         println!("cargo:rustc-link-lib=framework=QuartzCore");
+        println!("cargo:rustc-link-lib=framework=AppKit");
     }
     tauri_build::build()
 }

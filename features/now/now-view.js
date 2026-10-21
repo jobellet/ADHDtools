@@ -38,6 +38,7 @@
     let lastMode = null;
     let miniPlayerUpdate = null;
     let lastSlotKey = null;
+    let lastDoingSlot = null;
 
     const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
     const locale = () => document.documentElement.lang || undefined;
@@ -616,12 +617,37 @@
       const slotKey = state.current ? state.current.task.hash : (state.next ? state.next.task.hash : null);
       if (lastSlotKey && slotKey !== lastSlotKey) {
         if (state.mode === 'doing' && state.current) {
-          window.AttentionService?.notify?.(t('now.notify.next', { name: taskName(state.current.task) }), '');
+          const startingSlot = state.current;
+          window.AttentionService?.triggerTaskAlarm?.({
+            task: startingSlot.task,
+            actionType: 'start',
+            title: t('now.alarm.startTitle'),
+            body: taskName(startingSlot.task),
+            onStart: () => {
+              window.switchTool?.('home');
+            },
+            onSnooze: (mins) => snoozeTask(startingSlot, mins),
+          });
         } else if (state.mode === 'break' || state.mode === 'free') {
-          window.AttentionService?.notify?.(t('now.notify.transition'), '');
+          if (lastDoingSlot?.task) {
+            const finishedSlot = lastDoingSlot;
+            window.AttentionService?.triggerTaskAlarm?.({
+              task: finishedSlot.task,
+              title: t('now.notify.transition'),
+              body: taskName(finishedSlot.task),
+              onDone: () => completeTask(finishedSlot),
+              onSnooze: (mins) => snoozeTask(finishedSlot, mins),
+            });
+          } else {
+            window.AttentionService?.triggerTaskAlarm?.({
+              title: t('now.notify.transition'),
+              body: '',
+            });
+          }
         }
       }
       lastSlotKey = slotKey;
+      lastDoingSlot = (state.mode === 'doing' && state.current) ? state.current : null;
 
       if (state.mode !== lastMode) {
         if (lastMode === 'doing') {

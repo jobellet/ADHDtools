@@ -1129,11 +1129,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 notifyArgs.next = nextStepName;
             }
 
-            window.AttentionService?.notify(
-                tr('player.stepTimeUpTitle', { step: task.name }),
-                tr(bodyKey, notifyArgs),
-                { tag: 'routine-step' }
-            );
+            if (window.AttentionService?.triggerTaskAlarm && !autoRunEnabled) {
+                window.AttentionService.triggerTaskAlarm({
+                    title: tr('player.stepTimeUpTitle', { step: task.name }),
+                    body: tr(bodyKey, notifyArgs),
+                    onDone: () => manualAdvanceTask(),
+                    onSnooze: (mins) => {
+                        activeTaskTimeLeftSeconds += mins * 60;
+                        activeTaskTotalDurationSeconds += mins * 60;
+                    }
+                });
+            } else {
+                window.AttentionService?.notify(
+                    tr('player.stepTimeUpTitle', { step: task.name }),
+                    tr(bodyKey, notifyArgs),
+                    { tag: 'routine-step' }
+                );
+            }
 
             if (autoRunEnabled) {
                 manualAdvanceTask();

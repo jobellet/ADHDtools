@@ -542,19 +542,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function playNotification() {
-        playSound(settings.audioNotification);
-
         const title = currentMode === 'focus' ? 'Focus Session Complete!' : 'Break Over!';
         const body = currentMode === 'focus' ? 'Time for a break!' : 'Time to focus!';
 
-        if (window.AttentionService) {
-            window.AttentionService.notify(title, body, {
-                sound: settings.audioNotification,
+        if (window.AttentionService?.triggerTaskAlarm) {
+            window.AttentionService.triggerTaskAlarm({
+                title,
+                body,
                 tag: 'pomodoro-complete'
             });
-        } else if ('Notification' in window && Notification.permission === 'granted') {
-            // Show browser notification if supported and AttentionService is not available
-            new Notification(title, { body });
+        } else {
+            playSound(settings.audioNotification);
+            if (window.AttentionService) {
+                window.AttentionService.notify(title, body, {
+                    sound: settings.audioNotification,
+                    tag: 'pomodoro-complete'
+                });
+            } else if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body });
+            }
         }
     }
 

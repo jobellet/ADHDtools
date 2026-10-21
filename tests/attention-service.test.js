@@ -147,4 +147,53 @@ test('AttentionService', async (t) => {
     });
   });
 
+  await t.test('triggerTaskAlarm and alarm modal management', async () => {
+    setupWindow();
+    let appendedElements = [];
+    global.document.head = { appendChild: () => {} };
+    global.document.getElementById = (id) => appendedElements.find(el => el.id === id) || null;
+    global.document.removeEventListener = () => {};
+    global.document.body = {
+      appendChild: (el) => appendedElements.push(el),
+    };
+    global.document.createElement = (tag) => {
+      const el = {
+        tagName: tag,
+        className: '',
+        style: {},
+        id: '',
+        innerHTML: '',
+        querySelector: (sel) => ({
+          textContent: '',
+          classList: { add: () => {}, remove: () => {} },
+          addEventListener: () => {},
+        }),
+        addEventListener: () => {},
+        remove: () => {
+          const idx = appendedElements.indexOf(el);
+          if (idx !== -1) appendedElements.splice(idx, 1);
+        }
+      };
+      return el;
+    };
+
+    const service = window.AttentionService;
+    assert.strictEqual(service.isAlarmActive(), false);
+
+    service.triggerTaskAlarm({
+      title: 'Time to start!',
+      body: 'Review paper',
+      actionType: 'start',
+      task: { name: 'Review paper', hash: 'task-123' },
+    });
+
+    assert.strictEqual(service.isAlarmActive(), true);
+    assert.strictEqual(appendedElements.length, 1);
+    assert.strictEqual(appendedElements[0].id, 'alarm-overlay');
+
+    service.stopAlarm();
+    assert.strictEqual(service.isAlarmActive(), false);
+    assert.strictEqual(appendedElements.length, 0);
+  });
+
 });

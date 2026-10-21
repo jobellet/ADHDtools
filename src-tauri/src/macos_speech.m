@@ -1,8 +1,19 @@
 #import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <Speech/Speech.h>
 #import <QuartzCore/QuartzCore.h>
 #include <string.h>
+
+void macos_bring_app_to_front(void) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [NSApp activateIgnoringOtherApps:YES];
+        for (NSWindow *window in [NSApp windows]) {
+            [window makeKeyAndOrderFront:nil];
+            [window deminiaturize:nil];
+        }
+    });
+}
 
 static NSLock *g_lock = nil;
 static AVAudioEngine *g_audioEngine = nil;

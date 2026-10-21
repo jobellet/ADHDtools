@@ -651,6 +651,14 @@
                                         <label for="setting-desktop-notifications" data-i18n="settings.desktopNotifications">Desktop / Background Notifications</label>
                                     </div>
                                     <div class="setting-group">
+                                        <label for="setting-notification-style" data-i18n="settings.notificationStyle">Alarm & notification style</label>
+                                        <select id="setting-notification-style" name="notificationStyle">
+                                            <option value="intrusive" data-i18n="settings.notificationStyle.intrusive">Intrusive: bring to front + repeating alarm (Recommended)</option>
+                                            <option value="standard" data-i18n="settings.notificationStyle.standard">Standard: system notification + single beep</option>
+                                            <option value="subtle" data-i18n="settings.notificationStyle.subtle">Subtle: visual notification only</option>
+                                        </select>
+                                    </div>
+                                    <div class="setting-group">
                                         <button type="button" id="setting-enable-notifications-btn" class="btn btn-secondary btn-sm" data-i18n="settings.testNotification">Enable / Test Notification</button>
                                         <span id="setting-notification-status" class="setting-status-inline"></span>
                                     </div>

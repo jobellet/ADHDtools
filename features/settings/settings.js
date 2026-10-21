@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     routineAutoRunDefault: document.getElementById('setting-routine-auto-run'),
     contextAutoSwitch: document.getElementById('setting-context-autoswitch'),
     desktopNotifications: document.getElementById('setting-desktop-notifications'),
+    notificationStyle: document.getElementById('setting-notification-style'),
     keepScreenAwake: document.getElementById('setting-keep-screen-awake'),
     titleBarCountdown: document.getElementById('setting-title-countdown'),
 
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.routineAutoRunDefault) fields.routineAutoRunDefault.checked = values.routineAutoRunDefault;
     if (fields.contextAutoSwitch) fields.contextAutoSwitch.checked = values.contextAutoSwitch;
     if (fields.desktopNotifications) fields.desktopNotifications.checked = values.desktopNotifications ?? true;
+    if (fields.notificationStyle) fields.notificationStyle.value = values.notificationStyle || 'intrusive';
     if (fields.keepScreenAwake) fields.keepScreenAwake.checked = values.keepScreenAwake ?? true;
     if (fields.titleBarCountdown) fields.titleBarCountdown.checked = values.titleBarCountdown ?? true;
 
@@ -65,6 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ConfigManager.updateConfig({ desktopNotifications: fields.desktopNotifications.checked });
   });
 
+  fields.notificationStyle?.addEventListener('change', () => {
+    window.ConfigManager.updateConfig({ notificationStyle: fields.notificationStyle.value });
+  });
+
   fields.keepScreenAwake?.addEventListener('change', () => {
     window.ConfigManager.updateConfig({ keepScreenAwake: fields.keepScreenAwake.checked });
   });
@@ -79,8 +85,16 @@ document.addEventListener('DOMContentLoaded', () => {
     enableNotificationsBtn.addEventListener('click', async () => {
       if (!window.AttentionService) return;
       const permission = await window.AttentionService.requestNotificationPermission();
-      if (permission === 'granted') {
-        window.AttentionService.notify('Notification Test', 'Notifications are enabled and working.', { tag: 'settings-test' });
+      if (permission === 'granted' || window.AttentionService.isNative()) {
+        const style = window.ConfigManager?.getConfig?.()?.notificationStyle || 'intrusive';
+        if (style === 'intrusive') {
+          window.AttentionService.triggerTaskAlarm?.({
+            title: window.I18n?.t ? window.I18n.t('now.alarm.title') : 'Notification Test',
+            body: window.I18n?.t ? window.I18n.t('now.alarm.finished', { name: 'Test' }) : 'Notifications are enabled and working.',
+          });
+        } else {
+          window.AttentionService.notify('Notification Test', 'Notifications are enabled and working.', { tag: 'settings-test' });
+        }
         if (notificationStatus) {
           notificationStatus.textContent = 'Tested successfully!';
           notificationStatus.style.color = 'var(--text-color)';
@@ -162,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         routineAutoRunDefault: fields.routineAutoRunDefault?.checked || false,
         contextAutoSwitch: fields.contextAutoSwitch?.checked || false,
         desktopNotifications: fields.desktopNotifications?.checked ?? true,
+        notificationStyle: fields.notificationStyle?.value || 'intrusive',
         keepScreenAwake: fields.keepScreenAwake?.checked ?? true,
         titleBarCountdown: fields.titleBarCountdown?.checked ?? true,
 
