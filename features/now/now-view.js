@@ -108,7 +108,7 @@
     function kindOf(slot) {
       const source = slot?.task?.source;
       if (source === 'routine') return 'routine';
-      if (source === 'calendar') return 'event';
+      if (source === 'calendar' || slot?.task?.isEvent) return 'event';
       return 'task';
     }
 
@@ -230,7 +230,14 @@
     }
 
     function markEventNotATask(slot) {
-      const changed = window.CalendarTool?.markEventPassive?.(slot.task.hash);
+      let changed = window.CalendarTool?.markEventPassive?.(slot?.task?.hash);
+      if (!changed && slot?.task?.hash && window.TaskStore?.updateTaskByHash) {
+        changed = window.TaskStore.updateTaskByHash(slot.task.hash, {
+          isEvent: true,
+          isFixed: false,
+          notATask: true,
+        });
+      }
       if (changed) {
         window.DataManager?.showNotification?.(t('now.event.notATaskDone', { name: taskName(slot.task) }));
       } else {
@@ -261,6 +268,7 @@
       box.appendChild(button(t('now.skip.later'), 'fa-hourglass-half', 'btn-outline', () => snoozeTask(slot, 60)));
       box.appendChild(button(t('now.skip.tomorrow'), 'fa-calendar-plus', 'btn-outline', () => moveToTomorrow(slot)));
       box.appendChild(button(t('now.skip.split'), 'fa-project-diagram', 'btn-outline', () => sendToBreakdown(slot.task)));
+      box.appendChild(button(t('now.event.notATask'), 'fa-calendar-day', 'btn-outline', () => markEventNotATask(slot), t('now.event.notATaskTitle')));
       box.appendChild(button(t('now.skip.cancel'), 'fa-times', 'btn-link', () => { box.hidden = true; }));
       box.hidden = false;
     }

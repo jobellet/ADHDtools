@@ -68,6 +68,21 @@ function collectItems(currentDate, dayStart, dayEnd) {
         const end = toMinutes(ev.end) ?? start + 60;
         items.push({ kind: 'calendar', title: ev.title, start, end: Math.max(end, start + 5) });
     });
+    // Tasks marked "notATask" are skipped by the scheduler so other tasks can run during them,
+    // but still show on the timeline as calendar blocks.
+    const dayStr = localDateString(currentDate);
+    const allTasks = window.TaskStore?.getAllTasks?.() || [];
+    allTasks
+        .filter(t => !t.completed && t.notATask && t.plannerDate && t.plannerDate.startsWith(dayStr))
+        .forEach(task => {
+            const start = toMinutes(task.plannerDate.slice(11, 16));
+            if (start === null) return;
+            const duration = Number(task.duration ?? task.durationMinutes ?? 60);
+            const title = task.text || task.name || '';
+            if (!items.some(i => i.title === title && i.start === start)) {
+                items.push({ kind: 'calendar', title, start, end: Math.max(start + duration, start + 5), task });
+            }
+        });
     // Calendar events come from above; the schedule adds tasks and routines.
     getPlannerTasksForDay(currentDate)
         .filter(task => task.source !== 'calendar')

@@ -206,4 +206,46 @@ describe('mergeBackup — continuous full-state sync (breakdowns, routines, acti
     assert.strictEqual(updates['driveLastBackupAt'], undefined);
     assert.strictEqual(updates['adhd-habits'].length, 1);
   });
+
+  test('calendar event marked "notATask" on laptop syncs to phone even when random ev.id differs', () => {
+    const laptopEvent = {
+      id: 'ev-laptop-111',
+      uid: 'gcal-marie-uid',
+      calendarUid: 'gcal-marie-uid',
+      calendarInstanceId: 'gcal-marie-uid:2026-10-21T09:30:00',
+      instanceStart: '2026-10-21T09:30:00',
+      title: 'Marie',
+      start: '2026-10-21T09:30:00',
+      end: '2026-10-21T11:00:00',
+      isFixed: false,
+      notATask: true,
+      localOverride: true,
+      updatedAt: iso('2026-10-21T09:53:00Z'),
+    };
+    const phoneEvent = {
+      id: 'ev-phone-222',
+      uid: 'gcal-marie-uid',
+      calendarUid: 'gcal-marie-uid',
+      calendarInstanceId: 'gcal-marie-uid:2026-10-21T09:30:00',
+      instanceStart: '2026-10-21T09:30:00',
+      title: 'Marie',
+      start: '2026-10-21T09:30:00',
+      end: '2026-10-21T11:00:00',
+      localOverride: false,
+    };
+    const imported = {
+      metadata: { app: 'ADHD Tools Hub' },
+      'adhd-calendar-events': [laptopEvent],
+      'adhd-storage-log': { 'adhd-calendar-events': iso('2026-10-21T09:53:00Z') },
+    };
+    const existingRaw = {
+      'adhd-calendar-events': JSON.stringify([phoneEvent]),
+      'adhd-storage-log': JSON.stringify({ 'adhd-calendar-events': iso('2026-10-21T09:54:00Z') }),
+    };
+    const { updates, conflicts } = mergeBackup(imported, existingRaw);
+    assert.strictEqual(conflicts.length, 0);
+    assert.strictEqual(updates['adhd-calendar-events'].length, 1);
+    assert.strictEqual(updates['adhd-calendar-events'][0].notATask, true);
+    assert.strictEqual(updates['adhd-calendar-events'][0].localOverride, true);
+  });
 });

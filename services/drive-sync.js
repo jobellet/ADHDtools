@@ -169,10 +169,10 @@
     window.dispatchEvent(new CustomEvent('cloudSyncApplied', { detail: { keys: Object.keys(updates) } }));
     window.EventBus?.dispatchEvent(new CustomEvent('dataChanged', { detail: { source: 'cloud-sync' } }));
     if ('adhd-calendar-events' in updates) {
-      window.EventBus?.dispatchEvent(new Event('calendarEventsUpdated'));
+      window.EventBus?.dispatchEvent(new CustomEvent('calendarEventsUpdated', { detail: { source: 'cloud-sync' } }));
     }
     if ('adhd-tool-routines' in updates || 'adhd-routine-runs' in updates) {
-      window.dispatchEvent(new Event('routinesChanged'));
+      window.dispatchEvent(new CustomEvent('routinesChanged', { detail: { source: 'cloud-sync' } }));
       window.dispatchEvent(new Event('routinePlayerChanged'));
     }
     if ('adhd-tools-config' in updates) {
@@ -227,12 +227,22 @@
     }
   }
 
+  function hasUnpushedLocalChanges() {
+    const last = lastLocalPush();
+    if (!last) return true;
+    const log = window.getStorageLog?.() || {};
+    return Object.values(log).some(ts => {
+      const t = Date.parse(ts);
+      return Number.isFinite(t) && t > last;
+    });
+  }
+
   // Automatic push: backup to Drive shortly after local changes or if older than 24h.
   async function maybeAutoBackup() {
     if (inFlight) return;
     if (!window.GoogleAuth?.getClientId()) return;
     if (!autoSyncEnabled()) return;
-    if (!localChanges && Date.now() - lastLocalPush() < AUTO_BACKUP_INTERVAL_MS) return;
+    if (!localChanges && !hasUnpushedLocalChanges() && Date.now() - lastLocalPush() < AUTO_BACKUP_INTERVAL_MS) return;
     // Pull any newer remote state first so we merge before pushing our changes
     await maybeAutoPull();
     if (inFlight) return;
@@ -345,7 +355,14 @@
       if (e?.detail?.source === 'cloud-sync') return;
       notifyLocalChange();
     });
-    window.addEventListener('routinesChanged', () => notifyLocalChange());
+    window.EventBus?.addEventListener('calendarEventsUpdated', (e) => {
+      if (e?.detail?.source === 'cloud-sync') return;
+      notifyLocalChange();
+    });
+    window.addEventListener('routinesChanged', (e) => {
+      if (e?.detail?.source === 'cloud-sync') return;
+      notifyLocalChange();
+    });
   });
 
   window.DriveSync = {

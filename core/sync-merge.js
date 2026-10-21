@@ -83,15 +83,60 @@ function itemIdentity(key, item) {
   if (!item) return null;
   if (typeof item === 'string') return item;
   if (typeof item === 'object') {
+    if (key === 'adhd-calendar-events' && (item.calendarInstanceId || item.uid || item.calendarUid)) {
+      return `cal:${item.calendarInstanceId || item.calendarUid || item.uid}:${item.instanceStart || item.start || ''}`;
+    }
     if (item.id) return `id:${item.id}`;
     if (item.hash) return `id:${item.hash}`;
-    if (key === 'adhd-calendar-events' && (item.calendarInstanceId || item.uid)) {
-      return `cal:${item.calendarInstanceId || item.uid}:${item.start || ''}`;
-    }
     if (item.text) return `text:${item.text}`;
     if (item.name) return `name:${item.name}`;
   }
   return null;
+}
+
+function isSameCalendarEvent(a, b) {
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (a.calendarInstanceId && b.calendarInstanceId && a.calendarInstanceId === b.calendarInstanceId) return true;
+  const uidA = a.calendarUid || a.uid;
+  const uidB = b.calendarUid || b.uid;
+  if (uidA && uidB && uidA === uidB) {
+    const startA = a.instanceStart || a.start || '';
+    const startB = b.instanceStart || b.start || '';
+    if (!startA || !startB || startA === startB) return true;
+  }
+  const idA = a.id || a.hash;
+  const idB = b.id || b.hash;
+  if (idA && idB && idA === idB) return true;
+  const titleA = a.title || a.rawTitle || '';
+  const titleB = b.title || b.rawTitle || '';
+  const instA = a.instanceStart || a.start || '';
+  const instB = b.instanceStart || b.start || '';
+  if (titleA && instA && titleA === titleB && instA === instB) return true;
+  return false;
+}
+
+function preferCalendarEvent(a, b) {
+  const overrideA = Boolean(a?.localOverride || a?.notATask);
+  const overrideB = Boolean(b?.localOverride || b?.notATask);
+  if (overrideA !== overrideB) return overrideB ? b : a;
+  const tsA = itemTimestamp(a);
+  const tsB = itemTimestamp(b);
+  if (tsA !== tsB) return tsB > tsA ? b : a;
+  return a;
+}
+
+function deduplicateCalendarEvents(list) {
+  const out = [];
+  list.forEach(ev => {
+    if (!ev || typeof ev !== 'object') return;
+    const idx = out.findIndex(existing => isSameCalendarEvent(existing, ev));
+    if (idx === -1) {
+      out.push(ev);
+    } else {
+      out[idx] = preferCalendarEvent(out[idx], ev);
+    }
+  });
+  return out;
 }
 
 export function mergeArrayKey(key, importedVal, existingVal, context = {}) {
@@ -103,6 +148,50 @@ export function mergeArrayKey(key, importedVal, existingVal, context = {}) {
     updated: 0,
     conflicts: [],
   };
+
+  if (key === 'adhd-calendar-events') {
+    const dedupedExisting = deduplicateCalendarEvents(existingVal);
+    const dedupedImported = deduplicateCalendarEvents(importedVal);
+    result.merged = [...dedupedExisting];
+    if (dedupedExisting.length !== existingVal.length || !isSameContent(dedupedExisting, existingVal)) {
+      result.updated += 1;
+    }
+    dedupedImported.forEach(importedItem => {
+      const idx = result.merged.findIndex(e => isSameCalendarEvent(e, importedItem));
+      if (idx === -1) {
+        result.merged.push(importedItem);
+        result.added += 1;
+        return;
+      }
+      const conflict = result.merged[idx];
+      if (isSameContent(conflict, importedItem)) return;
+      const overrideImp = Boolean(importedItem?.localOverride || importedItem?.notATask);
+      const overrideEx = Boolean(conflict?.localOverride || conflict?.notATask);
+      if (overrideImp !== overrideEx) {
+        if (overrideImp) {
+          result.merged[idx] = importedItem;
+          result.updated += 1;
+        }
+        return;
+      }
+      const importedTs = itemTimestamp(importedItem);
+      const existingTs = itemTimestamp(conflict);
+      if ((importedTs > 0 || existingTs > 0) && importedTs !== existingTs) {
+        if (importedTs > existingTs) {
+          result.merged[idx] = importedItem;
+          result.updated += 1;
+        }
+        return;
+      }
+      if (importedKeyTs > 0 && existingKeyTs > 0 && importedKeyTs !== existingKeyTs && overrideImp) {
+        if (importedKeyTs > existingKeyTs) {
+          result.merged[idx] = importedItem;
+          result.updated += 1;
+        }
+      }
+    });
+    return result;
+  }
 
   if (isSameContent(existingVal, importedVal)) {
     return result;

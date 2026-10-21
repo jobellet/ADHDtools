@@ -47,7 +47,7 @@ function generateHash({ user, name, createdAt, seed }) {
 // all-day items must never book time.
 export function isPassiveOrAllDay(task) {
   if (!task) return false;
-  if (task.isAllDay) return true;
+  if (task.isAllDay || task.notATask) return true;
   if (typeof task.plannerDate === 'string' && task.plannerDate.length === 10 && Number(task.durationMinutes) >= 12 * 60) return true;
   return Boolean(task.isCalendarEvent && task.isActionable === false);
 }
@@ -115,10 +115,11 @@ export function createTask(raw = {}, overrides = {}) {
 }
 
 export function updateTask(task, updates) {
-  const next = { ...task, ...updates, createdAt: task.createdAt || new Date().toISOString(), hash: task.hash, id: task.id };
+  const updatedAt = updates?.updatedAt || new Date().toISOString();
+  const next = { ...task, ...updates, updatedAt, createdAt: task.createdAt || new Date().toISOString(), hash: task.hash, id: task.id };
   // Keep fields the model does not normalize (notes, category, snoozedUntil…);
   // normalized fields (duration, importance, deadline…) come from createTask.
-  return { ...next, ...createTask(next, {}) };
+  return { ...next, ...createTask(next, {}), updatedAt };
 }
 
 export function markTaskCompleted(task, completedAt = new Date().toISOString()) {

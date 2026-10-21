@@ -49,13 +49,16 @@
     else if (hasFlexibleTag) ev.isFixed = false;
     ev.title = stripTagsFromTitle(ev.rawTitle, [fixedTag, flexibleTag]);
 
-    if (!ev.id) ev.id = window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now();
     ev.calendarUid = ev.calendarUid || ev.uid || ev.id || null;
     ev.instanceStart = ev.instanceStart || ev.start || null;
     if (!ev.calendarInstanceId && ev.calendarUid && ev.instanceStart) {
       ev.calendarInstanceId = `${ev.calendarUid}:${ev.instanceStart}`;
     }
     if (!ev.uid && ev.calendarUid) ev.uid = ev.calendarUid;
+    if (!ev.id) {
+      ev.id = ev.calendarInstanceId || ev.uid || (window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now());
+    }
+    if (!ev.calendarUid) ev.calendarUid = ev.id;
     return ev;
   }
 
@@ -151,6 +154,7 @@
       ev.end = end.toISOString().slice(0, 16);
     }
     ev.localOverride = true;
+    ev.updatedAt = new Date().toISOString();
     normalizeEvent(ev);
   }
 
@@ -158,6 +162,7 @@
   // (calendarInstanceId, uid or id, in that order).
   function findEventByHash(hash) {
     if (!hash) return null;
+    if (!events.length) events = loadEvents();
     return events.find(ev => [ev.calendarInstanceId, ev.uid, ev.id].includes(hash)) || null;
   }
 
@@ -187,6 +192,7 @@
     ev.start = naive(start);
     if (end) ev.end = naive(end);
     ev.localOverride = true;
+    ev.updatedAt = new Date().toISOString();
     normalizeEvent(ev);
     saveEvents(events);
     render();
@@ -201,6 +207,7 @@
     ev.isFixed = false;
     ev.notATask = true;
     ev.localOverride = true;
+    ev.updatedAt = new Date().toISOString();
     normalizeEvent(ev);
     saveEvents(events);
     render();
@@ -235,6 +242,7 @@
     ev.end = newEnd;
     if (!ev.instanceStart && previousStart) ev.instanceStart = previousStart;
     ev.localOverride = true;
+    ev.updatedAt = new Date().toISOString();
     normalizeEvent(ev);
     saveEvents(events);
     render();
@@ -338,7 +346,21 @@
   function loadEvents() {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-      return removeDuplicateEvents(stored.map(normalizeEvent));
+      let stampedOverride = false;
+      const normalized = stored.map(raw => {
+        const ev = normalizeEvent(raw);
+        if (ev && (ev.localOverride || ev.notATask) && !ev.updatedAt) {
+          ev.localOverride = true;
+          ev.updatedAt = new Date().toISOString();
+          stampedOverride = true;
+        }
+        return ev;
+      });
+      const deduped = removeDuplicateEvents(normalized);
+      if (stampedOverride || deduped.length !== stored.length) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
+      }
+      return deduped;
     } catch {
       return [];
     }
@@ -381,13 +403,26 @@
   }
 
   function removeDuplicateEvents(evts) {
-    const seen = new Set();
-    return evts.filter(ev => {
-      const key = `${ev.title}|${ev.start}|${ev.end}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+    const byKey = new Map();
+    evts.forEach(ev => {
+      if (!ev) return;
+      const key = ev.calendarInstanceId || `${ev.title}|${ev.start}|${ev.end}`;
+      const existing = byKey.get(key);
+      if (!existing) {
+        byKey.set(key, ev);
+        return;
+      }
+      const overrideNew = Boolean(ev.localOverride || ev.notATask);
+      const overrideOld = Boolean(existing.localOverride || existing.notATask);
+      if (overrideNew && !overrideOld) {
+        byKey.set(key, ev);
+      } else if (overrideNew === overrideOld) {
+        const tsNew = Date.parse(ev.updatedAt || '') || 0;
+        const tsOld = Date.parse(existing.updatedAt || '') || 0;
+        if (tsNew > tsOld) byKey.set(key, ev);
+      }
     });
+    return Array.from(byKey.values());
   }
 
   function mergeEventsPreserveOverrides(existing, incoming) {
@@ -720,6 +755,7 @@
     const cfg = window.ConfigManager?.getConfig?.() || {};
     const fixedTag = cfg.fixedTag || '[FIX]';
     const flexibleTag = cfg.flexibleTag || '[FLEX]';
+    let anyChanged = false;
 
     importedEvents.forEach(ev => {
       const start = ev.start || ev.instanceStart;
@@ -755,9 +791,22 @@
         isAllDay
       };
       if (deleted.has(hash)) return;
+      const existing = window.TaskStore.getTaskByHash?.(hash);
+      if (existing
+        && existing.name === task.name
+        && existing.plannerDate === task.plannerDate
+        && existing.deadline === task.deadline
+        && existing.durationMinutes === task.durationMinutes
+        && existing.isFixed === task.isFixed
+        && Boolean(existing.isAllDay) === Boolean(task.isAllDay)) {
+        return;
+      }
       window.TaskStore.upsertTaskByHash(hash, task);
+      anyChanged = true;
     });
-    window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    if (anyChanged) {
+      window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    }
   }
 
   // Public API so other modules (e.g. Google Calendar OAuth sync) can feed
@@ -771,12 +820,16 @@
     markEventPassive,
     ingestExternalEvents(rawEvents) {
       if (!Array.isArray(rawEvents) || rawEvents.length === 0) return 0;
+      if (!events.length) events = loadEvents();
+      const prevJson = JSON.stringify(events);
       const normalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
       const overridden = new Set(
         events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
       );
       events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
-      saveEvents(events);
+      if (JSON.stringify(events) !== prevJson) {
+        saveEvents(events);
+      }
       // Only events that survived the merge get a TaskStore copy, so a locally
       // moved event does not come back as a copy at its original time.
       convertEventsToTasks(normalized.filter(ev => !overridden.has(ev.calendarUid || ev.uid || ev.id)));
