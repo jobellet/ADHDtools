@@ -84,6 +84,17 @@ A native app adds system notifications when a timer ends, a menu-bar timer, a sc
 
 On Windows and Linux, install [the Tauri prerequisites](https://tauri.app/start/prerequisites/), then run `npm ci && npm run desktop:build`; the app is created under `src-tauri/target/release/bundle/`.
 
+## 📱 Android app (optional, free, no Play Store)
+
+The Android app rings like an alarm clock when a task, routine or event starts or ends, **even with the screen off or the app closed**. It shows the running timer in the notification shade and keeps you signed in to Google. You build it on your computer and copy it to your phone:
+
+```bash
+npm ci
+npm run android:build
+```
+
+The app is then in `dist-android/ADHD-Tools.apk`. Setup, install on the phone and updates: [Android guide](docs/android.md).
+
 ## 🤖 Talk to your planner with your AI assistant (MCP)
 
 Ask your AI assistant (Mistral, Claude, or any app that supports MCP) to *"split my tax report into small steps"* or *"find an hour for sport tomorrow"*. The changes show up in the app. Your own Google Drive is the storage: no server of ours, no ngrok, no Tailscale.

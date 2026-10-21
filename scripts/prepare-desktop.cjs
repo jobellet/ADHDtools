@@ -1,11 +1,12 @@
 // Copies only the web app into dist-desktop/ so the desktop (Tauri) build does not bundle
 // node_modules, Rust build output or tests. Called by tauri.conf.json (beforeBuildCommand).
+// The file list is scripts/web-assets.json, shared with the Android build (android/app/build.gradle).
 const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, 'dist-desktop');
-const include = ['index.html', '404.html', 'core', 'features', 'services', 'shell', 'styles', 'icons', 'sounds'];
+const include = require('./web-assets.json');
 
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });

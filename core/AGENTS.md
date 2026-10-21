@@ -13,7 +13,7 @@ so classic scripts can use it. Data model details: [docs/task-model.md](../docs/
 | `urgency-helpers.js` | ES module | Urgency smoothing + skip ledger · `window.UrgencyHelpers` | `tests/urgency-helpers.test.js` |
 | `duration-learning.js` | ES module | `recordTaskDuration`, `getEstimatedDuration` · `window.DurationLearning` | `tests/duration-learning.test.js` |
 | `sync-merge.js` | ES module | `mergeBackup`, `mergeArrayKey` (loaded with `import()` by `services/data-manager.js`) | `tests/sync-merge.test.js` |
-| `now-state.js` | classic IIFE | `window.NowState`: `computeNowState`, `defaultToolFor`, `formatDuration`, `getState` | `tests/now-state.test.js` |
+| `now-state.js` | classic IIFE | `window.NowState`: `computeNowState`, `alarmPlan` (when the native apps ring), `defaultToolFor`, `formatDuration`, `getState` | `tests/now-state.test.js` |
 | `task-parser.js` | classic IIFE | `window.TaskParser`: `parse` (offline, English), `parseSmart` (AI when enabled) | `tests/task-parser.test.js` |
 | `ai-provider.js` | classic IIFE | `window.AIAssistant` (any provider, optional); `window.callGemini` legacy shim | — |
 | `user-context.js` | classic IIFE | `window.UserContext` (active user, profiles) | — |

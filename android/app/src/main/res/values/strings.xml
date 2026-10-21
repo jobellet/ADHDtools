@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ADHD Tools</string>
+    <string name="channel_alarms">Alarms</string>
+    <string name="channel_reminders">Reminders</string>
+    <string name="channel_quiet">Quiet reminders</string>
+    <string name="channel_timer">Running timer</string>
+    <string name="alarm_stop">Stop</string>
+    <string name="timer_done">Time\'s up</string>
+    <string name="saved_file">File saved</string>
+    <string name="save_failed">Could not save the file</string>
+    <string name="signin_done_title">Signed in to Google</string>
+    <string name="signin_back">Back to ADHD Tools</string>
+</resources>

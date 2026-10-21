@@ -84,6 +84,17 @@ Une application native ajoute des notifications système à la fin d’un minute
 
 Sous Windows et Linux, installez [les prérequis Tauri](https://tauri.app/start/prerequisites/), puis lancez `npm ci && npm run desktop:build` ; l’application est créée dans `src-tauri/target/release/bundle/`.
 
+## 📱 Application Android (facultative, gratuite, sans Play Store)
+
+L’application Android sonne comme un réveil quand une tâche, une routine ou un événement commence ou se termine, **même écran éteint ou application fermée**. Elle affiche le minuteur en cours dans les notifications et garde votre connexion Google. Vous la créez sur votre ordinateur, puis vous la copiez sur votre téléphone :
+
+```bash
+npm ci
+npm run android:build
+```
+
+L’application est alors dans `dist-android/ADHD-Tools.apk`. Préparation, installation sur le téléphone et mises à jour : [guide Android](docs/android.md) (en anglais).
+
 ## 🤖 Parlez à votre planning avec votre assistant IA (MCP)
 
 Demandez à votre assistant IA (Mistral, Claude, ou toute application compatible MCP) de *« découper ma déclaration d’impôts en petites étapes »* ou *« trouver une heure pour le sport demain »*. Les changements apparaissent dans l’application. Votre propre Google Drive sert de stockage : pas de serveur à nous, pas de ngrok, pas de Tailscale.

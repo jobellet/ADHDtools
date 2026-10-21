@@ -118,9 +118,11 @@ You can let an AI assistant (Mistral, Claude…) read your day, add tasks, give 
 
 Pick English, Deutsch, Français or Español in **More** (flags at the bottom). The Now view, the planner, Add and the routine player follow the language. Some older tools (Pomodoro, Habits, Rewards…) are still partly in English. Without an AI provider, write new tasks in English (the offline parser only understands English); with AI you can write in your language.
 
-## Native Desktop & Mobile App (Tauri)
+## Desktop and Android apps
 
-If you run the app inside the native Tauri wrapper (`npm run desktop` or `npm run desktop:install` on macOS; install steps in the [README](../README.md)):
+The Android app ([android.md](android.md)) rings task, routine and event alarms like an alarm clock, even with the screen off or the app closed; it shows the running timer in the notification shade and stays signed in to Google.
+
+If you run the app inside the native desktop app (`npm run desktop` or `npm run desktop:install` on macOS; install steps in the [README](../README.md)):
 - **Background Timer Notifications:** You get system notifications when timers or routines finish, even if the app is in the background.
 - **Screen Wake Lock:** While you are in a Focus or Routine session, your screen stays awake automatically.
 - **Floating Mini-player:** On desktop, you can switch to a floating mini-player via Picture-in-Picture mode to keep your current task visible over other windows.

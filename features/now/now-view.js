@@ -781,6 +781,7 @@
 
       if (state.current) pinIfFlexible(state.current);
       maybeAutoStartRoutine();
+      syncNativeAlarms(new Date());
 
       const key = [
         state.mode,
@@ -854,6 +855,35 @@
         lastMode = state.mode;
         window.AppRouter?.autoRoute?.(state);
       }
+    }
+
+    // Hand the coming alarms to the native app, which rings them even when this page sleeps:
+    // today's schedule, then tomorrow's fixed items (routines, events, tasks with a time).
+    function syncNativeAlarms(now) {
+      const scheduler = window.UnifiedScheduler;
+      if (!window.AttentionService?.isNative?.() || !window.NowState?.alarmPlan || !scheduler) return;
+      let slots = [];
+      try {
+        slots = scheduler.getTodaySchedule(now);
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const atMinute = minutes => new Date(tomorrow.getTime() + minutes * 60000);
+        scheduler.getBusyBlocks(scheduler.localDateString(tomorrow)).forEach(block => slots.push({
+          task: { hash: `${block.kind}:${block.id}`, name: block.name },
+          startTime: atMinute(block.start),
+          endTime: atMinute(block.end),
+        }));
+      } catch (err) {
+        console.warn('Now view: alarms for the native app unavailable', err);
+        return;
+      }
+      window.AttentionService.scheduleAlarms(window.NowState.alarmPlan({ slots, now }).map(alarm => ({
+        id: alarm.id,
+        at: alarm.at,
+        title: t(alarm.kind === 'start' ? 'now.alarm.startTitle' : 'now.alarm.title'),
+        body: taskName(alarm.slot.task),
+      })));
     }
 
     function maybeAutoStartRoutine() {

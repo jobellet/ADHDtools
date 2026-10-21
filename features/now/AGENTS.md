@@ -15,6 +15,8 @@ Read first: [../AGENTS.md](../AGENTS.md). Logic lives in `core/now-state.js` (mo
 - **Side effects:** pins the current auto-placed task (`autoPinned`); auto-starts a routine if
   `contextAutoSwitch`; calls `AppRouter.autoRoute(state)` when the mode changes;
   uses `AttentionService` to hold wake locks, trigger transition notifications, provide a mini-player (PiP), and update the tray/document title countdown.
+- **Native alarms:** `syncNativeAlarms()` (in `computeState()`) sends today's starts/ends and tomorrow's fixed items
+  (`NowState.alarmPlan`) to `AttentionService.scheduleAlarms`, so the Android app rings them with the screen off.
 - **Listeners:** `native:quick-capture` in `quick-capture.js` to auto-focus the input field when launched via the global shortcut.
 - **Actions:** event → `CalendarTool.postponeEvent` (+15/+60 min, refused on conflict) / `markEventPassive`
   (“it’s an event, not a task”: stays in the calendar, frees its time); Done → `TaskStore.markComplete`;
