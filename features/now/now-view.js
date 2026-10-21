@@ -39,6 +39,14 @@
     let miniPlayerUpdate = null;
     let lastSlotKey = null;
     let lastDoingSlot = null;
+    let suppressAlarmUntil = 0;
+    let lastAlarmedKey = null;
+
+    function registerUserAction() {
+      suppressAlarmUntil = Date.now() + 5000;
+      window.AttentionService?.stopAlarm?.();
+      lastDoingSlot = null;
+    }
 
     const t = (key, vars) => (window.I18n ? window.I18n.t(key, vars) : key);
     const locale = () => document.documentElement.lang || undefined;
@@ -154,6 +162,7 @@
     }
 
     function completeTask(slot) {
+      registerUserAction();
       if (!slot?.task?.hash || !window.TaskStore?.markComplete) return;
       window.TaskStore.markComplete(slot.task.hash);
       window.DataManager?.showNotification?.(t('now.toast.done', { name: taskName(slot.task) }));
@@ -161,6 +170,7 @@
     }
 
     function snoozeTask(slot, minutes) {
+      registerUserAction();
       window.TaskStore?.updateTaskByHash(slot.task.hash, {
         plannerDate: null,
         autoPinned: false,
@@ -172,6 +182,7 @@
     }
 
     function moveToTomorrow(slot) {
+      registerUserAction();
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       const dateStr = window.UnifiedScheduler.localDateString(tomorrow);
@@ -207,6 +218,7 @@
     }
 
     function skipRoutineToday(slot) {
+      registerUserAction();
       try {
         const runs = JSON.parse(localStorage.getItem('adhd-routine-runs') || '{}');
         runs[slot.task.routineId] = window.UnifiedScheduler.localDateString(new Date());
@@ -220,6 +232,7 @@
     // An event blocks its time like a task, but it is not work: the user may
     // want to push it back or to keep tasks running during it.
     function postponeEvent(slot, minutes) {
+      registerUserAction();
       const newStart = new Date(Date.now() + minutes * 60000);
       const moved = window.CalendarTool?.postponeEvent?.(slot.task.hash, newStart);
       if (moved) {
@@ -231,6 +244,7 @@
     }
 
     function markEventNotATask(slot) {
+      registerUserAction();
       let changed = window.CalendarTool?.markEventPassive?.(slot?.task?.hash);
       if (!changed && slot?.task?.hash && window.TaskStore?.updateTaskByHash) {
         changed = window.TaskStore.updateTaskByHash(slot.task.hash, {
@@ -615,34 +629,45 @@
       tick();
 
       const slotKey = state.current ? state.current.task.hash : (state.next ? state.next.task.hash : null);
-      if (lastSlotKey && slotKey !== lastSlotKey) {
+      const isSuppressed = Date.now() < suppressAlarmUntil;
+      if (lastSlotKey && slotKey !== lastSlotKey && !isSuppressed) {
         if (state.mode === 'doing' && state.current) {
           const startingSlot = state.current;
-          window.AttentionService?.triggerTaskAlarm?.({
-            task: startingSlot.task,
-            actionType: 'start',
-            title: t('now.alarm.startTitle'),
-            body: taskName(startingSlot.task),
-            onStart: () => {
-              window.switchTool?.('home');
-            },
-            onSnooze: (mins) => snoozeTask(startingSlot, mins),
-          });
+          const nowMs = Date.now();
+          const startMs = startingSlot.startTime ? new Date(startingSlot.startTime).getTime() : nowMs;
+          const isJustStarting = Math.abs(nowMs - startMs) < 2 * 60 * 1000;
+          const alarmKey = `start:${startingSlot.task.hash}`;
+          if (isJustStarting && lastAlarmedKey !== alarmKey) {
+            lastAlarmedKey = alarmKey;
+            window.AttentionService?.triggerTaskAlarm?.({
+              task: startingSlot.task,
+              actionType: 'start',
+              title: t('now.alarm.startTitle'),
+              body: taskName(startingSlot.task),
+              onStart: () => {
+                window.switchTool?.('home');
+              },
+              onSnooze: (mins) => snoozeTask(startingSlot, mins),
+            });
+          }
         } else if (state.mode === 'break' || state.mode === 'free') {
-          if (lastDoingSlot?.task) {
+          if (lastDoingSlot?.task && !lastDoingSlot.task.completed) {
             const finishedSlot = lastDoingSlot;
-            window.AttentionService?.triggerTaskAlarm?.({
-              task: finishedSlot.task,
-              title: t('now.notify.transition'),
-              body: taskName(finishedSlot.task),
-              onDone: () => completeTask(finishedSlot),
-              onSnooze: (mins) => snoozeTask(finishedSlot, mins),
-            });
-          } else {
-            window.AttentionService?.triggerTaskAlarm?.({
-              title: t('now.notify.transition'),
-              body: '',
-            });
+            const nowMs = Date.now();
+            const endMs = finishedSlot.endTime ? new Date(finishedSlot.endTime).getTime() : nowMs;
+            const reachedEnd = (nowMs >= endMs - 15000);
+            const alarmKey = `finish:${finishedSlot.task.hash}`;
+            if (reachedEnd && lastAlarmedKey !== alarmKey) {
+              lastAlarmedKey = alarmKey;
+              window.AttentionService?.triggerTaskAlarm?.({
+                task: finishedSlot.task,
+                actionType: 'finish',
+                title: t('now.alarm.title'),
+                body: taskName(finishedSlot.task),
+                onDone: () => completeTask(finishedSlot),
+                onSnooze: (mins) => snoozeTask(finishedSlot, mins),
+              });
+            }
           }
         }
       }

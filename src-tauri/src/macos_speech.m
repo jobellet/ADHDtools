@@ -7,10 +7,29 @@
 
 void macos_bring_app_to_front(void) {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [NSApp activateIgnoringOtherApps:YES];
-        for (NSWindow *window in [NSApp windows]) {
-            [window makeKeyAndOrderFront:nil];
-            [window deminiaturize:nil];
+        @try {
+            [NSApp activateIgnoringOtherApps:YES];
+            NSWindow *target = [NSApp mainWindow];
+            if (!target) {
+                target = [NSApp keyWindow];
+            }
+            if (!target) {
+                for (NSWindow *w in [NSApp windows]) {
+                    if ([w canBecomeKeyWindow]) {
+                        target = w;
+                        break;
+                    }
+                }
+            }
+            if (target) {
+                if ([target isMiniaturized]) {
+                    [target deminiaturize:nil];
+                }
+                [target makeKeyAndOrderFront:nil];
+                [target orderFrontRegardless];
+            }
+        } @catch (NSException *e) {
+            NSLog(@"[ADHDtools] Exception in macos_bring_app_to_front: %@", e);
         }
     });
 }
