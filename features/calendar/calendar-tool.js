@@ -812,6 +812,13 @@
   // Public API so other modules (e.g. Google Calendar OAuth sync) can feed
   // events through the same normalize/merge/task pipeline as ICS imports.
   window.CalendarTool = {
+    deleteEvent(idOrHash) {
+      if (!idOrHash) return;
+      if (!events.length) events = loadEvents();
+      events = events.filter(ev => ev.id !== idOrHash && ev.calendarEventHash !== idOrHash && ev.hash !== idOrHash);
+      saveEvents(events);
+      render();
+    },
     isPassiveEvent(task) {
       return !!(task && task.isCalendarEvent && task.isActionable === false);
     },

@@ -163,7 +163,10 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         el.title = `${item.title} · ${time.textContent}`;
 
         if (item.kind === 'routine') {
-            el.addEventListener('click', () => window.switchTool?.('routine'));
+            el.addEventListener('click', () => {
+                window.switchTool?.('routine');
+                if (item.task?.routineId) window.RoutinePlayer?.edit?.(item.task.routineId);
+            });
         } else if (item.task) {
             el.classList.add('task-event');
             el.addEventListener('click', () => openModal(item.task));
@@ -186,6 +189,27 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
                 window.dispatchEvent(new Event('scheduleNeedsRefresh'));
             });
             el.appendChild(doneBtn);
+
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'event-delete-btn';
+            const delLabel = window.I18n ? window.I18n.t('plan.delete') : 'Delete';
+            delBtn.title = delLabel;
+            delBtn.setAttribute('aria-label', `${delLabel}: ${item.title}`);
+            delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            delBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                const id = item.task.hash || item.task.id;
+                if (!id) return;
+                if (window.TaskStore?.deleteTasks) window.TaskStore.deleteTasks([id]);
+                else window.DataManager?.deleteTask?.(id);
+                if (window.I18n) {
+                    window.DataManager?.showNotification?.(window.I18n.t('plan.deleted', { n: 1 }), 'info');
+                }
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+            });
+            el.appendChild(delBtn);
             if (!item.task._continuation) {
                 const resizer = document.createElement('div');
                 resizer.className = 'event-resizer';

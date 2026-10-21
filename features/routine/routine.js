@@ -1635,6 +1635,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const routine = routines.find(r => r.id === routineId);
             if (routine) openRoutineEditModal(routine);
         },
+        deleteRoutine: (routineId) => {
+            if (!routineId) return;
+            routines = routines.filter(r => r.id !== routineId);
+            saveRoutines();
+            try {
+                const runs = JSON.parse(localStorage.getItem('adhd-routine-runs') || '{}');
+                delete runs[routineId];
+                if (runs._active?.routineId === routineId) delete runs._active;
+                localStorage.setItem('adhd-routine-runs', JSON.stringify(runs));
+            } catch (_) {}
+            if (selectedRoutineId === routineId) selectedRoutineId = null;
+            updateSettingsRoutineSelect();
+            window.dispatchEvent(new CustomEvent('routinesChanged'));
+            window.dispatchEvent(new CustomEvent('scheduleNeedsRefresh'));
+        },
+        unscheduleRoutine: (routineId) => {
+            if (!routineId) return;
+            const r = routines.find(item => item.id === routineId);
+            if (!r) return;
+            r.weekDays = [];
+            r.startTime = '';
+            saveRoutines();
+            updateSettingsRoutineSelect();
+            window.dispatchEvent(new CustomEvent('routinesChanged'));
+            window.dispatchEvent(new CustomEvent('scheduleNeedsRefresh'));
+        },
     };
 
     // Keep in sync when another tab or a sync pulls new routines.
