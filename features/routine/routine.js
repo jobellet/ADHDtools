@@ -1635,27 +1635,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const routine = routines.find(r => r.id === routineId);
             if (routine) openRoutineEditModal(routine);
         },
-        deleteRoutine: (routineId) => {
-            if (!routineId) return;
-            routines = routines.filter(r => r.id !== routineId);
+        deleteRoutine: (routineId, name) => {
+            loadRoutines();
+            routines = routines.filter(r => {
+                if (!r) return false;
+                if (routineId && (String(r.id) === String(routineId) || r.id == routineId)) return false;
+                if (name && r.name && r.name.trim().toLowerCase() === name.trim().toLowerCase()) return false;
+                return true;
+            });
             saveRoutines();
             try {
                 const runs = JSON.parse(localStorage.getItem('adhd-routine-runs') || '{}');
-                delete runs[routineId];
-                if (runs._active?.routineId === routineId) delete runs._active;
+                if (routineId) delete runs[routineId];
+                if (runs._active && (runs._active.routineId == routineId || runs._active.name === name)) {
+                    delete runs._active;
+                }
                 localStorage.setItem('adhd-routine-runs', JSON.stringify(runs));
             } catch (_) {}
-            if (selectedRoutineId === routineId) selectedRoutineId = null;
+            if (selectedRoutineId && (String(selectedRoutineId) === String(routineId) || selectedRoutineId == routineId)) {
+                selectedRoutineId = null;
+            }
             updateSettingsRoutineSelect();
             window.dispatchEvent(new CustomEvent('routinesChanged'));
             window.dispatchEvent(new CustomEvent('scheduleNeedsRefresh'));
         },
-        unscheduleRoutine: (routineId) => {
-            if (!routineId) return;
-            const r = routines.find(item => item.id === routineId);
-            if (!r) return;
-            r.weekDays = [];
-            r.startTime = '';
+        unscheduleRoutine: (routineId, name) => {
+            loadRoutines();
+            routines.forEach(r => {
+                if (!r) return;
+                const matchId = routineId && (String(r.id) === String(routineId) || r.id == routineId);
+                const matchName = name && r.name && r.name.trim().toLowerCase() === name.trim().toLowerCase();
+                if (matchId || matchName) {
+                    r.weekDays = [];
+                    r.startTime = '';
+                }
+            });
             saveRoutines();
             updateSettingsRoutineSelect();
             window.dispatchEvent(new CustomEvent('routinesChanged'));

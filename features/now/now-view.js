@@ -263,36 +263,113 @@
 
     function deleteTask(slot) {
       registerUserAction();
-      const id = slot?.task?.hash || slot?.task?.id;
-      if (!id) return;
-      if (slot?.task?.source === 'routine' || slot?.task?.routineId) {
-        window.RoutinePlayer?.deleteRoutine?.(slot.task.routineId);
-        window.DataManager?.showNotification?.(t('now.routine.deleted', { name: taskName(slot.task) }));
-      } else if (slot?.task?.isCalendarEvent) {
+      el.skipChoices.hidden = true;
+      const task = slot?.task;
+      const id = task?.hash || task?.id;
+      const routineId = task?.routineId || (typeof task?.hash === 'string' && task.hash.startsWith('routine:') ? task.hash.split(':')[1] : null);
+      const name = taskName(task);
+
+      if (task?.source === 'routine' || routineId) {
+        window.RoutinePlayer?.deleteRoutine?.(routineId, name);
+        try {
+          const raw = localStorage.getItem('adhd-tool-routines');
+          if (raw) {
+            let list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+              list = list.filter(r => {
+                if (!r) return false;
+                if (routineId && (String(r.id) === String(routineId) || r.id == routineId)) return false;
+                if (name && r.name && r.name.trim().toLowerCase() === name.trim().toLowerCase()) return false;
+                return true;
+              });
+              localStorage.setItem('adhd-tool-routines', JSON.stringify(list));
+            }
+          }
+          const runsRaw = localStorage.getItem('adhd-routine-runs');
+          if (runsRaw) {
+            let runs = JSON.parse(runsRaw);
+            if (routineId) delete runs[routineId];
+            if (runs._active && (runs._active.routineId == routineId || runs._active.name === name)) {
+              delete runs._active;
+            }
+            localStorage.setItem('adhd-routine-runs', JSON.stringify(runs));
+          }
+        } catch (e) {
+          console.error('Error removing routine from storage', e);
+        }
+        if (id) window.TaskStore?.deleteTasks?.([id]);
+        window.DataManager?.showNotification?.(t('now.routine.deleted', { name }));
+        window.dispatchEvent(new CustomEvent('routinesChanged'));
+        window.dispatchEvent(new CustomEvent('scheduleNeedsRefresh'));
+        window.EventBus?.dispatchEvent(new CustomEvent('dataChanged'));
+        refreshAll();
+        return;
+      }
+
+      if (task?.isCalendarEvent) {
         window.CalendarTool?.deleteEvent?.(id);
+        if (id) window.TaskStore?.deleteTasks?.([id]);
+        window.DataManager?.showNotification?.(t('now.event.deleted', { name }));
+      } else if (id) {
         window.TaskStore?.deleteTasks?.([id]);
-        window.DataManager?.showNotification?.(t('now.event.deleted', { name: taskName(slot.task) }));
-      } else {
-        window.TaskStore?.deleteTasks?.([id]);
-        window.DataManager?.showNotification?.(t('now.task.deleted', { name: taskName(slot.task) }));
+        window.DataManager?.showNotification?.(t('now.task.deleted', { name }));
       }
       refreshAll();
     }
 
     function unscheduleItem(slot) {
       registerUserAction();
-      const id = slot?.task?.hash || slot?.task?.id;
-      if (!id) return;
-      if (slot?.task?.source === 'routine' || slot?.task?.routineId) {
-        window.RoutinePlayer?.unscheduleRoutine?.(slot.task.routineId);
-        window.DataManager?.showNotification?.(t('now.routine.unscheduled', { name: taskName(slot.task) }));
-      } else {
+      el.skipChoices.hidden = true;
+      const task = slot?.task;
+      const id = task?.hash || task?.id;
+      const routineId = task?.routineId || (typeof task?.hash === 'string' && task.hash.startsWith('routine:') ? task.hash.split(':')[1] : null);
+      const name = taskName(task);
+
+      if (task?.source === 'routine' || routineId) {
+        window.RoutinePlayer?.unscheduleRoutine?.(routineId, name);
+        try {
+          const raw = localStorage.getItem('adhd-tool-routines');
+          if (raw) {
+            let list = JSON.parse(raw);
+            if (Array.isArray(list)) {
+              list.forEach(r => {
+                if (!r) return;
+                const matchId = routineId && (String(r.id) === String(routineId) || r.id == routineId);
+                const matchName = name && r.name && r.name.trim().toLowerCase() === name.trim().toLowerCase();
+                if (matchId || matchName) {
+                  r.weekDays = [];
+                  r.startTime = '';
+                }
+              });
+              localStorage.setItem('adhd-tool-routines', JSON.stringify(list));
+            }
+          }
+          const todayStr = window.UnifiedScheduler?.localDateString?.(new Date()) || new Date().toISOString().slice(0, 10);
+          const runsRaw = localStorage.getItem('adhd-routine-runs');
+          let runs = runsRaw ? JSON.parse(runsRaw) : {};
+          if (routineId) runs[routineId] = todayStr;
+          if (runs._active && (runs._active.routineId == routineId || runs._active.name === name)) {
+            delete runs._active;
+          }
+          localStorage.setItem('adhd-routine-runs', JSON.stringify(runs));
+        } catch (e) {
+          console.error('Error unscheduling routine', e);
+        }
+        window.DataManager?.showNotification?.(t('now.routine.unscheduled', { name }));
+        window.dispatchEvent(new CustomEvent('routinesChanged'));
+        window.dispatchEvent(new CustomEvent('scheduleNeedsRefresh'));
+        window.EventBus?.dispatchEvent(new CustomEvent('dataChanged'));
+        refreshAll();
+        return;
+      }
+
+      if (id) {
         window.TaskStore?.updateTaskByHash?.(id, {
           plannerDate: null,
           isFixed: false,
           autoPinned: false,
         });
-        window.DataManager?.showNotification?.(t('now.task.unscheduled', { name: taskName(slot.task) }));
+        window.DataManager?.showNotification?.(t('now.task.unscheduled', { name }));
       }
       refreshAll();
     }
@@ -303,9 +380,18 @@
       const label = document.createElement('p');
       label.textContent = t('now.routine.prompt');
       box.appendChild(label);
-      box.appendChild(button(t('now.routine.skipToday'), 'fa-forward', 'btn-outline', () => skipRoutineToday(slot)));
-      box.appendChild(button(t('now.routine.unschedule'), 'fa-calendar-times', 'btn-outline', () => unscheduleItem(slot)));
-      box.appendChild(button(t('now.routine.delete'), 'fa-trash-alt', 'btn-danger-outline', () => deleteTask(slot)));
+      box.appendChild(button(t('now.routine.skipToday'), 'fa-forward', 'btn-outline', () => {
+        box.hidden = true;
+        skipRoutineToday(slot);
+      }));
+      box.appendChild(button(t('now.routine.unschedule'), 'fa-calendar-times', 'btn-outline', () => {
+        box.hidden = true;
+        unscheduleItem(slot);
+      }));
+      box.appendChild(button(t('now.routine.delete'), 'fa-trash-alt', 'btn-danger-outline', () => {
+        box.hidden = true;
+        deleteTask(slot);
+      }));
       box.appendChild(button(t('now.skip.cancel'), 'fa-times', 'btn-link', () => { box.hidden = true; }));
       box.hidden = false;
     }
@@ -316,10 +402,22 @@
       const label = document.createElement('p');
       label.textContent = t('now.event.prompt');
       box.appendChild(label);
-      box.appendChild(button(t('now.event.later', { min: 15 }), 'fa-hourglass-half', 'btn-outline', () => postponeEvent(slot, 15)));
-      box.appendChild(button(t('now.event.later', { min: 60 }), 'fa-hourglass-half', 'btn-outline', () => postponeEvent(slot, 60)));
-      box.appendChild(button(t('now.event.notATask'), 'fa-calendar-day', 'btn-outline', () => markEventNotATask(slot), t('now.event.notATaskTitle')));
-      box.appendChild(button(t('now.event.delete'), 'fa-trash-alt', 'btn-danger-outline', () => deleteTask(slot)));
+      box.appendChild(button(t('now.event.later', { min: 15 }), 'fa-hourglass-half', 'btn-outline', () => {
+        box.hidden = true;
+        postponeEvent(slot, 15);
+      }));
+      box.appendChild(button(t('now.event.later', { min: 60 }), 'fa-hourglass-half', 'btn-outline', () => {
+        box.hidden = true;
+        postponeEvent(slot, 60);
+      }));
+      box.appendChild(button(t('now.event.notATask'), 'fa-calendar-day', 'btn-outline', () => {
+        box.hidden = true;
+        markEventNotATask(slot);
+      }, t('now.event.notATaskTitle')));
+      box.appendChild(button(t('now.event.delete'), 'fa-trash-alt', 'btn-danger-outline', () => {
+        box.hidden = true;
+        deleteTask(slot);
+      }));
       box.appendChild(button(t('now.skip.cancel'), 'fa-times', 'btn-link', () => { box.hidden = true; }));
       box.hidden = false;
     }
@@ -330,12 +428,30 @@
       const label = document.createElement('p');
       label.textContent = t('now.skip.prompt');
       box.appendChild(label);
-      box.appendChild(button(t('now.skip.later'), 'fa-hourglass-half', 'btn-outline', () => snoozeTask(slot, 60)));
-      box.appendChild(button(t('now.skip.tomorrow'), 'fa-calendar-plus', 'btn-outline', () => moveToTomorrow(slot)));
-      box.appendChild(button(t('now.skip.unschedule'), 'fa-calendar-times', 'btn-outline', () => unscheduleItem(slot)));
-      box.appendChild(button(t('now.skip.split'), 'fa-project-diagram', 'btn-outline', () => sendToBreakdown(slot.task)));
-      box.appendChild(button(t('now.event.notATask'), 'fa-calendar-day', 'btn-outline', () => markEventNotATask(slot), t('now.event.notATaskTitle')));
-      box.appendChild(button(t('now.skip.delete'), 'fa-trash-alt', 'btn-danger-outline', () => deleteTask(slot)));
+      box.appendChild(button(t('now.skip.later'), 'fa-hourglass-half', 'btn-outline', () => {
+        box.hidden = true;
+        snoozeTask(slot, 60);
+      }));
+      box.appendChild(button(t('now.skip.tomorrow'), 'fa-calendar-plus', 'btn-outline', () => {
+        box.hidden = true;
+        moveToTomorrow(slot);
+      }));
+      box.appendChild(button(t('now.skip.unschedule'), 'fa-calendar-times', 'btn-outline', () => {
+        box.hidden = true;
+        unscheduleItem(slot);
+      }));
+      box.appendChild(button(t('now.skip.split'), 'fa-project-diagram', 'btn-outline', () => {
+        box.hidden = true;
+        sendToBreakdown(slot.task);
+      }));
+      box.appendChild(button(t('now.event.notATask'), 'fa-calendar-day', 'btn-outline', () => {
+        box.hidden = true;
+        markEventNotATask(slot);
+      }, t('now.event.notATaskTitle')));
+      box.appendChild(button(t('now.skip.delete'), 'fa-trash-alt', 'btn-danger-outline', () => {
+        box.hidden = true;
+        deleteTask(slot);
+      }));
       box.appendChild(button(t('now.skip.cancel'), 'fa-times', 'btn-link', () => { box.hidden = true; }));
       box.hidden = false;
     }
