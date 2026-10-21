@@ -26,6 +26,7 @@ routine_running.png
 /src-tauri/gen/schemas/macOS-schema.json
 /src-tauri/gen/schemas/windows-schema.json
 /dist-desktop
+/dist-android
 
 # Private credentials and secrets
 *credentials*.json

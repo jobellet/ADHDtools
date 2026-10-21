@@ -117,6 +117,15 @@ fn native_set_keep_awake(app: AppHandle, active: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// The desktop web view keeps running in the background and rings its own alarms, so the list
+/// the web app sends is not needed here. The Android app sets real alarms with it
+/// (android/app/src/main/java/com/adhdtools/app/Alarms.java).
+#[tauri::command]
+fn native_schedule_alarms(alarms: serde_json::Value, style: Option<String>) -> Result<(), String> {
+    let _ = (alarms, style);
+    Ok(())
+}
+
 #[tauri::command]
 fn native_toggle_mini_player(app: AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
@@ -166,6 +175,7 @@ pub fn run() {
             native_stop_alarm,
             native_bring_to_front,
             native_update_tray,
+            native_schedule_alarms,
             native_set_keep_awake,
             native_toggle_mini_player,
             native_save_storage,

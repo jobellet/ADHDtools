@@ -84,6 +84,17 @@ Una aplicación nativa añade notificaciones del sistema cuando termina un tempo
 
 En Windows y Linux, instala [los requisitos de Tauri](https://tauri.app/start/prerequisites/) y ejecuta `npm ci && npm run desktop:build`; la aplicación queda en `src-tauri/target/release/bundle/`.
 
+## 📱 Aplicación Android (opcional, gratis, sin Play Store)
+
+La aplicación Android suena como un despertador cuando una tarea, rutina o evento empieza o termina, **incluso con la pantalla apagada o la aplicación cerrada**. Muestra el temporizador en curso en las notificaciones y mantiene tu sesión de Google. La creas en tu ordenador y la copias a tu teléfono:
+
+```bash
+npm ci
+npm run android:build
+```
+
+La aplicación queda en `dist-android/ADHD-Tools.apk`. Preparación, instalación en el teléfono y actualizaciones: [guía de Android](docs/android.md) (en inglés).
+
 ## 🤖 Habla con tu asistente de IA sobre tu día (MCP)
 
 Pide a tu asistente de IA (Mistral, Claude o cualquier app compatible con MCP) que *«divida mi declaración de impuestos en pasos pequeños»* o *«busque una hora para hacer deporte mañana»*. Los cambios aparecen en la app. Tu propio Google Drive es el almacenamiento: ningún servidor nuestro, sin ngrok, sin Tailscale.

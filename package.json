@@ -10,6 +10,8 @@
     "desktop": "tauri dev",
     "desktop:build": "tauri build",
     "desktop:install": "node scripts/install-desktop-mac.cjs",
+    "android:build": "node scripts/build-android.cjs",
+    "android:install": "node scripts/build-android.cjs --install",
     "mcp": "node mcp/server.js",
     "mcp:auth": "node mcp/server.js auth",
     "mcp:http": "node mcp/server.js http",

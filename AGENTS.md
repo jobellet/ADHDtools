@@ -12,6 +12,7 @@ Do not read whole folders to "get context": each `AGENTS.md` lists what is insid
 | `services/` | Storage, Google (auth, Calendar, Drive), import/export | [services/AGENTS.md](services/AGENTS.md) |
 | `features/<name>/` | One screen each: JS + CSS + `strings.js` + `AGENTS.md` | [features/AGENTS.md](features/AGENTS.md) |
 | `mcp/` | MCP server: AI assistants read the day and queue changes via Google Drive (Node only) | [mcp/AGENTS.md](mcp/AGENTS.md) |
+| `android/` | Android app (Java WebView, same web files): alarms with the screen off, Google sign-in kept | [android/AGENTS.md](android/AGENTS.md) |
 | `styles/` | Legacy shared CSS and the app shell CSS | [styles/AGENTS.md](styles/AGENTS.md) |
 | `tests/` | `node:test` unit tests (no browser) | [tests/AGENTS.md](tests/AGENTS.md) |
 | `docs/` | User guides and design docs; READMEs in 4 languages | [docs/AGENTS.md](docs/AGENTS.md) |
@@ -39,9 +40,10 @@ node mcp/server.js                  # MCP server for AI assistants (stdio); setu
 npm run mcp:check                   # test a user's MCP setup end to end (prints the fix for each problem)
 npm run desktop:install             # macOS: build + install "ADHD Tools.app" into /Applications (double-click / keep in Dock)
 npm run desktop:build               # native app (Tauri/Rust in src-tauri/); `npm run desktop` = dev window. Web assets are copied by scripts/prepare-desktop.cjs
+npm run android:build               # Android APK in dist-android/ (needs the Android SDK; guide: docs/android.md); android:install = + adb install
 ```
 `npm run test:ui` needs Chromium once: `npx playwright install chromium` (skip it where Playwright
-browsers are preinstalled). CI runs **both** `npm test` and `npm run test:ui` on every PR.
+browsers are preinstalled). CI runs `npm test` and `npm run test:ui` on every PR, plus the `android` (APK build) and `desktop` (`cargo check`) jobs.
 No build step, no bundler, no runtime npm packages: files are served as they are (GitHub Pages).
 `jsdom` and `playwright` are for tests only. CI: `.github/workflows/ci.yml` (jobs `test` and `ui`).
 
@@ -94,7 +96,7 @@ arrive after a classic script: listen to `schedulerReady`.
 | `DurationLearning` | `core/duration-learning.js` | Learned task durations |
 | `TaskParser` | `core/task-parser.js` | Natural-language task parsing (offline; AI if set) |
 | `AIAssistant` | `core/ai-provider.js` | Optional AI: `isEnabled()`, `complete()`, `completeJSON()` |
-| `AttentionService` | `services/attention-service.js` | Background attention & native bridge service |
+| `AttentionService` | `services/attention-service.js` | Background attention & native bridge: `invokeNative`, `notify`, `triggerTaskAlarm`, `scheduleAlarms` |
 | `UserContext` | `core/user-context.js` | Active user / profiles |
 | `ConfigManager` | `shell/config.js` | `getConfig()`, `updateConfig(partial)` |
 | `I18n` | `shell/i18n.js` | `t(key, vars, fallback)`, `getLang()`, `register(dict)` |
@@ -163,6 +165,10 @@ Changing the shape of stored data needs a migration that reads the old shape (us
 - **Keep the AI assistant in step:** a new TaskStore method, scheduler function, task field, `adhd-…` storage
   key or global makes `tests/mcp-coverage.test.js` fail until `mcp/coverage.js` says which MCP tool uses it
   (or `no: <reason>`). See [mcp/AGENTS.md](mcp/AGENTS.md) → "When you add something to the app".
+- **Three apps, one web code:** GitHub Pages, the desktop app (`src-tauri/`) and the Android app (`android/`)
+  run the same files. A native command (`invokeNative('native_…')`) must exist in **both** native apps;
+  web folders are listed once in `scripts/web-assets.json`; `tests/native-alignment.test.js` checks this.
+  CI also builds the APK and compile-checks the desktop app. See [android/AGENTS.md](android/AGENTS.md).
 - **Keep docs true:** if you change a contract above, update this file in the same commit.
 
 ## Working in parallel
@@ -188,5 +194,5 @@ Sequential: anything that changes a global, an event or a storage shape (update 
 3. Strings in en/fr/de/es; no `alert()` in new flows.
 4. The folder's `AGENTS.md` (and this file, if a contract changed) and user docs (`docs/using-the-app.md`) are updated.
 5. Commit message: imperative summary line, then what and why.
-6. Never merge a PR with red CI. (Repo owner: in GitHub → Settings → Branches, require the `test` and `ui`
-   checks on `main` so this is enforced.)
+6. Never merge a PR with red CI. (Repo owner: in GitHub → Settings → Branches, require the `test`, `ui`, `android`
+   and `desktop` checks on `main` so this is enforced.)

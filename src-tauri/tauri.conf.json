@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "productName": "ADHD Tools",
-  "version": "1.0.0",
+  "version": "../package.json",
   "identifier": "com.adhdtools.desktop",
   "build": {
     "beforeDevCommand": "node .claude/static-server.cjs",

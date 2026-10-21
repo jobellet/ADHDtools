@@ -66,6 +66,11 @@
     justify-content: center;
 }
 
+/* Beats the phone rule ".tool-section button { width: 100% }" in styles/base.css. */
+.now-card .now-pip-btn {
+    width: auto;
+}
+
 .now-pip-btn:hover {
     background: rgba(0, 0, 0, 0.05);
     color: var(--on-surface);

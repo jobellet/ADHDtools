@@ -323,6 +323,20 @@
     showAlarmModal({ title, body, task, actionType, onDone, onStart, onSnooze, onDismiss });
   }
 
+  // Native apps ring these themselves, even while the page sleeps (Android with the screen off).
+  // alarms: [{ id, at: ms, title, body }]; sent again only when something changed.
+  let lastAlarmsKey = '';
+  function scheduleAlarms(alarms = []) {
+    if (!isNative()) return;
+    const config = window.ConfigManager?.getConfig?.() || {};
+    const list = config.desktopNotifications === false ? [] : alarms;
+    const style = config.notificationStyle || 'intrusive';
+    const key = JSON.stringify([style, list]);
+    if (key === lastAlarmsKey) return;
+    lastAlarmsKey = key;
+    invokeNative('native_schedule_alarms', { alarms: list, style });
+  }
+
   function playNativeSound(type = 'bell') {
     if (isNative()) {
       invokeNative('native_play_sound', { sound: type });
@@ -484,6 +498,7 @@
       startAlarm: showAlarmModal,
       stopAlarm,
       triggerTaskAlarm,
+      scheduleAlarms,
       isAlarmActive: () => alarmActive,
     };
   }

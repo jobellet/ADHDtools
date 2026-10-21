@@ -1,0 +1,76 @@
+// Android app: a WebView that runs the same web files as GitHub Pages and the desktop app,
+// plus native alarms, notifications and Google sign-in (see android/AGENTS.md).
+import groovy.json.JsonSlurper
+
+plugins {
+    id 'com.android.application'
+}
+
+def webRoot = rootProject.projectDir.parentFile
+// One list of web files for every app: scripts/web-assets.json (also read by scripts/prepare-desktop.cjs).
+def webAssets = new JsonSlurper().parse(new File(webRoot, 'scripts/web-assets.json'))
+// One version for every app: package.json (tests/native-alignment.test.js checks the desktop app uses it too).
+def appVersion = new JsonSlurper().parse(new File(webRoot, 'package.json')).version
+def generatedAssets = layout.buildDirectory.dir('generated/web-assets')
+
+tasks.register('copyWebAssets', Sync) {
+    from(webRoot) {
+        webAssets.each { name -> include(name, "${name}/**") }
+        exclude '**/AGENTS.md', '**/.DS_Store'
+    }
+    into generatedAssets
+}
+
+// Release signing key, kept outside the repository (created by scripts/build-android.cjs).
+// The same key must sign every update, or Android refuses to install it over the old app.
+def signingFile = new File(System.getenv('ADHD_ANDROID_SIGNING')
+        ?: "${System.getProperty('user.home')}/.config/adhd-tools-android/signing.properties")
+def signing = new Properties()
+if (signingFile.exists()) signingFile.withInputStream { signing.load(it) }
+
+android {
+    namespace 'com.adhdtools.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.adhdtools.app'
+        minSdk 26
+        targetSdk 35
+        // Minutes since 1970: every build can be installed over the previous one.
+        versionCode((int) (System.currentTimeMillis() / 60000L))
+        versionName appVersion
+    }
+
+    signingConfigs {
+        release {
+            if (signing.storeFile) {
+                storeFile new File(signing.storeFile)
+                storePassword signing.storePassword
+                keyAlias signing.keyAlias
+                keyPassword signing.keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signing.storeFile ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main.assets.srcDirs += generatedAssets
+    }
+}
+
+tasks.named('preBuild') { dependsOn 'copyWebAssets' }
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+}

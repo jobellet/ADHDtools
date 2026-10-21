@@ -11,7 +11,7 @@ Classic scripts, no screen of their own (they add small UI blocks into Settings 
 | `drive-sync.js` | `window.DriveSync`: continuous cross-device sync via Google Drive `appDataFolder`, using `DataManager.mergeFromBackup` (→ `core/sync-merge.js`). Debounces auto-push (~3.5 s) after local changes, polls for remote changes every 15 s (plus on focus/visibility/online), and applies updates live in-place (`cloudSyncApplied`). `readAppFile(name)` reads another app-folder file (the assistant inbox). | About → Sync Across Devices |
 | `credentials-sync.js` | `window.CredentialsSync`: encrypted export/import of API keys and Client ID. | Settings → Credentials Sync |
 | `cross-tool-interaction.js` | `window.CrossTool.sendTaskToTool(task, tool)` → fires `ef-receiveTaskFor-<Tool>` on `EventBus`. | — |
-| `attention-service.js` | `window.AttentionService`: background attention and native bridge (wake lock, intrusive repeating alarm + foreground activation, desktop notifications, pip, native tray/title). | — |
+| `attention-service.js` | `window.AttentionService`: background attention and native bridge (wake lock, intrusive repeating alarm + foreground activation, desktop notifications, pip, native tray/title, `scheduleAlarms()` hands the coming alarms to the native app so Android rings them with the screen off). | — |
 
 ## Rules
 - **Sync must not resurrect deleted tasks:** merges filter `adhd-unified-tasks` with the tombstones in

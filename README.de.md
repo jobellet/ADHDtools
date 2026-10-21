@@ -84,6 +84,17 @@ Eine native App bringt Systembenachrichtigungen, wenn ein Timer endet, einen Tim
 
 Unter Windows und Linux installierst du [die Tauri-Voraussetzungen](https://tauri.app/start/prerequisites/) und startest `npm ci && npm run desktop:build`; die App liegt dann unter `src-tauri/target/release/bundle/`.
 
+## 📱 Android-App (optional, kostenlos, ohne Play Store)
+
+Die Android-App klingelt wie ein Wecker, wenn eine Aufgabe, Routine oder ein Termin beginnt oder endet, **auch bei ausgeschaltetem Bildschirm oder geschlossener App**. Sie zeigt den laufenden Timer in den Benachrichtigungen und bleibt bei Google angemeldet. Du erstellst sie auf deinem Computer und kopierst sie aufs Handy:
+
+```bash
+npm ci
+npm run android:build
+```
+
+Die App liegt dann in `dist-android/ADHD-Tools.apk`. Einrichtung, Installation auf dem Handy und Updates: [Android-Anleitung](docs/android.md) (auf Englisch).
+
 ## 🤖 Sprich mit deinem KI-Assistenten über deinen Tag (MCP)
 
 Bitte deinen KI-Assistenten (Mistral, Claude oder jede App mit MCP): *„Teile meine Steuererklärung in kleine Schritte“* oder *„Finde morgen eine Stunde für Sport“*. Die Änderungen erscheinen in der App. Dein eigenes Google Drive ist der Speicher: kein Server von uns, kein ngrok, kein Tailscale.

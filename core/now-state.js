@@ -45,6 +45,29 @@
     };
   }
 
+  // When the native apps must ring, even with the screen off (android/AGENTS.md): the same moments
+  // as the Now view's own alarms — an item starts, or an item ends with nothing running right after it.
+  // slots: [{ task, startTime, endTime }] -> [{ id, kind: 'start' | 'end', at: ms, slot }], soonest first
+  function alarmPlan({ slots = [], now = new Date(), horizonHours = 36 } = {}) {
+    const nowMs = toDate(now).getTime();
+    const limit = nowMs + horizonHours * 3600000;
+    const list = slots
+      .map(slot => ({ ...slot, startTime: toDate(slot.startTime), endTime: toDate(slot.endTime) }))
+      .filter(slot => !Number.isNaN(slot.startTime.getTime()) && !Number.isNaN(slot.endTime.getTime()));
+    const inRange = at => at > nowMs && at <= limit;
+    const alarms = [];
+    list.forEach(slot => {
+      const key = slot.task?.hash || slot.task?.id || slot.task?.name || '';
+      const start = slot.startTime.getTime();
+      const end = slot.endTime.getTime();
+      if (inRange(start)) alarms.push({ id: `start:${key}:${start}`, kind: 'start', at: start, slot });
+      const followed = list.some(other => other !== slot
+        && other.startTime.getTime() <= end && other.endTime.getTime() > end);
+      if (inRange(end) && !followed) alarms.push({ id: `end:${key}:${end}`, kind: 'end', at: end, slot });
+    });
+    return alarms.sort((a, b) => a.at - b.at);
+  }
+
   // Which view should open by default: the Now view while something is
   // happening (or about to), otherwise the day planner.
   function defaultToolFor(state) {
@@ -76,6 +99,6 @@
   }
 
   if (typeof window !== 'undefined') {
-    window.NowState = { computeNowState, defaultToolFor, formatDuration, getState };
+    window.NowState = { computeNowState, alarmPlan, defaultToolFor, formatDuration, getState };
   }
 })();
