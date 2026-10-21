@@ -6,7 +6,8 @@
 document.addEventListener('DOMContentLoaded', function () {
     const SCOPE = 'https://www.googleapis.com/auth/calendar.events';
     const SCOPE_LIST = 'https://www.googleapis.com/auth/calendar.calendarlist.readonly';
-    const SCOPES = `${SCOPE} ${SCOPE_LIST}`;
+    const SCOPE_DRIVE = 'https://www.googleapis.com/auth/drive.appdata';
+    const SCOPES = `${SCOPE} ${SCOPE_LIST} ${SCOPE_DRIVE}`;
     const API_BASE = 'https://www.googleapis.com/calendar/v3';
     const SELECTED_CALENDARS_KEY = 'gcalSelectedCalendars';
     const CONNECTED_FLAG_KEY = 'gcalConnected';
@@ -255,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Ensure auto-sync is started if newly connected
             if (interactive && !autoSyncIntervalId) startAutoSync();
+            if (interactive) window.DriveSync?.maybeAutoPull?.().then(() => window.DriveSync?.maybeAutoBackup?.());
         } catch (err) {
             console.error('Google Calendar sync failed:', err);
             setStatus('Sync failed: ' + err.message, true);

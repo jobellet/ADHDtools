@@ -480,4 +480,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initial render
     renderHabits();
     renderCalendar();
+
+    const reloadHabitsFromStorage = () => {
+        try {
+            habits = JSON.parse(localStorage.getItem('adhd-habits')) || [];
+            habitLogs = JSON.parse(localStorage.getItem('adhd-habit-logs')) || {};
+            renderHabits();
+            renderCalendar();
+        } catch (err) {
+            console.warn('Could not reload habits from storage', err);
+        }
+    };
+    window.addEventListener('cloudSyncApplied', reloadHabitsFromStorage);
+    window.addEventListener('storage', (e) => {
+        if (!e.key || e.key === 'adhd-habits' || e.key === 'adhd-habit-logs') reloadHabitsFromStorage();
+    });
 });

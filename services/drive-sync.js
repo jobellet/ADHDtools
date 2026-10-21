@@ -14,10 +14,15 @@
   const DRIVE_API = 'https://www.googleapis.com/drive/v3';
   const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
   const AUTO_BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
-  const REMOTE_GRACE_MS = 10 * 1000;
+  const AUTO_PUSH_DEBOUNCE_MS = 3500;
+  const AUTO_PULL_INTERVAL_MS = 15 * 1000;
+  const REMOTE_GRACE_MS = 2 * 1000;
 
   let inFlight = false;
-  let localChanges = false; // data changed since the last backup (so the assistant sees fresh data)
+  let localChanges = false; // data changed since the last backup (so other devices & the assistant see fresh data)
+  let pushDebounceTimer = null;
+  let pullIntervalId = null;
+  let cachedBackupFileId = null;
 
   function notify(message, type) {
     if (window.DataManager?.showNotification) {
@@ -43,7 +48,9 @@
     const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!resp.ok) throw new Error(`Drive API ${resp.status}`);
     const data = await resp.json();
-    return (data.files && data.files[0]) || null;
+    const found = (data.files && data.files[0]) || null;
+    if (found?.id) cachedBackupFileId = found.id;
+    return found;
   }
 
   // Read a JSON file from the app folder (e.g. the assistant inbox). null if missing or signed out.
@@ -108,8 +115,11 @@
         });
       }
       if (!resp.ok) throw new Error(`Drive API ${resp.status}`);
+      const savedMeta = await resp.json().catch(() => null);
+      if (savedMeta?.id) cachedBackupFileId = savedMeta.id;
+      const remoteModTs = savedMeta?.modifiedTime ? Date.parse(savedMeta.modifiedTime) : Date.now();
 
-      localStorage.setItem(LAST_BACKUP_KEY, String(Date.now()));
+      localStorage.setItem(LAST_BACKUP_KEY, String(Number.isFinite(remoteModTs) ? remoteModTs : Date.now()));
       localChanges = false;
       refreshStatus();
       if (!silent) {
@@ -148,9 +158,32 @@
     }
   }
 
-  // Automatic pull: merge a newer remote backup into local data.
-  // Identical items are skipped, newer versions win, only true conflicts
-  // open the existing collision modal for manual resolution.
+  function applyCloudUpdatesInPlace(updates) {
+    const write = window.getStorageLog?.withCloudSyncWrite || (fn => fn());
+    write(() => {
+      Object.keys(updates).forEach(key => {
+        const val = updates[key];
+        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+      });
+    });
+    window.dispatchEvent(new CustomEvent('cloudSyncApplied', { detail: { keys: Object.keys(updates) } }));
+    window.EventBus?.dispatchEvent(new CustomEvent('dataChanged', { detail: { source: 'cloud-sync' } }));
+    if ('adhd-calendar-events' in updates) {
+      window.EventBus?.dispatchEvent(new Event('calendarEventsUpdated'));
+    }
+    if ('adhd-tool-routines' in updates || 'adhd-routine-runs' in updates) {
+      window.dispatchEvent(new Event('routinesChanged'));
+      window.dispatchEvent(new Event('routinePlayerChanged'));
+    }
+    if ('adhd-tools-config' in updates) {
+      window.dispatchEvent(new CustomEvent('configUpdated', { detail: window.ConfigManager?.getConfig?.() }));
+    }
+    window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+    window.DayPlanner?.rerender?.();
+  }
+
+  // Automatic pull: merge a newer remote backup into local data in-place.
+  // Identical items are skipped, newer versions win automatically.
   async function maybeAutoPull() {
     if (inFlight) return;
     if (!window.GoogleAuth?.getClientId()) return;
@@ -171,30 +204,22 @@
       if (!resp.ok) return;
       const imported = await resp.json();
 
-      const { updates, added, updated, conflicts } = await window.DataManager.mergeFromBackup(imported);
-
-      if (conflicts.length > 0) {
-        window.DataManager.importDataFromObject(imported); // shows the collision modal
+      // Ignore our own device's snapshot if timestamps drifted slightly
+      if (imported?.metadata?.deviceId && imported.metadata.deviceId === window.DataManager?.getDeviceId?.() && !localChanges) {
+        localStorage.setItem(LAST_BACKUP_KEY, String(remoteTs));
         return;
       }
 
-      if (added === 0 && updated === 0) {
-        // Nothing new remotely that we don't already have — but the remote is newer,
-        // so mark it as seen to avoid re-downloading every startup.
-        localStorage.setItem(LAST_BACKUP_KEY, String(remoteTs - REMOTE_GRACE_MS));
+      const { updates, added, updated } = await window.DataManager.mergeFromBackup(imported);
+
+      if (added === 0 && updated === 0 && Object.keys(updates).length === 0) {
+        localStorage.setItem(LAST_BACKUP_KEY, String(remoteTs));
         return;
       }
 
-      Object.keys(updates).forEach(key => {
-        const val = updates[key];
-        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
-      });
-      localStorage.setItem(LAST_BACKUP_KEY, String(remoteTs - REMOTE_GRACE_MS));
-      window.DataManager.showNotification(
-        `Synced from Drive: ${added} item${added === 1 ? '' : 's'} added, ${updated} updated. Reloading…`,
-        'success'
-      );
-      setTimeout(() => location.reload(), 1500);
+      applyCloudUpdatesInPlace(updates);
+      localStorage.setItem(LAST_BACKUP_KEY, String(remoteTs));
+      refreshStatus();
     } catch (err) {
       console.warn('Auto pull skipped:', err.message);
     } finally {
@@ -202,12 +227,15 @@
     }
   }
 
-  // Automatic push: backup to Drive if the local snapshot is older than 24h.
+  // Automatic push: backup to Drive shortly after local changes or if older than 24h.
   async function maybeAutoBackup() {
     if (inFlight) return;
     if (!window.GoogleAuth?.getClientId()) return;
     if (!autoSyncEnabled()) return;
     if (!localChanges && Date.now() - lastLocalPush() < AUTO_BACKUP_INTERVAL_MS) return;
+    // Pull any newer remote state first so we merge before pushing our changes
+    await maybeAutoPull();
+    if (inFlight) return;
     inFlight = true;
     try {
       const token = await getToken({ interactive: false });
@@ -218,6 +246,26 @@
     } finally {
       inFlight = false;
     }
+  }
+
+  function notifyLocalChange() {
+    localChanges = true;
+    if (!autoSyncEnabled() || !window.GoogleAuth?.getClientId()) return;
+    if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
+    pushDebounceTimer = setTimeout(() => {
+      pushDebounceTimer = null;
+      maybeAutoBackup();
+    }, AUTO_PUSH_DEBOUNCE_MS);
+  }
+
+  function startSyncLoop() {
+    if (pullIntervalId) clearInterval(pullIntervalId);
+    pullIntervalId = setInterval(() => {
+      if (document.visibilityState === 'visible' && autoSyncEnabled()) {
+        if (localChanges) maybeAutoBackup();
+        else maybeAutoPull();
+      }
+    }, AUTO_PULL_INTERVAL_MS);
   }
 
   function refreshStatus() {
@@ -270,21 +318,34 @@
 
     if (autoSyncEnabled()) {
       maybeAutoPull().then(maybeAutoBackup);
+      startSyncLoop();
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') maybeAutoBackup();
+        else if (document.visibilityState === 'visible') maybeAutoPull().then(maybeAutoBackup);
+      });
+      window.addEventListener('focus', () => {
+        if (autoSyncEnabled()) maybeAutoPull().then(maybeAutoBackup);
+      });
+      window.addEventListener('online', () => {
+        if (autoSyncEnabled()) maybeAutoPull().then(maybeAutoBackup);
       });
     }
     window.addEventListener('nativeSecretsRestored', () => {
       refreshStatus();
-      if (autoSyncEnabled()) maybeAutoPull().then(maybeAutoBackup);
+      if (autoSyncEnabled()) {
+        startSyncLoop();
+        maybeAutoPull().then(maybeAutoBackup);
+      }
     });
   }
 
   document.addEventListener('DOMContentLoaded', createUI);
   document.addEventListener('DOMContentLoaded', () => {
-    const changed = () => { localChanges = true; };
-    window.EventBus?.addEventListener('dataChanged', changed);
-    window.addEventListener('routinesChanged', changed);
+    window.EventBus?.addEventListener('dataChanged', (e) => {
+      if (e?.detail?.source === 'cloud-sync') return;
+      notifyLocalChange();
+    });
+    window.addEventListener('routinesChanged', () => notifyLocalChange());
   });
 
   window.DriveSync = {
@@ -292,6 +353,7 @@
     restoreFromDrive,
     maybeAutoPull,
     maybeAutoBackup,
+    notifyLocalChange,
     readAppFile,
     isAutoSyncOn: autoSyncEnabled,
   };

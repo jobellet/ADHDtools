@@ -86,11 +86,23 @@
   function readCachedToken(scope) {
     try {
       const raw = sessionStorage.getItem(TOKEN_CACHE_PREFIX + scope);
-      if (!raw) return null;
-      const { token, expiresAt } = JSON.parse(raw);
-      // 60s safety margin so we never hand out a token about to expire
-      if (!token || Date.now() > expiresAt - 60000) return null;
-      return token;
+      if (raw) {
+        const { token, expiresAt } = JSON.parse(raw);
+        // 60s safety margin so we never hand out a token about to expire
+        if (token && Date.now() <= expiresAt - 60000) return token;
+      }
+      // If a superset token (e.g. NATIVE_SCOPES) is cached, reuse it when it covers every requested scope.
+      const requested = String(scope || '').split(/\s+/).filter(Boolean);
+      if (!requested.length) return null;
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (!k || !k.startsWith(TOKEN_CACHE_PREFIX)) continue;
+        const granted = k.slice(TOKEN_CACHE_PREFIX.length).split(/\s+/).filter(Boolean);
+        if (!requested.every(s => granted.includes(s))) continue;
+        const entry = JSON.parse(sessionStorage.getItem(k) || '{}');
+        if (entry.token && Date.now() <= entry.expiresAt - 60000) return entry.token;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -98,10 +110,15 @@
 
   function cacheToken(scope, token, expiresInSeconds) {
     try {
-      sessionStorage.setItem(TOKEN_CACHE_PREFIX + scope, JSON.stringify({
+      const payload = JSON.stringify({
         token,
         expiresAt: Date.now() + (parseInt(expiresInSeconds, 10) || 3600) * 1000,
-      }));
+      });
+      sessionStorage.setItem(TOKEN_CACHE_PREFIX + scope, payload);
+      // Cache under individual scopes too so Calendar and Drive share one sign-in seamlessly.
+      String(scope || '').split(/\s+/).filter(Boolean).forEach(single => {
+        sessionStorage.setItem(TOKEN_CACHE_PREFIX + single, payload);
+      });
     } catch { /* storage full or blocked — token stays usable for this call */ }
   }
 

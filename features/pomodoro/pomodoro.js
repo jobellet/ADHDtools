@@ -218,8 +218,65 @@ document.addEventListener('DOMContentLoaded', function () {
             targetEndTimeMs = Date.now() + remaining * 1000;
 
             recalculateNextChime();
+            persistLivePomodoroState();
 
             timer = setInterval(updateTimer, 1000);
+        }
+    }
+
+    function persistLivePomodoroState() {
+        try {
+            settings.liveState = {
+                isRunning,
+                isPaused,
+                currentMode,
+                targetEndTimeMs,
+                remainingSeconds: isPaused ? (minutes * 60 + seconds) : null,
+                currentSessionTotalSeconds,
+                updatedAt: new Date().toISOString()
+            };
+            localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
+        } catch (err) {
+            console.warn('Could not persist live Pomodoro state', err);
+        }
+    }
+
+    function syncLivePomodoroFromStorage() {
+        try {
+            const raw = JSON.parse(localStorage.getItem('pomodoroSettings'));
+            if (!raw) return;
+            settings = { ...settings, ...raw };
+            if (focusDurationInput) focusDurationInput.value = settings.focusDuration;
+            if (shortBreakDurationInput) shortBreakDurationInput.value = settings.shortBreakDuration;
+            if (longBreakDurationInput) longBreakDurationInput.value = settings.longBreakDuration;
+            if (sessionsBeforeLongBreakInput) sessionsBeforeLongBreakInput.value = settings.sessionsBeforeLongBreak;
+            if (audioNotificationSelect) audioNotificationSelect.value = settings.audioNotification;
+            sessionCount = parseInt(localStorage.getItem('pomodoroSessionsCompleted'), 10) || 0;
+            if (sessionCountDisplay) sessionCountDisplay.textContent = sessionCount;
+            updateLongBreakInfo();
+
+            const live = settings.liveState;
+            if (!live) return;
+            if (live.isRunning && !live.isPaused && live.targetEndTimeMs && live.targetEndTimeMs > Date.now()) {
+                if (isRunning && !isPaused && Math.abs((targetEndTimeMs || 0) - live.targetEndTimeMs) < 2000) return;
+                clearInterval(timer);
+                isRunning = true;
+                isPaused = false;
+                currentMode = live.currentMode || 'focus';
+                targetEndTimeMs = live.targetEndTimeMs;
+                currentSessionTotalSeconds = live.currentSessionTotalSeconds || (settings.focusDuration * 60);
+                if (startButton) startButton.disabled = true;
+                if (pauseButton) pauseButton.disabled = false;
+                if (timerLabel) {
+                    timerLabel.textContent = currentMode === 'shortBreak' ? 'SHORT BREAK' : currentMode === 'longBreak' ? 'LONG BREAK' : 'FOCUS';
+                }
+                updateTimer();
+                timer = setInterval(updateTimer, 1000);
+            } else if (!live.isRunning && !live.isPaused && isRunning) {
+                resetTimer();
+            }
+        } catch (err) {
+            console.warn('Could not sync Pomodoro state', err);
         }
     }
 
@@ -239,6 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 window.AttentionService.releaseWakeLock('pomodoro');
                 window.AttentionService.clearCountdownStatus('pomodoro');
             }
+            persistLivePomodoroState();
         }
     }
 
@@ -265,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
             window.AttentionService.releaseWakeLock('pomodoro');
             window.AttentionService.clearCountdownStatus('pomodoro');
         }
+        persistLivePomodoroState();
     }
 
     function updateTimer() {
@@ -582,4 +641,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const sessionsUntilLongBreak = settings.sessionsBeforeLongBreak - (sessionCount % settings.sessionsBeforeLongBreak);
         sessionsUntilLongDisplay.textContent = sessionsUntilLongBreak;
     }
+
+    syncLivePomodoroFromStorage();
+    window.addEventListener('cloudSyncApplied', syncLivePomodoroFromStorage);
+    window.addEventListener('storage', (e) => {
+        if (!e.key || e.key === 'pomodoroSettings' || e.key === 'pomodoroSessionsCompleted') {
+            syncLivePomodoroFromStorage();
+        }
+    });
 });

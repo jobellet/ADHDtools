@@ -805,4 +805,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for points to award on page load
     checkForPointsToAward();
+
+    const reloadRewardsFromStorage = () => {
+        try {
+            const rawRewards = localStorage.getItem('adhd-rewards');
+            if (rawRewards) rewards = JSON.parse(rawRewards);
+            achievements = JSON.parse(localStorage.getItem('adhd-achievements')) || [];
+            loadLedger();
+            renderRewards();
+            renderAchievements();
+            renderPastTasksReview();
+        } catch (err) {
+            console.warn('Could not reload rewards from storage', err);
+        }
+    };
+    window.addEventListener('cloudSyncApplied', reloadRewardsFromStorage);
+    window.addEventListener('storage', (e) => {
+        if (!e.key || e.key === 'adhd-rewards' || e.key === 'adhd-achievements' || e.key === LEDGER_KEY) {
+            reloadRewardsFromStorage();
+        }
+    });
 });

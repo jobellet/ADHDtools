@@ -12,7 +12,7 @@ const read = p => readFileSync(join(ROOT, p), 'utf8');
 
 function walk(dir) {
   return readdirSync(join(ROOT, dir)).filter(name => name !== 'node_modules' && name !== '.git').flatMap(name => {
-    const rel = join(dir, name);
+    const rel = join(dir, name).replace(/\\/g, '/');
     return statSync(join(ROOT, rel)).isDirectory() ? walk(rel) : [rel];
   });
 }
@@ -41,7 +41,7 @@ describe('Architecture', () => {
 
   it('every source file is described in the AGENTS.md of its folder', () => {
     const missing = sourceFiles.filter(file => {
-      const doc = join(dirname(file), 'AGENTS.md');
+      const doc = join(dirname(file), 'AGENTS.md').replace(/\\/g, '/');
       if (!existsSync(join(ROOT, doc))) return true;
       return !read(doc).includes(`\`${file.split('/').pop()}\``);
     });

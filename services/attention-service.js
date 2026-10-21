@@ -185,6 +185,10 @@
   }
 
   if (typeof window !== 'undefined') {
+    window.addEventListener('configUpdated', () => {
+      updateWakeLock();
+    });
+
     window.addEventListener('native:quick-capture', () => {
       window.AppSheets?.open('capture');
     });

@@ -3,6 +3,16 @@
   const originalSetItem = Storage.prototype.setItem;
   const originalRemoveItem = Storage.prototype.removeItem;
   let syncTimeout = null;
+  let suppressDriveNotify = false;
+
+  function isBookkeepingKey(key) {
+    return !key
+      || key === LOG_KEY
+      || key === 'adhd-device-id'
+      || key === 'driveLastBackupAt'
+      || key === 'gcalLastSyncAt'
+      || key === 'last-points-check';
+  }
 
   function scheduleSync(changedKey) {
     if (window.AttentionService?.isNative?.()) {
@@ -15,10 +25,13 @@
         }
       }, 300);
     }
+    if (!suppressDriveNotify && !isBookkeepingKey(changedKey) && !window.DataManager?.isNativeSecretKey?.(changedKey)) {
+      window.DriveSync?.notifyLocalChange?.(changedKey);
+    }
   }
 
   function updateLog(key) {
-    if (key === LOG_KEY) return;
+    if (suppressDriveNotify || isBookkeepingKey(key)) return;
     let log;
     try {
       log = JSON.parse(localStorage.getItem(LOG_KEY)) || {};
@@ -30,15 +43,15 @@
   }
 
   Storage.prototype.setItem = function(key, value) {
-    updateLog(key);
+    if (this === localStorage) updateLog(key);
     originalSetItem.call(this, key, value);
-    if (key.startsWith('adhd-') || window.DataManager?.isNativeSecretKey?.(key)) scheduleSync(key);
+    if (this === localStorage) scheduleSync(key);
   };
 
   Storage.prototype.removeItem = function(key) {
-    updateLog(key);
+    if (this === localStorage) updateLog(key);
     originalRemoveItem.call(this, key);
-    if (key.startsWith('adhd-') || window.DataManager?.isNativeSecretKey?.(key)) scheduleSync(key);
+    if (this === localStorage) scheduleSync(key);
   };
 
   window.getStorageLog = function() {
@@ -46,6 +59,14 @@
       return JSON.parse(localStorage.getItem(LOG_KEY)) || {};
     } catch {
       return {};
+    }
+  };
+  window.getStorageLog.withCloudSyncWrite = function(fn) {
+    suppressDriveNotify = true;
+    try {
+      return fn();
+    } finally {
+      suppressDriveNotify = false;
     }
   };
 })();

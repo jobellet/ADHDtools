@@ -140,3 +140,70 @@ describe('mergeBackup — deleted tasks stay deleted', () => {
     assert.deepStrictEqual(updates['adhd-deleted-tasks'].map(x => x.id), ['a']);
   });
 });
+
+describe('mergeBackup — continuous full-state sync (breakdowns, routines, active runs, habits)', () => {
+  test('newer remote breakdown tree replaces local breakdown tree (including edits and deletions)', () => {
+    const imported = {
+      metadata: { app: 'ADHD Tools Hub', exportedAt: iso('2026-09-20T12:05:00Z') },
+      'adhd-breakdown-tasks': [{ text: 'Write paper', completed: false, duration: 15, subtasks: [{ text: 'Outline', completed: true, duration: 15, subtasks: [] }] }],
+      'adhd-storage-log': { 'adhd-breakdown-tasks': iso('2026-09-20T12:04:00Z') },
+    };
+    const existingRaw = {
+      'adhd-breakdown-tasks': JSON.stringify([
+        { text: 'Write paper', completed: false, duration: 10, subtasks: [] },
+        { text: 'Deleted project', completed: false, duration: 5, subtasks: [] },
+      ]),
+      'adhd-storage-log': JSON.stringify({ 'adhd-breakdown-tasks': iso('2026-09-20T11:00:00Z') }),
+    };
+    const { updates, conflicts } = mergeBackup(imported, existingRaw);
+    assert.strictEqual(conflicts.length, 0);
+    assert.strictEqual(updates['adhd-breakdown-tasks'].length, 1);
+    assert.strictEqual(updates['adhd-breakdown-tasks'][0].subtasks.length, 1);
+    assert.strictEqual(updates['adhd-breakdown-tasks'][0].subtasks[0].completed, true);
+  });
+
+  test('active routine started on laptop syncs to phone via adhd-routine-runs._active', () => {
+    const stepEnd = Date.now() + 180000;
+    const imported = {
+      metadata: { app: 'ADHD Tools Hub', exportedAt: iso('2026-09-20T08:05:00Z') },
+      'adhd-routine-runs': {
+        _active: {
+          routineId: 'r-morning',
+          name: 'Morning Launch',
+          currentTaskIndex: 1,
+          stepEndTimeMs: stepEnd,
+          activeTaskTotalDurationSeconds: 180,
+          tasks: [{ name: 'Drink water', duration: 2 }, { name: 'Medications', duration: 3 }],
+          updatedAt: iso('2026-09-20T08:04:50Z'),
+        },
+      },
+      'adhd-storage-log': { 'adhd-routine-runs': iso('2026-09-20T08:04:50Z') },
+    };
+    const existingRaw = {
+      'adhd-routine-runs': JSON.stringify({ 'r-evening': '2026-09-19' }),
+      'adhd-storage-log': JSON.stringify({ 'adhd-routine-runs': iso('2026-09-19T21:00:00Z') }),
+    };
+    const { updates, conflicts } = mergeBackup(imported, existingRaw);
+    assert.strictEqual(conflicts.length, 0);
+    assert.strictEqual(updates['adhd-routine-runs']['r-evening'], '2026-09-19');
+    assert.strictEqual(updates['adhd-routine-runs']._active.routineId, 'r-morning');
+    assert.strictEqual(updates['adhd-routine-runs']._active.currentTaskIndex, 1);
+  });
+
+  test('device-local keys (adhd-device-id, driveLastBackupAt) are never overwritten by remote backup', () => {
+    const imported = {
+      metadata: { app: 'ADHD Tools Hub' },
+      'adhd-device-id': 'laptop-id',
+      'driveLastBackupAt': '999999999',
+      'adhd-habits': [{ id: 'h1', name: 'Walk' }],
+    };
+    const existingRaw = {
+      'adhd-device-id': 'phone-id',
+      'driveLastBackupAt': '111111111',
+    };
+    const { updates } = mergeBackup(imported, existingRaw);
+    assert.strictEqual(updates['adhd-device-id'], undefined);
+    assert.strictEqual(updates['driveLastBackupAt'], undefined);
+    assert.strictEqual(updates['adhd-habits'].length, 1);
+  });
+});

@@ -442,4 +442,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.EventBus) {
     window.EventBus.addEventListener('ef-receiveTaskFor-TaskBreakdown', handleReceivedTaskForTaskBreakdown);
   }
+
+  const reloadTreeFromStorage = () => {
+    try {
+      tree = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      normalizeTree(tree);
+      recalculateDurations();
+      renderTree();
+    } catch (err) {
+      console.warn('Could not reload breakdown tree', err);
+    }
+  };
+  window.addEventListener('cloudSyncApplied', reloadTreeFromStorage);
+  window.addEventListener('storage', (e) => {
+    if (!e.key || e.key === STORAGE_KEY) reloadTreeFromStorage();
+  });
 });

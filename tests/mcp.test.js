@@ -8,7 +8,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
-const SERVER = new URL('../mcp/server.js', import.meta.url).pathname;
+import { fileURLToPath } from 'node:url';
+
+const SERVER = fileURLToPath(new URL('../mcp/server.js', import.meta.url));
 const today = new Date();
 const pad = n => String(n).padStart(2, '0');
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

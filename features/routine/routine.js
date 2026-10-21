@@ -213,11 +213,103 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const runs = JSON.parse(localStorage.getItem(ROUTINE_RUNS_KEY) || '{}');
             runs[routineId] = todayStr();
+            runs._active = null;
             localStorage.setItem(ROUTINE_RUNS_KEY, JSON.stringify(runs));
         } catch (err) {
             console.warn('Could not record routine run', err);
         }
         window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+    }
+
+    function persistActiveRoutineState() {
+        try {
+            const runs = JSON.parse(localStorage.getItem(ROUTINE_RUNS_KEY) || '{}');
+            if (!activeRoutine || currentTaskIndex < 0 || currentTaskIndex >= activeRoutine.tasks.length) {
+                if (runs._active) {
+                    runs._active = null;
+                    localStorage.setItem(ROUTINE_RUNS_KEY, JSON.stringify(runs));
+                }
+                return;
+            }
+            runs._active = {
+                routineId: activeRoutine.id,
+                name: activeRoutine.name,
+                currentTaskIndex,
+                stepEndTimeMs,
+                activeTaskTotalDurationSeconds,
+                autoRunEnabled,
+                tasks: activeRoutine.tasks,
+                updatedAt: new Date().toISOString(),
+            };
+            localStorage.setItem(ROUTINE_RUNS_KEY, JSON.stringify(runs));
+        } catch (err) {
+            console.warn('Could not persist active routine state', err);
+        }
+    }
+
+    function syncActiveRoutineFromStorage() {
+        try {
+            const runs = JSON.parse(localStorage.getItem(ROUTINE_RUNS_KEY) || '{}');
+            const remote = runs?._active;
+            if (!remote || !remote.routineId || !Array.isArray(remote.tasks) || !remote.tasks.length) {
+                // If our currently running routine was marked done today on another device, stop it cleanly.
+                if (activeRoutine && runs?.[activeRoutine.id] === todayStr()) {
+                    if (currentTaskTimer) window.clearInterval(currentTaskTimer);
+                    currentTaskTimer = null;
+                    activeRoutine = null;
+                    window.AttentionService?.clearCountdownStatus('routine');
+                    window.AttentionService?.releaseWakeLock('routine');
+                    exitFocusMode();
+                    window.dispatchEvent(new Event('routinePlayerChanged'));
+                    showReadyToStart(findBestRoutineForNow());
+                }
+                return;
+            }
+            // Ignore stale remote runs whose step already ended more than 2 hours ago.
+            if (remote.stepEndTimeMs && Date.now() - remote.stepEndTimeMs > 2 * 3600 * 1000) return;
+
+            const sameState = activeRoutine
+                && activeRoutine.id === remote.routineId
+                && currentTaskIndex === remote.currentTaskIndex
+                && Math.abs((stepEndTimeMs || 0) - (remote.stepEndTimeMs || 0)) < 2000;
+            if (sameState) return;
+
+            if (currentTaskTimer) {
+                window.clearInterval(currentTaskTimer);
+                currentTaskTimer = null;
+            }
+            const baseRoutine = routines.find(r => r.id === remote.routineId) || { id: remote.routineId, name: remote.name, tasks: remote.tasks };
+            activeRoutine = {
+                ...JSON.parse(JSON.stringify(baseRoutine)),
+                name: remote.name || baseRoutine.name,
+                tasks: JSON.parse(JSON.stringify(remote.tasks)),
+            };
+            originalRoutineSnapshot = JSON.parse(JSON.stringify(baseRoutine));
+            currentTaskIndex = Math.min(Math.max(0, Number(remote.currentTaskIndex) || 0), activeRoutine.tasks.length - 1);
+            if (typeof remote.autoRunEnabled === 'boolean') {
+                autoRunEnabled = remote.autoRunEnabled;
+                syncAutoRunToggles();
+            }
+            const task = activeRoutine.tasks[currentTaskIndex];
+            activeTaskTotalDurationSeconds = Number(remote.activeTaskTotalDurationSeconds) || ((task.duration || 5) * 60);
+            stepEndTimeMs = Number(remote.stepEndTimeMs) || (Date.now() + activeTaskTotalDurationSeconds * 1000);
+            activeTaskTimeLeftSeconds = Math.max(0, Math.ceil((stepEndTimeMs - Date.now()) / 1000));
+
+            if (currentTaskDisplay) currentTaskDisplay.style.display = '';
+            if (pieChartContainer) pieChartContainer.style.display = '';
+            if (routineControls) routineControls.style.display = '';
+            if (playerRoutineNameDisplay) {
+                playerRoutineNameDisplay.textContent = `Running: ${activeRoutine.name}`;
+                playerRoutineNameDisplay.style.display = 'block';
+            }
+            if (currentTaskNameDisplay) currentTaskNameDisplay.textContent = task.name;
+            renderActiveRoutineTaskList();
+            currentTaskTimer = window.setInterval(handleTick, 1000);
+            handleTick();
+            window.dispatchEvent(new Event('routinePlayerChanged'));
+        } catch (err) {
+            console.warn('Could not sync active routine from storage', err);
+        }
     }
 
     function loadRoutines() {
@@ -1082,6 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeTaskTimeLeftSeconds = task.duration * 60;
         activeTaskTotalDurationSeconds = activeTaskTimeLeftSeconds;
         stepEndTimeMs = Date.now() + activeTaskTotalDurationSeconds * 1000;
+        persistActiveRoutineState();
 
         if (currentTaskTimeLeftDisplay) currentTaskTimeLeftDisplay.textContent = formatTimeLeft(activeTaskTimeLeftSeconds);
         drawPieChart(1, false);
@@ -1495,9 +1588,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRoutines();
     initSettingsUI();
 
-    // Auto-select best routine
+    // Auto-select best routine or resume a running routine synced from another device
     const bestRoutine = findBestRoutineForNow();
     showReadyToStart(bestRoutine);
+    syncActiveRoutineFromStorage();
 
     setupSpacebarHandler();
     setupTouchHandler();
@@ -1533,10 +1627,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Keep in sync when another tab or a sync pulls new routines.
     window.addEventListener('languageChanged', () => updateSettingsRoutineSelect());
+    const reloadRoutinesAndActive = () => {
+        loadRoutines();
+        updateSettingsRoutineSelect();
+        syncActiveRoutineFromStorage();
+        if (!activeRoutine) {
+            showReadyToStart(findBestRoutineForNow());
+        }
+    };
+    window.addEventListener('cloudSyncApplied', reloadRoutinesAndActive);
     window.addEventListener('storage', (e) => {
-        if (e.key === ROUTINE_STORAGE_KEY && !activeRoutine) {
-            loadRoutines();
-            updateSettingsRoutineSelect();
+        if (!e.key || e.key === ROUTINE_STORAGE_KEY || e.key === ROUTINE_RUNS_KEY) {
+            reloadRoutinesAndActive();
         }
     });
 

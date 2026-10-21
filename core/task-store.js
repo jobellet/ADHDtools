@@ -282,7 +282,16 @@ const TaskStore = {
 };
 
 if (typeof window !== 'undefined') {
-  if (typeof window !== "undefined") window.TaskStore = TaskStore;
+  window.TaskStore = TaskStore;
+  const reloadFromStorage = () => {
+    tasks = loadTasks();
+  };
+  window.addEventListener('cloudSyncApplied', reloadFromStorage);
+  window.addEventListener('storage', (e) => {
+    if (!e.key || e.key === STORAGE_KEY || e.key === DELETED_TASKS_KEY) {
+      reloadFromStorage();
+    }
+  });
 }
 
 export default TaskStore;

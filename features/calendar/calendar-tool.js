@@ -832,6 +832,10 @@
         render();
       });
     }
+    window.addEventListener('cloudSyncApplied', () => {
+      events = loadEvents();
+      render();
+    });
 
     window.addEventListener('configUpdated', () => {
       events = events.map(normalizeEvent);

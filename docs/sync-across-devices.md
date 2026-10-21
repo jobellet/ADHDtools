@@ -2,7 +2,7 @@
 
 All app data lives in your browser's local storage — private by design, but it means your phone and your laptop each start with their own copy. Here are the ways to move or sync data between devices, from easiest to most manual.
 
-> **What gets synced?** Everything the app stores: tasks, routines, habits, rewards, settings — *including any API keys you saved*. Treat backup files accordingly.
+> **What gets synced?** Everything the app stores: tasks, events, routines (including currently running routine steps), task breakdowns, habits, rewards, Pomodoro timer state, and settings — *excluding API keys and OAuth secrets for your privacy*.
 
 ---
 
@@ -30,13 +30,13 @@ Then on **each device**: open **More → Settings → Calendar Notifications & G
 
 Repeat backup/restore whenever you want to push fresh data around.
 
-### Automatic sync (optional)
+### Automatic live sync (enabled by default)
 
-Leave **“Automatic sync”** checked (**More → About**, under the Drive buttons) and the app handles the round-trips for you:
+Leave **“Automatic sync”** checked (**More → About**, under the Drive buttons) and all devices signed into the same Google account stay in sync automatically:
 
-- **On startup:** if another device pushed a newer backup to Drive, it is pulled and merged automatically — new items appear, and for items changed on both sides the most recent version wins. Only a *true* conflict (the same item edited differently on two devices with no way to tell which is newer) opens the manual conflict dialog.
-- **Daily:** after 24h without a backup, your local snapshot is pushed to Drive (also when you hide the tab).
-- **Never opens a Google popup on its own** — automatic sync only runs when you have already granted Drive access in this browser. Uncheck it anytime to go fully manual.
+- **Unified sign-in:** connecting Google in **Settings → Calendar Notifications & Google Sync** grants both Calendar and Drive `appDataFolder` access at once, immediately activating live Drive sync.
+- **Continuous push & pull:** local edits (adding/completing tasks, editing task breakdowns, starting or advancing a routine or Pomodoro, logging habits, claiming rewards) are automatically pushed to Drive within ~3.5 seconds. Open devices check for remote updates every 15 seconds (and immediately when you focus or unlock the app) and apply changes live in-place without reloading the page.
+- **Never opens a Google popup on its own** — automatic sync only runs when you have already granted access. Uncheck it anytime to go fully manual.
 
 ---
 
