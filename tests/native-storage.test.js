@@ -3,11 +3,17 @@ import { describe, it, beforeEach } from 'node:test';
 import { runInNewContext, createContext } from 'node:vm';
 import { readFileSync } from 'node:fs';
 
-const dataManagerCode = readFileSync('services/data-manager.js', 'utf8');
+// The sandbox needs a working dynamic import for mergeFromBackup's `import('../core/sync-merge.js')`.
+// We pre-load the real module and stub the import so the VM context can use it.
+import * as syncMerge from '../core/sync-merge.js';
+
+const dataManagerCode = readFileSync('services/data-manager.js', 'utf8')
+  .replace(/const \{ mergeBackup \} = await import\('\.\.\/core\/sync-merge\.js'\);/g, 'const { mergeBackup } = syncMergeModule;');
 
 function setupSandbox() {
   const store = new Map();
   const sandbox = {
+    syncMergeModule: syncMerge,
     console: { error: () => {}, log: () => {} },
     setTimeout: (cb, t) => cb(),
     clearTimeout: () => {},
@@ -15,7 +21,7 @@ function setupSandbox() {
     JSON: JSON,
     document: { addEventListener: () => {} },
     EventTarget: class EventTarget {},
-    CustomEvent: class CustomEvent {},
+    CustomEvent: class CustomEvent { constructor(type, opts) { this.type = type; Object.assign(this, opts); } },
     localStorage: {
       getItem: (k) => store.get(k) || null,
       setItem: (k, v) => store.set(k, String(v)),
@@ -43,6 +49,7 @@ function setupSandbox() {
   sandbox.window.EventBus = { dispatchEvent: () => {} };
   sandbox.window.scheduleNeedsRefresh = () => {};
   sandbox.window.getStorageLog = () => ({});
+  sandbox.window.dispatchEvent = () => {};
   return sandbox;
 }
 
@@ -80,11 +87,16 @@ describe('Native Storage Mirroring', () => {
         assert.equal(payload['geminiApiKey'], undefined);
     });
 
-    it('restoreFromNativeDisk merges tasks and respects tombstones', async () => {
+    it('restoreFromNativeDisk merges tasks and dispatches events', async () => {
         const events = [];
+        const windowEvents = [];
+        const CustomEvent = class CustomEvent { constructor(type, opts) { this.type = type; Object.assign(this, opts); } };
         sandbox.window.EventBus = {
-            dispatchEvent: (ev) => events.push(ev.type)
+            dispatchEvent: (ev) => events.push(ev.type || ev)
         };
+        sandbox.window.dispatchEvent = (ev) => windowEvents.push(ev.type || ev);
+        sandbox.window.CustomEvent = CustomEvent;
+        sandbox.CustomEvent = CustomEvent;
 
         const nativeData = {
             'adhd-unified-tasks': JSON.stringify([{ id: '1', text: 'Task 1' }]),
@@ -107,17 +119,12 @@ describe('Native Storage Mirroring', () => {
             importTasks: () => {}
         });
 
-        const testCode = dataManagerCode.replace(/import\(/g, 'Promise.resolve({ mergeBackup: () => ({ updates: {}, conflicts: [] }) }).then(')
-            .replace('mergeFromBackup(imported);', 'events.push("dataChanged");');
-
-        runInNewContext(`const events = sandboxEvents; ${testCode}`, { ...sandbox, sandboxEvents: events });
-
-        // Let the dynamic import promise resolve
-        await new Promise(r => setTimeout(r, 10));
+        runInNewContext(dataManagerCode, sandbox);
 
         await sandbox.window.DataManager.restoreFromNativeDisk();
 
-        assert.ok(events.includes('dataChanged'));
+        // The native payload has no metadata wrapper; the merge must still run and notify.
+        assert.ok(events.includes('dataChanged') || windowEvents.includes('cloudSyncApplied'));
     });
 
     it('syncSecretsToNativeDisk saves and restores secrets securely', async () => {

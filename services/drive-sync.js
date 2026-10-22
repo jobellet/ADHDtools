@@ -150,7 +150,7 @@
       const imported = await resp.json();
       if (status) status.textContent = `Restoring backup from ${new Date(existing.modifiedTime).toLocaleString()}…`;
       // Runs the same collision-resolution UI as file import, then reloads.
-      window.DataManager.importDataFromObject(imported);
+      await window.DataManager.importDataFromObject(imported);
     } catch (err) {
       console.error('Drive restore failed:', err);
       if (status) status.textContent = 'Restore failed: ' + err.message;
