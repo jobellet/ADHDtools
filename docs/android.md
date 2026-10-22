@@ -12,9 +12,17 @@ tab cannot:
 - **Voice input** with Android's speech recognition.
 - **Your data is kept on the phone** (and in your Google Drive if you turn on Drive sync).
 
-It is not in the Play Store. You build it on your computer for free and copy it to your phone.
+It is not in the Play Store. You can download the pre-built APK directly from GitHub or build it on your computer.
 
-## Build the app (once, about 10 minutes)
+## Download directly from GitHub (simplest)
+
+1. Open [GitHub Releases](https://github.com/jobellet/ADHDtools/releases) on your Android phone (or download directly from [ADHD-Tools.apk](https://github.com/jobellet/ADHDtools/releases/download/latest/ADHD-Tools.apk)).
+2. Tap **ADHD-Tools.apk** to download.
+3. When prompted, allow Chrome (or your browser) to install apps, then tap **Install**.
+
+*(Alternatively, go to [GitHub Actions](https://github.com/jobellet/ADHDtools/actions), tap the latest CI run, and download the `ADHD-Tools-Android-APK` artifact.)*
+
+## Build the app yourself (optional)
 
 On a Mac with [Node.js](https://nodejs.org) and [Homebrew](https://brew.sh):
 

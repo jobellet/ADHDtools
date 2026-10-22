@@ -35,6 +35,8 @@ jobs:
   # (tests/native-alignment.test.js); these two jobs check each native shell still builds.
   android:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -44,13 +46,27 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew assembleRelease
         working-directory: android
-      - name: Upload APK
+      - name: Prepare APK
+        run: |
+          mkdir -p dist-android
+          cp android/app/build/outputs/apk/release/*.apk dist-android/ADHD-Tools.apk
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ADHD-Tools-Android-APK
-          path: android/app/build/outputs/apk/release/
+          path: dist-android/ADHD-Tools.apk
           if-no-files-found: ignore
+      - name: Publish Latest Release APK
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Android Release
+          body: "Latest automated Android build. Download ADHD-Tools.apk directly to your phone."
+          files: dist-android/ADHD-Tools.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   desktop:
     runs-on: macos-latest
