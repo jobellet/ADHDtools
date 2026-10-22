@@ -5,7 +5,14 @@ const os = require('os');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const run = (cmd, args) => spawnSync(cmd, args, { cwd: root, stdio: 'inherit' }).status === 0;
+
+// Ensure cargo is in PATH if installed in user's home directory
+const cargoBin = path.join(os.homedir(), '.cargo', 'bin');
+if (fs.existsSync(cargoBin) && !process.env.PATH.includes(cargoBin)) {
+  process.env.PATH = `${cargoBin}${path.delimiter}${process.env.PATH}`;
+}
+
+const run = (cmd, args) => spawnSync(cmd, args, { cwd: root, stdio: 'inherit', env: process.env }).status === 0;
 
 if (process.platform === 'darwin') {
   // macOS install flow

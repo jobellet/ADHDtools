@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "ADHD Tools Hub",
         "width": 1100,
         "height": 800,

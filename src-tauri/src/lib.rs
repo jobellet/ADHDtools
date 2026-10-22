@@ -201,9 +201,15 @@ pub fn run() {
             let quick_capture_i = MenuItem::with_id(app, "quick_capture", "Quick Capture", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&open_i, &quick_capture_i, &quit_i])?;
 
-            let _tray = TrayIconBuilder::with_id("main_tray")
+            let mut tray_builder = TrayIconBuilder::with_id("main_tray")
                 .menu(&menu)
-                .tooltip("ADHD Tools")
+                .tooltip("ADHD Tools");
+
+            if let Some(icon) = app.default_window_icon() {
+                tray_builder = tray_builder.icon(icon.clone());
+            }
+
+            let _tray = tray_builder
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
                         app.exit(0);
