@@ -7,9 +7,17 @@
 
 # ADHD Tools Hub
 
-[**▶ Abrir la aplicación**](https://jobellet.github.io/ADHDtools/)
+Un planificador del día para personas con TDAH que muestra **una sola cosa a la vez**. Funciona en el navegador o como aplicación nativa: tus datos se quedan en tu dispositivo, salvo que *tú* actives una sincronización. Sin conexión y sin cuenta.
 
-Un planificador del día para personas con TDAH que muestra **una sola cosa a la vez**. Funciona en el navegador: tus datos se quedan en tu dispositivo, salvo que *tú* actives una sincronización. Funciona en móvil y ordenador, sin conexión y sin cuenta.
+### 🚀 Empezar (Elige tu plataforma)
+
+| 🌐 App Web (Instantáneo) | 🪟 Windows Escritorio | 🍎 macOS Escritorio | 📱 Móvil Android |
+| :---: | :---: | :---: | :---: |
+| [**▶ Abrir la aplicación**](https://jobellet.github.io/ADHDtools/) | [**⬇ Descargar (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Descargar (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Descargar (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) |
+| *Sin instalación* | *Bandeja de sistema y avisos* | *Barra de menús y temporizador* | *Alarmas incluso con pantalla apagada* |
+| Clic y planifica | Ejecuta el instalador | Arrastra a Aplicaciones | Toca e instala |
+
+> **Todas las versiones son 100 % gratuitas y de código abierto.** Tus datos permanecen completamente sin conexión en tu dispositivo, con sincronización privada opcional con Google Drive / Calendario.
 
 ## La idea: la menor carga mental posible
 

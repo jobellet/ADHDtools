@@ -7,9 +7,17 @@
 
 # ADHD Tools Hub
 
-[**▶ Open the Live App**](https://jobellet.github.io/ADHDtools/)
+A day planner for people with ADHD that shows **one thing at a time**. It runs in your browser or as a native app: your data stays on your device unless *you* turn on a sync option. Offline-first, no account required.
 
-A day planner for people with ADHD that shows **one thing at a time**. It runs in your browser: your data stays on your device unless *you* turn on a sync option. It works on phones and computers, offline, with no account.
+### 🚀 Get Started (Choose your platform)
+
+| 🌐 Web App (Instant) | 🪟 Windows Desktop | 🍎 macOS Desktop | 📱 Android Phone |
+| :---: | :---: | :---: | :---: |
+| [**▶ Open Live App**](https://jobellet.github.io/ADHDtools/) | [**⬇ Download (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Download (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Download (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) |
+| *No install required* | *System tray & notifications* | *Menu bar & native alarms* | *Alarms with screen off* |
+| Click and plan | Run installer setup | Drag to Applications | Tap and install |
+
+> **All versions are 100% free and open-source.** Your data stays completely offline on your device, with optional private Google Drive / Calendar sync across devices.
 
 ## The idea: as little to think about as possible
 
@@ -58,42 +66,44 @@ The app only shows the options you use. For example, `.ics` import is hidden onc
 
 ## 🖥️ Desktop app (optional)
 
-A native app adds system notifications when a timer ends, a menu-bar timer, a screen that stays awake during Focus/Routine, a floating mini-player, and a disk copy of your data. Everything else works the same as in the browser. It is built on your own computer (about 5 minutes the first time).
+A native app adds system notifications when a timer ends, a menu-bar/tray timer, a screen that stays awake during Focus/Routine, a floating mini-player, and a disk copy of your data. Everything else works the same as in the browser.
 
-**macOS (Apple silicon or Intel):**
+### Option A — Pre-built Installers (Fastest)
 
-1. Install the tools once: [Node.js](https://nodejs.org), then in Terminal:
-   ```bash
-   xcode-select --install
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-   . "$HOME/.cargo/env"
-   ```
-2. Get the app and build it:
-   ```bash
-   git clone https://github.com/jobellet/ADHDtools.git
-   cd ADHDtools
-   npm ci
-   npm run desktop:install
-   ```
-3. **ADHD Tools** is now in your *Applications* folder and opens by itself. Double-click it from Launchpad or Finder. To keep it in the Dock, right-click its Dock icon → *Options* → *Keep in Dock*. Allow notifications when macOS asks.
-4. **Voice input (microphone) on macOS:** the first time you click the microphone button, macOS asks for permission to use the **Microphone** and **Speech Recognition**. If the microphone does not respond, open **System Settings → Privacy & Security** and make sure **ADHD Tools** is enabled under both **Microphone** *and* **Speech Recognition** (toggle it off and back on if needed after an update). The expected language matches the language chosen in the app's language menu (and AI automatically detects the spoken language).
+*   **🪟 Windows:** Download [**ADHD-Tools-Setup.exe**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe), run the installer, and open ADHD Tools from your Start Menu.
+*   **🍎 macOS:** Download [**ADHD-Tools.dmg**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg), drag **ADHD Tools** to your *Applications* folder, and open it.
+*   **📱 Android:** Download [**ADHD-Tools.apk**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) on your phone and tap Install.
 
-**Updating or reinstalling:** no need to uninstall manually (your tasks and keys are kept on disk). Just run `git pull && npm ci && npm run desktop:install` — the installer quits the running version, replaces `/Applications/ADHD Tools.app`, and opens the updated app.
+### Option B — Build on your machine (Developers)
 
-**Try it without installing:** `npm run desktop` opens the app in a window, using your local source files.
+**macOS:**
+```bash
+git clone https://github.com/jobellet/ADHDtools.git
+cd ADHDtools && npm ci
+npm run desktop:install
+```
+*ADHD Tools is installed into `/Applications` and launches automatically.*
 
-On Windows and Linux, install [the Tauri prerequisites](https://tauri.app/start/prerequisites/), then run `npm ci && npm run desktop:build`; the app is created under `src-tauri/target/release/bundle/`.
+**Windows:**
+```powershell
+git clone https://github.com/jobellet/ADHDtools.git
+cd ADHDtools; npm ci
+npm run desktop:install
+```
+*Builds the Windows app, adds an ADHD Tools shortcut to your Start Menu, and launches it.*
+
+**Voice input (microphone) on macOS:** the first time you click the microphone button, macOS asks for permission to use the **Microphone** and **Speech Recognition**. Make sure ADHD Tools is enabled under **System Settings → Privacy & Security → Microphone & Speech Recognition**.
+
+**Updating:** Just run `git pull && npm ci && npm run desktop:install`. Your local data and keys are kept on disk.
+
+**Try it without installing:** `npm run desktop` opens the app in a dev window.
 
 ## 📱 Android app (optional, free, no Play Store)
 
-The Android app rings like an alarm clock when a task, routine or event starts or ends, **even with the screen off or the app closed**. It shows the running timer in the notification shade and keeps you signed in to Google. You build it on your computer and copy it to your phone:
+The Android app rings like an alarm clock when a task, routine or event starts or ends, **even with the screen off or the app closed**. It shows the running timer in the notification shade and keeps you signed in to Google.
 
-```bash
-npm ci
-npm run android:build
-```
-
-The app is then in `dist-android/ADHD-Tools.apk`. Setup, install on the phone and updates: [Android guide](docs/android.md).
+*   **Download:** Get [**ADHD-Tools.apk**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) from the latest release and tap to install.
+*   **Build yourself:** Run `npm ci && npm run android:build` (creates `dist-android/ADHD-Tools.apk`). See the [Android guide](docs/android.md) for full details.
 
 ## 🤖 Talk to your planner with your AI assistant (MCP)
 

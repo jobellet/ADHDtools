@@ -38,7 +38,7 @@ npm run test:ui                     # browser tests: the real app in headless Ch
 node .claude/static-server.cjs      # serve on http://localhost:8422 (also under /ADHDtools/ like GitHub Pages)
 node mcp/server.js                  # MCP server for AI assistants (stdio); setup: docs/mcp.md
 npm run mcp:check                   # test a user's MCP setup end to end (prints the fix for each problem)
-npm run desktop:install             # macOS: build + install "ADHD Tools.app" into /Applications (double-click / keep in Dock)
+npm run desktop:install             # build + install into /Applications (macOS) or Start Menu (Windows)
 npm run desktop:build               # native app (Tauri/Rust in src-tauri/); `npm run desktop` = dev window. Web assets are copied by scripts/prepare-desktop.cjs
 npm run android:build               # Android APK in dist-android/ (needs the Android SDK; guide: docs/android.md); android:install = + adb install
 ```

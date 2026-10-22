@@ -7,9 +7,17 @@
 
 # ADHD Tools Hub
 
-[**▶ App öffnen**](https://jobellet.github.io/ADHDtools/)
+Ein Tagesplaner für Menschen mit ADHS, der **immer nur eine Sache** zeigt. Er läuft im Browser oder als native App: Deine Daten bleiben auf deinem Gerät, außer *du* schaltest eine Synchronisierung ein. Offline-fähig, ohne Konto.
 
-Ein Tagesplaner für Menschen mit ADHS, der **immer nur eine Sache** zeigt. Er läuft im Browser: Deine Daten bleiben auf deinem Gerät, außer *du* schaltest eine Synchronisierung ein. Er funktioniert auf Handy und Computer, offline und ohne Konto.
+### 🚀 Loslegen (Wähle deine Plattform)
+
+| 🌐 Web-App (Sofort) | 🪟 Windows Desktop | 🍎 macOS Desktop | 📱 Android Handy |
+| :---: | :---: | :---: | :---: |
+| [**▶ App öffnen**](https://jobellet.github.io/ADHDtools/) | [**⬇ Download (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Download (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Download (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) |
+| *Keine Installation nötig* | *System-Tray & Benachrichtigungen* | *Menüleiste & Wecker* | *Klingelt auch bei gesperrtem Bildschirm* |
+| Anklicken und planen | Setup ausführen | In Programme ziehen | Antippen und installieren |
+
+> **Alle Versionen sind 100 % kostenlos und quelloffen.** Deine Daten bleiben komplett offline auf deinem Gerät, mit optionaler privater Google Drive / Kalender Synchronisierung.
 
 ## Die Idee: so wenig wie möglich nachdenken müssen
 

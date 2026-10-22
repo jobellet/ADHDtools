@@ -9,7 +9,7 @@
     "test:all": "npm test && npm run test:ui",
     "desktop": "tauri dev",
     "desktop:build": "tauri build",
-    "desktop:install": "node scripts/install-desktop-mac.cjs",
+    "desktop:install": "node scripts/install-desktop.cjs",
     "android:build": "node scripts/build-android.cjs",
     "android:install": "node scripts/build-android.cjs --install",
     "mcp": "node mcp/server.js",
