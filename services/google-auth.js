@@ -154,18 +154,29 @@
   }
 
   async function postToken(params) {
-    const resp = await fetch(TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(params),
-    });
-    const body = await resp.json().catch(() => ({}));
-    if (!resp.ok) {
-      const err = new Error(body.error_description || body.error || `Google token error ${resp.status}`);
-      err.code = body.error;
-      throw err;
+    let lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const resp = await fetch(TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(params),
+        });
+        const body = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          const err = new Error(body.error_description || body.error || `Google token error ${resp.status}`);
+          err.code = body.error;
+          throw err;
+        }
+        return body;
+      } catch (err) {
+        lastErr = err;
+        // Don't retry if Google returned an explicit OAuth error code (e.g. invalid_grant)
+        if (err.code || attempt === 2) throw err;
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      }
     }
-    return body;
+    throw lastErr;
   }
 
   async function nativeRefresh(scope) {
@@ -210,6 +221,28 @@
     const params = new URLSearchParams(query);
     if (params.get('error')) throw new Error(params.get('error'));
     if (params.get('state') !== state) throw new Error('Google sign-in answer did not match the request');
+
+    // On mobile devices (Android WebView), wait until the user returns from Chrome to this app
+    // before initiating network requests, because background webviews often have sockets suspended.
+    if (typeof document !== 'undefined' && document.hidden) {
+      await new Promise(resolve => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          document.removeEventListener('visibilitychange', check);
+          window.removeEventListener('focus', check);
+          setTimeout(resolve, 350);
+        };
+        const check = () => {
+          if (!document.hidden) finish();
+        };
+        document.addEventListener('visibilitychange', check);
+        window.addEventListener('focus', check);
+        setTimeout(finish, 6000);
+      });
+    }
+
     const body = await postToken({
       grant_type: 'authorization_code', code: params.get('code'), code_verifier: verifier,
       client_id: clientId, client_secret: clientSecret, redirect_uri: redirectUri,

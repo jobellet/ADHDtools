@@ -266,7 +266,7 @@ final class NativeBridge implements WebViewCompat.WebMessageListener {
                 + "<h2>" + escape(activity.getString(R.string.signin_done_title)) + "</h2>"
                 + "<p><a href=\"intent://open#Intent;scheme=adhdtools;package=com.adhdtools.app;end\" "
                 + "style=\"display:inline-block;padding:12px 20px;background:#6200ee;color:#fff;border-radius:8px;text-decoration:none\">"
-                + escape(activity.getString(R.string.signin_back)) + "</a></p></body>";
+                + escape(activity.getString(R.string.signin_back)) + "</a></p><script>setTimeout(function(){ window.location.href = 'intent://open#Intent;scheme=adhdtools;package=com.adhdtools.app;end'; }, 400);</script></body>";
         byte[] body = page.getBytes(StandardCharsets.UTF_8);
         OutputStream out = client.getOutputStream();
         out.write(("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + body.length
