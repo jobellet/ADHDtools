@@ -17,6 +17,38 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  # Timezone safety: the app stores local dates (habit logs, calendar cells, export
+  # filenames). These jobs run the unit tests under timezones on both sides of UTC
+  # so a toISOString()/new Date('YYYY-MM-DD') regression cannot slip through.
+  test-timezones:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tz: [America/New_York, Asia/Tokyo, Pacific/Kiritimati]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run tests in ${{ matrix.tz }}
+        run: TZ=${{ matrix.tz }} npm test
+
+  # MCP server: the AI-assistant bridge must keep speaking valid JSON-RPC and the
+  # tool schemas must stay in sync with the app (tests/mcp-coverage.test.js).
+  mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/mcp.test.js tests/mcp-coverage.test.js tests/assistant-ops.test.js
+
   # Opens the real app in headless Chromium at phone and desktop sizes
   # (tests/ui/). Catches layout and scheduling bugs that unit tests miss.
   ui:

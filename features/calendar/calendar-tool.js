@@ -78,10 +78,12 @@
       .map(t => {
         const start = t.plannerDate;
         let end = start;
-        if (t.duration) {
+        const minutes = Number(t.durationMinutes ?? t.duration);
+        if (Number.isFinite(minutes) && minutes > 0) {
           const s = new Date(start);
-          const e = new Date(s.getTime() + t.duration * 60000);
-          end = e.toISOString().slice(0, 16);
+          const e = new Date(s.getTime() + minutes * 60000);
+          const pad = n => String(n).padStart(2, '0');
+          end = `${e.getFullYear()}-${pad(e.getMonth() + 1)}-${pad(e.getDate())}T${pad(e.getHours())}:${pad(e.getMinutes())}`;
         }
         return {
           id: t.id,
@@ -133,8 +135,8 @@
     const ev = normalizeEvent({
       id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
       title,
-      start: start.toISOString().slice(0, 16),
-      end: end.toISOString().slice(0, 16)
+      start: localStamp(start),
+      end: localStamp(end)
     });
     events.push(ev);
     saveEvents(events);
@@ -146,12 +148,12 @@
       if (!ev.instanceStart) ev.instanceStart = ev.start;
       const start = new Date(ev.start);
       start.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-      ev.start = start.toISOString().slice(0, 16);
+      ev.start = localStamp(start);
     }
     if (ev.end) {
       const end = new Date(ev.end);
       end.setFullYear(newDate.getFullYear(), newDate.getMonth(), newDate.getDate());
-      ev.end = end.toISOString().slice(0, 16);
+      ev.end = localStamp(end);
     }
     ev.localOverride = true;
     ev.updatedAt = new Date().toISOString();
@@ -551,8 +553,13 @@
   }
 
 
+  // Local YYYY-MM-DD (never UTC: toISOString() shifts the day for timezones behind UTC)
+  const pad2 = n => String(n).padStart(2, '0');
+  const localDayStr = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const localStamp = d => `${localDayStr(d)}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
   function renderDay(events, container) {
-    const dayStr = referenceDate.toISOString().split('T')[0];
+    const dayStr = localDayStr(referenceDate);
     const dayEvents = events.filter(ev => ev.start && ev.start.startsWith(dayStr));
     const table = document.createElement('table');
     table.className = 'calendar-table';
@@ -601,9 +608,9 @@
       const cellDate = new Date(start);
       cellDate.setDate(start.getDate() + i);
       const cell = document.createElement('td');
-      const dayStr = cellDate.toISOString().split('T')[0];
+      const dayStr = localDayStr(cellDate);
       cell.dataset.date = dayStr;
-      if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
+      if (dayStr === localDayStr(new Date())) cell.classList.add('today');
       const list = document.createElement('ul');
       events.filter(ev => ev.start && ev.start.startsWith(dayStr)).forEach(ev => {
         const li = createEventElement(ev, 'li', true);
@@ -648,7 +655,7 @@
         const cellDate = new Date(year, month, current);
         const cell = document.createElement('td');
         if (current >= 1 && current <= daysInMonth) {
-          const dayStr = cellDate.toISOString().split('T')[0];
+          const dayStr = localDayStr(cellDate);
           cell.dataset.date = dayStr;
           const num = document.createElement('div');
           num.textContent = cellDate.getDate();
@@ -662,7 +669,7 @@
           cell.addEventListener('dblclick', () => createEventAt(cellDate));
           cell.addEventListener('dragover', e => e.preventDefault());
           cell.addEventListener('drop', e => handleDrop(e, cellDate));
-          if (dayStr === new Date().toISOString().split('T')[0]) cell.classList.add('today');
+          if (dayStr === localDayStr(new Date())) cell.classList.add('today');
         }
         tr.appendChild(cell);
         current++;

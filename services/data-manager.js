@@ -355,7 +355,9 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${APP_NAME.toLowerCase().replace(/\s+/g, '-')}-data-${new Date().toISOString().split('T')[0]}.json`;
+    const pad = n => String(n).padStart(2, '0');
+    const d = new Date();
+    a.download = `${APP_NAME.toLowerCase().replace(/\s+/g, '-')}-data-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -595,23 +597,38 @@
   }
 
   // Shared import entry point: used by file import and cloud restore alike.
-  function importDataFromObject(imported) {
+  // Uses the same merge logic as Drive sync (core/sync-merge.js) so both paths behave identically.
+  async function importDataFromObject(imported) {
     if (!imported || !imported.metadata || imported.metadata.app !== APP_NAME) {
       throw new Error('Invalid data file');
     }
 
-    const { collisions, updates } = detectCollisions(imported);
+    const { updates, added, updated, conflicts } = await mergeFromBackup(imported);
 
-    if (collisions.length === 0) {
-      // No collisions, just apply updates
-      Object.keys(updates).forEach(key => {
-        const val = updates[key];
-        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+    if (conflicts.length === 0) {
+      // No conflicts: apply the merged values directly.
+      const write = window.getStorageLog?.withCloudSyncWrite || (fn => fn());
+      write(() => {
+        Object.keys(updates).forEach(key => {
+          const val = updates[key];
+          localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+        });
       });
-      showNotification('Data imported successfully. Reloading...', 'success');
+      window.dispatchEvent(new CustomEvent('cloudSyncApplied', { detail: { keys: Object.keys(updates) } }));
+      showNotification(`Data imported successfully (${added} added, ${updated} updated). Reloading...`, 'success');
       setTimeout(() => location.reload(), 1500);
     } else {
-      showCollisionModal(collisions, updates, applyResolutions);
+      // True simultaneous edits: let the user pick per item.
+      const legacyCollisions = conflicts.map(c => ({
+        key: c.key,
+        type: c.type,
+        id: c.id || c.label,
+        existing: c.existing,
+        imported: c.imported,
+        label: c.label,
+      }));
+      const legacyUpdates = { ...updates };
+      showCollisionModal(legacyCollisions, legacyUpdates, applyResolutions);
     }
   }
 
@@ -709,12 +726,24 @@
         if (json) {
           const imported = typeof json === 'string' ? JSON.parse(json) : json;
           if (Object.keys(imported).length > 0) {
-            mergeFromBackup(imported);
-            if (window.EventBus) {
-              window.EventBus.dispatchEvent(new CustomEvent('dataChanged', { detail: { source: 'native-sync' } }));
-            }
-            if (typeof window.scheduleNeedsRefresh === 'function') {
-              window.scheduleNeedsRefresh();
+            // Native disk mirror has no metadata wrapper: merge it like a backup payload.
+            const asBackup = { ...imported, metadata: { app: APP_NAME, version: APP_VERSION, importedAt: new Date().toISOString() } };
+            const { updates, added, updated } = await mergeFromBackup(asBackup);
+            const write = window.getStorageLog?.withCloudSyncWrite || (fn => fn());
+            write(() => {
+              Object.keys(updates).forEach(key => {
+                const val = updates[key];
+                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+              });
+            });
+            if (added > 0 || updated > 0 || Object.keys(updates).length > 0) {
+              window.dispatchEvent(new CustomEvent('cloudSyncApplied', { detail: { keys: Object.keys(updates) } }));
+              if (window.EventBus) {
+                window.EventBus.dispatchEvent(new CustomEvent('dataChanged', { detail: { source: 'native-sync' } }));
+              }
+              if (typeof window.scheduleNeedsRefresh === 'function') {
+                window.scheduleNeedsRefresh();
+              }
             }
           }
         }

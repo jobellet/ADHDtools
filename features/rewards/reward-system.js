@@ -656,8 +656,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Check for completed tasks and pomodoros to award points
     function checkForPointsToAward() {
-        // Check for completed tasks
-        const tasks = JSON.parse(localStorage.getItem('adhd-tasks')) || [];
+        // Check for completed tasks (TaskStore keeps them in adhd-unified-tasks)
+        const tasks = window.TaskStore?.getAllTasks?.() || JSON.parse(localStorage.getItem('adhd-unified-tasks')) || [];
         const lastPointsCheck = localStorage.getItem('last-points-check') || '2000-01-01T00:00:00.000Z';
         
         let newPoints = 0;
@@ -722,14 +722,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         function calculateStreak(logs) {
             if (!logs) return 0;
+            const pad = n => String(n).padStart(2, '0');
+            const localDateStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
             let streak = 0;
             let checkDate = new Date();
-            const todayStr = checkDate.toISOString().split('T')[0];
+            const todayStr = localDateStr(checkDate);
             if (!logs[todayStr]) {
                 checkDate.setDate(checkDate.getDate() - 1);
             }
             while (true) {
-                const dateStr = checkDate.toISOString().split('T')[0];
+                const dateStr = localDateStr(checkDate);
                 if (logs[dateStr]) {
                     streak++;
                     checkDate.setDate(checkDate.getDate() - 1);
@@ -746,7 +748,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (streak >= 7 && streak > lastAward) {
                 newPoints += 5;
                 newAchievements.push({
-                    name: `7-day streak for ${habit.text}`,
+                    name: `7-day streak for ${habit.name || habit.text || 'habit'}`,
                     date: new Date().toISOString(),
                     type: 'habit',
                     points: 5

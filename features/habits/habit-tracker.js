@@ -26,6 +26,14 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentMonth = currentDate.getMonth();
     let currentYear = currentDate.getFullYear();
 
+    // Local YYYY-MM-DD (never UTC: toISOString() shifts the day for timezones behind UTC)
+    const pad2 = n => String(n).padStart(2, '0');
+    const localDateStr = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const parseLocalDate = s => {
+        const [y, m, d] = s.split('-').map(Number);
+        return new Date(y, m - 1, d);
+    };
+
     // Load habits from localStorage
     let habits = JSON.parse(localStorage.getItem('adhd-habits')) || [];
 
@@ -94,9 +102,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Calculate completion rate for current month
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const completedDays = Object.keys(habitLogs[habit.id] || {}).filter(date => {
-                const logDate = new Date(date);
-                return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
+            const completedDays = Object.keys(habitLogs[habit.id] || {}).filter(dateStr => {
+                const [y, m] = dateStr.split('-').map(Number);
+                return m - 1 === currentMonth && y === currentYear;
             }).length;
 
             const completionRate = Math.round((completedDays / daysInMonth) * 100);
@@ -379,19 +387,18 @@ document.addEventListener('DOMContentLoaded', function () {
     function calculateStreak(habitId) {
         if (!habitLogs[habitId]) return 0;
 
-        let streak = 0;
         let currentStreak = 0;
         let checkDate = new Date(currentDate);
 
         // Check yesterday if today is not yet completed
-        const todayStr = checkDate.toISOString().split('T')[0];
+        const todayStr = localDateStr(checkDate);
         if (!habitLogs[habitId][todayStr]) {
             checkDate.setDate(checkDate.getDate() - 1);
         }
 
         // Count consecutive days backwards
         while (true) {
-            const dateStr = checkDate.toISOString().split('T')[0];
+            const dateStr = localDateStr(checkDate);
 
             if (habitLogs[habitId][dateStr]) {
                 currentStreak++;
@@ -415,9 +422,9 @@ document.addEventListener('DOMContentLoaded', function () {
         let prevDate = null;
 
         dates.forEach(dateStr => {
-            const date = new Date(dateStr);
+            const date = parseLocalDate(dateStr);
             if (prevDate) {
-                const diff = (date - prevDate) / (1000 * 60 * 60 * 24);
+                const diff = Math.round((date - prevDate) / (1000 * 60 * 60 * 24));
                 if (diff === 1) {
                     current += 1;
                 } else {
@@ -453,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `habit-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `habit-data-${localDateStr(new Date())}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
