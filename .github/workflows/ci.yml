@@ -44,6 +44,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew assembleRelease
         working-directory: android
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ADHD-Tools-Android-APK
+          path: android/app/build/outputs/apk/release/
+          if-no-files-found: ignore
 
   desktop:
     runs-on: macos-latest

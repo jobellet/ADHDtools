@@ -25,7 +25,8 @@ You need a **Client ID** only — no API key, no billing.
    - **Audience** — choose **External** → **Next**. (Your app stays in "Testing" mode — no verification needed.)
    - **Contact Information** — your email → **Next**, agree to the policy → **Create**.
 5. In the left sidebar open **Clients** → **Create client**:
-   - Application type: **Web application**.
+   - Application type: **Web application** (for the web version in Chrome/Safari/Firefox).
+     *(Note for Desktop & Android apps: create a **Desktop app** client instead, which provides both a Client ID and Client Secret, allowing loopback sign-in and keeping the connection across restarts.)*
    - Under **Authorized JavaScript origins** add:
      - `https://jobellet.github.io` (to use the hosted app)
      - `http://localhost:8422` (only if you run the app locally; adapt the port)

@@ -58,15 +58,26 @@ the old one. Your tasks, routines and Google connection stay.
 ## Connect Google (Calendar and Drive sync)
 
 The phone app signs in like the desktop app: it needs a **Desktop app** OAuth client (ID and secret).
+*(Important: A "Web application" or "Android" client ID type from Google Cloud Console will not work with loopback redirect and will return "Error 401: invalid_client — The OAuth client was not found".)*
 
-1. If you set up the AI assistant ([mcp.md](mcp.md)), you already have one. Otherwise create it:
+### Option 1 — Transfer from your computer (easiest)
+If you already use the app or AI assistant on your computer:
+- In the computer app: go to **More → Settings → Calendar Notifications & Google Sync** and click **Copy for Android** (or use **Settings → Export Credentials**).
+- Send the copied text or credentials file to your phone (via email, Signal, notes, etc.).
+- In the Android app: paste it directly into the **Client ID** box: both the Client ID and Secret are extracted automatically. Tap **Save**.
+
+### Option 2 — Set up manually
+1. If you set up the AI assistant ([mcp.md](mcp.md)), you already have credentials in `~/.config/adhd-tools-mcp/credentials.json`. Otherwise create one:
    [Google Auth Platform → Clients](https://console.cloud.google.com/auth/clients) → **+ Create client →
    Desktop app**, in the same project as your Calendar Client ID.
 2. In the app: **More → Settings → Calendar Notifications & Google Sync**: paste the **Client ID** and the
-   **Client secret**, then **Save**. Tip: copy the whole JSON file Google gives you (or
-   `~/.config/adhd-tools-mcp/credentials.json` from the AI assistant setup) and paste it into the
-   **Client ID** box: both fields fill in.
+   **Client secret**, then **Save**. Tip: copy the whole JSON file Google gives you and paste it into the
+   **Client ID** box: both fields fill in automatically.
 3. Tap **Connect & Sync**. Chrome opens Google's page. After you allow access, tap **Back to ADHD Tools**.
+
+### Troubleshooting Google Sign-In
+- **"Error 401: invalid_client — The OAuth client was not found":** This happens if the Client ID has a typo, missing characters, or was created as a "Web application" instead of "Desktop app". Make sure your Client ID ends with `.apps.googleusercontent.com` and was created with type **Desktop app**.
+- **"Client Secret missing":** Unlike the web browser, native apps (Android and Desktop) require the Client Secret (starting with `GOCSPX-`) to exchange the auth code offline. Make sure it is saved.
 
 You do this once. The app keeps the connection after restarts and updates.
 

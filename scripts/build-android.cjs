@@ -27,6 +27,7 @@ function findSdk() {
     process.env.ANDROID_SDK_ROOT,
     path.join(os.homedir(), 'Library', 'Android', 'sdk'),
     path.join(os.homedir(), 'Android', 'Sdk'),
+    path.join(process.env.LOCALAPPDATA || '', 'Android', 'Sdk'),
     '/opt/homebrew/share/android-commandlinetools',
     '/usr/local/share/android-commandlinetools',
   ].filter(Boolean);

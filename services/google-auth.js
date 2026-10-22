@@ -31,7 +31,7 @@
     }
   }
 
-  function getClientSecret() {
+  function getSavedClientSecret() {
     try {
       return localStorage.getItem(CLIENT_SECRET_KEY) || '';
     } catch {
@@ -39,12 +39,22 @@
     }
   }
 
+  function getClientSecret() {
+    const saved = getSavedClientSecret();
+    if (saved) return saved;
+    if (isNative() && mcpClient?.clientSecret) return mcpClient.clientSecret;
+    return '';
+  }
+
   // Desktop app: the saved Client ID is used only together with a secret; otherwise fall back to the
   // Desktop client already created for the AI assistant (~/.config/adhd-tools-mcp/credentials.json).
   function getClientId() {
     const saved = getSavedClientId();
-    if (!isNative() || getClientSecret()) return saved;
-    return mcpClient?.clientId || saved;
+    if (isNative()) {
+      if (saved && getSavedClientSecret()) return saved;
+      return mcpClient?.clientId || saved;
+    }
+    return saved;
   }
 
   async function loadMcpClient() {
@@ -137,10 +147,10 @@
 
   async function nativeClient() {
     await loadMcpClient();
-    const secret = getClientSecret();
-    if (getSavedClientId() && secret) return { clientId: getSavedClientId(), clientSecret: secret };
-    if (mcpClient) return mcpClient;
-    throw new Error('Desktop/Android app needs an OAuth Client ID and Secret — enter them above in Google Calendar API and click Save.');
+    const id = (getSavedClientId() || mcpClient?.clientId || '').trim();
+    const secret = (getClientSecret() || '').trim();
+    if (id && secret) return { clientId: id, clientSecret: secret };
+    throw new Error('Desktop and Android apps need a "Desktop app" OAuth Client ID and Client Secret from Google Cloud Console. Enter them in Settings → Calendar Notifications & Google Sync.');
   }
 
   async function postToken(params) {
@@ -178,6 +188,9 @@
   async function nativeSignIn(scope) {
     const invoke = window.AttentionService.invokeNative;
     const { clientId, clientSecret } = await nativeClient();
+    if (!clientId.includes('.apps.googleusercontent.com')) {
+      throw new Error(`The saved Google Client ID is invalid: "${clientId}". A Google OAuth Client ID ends with .apps.googleusercontent.com. Please re-enter it in Settings.`);
+    }
     const port = await invoke('native_oauth_listen');
     if (!port) throw new Error('Could not start the local sign-in listener');
     const redirectUri = `http://127.0.0.1:${port}`;

@@ -39,6 +39,13 @@
   function collectCredentials() {
     const creds = {};
     getSensitiveKeys().forEach(k => { creds[k] = localStorage.getItem(k); });
+    // Also include Google client ID and secret from GoogleAuth if available (e.g. desktop MCP)
+    if (!creds['gcalClientId'] && window.GoogleAuth?.getClientId?.()) {
+      creds['gcalClientId'] = window.GoogleAuth.getClientId();
+    }
+    if (!creds['gcalClientSecret'] && window.GoogleAuth?.getClientSecret?.()) {
+      creds['gcalClientSecret'] = window.GoogleAuth.getClientSecret();
+    }
     return creds;
   }
 
@@ -268,6 +275,10 @@
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
 
   window.CredentialsSync = {
+    collectCredentials,
+    applyCredentials,
+    encryptPayload,
+    decryptPayload,
     refresh() { const c = document.getElementById('credentials-sync-container'); if (c) refreshPreview(c); }
   };
 })();

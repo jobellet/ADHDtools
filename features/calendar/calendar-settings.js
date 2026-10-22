@@ -19,8 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
       <label for="gcal-client-secret-input" style="display:block; font-size: 0.85rem;">Client secret (Desktop & Android app):</label>
       <input type="password" id="gcal-client-secret-input" placeholder="GOCSPX-…" autocomplete="off" style="width: 100%; padding: 0.4rem;" />
     </div>
-    <div class="api-actions" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+    <div class="api-actions" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
         <button type="button" id="save-gcal-keys" class="btn btn-primary btn-sm">Save</button>
+        <button type="button" id="copy-gcal-json" class="btn btn-secondary btn-sm" style="display: none;" title="Copy credentials as JSON to transfer to Android"><i class="fas fa-copy"></i> Copy for Android</button>
         <button type="button" id="clear-gcal-keys" class="btn btn-secondary btn-sm">Clear</button>
     </div>
     <span id="gcal-key-status" class="status" style="display: block; margin-top: 0.5rem; font-size: 0.85rem;"></span>
@@ -29,38 +30,96 @@ document.addEventListener('DOMContentLoaded', () => {
   const clientInput = settingsContainer.querySelector('#gcal-client-id-input');
   const status = settingsContainer.querySelector('#gcal-key-status');
   const secretInput = settingsContainer.querySelector('#gcal-client-secret-input');
-  if (window.AttentionService?.isNative?.()) {
-    settingsContainer.querySelector('#gcal-client-secret-row').style.display = '';
-  }
+  const copyBtn = settingsContainer.querySelector('#copy-gcal-json');
 
   // The old integration also stored an API key; it is no longer needed.
   localStorage.removeItem('gcalApiKey');
 
-  if (localStorage.getItem('gcalClientId')) {
-    status.textContent = 'Client ID saved';
-    status.style.color = 'var(--success-color)';
-  }
+  function refreshUI() {
+    const isNative = Boolean(window.AttentionService?.isNative?.());
+    if (isNative) {
+      const secretRow = settingsContainer.querySelector('#gcal-client-secret-row');
+      if (secretRow) secretRow.style.display = '';
+    }
 
-  // Smart paste: accept a raw Client ID/Secret or a JSON blob (e.g. credentials.json)
-  // and extract both client_id and client_secret from it.
-  function handleSmartPaste(e) {
-    const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-    if (!pastedText.trim().startsWith('{')) return;
-    try {
-      const data = JSON.parse(pastedText);
-      const clientId = data.client_id || data.clientId || data.CLIENT_ID
-        || data.web?.client_id || data.installed?.client_id;
-      const clientSecret = data.client_secret || data.clientSecret || data.web?.client_secret || data.installed?.client_secret;
-      if (clientId) {
-        e.preventDefault();
-        clientInput.value = clientId;
-        if (clientSecret) secretInput.value = clientSecret;
-        status.textContent = clientSecret
-          ? 'Client ID and Secret extracted from JSON — click Save'
-          : 'Client ID extracted from JSON — click Save';
+    const currentId = window.GoogleAuth?.getClientId?.() || localStorage.getItem('gcalClientId') || '';
+    const currentSecret = window.GoogleAuth?.getClientSecret?.() || localStorage.getItem('gcalClientSecret') || '';
+
+    if (currentId && !clientInput.value) {
+      clientInput.value = currentId;
+    }
+    if (currentSecret) {
+      secretInput.placeholder = '•••••••• (saved)';
+    }
+
+    if (copyBtn) {
+      copyBtn.style.display = (currentId && currentSecret) ? '' : 'none';
+    }
+
+    if (currentId) {
+      if (isNative) {
+        if (currentSecret) {
+          status.textContent = 'Client ID and Secret configured ✓';
+          status.style.color = 'var(--success-color)';
+        } else {
+          status.textContent = 'Client ID saved, but Client Secret is missing (required on Android & Desktop)';
+          status.style.color = 'var(--warning-color, #e67e22)';
+        }
+      } else {
+        status.textContent = 'Client ID saved ✓';
         status.style.color = 'var(--success-color)';
       }
-    } catch { /* not JSON, let the normal paste happen */ }
+    }
+  }
+
+  // Smart extraction: accept raw strings, JSON blob (e.g. credentials.json), markdown, or labeled text
+  function extractCredentials(text) {
+    if (!text || typeof text !== 'string') return null;
+    let raw = text.trim();
+    // Strip markdown code fences if present
+    raw = raw.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/, '').trim();
+
+    // Try parsing as JSON first
+    if (raw.startsWith('{') && raw.endsWith('}')) {
+      try {
+        const data = JSON.parse(raw);
+        const clientId = data.client_id || data.clientId || data.CLIENT_ID
+          || data.installed?.client_id || data.web?.client_id;
+        const clientSecret = data.client_secret || data.clientSecret || data.CLIENT_SECRET
+          || data.installed?.client_secret || data.web?.client_secret;
+        if (clientId) {
+          return { clientId: String(clientId).trim(), clientSecret: clientSecret ? String(clientSecret).trim() : '' };
+        }
+      } catch { /* not JSON */ }
+    }
+
+    // Try regex extraction
+    const idMatch = raw.match(/([0-9]+-[a-z0-9_]+\.apps\.googleusercontent\.com)/i);
+    const secretMatch = raw.match(/(GOCSPX-[a-zA-Z0-9_-]+)/);
+    if (idMatch) {
+      return {
+        clientId: idMatch[1].trim(),
+        clientSecret: secretMatch ? secretMatch[1].trim() : '',
+      };
+    }
+    return null;
+  }
+
+  function handleSmartPaste(e) {
+    const pastedText = (e.clipboardData || window.clipboardData)?.getData('text');
+    if (!pastedText) return;
+    const extracted = extractCredentials(pastedText);
+    if (extracted && extracted.clientId) {
+      e.preventDefault();
+      clientInput.value = extracted.clientId;
+      if (extracted.clientSecret) {
+        secretInput.value = extracted.clientSecret;
+      }
+      status.textContent = extracted.clientSecret
+        ? 'Client ID and Secret extracted from paste — click Save'
+        : 'Client ID extracted from paste — click Save';
+      status.style.color = 'var(--success-color)';
+    }
   }
 
   clientInput.addEventListener('paste', handleSmartPaste);
@@ -68,19 +127,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
   settingsContainer.querySelector('#save-gcal-keys').addEventListener('click', (e) => {
     e.preventDefault();
-    const clientId = clientInput.value.trim();
+    let clientId = clientInput.value.trim();
+    let secret = secretInput.value.trim();
+
+    // Check if the input contains a pasted blob that wasn't caught by smart paste
+    const extracted = extractCredentials(clientId) || (secret ? extractCredentials(secret) : null);
+    if (extracted && extracted.clientId) {
+      clientId = extracted.clientId;
+      clientInput.value = clientId;
+      if (extracted.clientSecret && !secret) {
+        secret = extracted.clientSecret;
+      }
+    }
+
+    // Clean zero-width chars and invisible unicode
+    clientId = clientId.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+    secret = secret.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
+
     if (!clientId) {
       status.textContent = 'Client ID is empty';
       status.style.color = 'var(--danger-color)';
       return;
     }
+
+    if (!clientId.includes('.apps.googleusercontent.com')) {
+      status.textContent = 'Invalid Client ID: must end with .apps.googleusercontent.com';
+      status.style.color = 'var(--danger-color)';
+      return;
+    }
+
+    const isNative = Boolean(window.AttentionService?.isNative?.());
+    const existingSecret = window.GoogleAuth?.getClientSecret?.() || localStorage.getItem('gcalClientSecret') || '';
+    const finalSecret = secret || existingSecret;
+
     window.GoogleAuth ? window.GoogleAuth.setClientId(clientId) : localStorage.setItem('gcalClientId', clientId);
-    if (secretInput.value.trim()) window.GoogleAuth?.setClientSecret(secretInput.value.trim());
-    secretInput.value = '';
-    clientInput.value = '';
-    status.textContent = 'Client ID saved ✓';
-    status.style.color = 'var(--success-color)';
+    if (secret) {
+      window.GoogleAuth ? window.GoogleAuth.setClientSecret(secret) : localStorage.setItem('gcalClientSecret', secret);
+      secretInput.value = '';
+      secretInput.placeholder = '•••••••• (saved)';
+    }
+
+    if (isNative && !finalSecret) {
+      status.textContent = 'Warning: Android & Desktop require a Client Secret (Desktop app OAuth client).';
+      status.style.color = 'var(--warning-color, #e67e22)';
+    } else {
+      status.textContent = isNative ? 'Client ID and Secret saved ✓' : 'Client ID saved ✓';
+      status.style.color = 'var(--success-color)';
+    }
+
+    refreshUI();
     window.dispatchEvent(new CustomEvent('capabilitiesChanged'));
+  });
+
+  copyBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const id = window.GoogleAuth?.getClientId?.() || localStorage.getItem('gcalClientId') || '';
+    const secret = window.GoogleAuth?.getClientSecret?.() || localStorage.getItem('gcalClientSecret') || '';
+    if (!id) return;
+    const payload = JSON.stringify({ client_id: id, client_secret: secret || '' }, null, 2);
+    try {
+      await navigator.clipboard.writeText(payload);
+      status.textContent = 'Copied credentials JSON to clipboard! Paste it into ADHD Tools on your phone.';
+      status.style.color = 'var(--success-color)';
+    } catch {
+      prompt('Copy this credentials JSON to paste into ADHD Tools on your phone:', payload);
+    }
   });
 
   settingsContainer.querySelector('#clear-gcal-keys').addEventListener('click', (e) => {
@@ -89,8 +200,16 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem('gcalApiKey');
     localStorage.removeItem('gcalClientSecret');
     window.GoogleAuth?.clearTokens();
+    clientInput.value = '';
+    secretInput.value = '';
+    secretInput.placeholder = 'GOCSPX-…';
     status.textContent = 'Client ID cleared';
     status.style.color = 'var(--text-muted)';
+    refreshUI();
     window.dispatchEvent(new CustomEvent('capabilitiesChanged'));
   });
+
+  refreshUI();
+  window.addEventListener('capabilitiesChanged', refreshUI);
+  window.addEventListener('nativeSecretsRestored', refreshUI);
 });
