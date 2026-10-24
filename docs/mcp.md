@@ -106,15 +106,19 @@ Quit the AI app completely and open it again. Its tool list should show `get_ove
 
 ### Mistral Vibe (terminal)
 
-Add this to `~/.vibe/config.toml` (check Vibe's documentation if the format has changed):
+Add this to `~/.vibe/config.toml` (check Vibe's documentation if the format has changed). Use **full paths**, like in the JSON above: find `node` with `which node` (Windows: `where node`) and the folder with `pwd` inside `ADHDtools`. A bare `node` often fails with "spawn node ENOENT".
 
 ```toml
 [[mcp_servers]]
 name = "adhd-tools"
 transport = "stdio"
-command = "node"
+command = "/full/path/to/node"
 args = ["/full/path/to/ADHDtools/mcp/server.js"]
 ```
+
+Inside Vibe, run `/mcp` to check that the server is connected. Its tools appear with the server name as a prefix: `adhd-tools_get_overview`, `adhd-tools_add_task`, …
+
+> **Stuck?** Vibe says the server failed to start, or no tools → [full paths and restart](mcp-troubleshooting.md#server-not-listed)
 
 ### Le Chat (Mistral on the web or phone) and other web apps
 
@@ -127,7 +131,8 @@ A web app can't start a program on your computer: it needs the server at an **ht
    - `ADHD_TZ`: your time zone, for example `Europe/Paris`. Without it, "today" is the server's day.
    - `HOST=0.0.0.0` and `PORT`, if the host asks for them.
 3. Check that `https://YOUR-HOST/health` shows `ok`.
-4. In Le Chat, add a custom MCP connector with the address `https://YOUR-HOST/mcp/YOUR_ADHD_MCP_TOKEN`. If the app lets you set a header instead, use `https://YOUR-HOST/mcp` with `Authorization: Bearer YOUR_ADHD_MCP_TOKEN`.
+4. In Mistral's web or phone app (Le Chat, now part of Vibe Work): open the **Connectors** page → **+ Add Connector** → **Custom MCP Connector** tab (adding a connector needs an administrator; on the Free, Pro and Student plans, the account owner is the administrator by default). Enter a name like `adhd-tools` and the Server URL `https://YOUR-HOST/mcp/YOUR_ADHD_MCP_TOKEN`. The token in the address is the authentication; if the app asks for a header instead, use `https://YOUR-HOST/mcp` with `Authorization: Bearer YOUR_ADHD_MCP_TOKEN`.
+5. In the chat, turn the connector's tools on (the tools/"+" button under the message box). Read functions can be set to *Always allow*; keep write functions on manual approval until you trust them.
 
 Keep that address secret: anyone who has it can read and change your tasks.
 
@@ -139,10 +144,12 @@ In the `ADHDtools` folder:
 
 ```bash
 git pull              # get the latest version
-npm run mcp:check     # tests Node, Google, your backup, the AI app's config, and starts the server like the AI app does
+npm run mcp:check     # tests Node, Google, your backup, the tools, and starts the server like the AI app does
 ```
 
 Each line with a **✗** comes with a **Fix:** link. When all lines show **✓**: quit the AI app completely, open it again, and start a new **text** chat.
+
+`mcp:check` also reads the config file of apps that use the `mcpServers` JSON shape (Claude Desktop). For the other apps above (Mistral Vibe's `config.toml`, web connectors) it checks everything else the same way; look at the app itself to confirm the server is listed (in Vibe: `/mcp`).
 
 > **Stuck?** The AI says it can't find or use the tools → [tools not usable in this chat](mcp-troubleshooting.md#ai-cant-see-tools) · worked before, not after a Node update → [node path changed](mcp-troubleshooting.md#node-path-changed) · you shared your Client secret → [change it](mcp-troubleshooting.md#secret-shared)
 
