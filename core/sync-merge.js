@@ -91,6 +91,34 @@ function itemIdentity(key, item) {
     if (item.text) return `text:${item.text}`;
     if (item.name) return `name:${item.name}`;
   }
+  if (key === 'adhd-thoughts') {
+    const merged = { ...existingVal };
+    let changed = 0;
+    for (const [dateStr, notes] of Object.entries(importedVal)) {
+      if (!Array.isArray(notes)) continue;
+      if (!Array.isArray(merged[dateStr])) {
+        merged[dateStr] = [...notes];
+        changed += 1;
+        continue;
+      }
+      const existingIds = new Set(merged[dateStr].map(n => n && n.id).filter(Boolean));
+      let addedForDate = 0;
+      notes.forEach(note => {
+        if (!note || typeof note !== 'object') return;
+        if (!note.id || !existingIds.has(note.id)) {
+          merged[dateStr].push(note);
+          if (note.id) existingIds.add(note.id);
+          addedForDate += 1;
+        }
+      });
+      if (addedForDate > 0) {
+        merged[dateStr].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+        changed += addedForDate;
+      }
+    }
+    return { merged, changed };
+  }
+
   return null;
 }
 

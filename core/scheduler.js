@@ -12,6 +12,8 @@ const DEFAULT_CONFIG = {
   // so a 30 min routine blocks 33 min and nothing else can be put there.
   routineBufferPercent: 10,
   includeCalendarInSchedule: true,
+  plannerShowRoutineTasks: true,
+  routineTasksDays: [1, 2, 3, 4, 5],
 };
 
 const ROUTINE_STORAGE_KEY = 'adhd-tool-routines';
@@ -126,6 +128,7 @@ export function getRoutineBlocks(dateStr, config = {}, { includeDone = false } =
           isFixed: true,
           source: 'routine',
           routineId: routine.id,
+          showTasksInDayView: routine.showTasksInDayView !== false,
           steps: (routine.tasks || []).map(step => ({ name: step.name, duration: parseInt(step.duration, 10) || 0 })),
           stepsMinutes: routineStepsMinutes(routine),
           hash: `routine:${routine.id}:${dateStr}`,

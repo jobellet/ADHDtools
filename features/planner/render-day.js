@@ -137,6 +137,15 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         grid.appendChild(line);
     }
 
+    const cfg = (typeof window !== 'undefined' && window.ConfigManager) ? window.ConfigManager.getConfig() : {};
+    const dayOfWeek = currentDate.getDay();
+    const preselectedDays = Array.isArray(cfg.routineTasksDays) ? cfg.routineTasksDays : [1, 2, 3, 4, 5];
+    const isPreselectedDay = preselectedDays.includes(dayOfWeek);
+    const showByDefault = (cfg.plannerShowRoutineTasks !== false) && isPreselectedDay;
+    const showRoutineTasks = typeof window !== 'undefined' && window.__plannerShowRoutineTasksOverride !== undefined
+        ? window.__plannerShowRoutineTasksOverride
+        : showByDefault;
+
     items.forEach(item => {
         const el = document.createElement('div');
         el.className = {
@@ -163,6 +172,39 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         el.title = `${item.title} · ${time.textContent}`;
 
         if (item.kind === 'routine') {
+            if (showRoutineTasks && item.task?.showTasksInDayView !== false) {
+                let steps = item.task?.steps;
+                if ((!steps || steps.length === 0) && item.task?.routineId) {
+                    try {
+                        const allRoutines = JSON.parse(localStorage.getItem('adhd-tool-routines') || '[]');
+                        const found = allRoutines.find(r => r.id === item.task.routineId);
+                        if (found?.tasks) steps = found.tasks;
+                    } catch (_) {}
+                }
+                if (steps && steps.length > 0) {
+                    const stepsList = document.createElement('div');
+                    stepsList.className = 'routine-steps-list';
+                    let stepStart = item.start;
+                    steps.forEach(step => {
+                        const row = document.createElement('div');
+                        row.className = 'routine-step-row';
+                        const stepTime = document.createElement('span');
+                        stepTime.className = 'routine-step-time';
+                        stepTime.textContent = clockLabel(stepStart);
+                        const stepName = document.createElement('span');
+                        stepName.className = 'routine-step-name';
+                        stepName.textContent = step.name;
+                        const stepDur = document.createElement('span');
+                        stepDur.className = 'routine-step-dur';
+                        stepDur.textContent = `${step.duration || 5}m`;
+                        row.append(stepTime, stepName, stepDur);
+                        stepsList.appendChild(row);
+                        stepStart += Number(step.duration || 5);
+                    });
+                    el.appendChild(stepsList);
+                }
+            }
+
             el.addEventListener('click', () => {
                 window.switchTool?.('routine');
                 if (item.task?.routineId) window.RoutinePlayer?.edit?.(item.task.routineId);

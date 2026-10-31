@@ -113,6 +113,7 @@ arrive after a classic script: listen to `schedulerReady`.
 | `CalendarTool` | `features/calendar/calendar-tool.js` | `ingestExternalEvents(events)` |
 | `RewardSystem` | `features/rewards/reward-system.js` | Points and rewards |
 | `AssistantInbox` | `features/assistant/assistant-inbox.js` | `check()`: apply changes queued by the MCP server |
+| `QuickThoughts` | `features/thoughts/thoughts.js` | `getAllThoughts`, `addThought`, `deleteThought`, `syncToDrive`, `summarizeDay`, `restructureDay` |
 
 Add a global only when another file needs it, and add a row here.
 

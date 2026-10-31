@@ -61,6 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements for Settings Management ---
     const routineListCards = document.getElementById('routine-list-cards');
     const settingCreateRoutineBtn = document.getElementById('setting-create-routine-btn');
+    const routineNewAiBtn = document.getElementById('routine-new-ai-btn');
+    const routineAiInput = document.getElementById('routine-ai-input');
+    const routineAiVoiceBtn = document.getElementById('routine-ai-voice-btn');
+    const routineAiApplyBtn = document.getElementById('routine-ai-apply-btn');
+    const routineAiStatus = document.getElementById('routine-ai-status');
     const routineEditModal = document.getElementById('routine-edit-modal');
     const routineEditModalBackdrop = document.getElementById('routine-edit-modal-backdrop');
     const routineEditModalCloseBtn = document.getElementById('routine-edit-modal-close');
@@ -70,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const routineEditModalName = document.getElementById('routine-edit-modal-name');
     const routineEditModalStartTime = document.getElementById('routine-edit-modal-start-time');
     const routineEditModalWeekdays = document.getElementById('routine-edit-modal-weekdays');
+    const routineEditModalShowTasks = document.getElementById('routine-edit-modal-show-tasks');
     const routineEditModalTasksList = document.getElementById('routine-edit-modal-tasks-list');
     const routinePickerModal = document.getElementById('routine-picker-modal');
     const routinePickerModalBackdrop = document.getElementById('routine-picker-modal-backdrop');
@@ -442,7 +448,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     startTime: "08:00",
                     weekDays: [1, 2, 3, 4, 5],
                     tasks: [],
-                    totalDuration: 0
+                    totalDuration: 0,
+                    showTasksInDayView: true,
                 };
                 routines.push(newRoutine);
                 saveRoutines();
@@ -450,6 +457,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateSettingsRoutineSelect();
                 openRoutineEditModal(newRoutine, true);
             });
+        }
+
+        if (routineNewAiBtn) {
+            routineNewAiBtn.addEventListener('click', () => {
+                const newRoutine = {
+                    id: generateId(),
+                    name: '',
+                    startTime: "08:00",
+                    weekDays: [1, 2, 3, 4, 5],
+                    tasks: [],
+                    totalDuration: 0,
+                    showTasksInDayView: true,
+                };
+                routines.push(newRoutine);
+                saveRoutines();
+                selectedRoutineId = newRoutine.id;
+                updateSettingsRoutineSelect();
+                openRoutineEditModal(newRoutine, true);
+                if (routineAiInput) {
+                    setTimeout(() => routineAiInput.focus(), 150);
+                }
+            });
+        }
+
+        if (routineAiApplyBtn) {
+            routineAiApplyBtn.addEventListener('click', handleApplyAI);
+        }
+        if (routineAiInput) {
+            routineAiInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleApplyAI();
+                }
+            });
+        }
+        if (routineAiVoiceBtn) {
+            routineAiVoiceBtn.addEventListener('click', handleRoutineVoice);
         }
 
         if (routineEditModalSaveBtn) routineEditModalSaveBtn.addEventListener('click', saveRoutineFromModal);
@@ -564,6 +608,426 @@ document.addEventListener('DOMContentLoaded', () => {
         return Number.isFinite(pct) ? pct : 10;
     }
 
+    // --- Routine AI & Microphone / Speech Integration ---
+
+    let routineSpeechActive = null;
+    let routineNativePollTimer = null;
+    let routineMediaRecorder = null;
+    let routineAudioChunks = [];
+
+    function resetRoutineVoiceBtn() {
+        if (routineNativePollTimer) {
+            clearInterval(routineNativePollTimer);
+            routineNativePollTimer = null;
+        }
+        if (routineSpeechActive) {
+            try { routineSpeechActive.stop(); } catch (_) {}
+            routineSpeechActive = null;
+        }
+        if (routineMediaRecorder && routineMediaRecorder.state !== 'inactive') {
+            try { routineMediaRecorder.stop(); } catch (_) {}
+            routineMediaRecorder = null;
+        }
+        if (routineAiVoiceBtn) {
+            routineAiVoiceBtn.classList.remove('listening');
+            routineAiVoiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        }
+    }
+
+    function parseRoutineOffline(text, currentRoutine = {}) {
+        const result = {
+            id: currentRoutine?.id,
+            name: currentRoutine?.name || '',
+            startTime: currentRoutine?.startTime || '07:30',
+            weekDays: Array.isArray(currentRoutine?.weekDays) && currentRoutine.weekDays.length > 0
+                ? [...currentRoutine.weekDays]
+                : [1, 2, 3, 4, 5],
+            tasks: Array.isArray(currentRoutine?.tasks)
+                ? currentRoutine.tasks.map(t => ({ ...t }))
+                : [],
+            showTasksInDayView: currentRoutine?.showTasksInDayView !== false,
+        };
+
+        const raw = (text || '').trim();
+        if (!raw) return result;
+
+        // 1. Time extraction
+        const timeMatch = raw.match(/(?:(?:à|at|um|vers|start at|heure\s*(?:à|:)?)\s*)?([01]?[0-9]|2[0-3])(?::([0-5][0-9])|h([0-5][0-9])?)\s*(am|pm)?\b/i)
+            || raw.match(/\b([01]?[0-9]|2[0-3]):([0-5][0-9])\b/)
+            || raw.match(/\b([1-9]|1[0-2])\s*(am|pm)\b/i);
+
+        if (timeMatch) {
+            let hours = parseInt(timeMatch[1], 10);
+            let minutes = parseInt(timeMatch[2] || timeMatch[3] || '0', 10);
+            const ampm = (timeMatch[4] || timeMatch[2] || '').toLowerCase();
+            if (ampm === 'pm' && hours < 12) hours += 12;
+            if (ampm === 'am' && hours === 12) hours = 0;
+            const hh = String(hours).padStart(2, '0');
+            const mm = String(minutes).padStart(2, '0');
+            result.startTime = `${hh}:${mm}`;
+        }
+
+        // 2. Weekdays extraction
+        const lower = raw.toLowerCase();
+        if (/lundi\s+au\s+vendredi|mon(?:day)?\s+(?:to|through)\s+fri(?:day)?|weekdays|en\s+semaine|werktags|d[ií]as\s+laborales/i.test(lower)) {
+            result.weekDays = [1, 2, 3, 4, 5];
+        } else if (/week-?end|fin\s+de\s+semaine|wochenende|fin\s+de\s+semana/i.test(lower)) {
+            result.weekDays = [0, 6];
+        } else if (/tous\s+les\s+jours|every\s*day|chaque\s+jour|jeden\s+tag|todos\s+los\s+d[ií]as/i.test(lower)) {
+            result.weekDays = [0, 1, 2, 3, 4, 5, 6];
+        } else {
+            const foundDays = [];
+            if (/lundi|monday|montag|lunes/i.test(lower)) foundDays.push(1);
+            if (/mardi|tuesday|dienstag|martes/i.test(lower)) foundDays.push(2);
+            if (/mercredi|wednesday|mittwoch|mi[eé]rcoles/i.test(lower)) foundDays.push(3);
+            if (/jeudi|thursday|donnerstag|jueves/i.test(lower)) foundDays.push(4);
+            if (/vendredi|friday|freitag|viernes/i.test(lower)) foundDays.push(5);
+            if (/samedi|saturday|samstag|s[aá]bado/i.test(lower)) foundDays.push(6);
+            if (/dimanche|sunday|sonntag|domingo/i.test(lower)) foundDays.push(0);
+            if (foundDays.length > 0) {
+                result.weekDays = foundDays.sort((a, b) => a - b);
+            }
+        }
+
+        // 3. Routine name extraction
+        const knownRoutineMatch = raw.match(/\b(routine\s+(?:du\s+matin|du\s+soir|matinale|de\s+travail|quotidienne)|morning\s+routine|evening\s+routine|night\s+routine|work\s+routine|bedtime\s+routine)\b/i);
+        if (knownRoutineMatch) {
+            result.name = knownRoutineMatch[1].charAt(0).toUpperCase() + knownRoutineMatch[1].slice(1);
+        } else {
+            const namedPrefixMatch = raw.match(/^(?:crée|create|nouvelle|new\s+routine|routine)?\s*["'«]?([a-zA-Z0-9\s_-]{3,30})["'»]?\s*:(?!\d\d)/i);
+            if (namedPrefixMatch && !/\b(?:à|at|\d)\b/i.test(namedPrefixMatch[1])) {
+                result.name = namedPrefixMatch[1].trim();
+            }
+        }
+        if (!result.name) {
+            result.name = currentRoutine?.name || 'Routine';
+        }
+
+        // 4. Step removal: "supprime/remove/delete/lösche/elimina <step name>"
+        const removeMatch = raw.match(/(?:supprime|supprimer|remove|delete|lösche|löschen|elimina|eliminar)\s+["'«]?([^,.\n]+?)["'»]?$/i);
+        if (removeMatch) {
+            const toRemove = removeMatch[1].trim().toLowerCase();
+            result.tasks = result.tasks.filter(t => !t.name.toLowerCase().includes(toRemove));
+            return result;
+        }
+
+        // 5. Step addition: "ajoute/add/füge hinzu/agrega <step name> <duration>"
+        const addMatch = raw.match(/(?:ajoute|ajouter|add|füge\s+hinzu|agrega|agregar)\s+(?:(\d+)\s*(?:min|m|minutes?)\s+(?:de\s+)?)?["'«]?([^,.\n]+?)["'»]?(?:\s+(\d+)\s*(?:min|m|minutes?))?$/i);
+        if (addMatch && !raw.includes(':') && !raw.includes(',')) {
+            const dur1 = addMatch[1];
+            const stepName = addMatch[2].trim();
+            const dur2 = addMatch[3];
+            const duration = parseInt(dur1 || dur2 || '10', 10);
+            if (stepName) {
+                result.tasks.push({
+                    id: generateId(),
+                    name: stepName.charAt(0).toUpperCase() + stepName.slice(1),
+                    duration: Math.max(1, duration),
+                });
+                return result;
+            }
+        }
+
+        // 6. Multiple steps extraction (e.g. "Méditation 10m, Douche 15m, Café 10m" or after colon)
+        let stepsText = raw;
+        const stepsColonMatch = raw.match(/(?<!\d\d?):(?!\d\d)\s*(.+)$/);
+        if (stepsColonMatch) {
+            stepsText = stepsColonMatch[1];
+        } else {
+            stepsText = stepsText.replace(/(?:à|at|um|vers|start at|heure\s*(?:à|:)?)\s*[01]?[0-9](?::[0-5][0-9]|h(?:[0-5][0-9])?)\s*(am|pm)?/gi, '');
+            stepsText = stepsText.replace(/\b[01]?[0-9]:[0-5][0-9]\b/gi, '');
+            stepsText = stepsText.replace(/\b[1-9]|1[0-2]\s*(am|pm)\b/gi, '');
+            stepsText = stepsText.replace(/\b(?:du\s+lundi\s+au\s+vendredi|lundi\s+au\s+vendredi|on\s+weekdays|weekdays|en\s+semaine|werktags|días\s+laborales)\b/gi, '');
+            stepsText = stepsText.replace(/\b(routine\s+(?:du\s+matin|du\s+soir|matinale|de\s+travail|quotidienne)|morning\s+routine|evening\s+routine|night\s+routine|work\s+routine|bedtime\s+routine)\b/gi, '');
+        }
+        const rawParts = stepsText.split(/[,;\n]|\b(?:puis|then|danach|y\s+luego)\b/i);
+        const parsedSteps = [];
+        rawParts.forEach(part => {
+            let p = part.trim();
+            if (!p) return;
+            const durMatch = p.match(/(?:(\d+)\s*(?:min|m|minutes?)\s+(?:de\s+)?)?(.+?)(?:\s*\(?(\d+)\s*(?:min|m|minutes?)\)?)?$/i);
+            if (durMatch) {
+                let duration = parseInt(durMatch[1] || durMatch[3] || '', 10);
+                let name = (durMatch[2] || '').trim();
+                name = name.replace(/\b(?:du lundi au vendredi|lundi au vendredi|weekdays|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/gi, '').trim();
+                name = name.replace(/^(?:et|and|und|y)\s+/i, '').trim();
+                if (name.length > 1 && !/^(?:à|at|um)\s+\d/i.test(name)) {
+                    if (!duration || isNaN(duration)) duration = 10;
+                    parsedSteps.push({
+                        id: generateId(),
+                        name: name.charAt(0).toUpperCase() + name.slice(1),
+                        duration: Math.max(1, duration),
+                    });
+                }
+            }
+        });
+
+        if (parsedSteps.length > 0) {
+            if (raw.includes(':') || result.tasks.length === 0 || /avec|with|mit|con/i.test(raw)) {
+                result.tasks = parsedSteps;
+            } else {
+                result.tasks.push(...parsedSteps);
+            }
+        }
+
+        return result;
+    }
+
+    async function applyRoutineAI(instruction, currentRoutine = {}) {
+        if (window.AIAssistant?.isEnabled?.()) {
+            try {
+                const systemPrompt = `You are an AI assistant for an ADHD planner. The user wants to create or update a routine.
+A routine contains:
+- "name": string (the routine title)
+- "startTime": "HH:MM" (24-hour time string, e.g. "07:30")
+- "weekDays": array of numbers from 0 (Sunday) to 6 (Saturday). For Monday to Friday, use [1, 2, 3, 4, 5].
+- "tasks": array of steps [{ "name": string, "duration": number (minutes) }].
+- "showTasksInDayView": boolean (true by default)
+
+Based on the CURRENT ROUTINE state and the USER INSTRUCTION (which may be in English, French, German, or Spanish), output the updated routine JSON.
+Output ONLY a valid JSON object matching the schema. No markdown formatting, no conversational text.`;
+
+                const userPrompt = `CURRENT ROUTINE:
+${JSON.stringify({
+  name: currentRoutine?.name || '',
+  startTime: currentRoutine?.startTime || '07:30',
+  weekDays: currentRoutine?.weekDays || [1, 2, 3, 4, 5],
+  tasks: (currentRoutine?.tasks || []).map(t => ({ name: t.name, duration: t.duration })),
+  showTasksInDayView: currentRoutine?.showTasksInDayView !== false,
+}, null, 2)}
+
+USER INSTRUCTION:
+"${instruction}"`;
+
+                const res = await window.AIAssistant.completeJSON(userPrompt, { system: systemPrompt, temperature: 0.2 });
+                if (res && (res.name || res.startTime || Array.isArray(res.tasks) || Array.isArray(res.weekDays))) {
+                    return {
+                        id: currentRoutine?.id,
+                        name: res.name || currentRoutine?.name || 'Routine',
+                        startTime: res.startTime || currentRoutine?.startTime || '07:30',
+                        weekDays: Array.isArray(res.weekDays) && res.weekDays.length ? res.weekDays.map(Number) : (currentRoutine?.weekDays || [1, 2, 3, 4, 5]),
+                        tasks: Array.isArray(res.tasks) && res.tasks.length ? res.tasks.map(t => ({
+                            id: t.id || generateId(),
+                            name: String(t.name || 'Step').trim(),
+                            duration: Math.max(1, parseInt(t.duration, 10) || 5),
+                        })) : (currentRoutine?.tasks || []),
+                        showTasksInDayView: res.showTasksInDayView !== false,
+                    };
+                }
+            } catch (e) {
+                console.warn('AI routine update failed, using offline fallback:', e);
+            }
+        }
+        return parseRoutineOffline(instruction, currentRoutine);
+    }
+
+    async function handleApplyAI() {
+        const text = (routineAiInput?.value || '').trim();
+        if (!text) return;
+        const routine = routines.find(r => r.id === selectedRoutineId) || {
+            id: selectedRoutineId,
+            name: routineEditModalName.value,
+            startTime: routineEditModalStartTime.value,
+            weekDays: Array.from(routineEditModalWeekdays.querySelectorAll('input:checked')).map(cb => parseInt(cb.value)),
+            tasks: collectTaskRows(routineEditModalTasksList),
+            showTasksInDayView: routineEditModalShowTasks ? routineEditModalShowTasks.checked : true,
+        };
+
+        if (routineAiStatus) {
+            routineAiStatus.textContent = tr('routine.aiProcessing');
+            routineAiStatus.className = 'routine-ai-status';
+            routineAiStatus.classList.remove('hidden');
+        }
+        if (routineAiApplyBtn) routineAiApplyBtn.disabled = true;
+
+        try {
+            const updated = await applyRoutineAI(text, routine);
+            if (updated) {
+                if (updated.name) routineEditModalName.value = updated.name;
+                if (updated.startTime) routineEditModalStartTime.value = updated.startTime;
+                if (Array.isArray(updated.weekDays)) {
+                    const checkboxes = routineEditModalWeekdays.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => {
+                        cb.checked = updated.weekDays.includes(parseInt(cb.value));
+                    });
+                }
+                if (updated.showTasksInDayView !== undefined && routineEditModalShowTasks) {
+                    routineEditModalShowTasks.checked = updated.showTasksInDayView;
+                }
+                if (Array.isArray(updated.tasks) && updated.tasks.length > 0) {
+                    routineEditModalTasksList.innerHTML = '';
+                    updated.tasks.forEach(task => appendTaskRow(routineEditModalTasksList, task));
+                }
+                if (routineAiStatus) {
+                    routineAiStatus.textContent = tr('routine.aiSuccess');
+                    routineAiStatus.className = 'routine-ai-status success';
+                }
+            }
+        } catch (err) {
+            if (routineAiStatus) {
+                routineAiStatus.textContent = tr('routine.aiError', { error: err.message || 'Error' });
+                routineAiStatus.className = 'routine-ai-status error';
+            }
+        } finally {
+            if (routineAiApplyBtn) routineAiApplyBtn.disabled = false;
+        }
+    }
+
+    async function handleRoutineVoice() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const isNative = Boolean(window.AttentionService?.isNative?.());
+
+        if (routineAiVoiceBtn?.classList.contains('listening')) {
+            if (isNative) {
+                const res = await window.AttentionService.invokeNative('native_stop_speech', {});
+                resetRoutineVoiceBtn();
+                if (res?.transcript && routineAiInput) {
+                    routineAiInput.value = res.transcript;
+                    handleApplyAI();
+                }
+            } else if (routineSpeechActive) {
+                routineSpeechActive.stop();
+            } else if (routineMediaRecorder && routineMediaRecorder.state === 'recording') {
+                routineMediaRecorder.stop();
+            }
+            return;
+        }
+
+        if (!SpeechRecognition && !isNative) {
+            if (navigator.mediaDevices?.getUserMedia && window.AIAssistant?.transcribeAudio) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    routineMediaRecorder = new MediaRecorder(stream);
+                    routineAudioChunks = [];
+                    routineMediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) routineAudioChunks.push(e.data);
+                    };
+                    routineMediaRecorder.onstop = async () => {
+                        stream.getTracks().forEach(track => track.stop());
+                        resetRoutineVoiceBtn();
+                        if (routineAudioChunks.length === 0) return;
+                        const audioBlob = new Blob(routineAudioChunks, { type: 'audio/webm' });
+                        if (routineAiStatus) {
+                            routineAiStatus.textContent = tr('routine.aiProcessing');
+                            routineAiStatus.className = 'routine-ai-status';
+                        }
+                        try {
+                            const transcript = await window.AIAssistant.transcribeAudio(audioBlob, {
+                                language: (window.I18n?.getLang?.() || 'en').slice(0, 2)
+                            });
+                            if (transcript && routineAiInput) {
+                                routineAiInput.value = transcript;
+                                handleApplyAI();
+                            }
+                        } catch (err) {
+                            if (routineAiStatus) {
+                                routineAiStatus.textContent = tr('routine.aiError', { error: err.message || 'Audio error' });
+                                routineAiStatus.className = 'routine-ai-status error';
+                            }
+                        }
+                    };
+                    routineAiVoiceBtn.classList.add('listening');
+                    routineAiVoiceBtn.innerHTML = '<i class="fas fa-microphone fa-beat" style="color: #ef4444"></i>';
+                    if (routineAiStatus) {
+                        routineAiStatus.textContent = tr('routine.aiListening');
+                        routineAiStatus.className = 'routine-ai-status';
+                        routineAiStatus.classList.remove('hidden');
+                    }
+                    routineMediaRecorder.start();
+                } catch (err) {
+                    resetRoutineVoiceBtn();
+                    if (routineAiStatus) {
+                        routineAiStatus.textContent = tr('routine.aiError', { error: 'Microphone permission denied' });
+                        routineAiStatus.className = 'routine-ai-status error';
+                        routineAiStatus.classList.remove('hidden');
+                    }
+                }
+                return;
+            }
+
+            if (routineAiStatus) {
+                routineAiStatus.textContent = tr('routine.aiError', { error: 'Speech recognition not supported' });
+                routineAiStatus.className = 'routine-ai-status error';
+                routineAiStatus.classList.remove('hidden');
+            }
+            return;
+        }
+
+        routineAiVoiceBtn.classList.add('listening');
+        routineAiVoiceBtn.innerHTML = '<i class="fas fa-microphone fa-beat" style="color: #ef4444"></i>';
+        if (routineAiStatus) {
+            routineAiStatus.textContent = tr('routine.aiListening');
+            routineAiStatus.className = 'routine-ai-status';
+            routineAiStatus.classList.remove('hidden');
+        }
+
+        const lang = (window.I18n?.getLang?.() || document.documentElement.lang || 'en').toLowerCase();
+        const langMap = { fr: 'fr-FR', de: 'de-DE', es: 'es-ES', en: 'en-US' };
+        const speechLang = langMap[lang] || `${lang}-${lang.toUpperCase()}`;
+
+        if (isNative) {
+            await window.AttentionService.invokeNative('native_start_speech', { lang: speechLang });
+            routineNativePollTimer = setInterval(async () => {
+                const res = await window.AttentionService.invokeNative('native_poll_speech', {});
+                if (!res) return;
+                if (res.transcript && routineAiInput) {
+                    routineAiInput.value = res.transcript;
+                }
+                if (res.status === 'done') {
+                    resetRoutineVoiceBtn();
+                    if (res.transcript && routineAiInput) {
+                        routineAiInput.value = res.transcript;
+                        handleApplyAI();
+                    }
+                } else if (res.status === 'error') {
+                    resetRoutineVoiceBtn();
+                    if (routineAiStatus) {
+                        routineAiStatus.textContent = tr('routine.aiError', { error: res.error || 'Speech error' });
+                        routineAiStatus.className = 'routine-ai-status error';
+                    }
+                }
+            }, 250);
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        routineSpeechActive = recognition;
+        recognition.lang = speechLang;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = (event) => {
+            resetRoutineVoiceBtn();
+            const transcript = event.results?.[0]?.[0]?.transcript;
+            if (transcript && routineAiInput) {
+                routineAiInput.value = transcript;
+                handleApplyAI();
+            }
+        };
+
+        recognition.onerror = (event) => {
+            resetRoutineVoiceBtn();
+            if (routineAiStatus) {
+                routineAiStatus.textContent = tr('routine.aiError', { error: event.error || 'Speech error' });
+                routineAiStatus.className = 'routine-ai-status error';
+            }
+        };
+
+        recognition.onend = () => {
+            resetRoutineVoiceBtn();
+        };
+
+        try {
+            recognition.start();
+        } catch (e) {
+            resetRoutineVoiceBtn();
+            if (routineAiStatus) {
+                routineAiStatus.textContent = tr('routine.aiError', { error: e.message || 'Speech error' });
+                routineAiStatus.className = 'routine-ai-status error';
+            }
+        }
+    }
+
     // --- Routine Edit Modal (mobile sheet / desktop dialog) ---
 
     function openRoutineEditModal(routine, isNew = false) {
@@ -581,6 +1045,18 @@ document.addEventListener('DOMContentLoaded', () => {
             cb.checked = routine.weekDays && routine.weekDays.includes(parseInt(cb.value));
         });
 
+        if (routineEditModalShowTasks) {
+            routineEditModalShowTasks.checked = routine.showTasksInDayView !== false;
+        }
+        if (routineAiInput) {
+            routineAiInput.value = '';
+        }
+        if (routineAiStatus) {
+            routineAiStatus.textContent = '';
+            routineAiStatus.className = 'routine-ai-status hidden';
+        }
+        resetRoutineVoiceBtn();
+
         routineEditModalTasksList.innerHTML = '';
         (routine.tasks || []).forEach(task => appendTaskRow(routineEditModalTasksList, task));
 
@@ -590,6 +1066,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeRoutineEditModal() {
+        resetRoutineVoiceBtn();
         if (!routineEditModal) return;
         routineEditModal.classList.add('hidden');
         if (routineEditModalBackdrop) routineEditModalBackdrop.classList.add('hidden');
@@ -611,12 +1088,14 @@ document.addEventListener('DOMContentLoaded', () => {
         routineEditModalWeekdays.querySelectorAll('input:checked').forEach(cb => {
             selectedDays.push(parseInt(cb.value));
         });
+        const showTasksInDayView = routineEditModalShowTasks ? routineEditModalShowTasks.checked : true;
         const draft = {
             ...routine,
             name,
             startTime: routineEditModalStartTime.value,
             weekDays: selectedDays,
             tasks: collectTaskRows(routineEditModalTasksList),
+            showTasksInDayView,
         };
 
         // Routines book their time (+ buffer): two routines can't share it.
@@ -1631,6 +2110,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } : null,
         start: activateRoutine,
         show: enterFocusMode,
+        parseRoutineOffline,
+        applyRoutineAI,
+        openEditModal: openRoutineEditModal,
         edit: (routineId) => {
             const routine = routines.find(r => r.id === routineId);
             if (routine) openRoutineEditModal(routine);

@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="features/planner/planner.css">
     <link rel="stylesheet" href="features/routine/routine.css">
     <link rel="stylesheet" href="features/settings/settings.css">
+    <link rel="stylesheet" href="features/thoughts/thoughts.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- 1. Shell & services (classic scripts, run in this order) -->
@@ -33,6 +34,7 @@
     <script src="features/routine/strings.js" defer></script>
     <script src="features/settings/strings.js" defer></script>
     <script src="features/assistant/strings.js" defer></script>
+    <script src="features/thoughts/strings.js" defer></script>
     <script src="services/data-manager.js" defer></script>
     <script src="services/google-auth.js" defer></script>
     <script src="services/drive-sync.js" defer></script>
@@ -68,6 +70,7 @@
     <script src="features/routine/routine.js" defer></script>
     <script src="services/credentials-sync.js" defer></script>
     <script src="features/assistant/assistant-inbox.js" defer></script>
+    <script src="features/thoughts/thoughts.js" defer></script>
 </head>
 
 <body>
@@ -83,6 +86,7 @@
                 <li><a href="#" class="app-tab" data-tool="routine"><i class="fas fa-redo-alt"></i><span data-i18n="tab-routines">Routines</span></a></li>
                 <li><button type="button" class="app-tab hamburger-menu" aria-label="More tools" aria-expanded="false" aria-controls="more-menu"><i class="fas fa-th-large"></i><span data-i18n="tab-more">More</span></button></li>
             </ul>
+            <button type="button" id="quick-thoughts-header-btn" class="quick-thoughts-trigger" data-go-tool="thoughts" aria-label="Quick Thoughts" title="Quick Thoughts"><i class="fas fa-lightbulb"></i> <span data-i18n="quick-thoughts-btn">Thoughts</span></button>
             <span id="current-time-display" class="app-clock" aria-hidden="true"></span>
         </div>
     </nav>
@@ -102,6 +106,7 @@
             <li><a href="#" data-tool="habits"><i class="fas fa-check-square"></i><span data-i18n="nav-habits">Habit Tracker</span></a></li>
             <li><a href="#" data-tool="rewards"><i class="fas fa-trophy"></i><span data-i18n="nav-rewards">Rewards</span></a></li>
             <li><a href="#" data-tool="settings"><i class="fas fa-cog"></i><span data-i18n="nav-settings">Settings</span></a></li>
+            <li><a href="#" data-tool="thoughts"><i class="fas fa-lightbulb"></i><span data-i18n="nav-thoughts">Quick Thoughts</span></a></li>
             <li><a href="#" data-tool="about"><i class="fas fa-info-circle"></i><span data-i18n="nav-about">About</span></a></li>
         </ul>
         <div class="more-prefs">
@@ -137,6 +142,7 @@
             </form>
             <p class="quick-capture-hint" data-i18n="capture.hint">Say when (“at 5pm”, “tomorrow”), how long (“for 20 min”) and how important (“!7”). No time = the app fits it into a free slot.</p>
             <p id="quick-capture-status" class="quick-capture-status" aria-live="polite"></p>
+            <div class="capture-thoughts-promo"><button type="button" class="btn btn-secondary btn-compact" data-go-tool="thoughts"><i class="fas fa-lightbulb"></i> <span data-i18n="thoughts-quick-link">Quick Thoughts</span></button></div>
         </div>
     </div>
 
@@ -229,6 +235,9 @@
                             </button>
                             <button id="record-event-btn" class="btn btn-secondary" data-cap="speech" title="Speak an event">
                                 <i class="fas fa-microphone"></i> <span class="btn-text" data-i18n="record-btn">Record</span>
+                            </button>
+                            <button id="planner-toggle-routine-tasks" class="btn btn-secondary" title="Show or hide routine steps in day view" data-i18n-title="plan.routineTasksToggleTitle">
+                                <i class="fas fa-list-check"></i> <span class="btn-text" data-i18n="plan.routineTasksToggle">Routine steps</span>
                             </button>
                             <button id="clear-events-btn" class="btn btn-outline" title="Unschedule every task of this day">
                                 <i class="fas fa-eraser"></i> <span class="btn-text" data-i18n="clear-all-btn">Clear day</span>
@@ -634,6 +643,10 @@
                                         <label for="setting-routine-buffer" data-i18n="settings.routineBuffer">Routine buffer (% added to booked time)</label>
                                         <input type="number" id="setting-routine-buffer" name="routineBufferPercent" min="0" max="100" step="5" value="10">
                                     </div>
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="setting-planner-show-routine-tasks" name="plannerShowRoutineTasks" checked>
+                                        <label for="setting-planner-show-routine-tasks" data-i18n="settings.plannerShowRoutineTasks">Show routine steps in day view on weekdays (Mon–Fri)</label>
+                                    </div>
                                     <div class="setting-group">
                                         <label for="setting-task-buffer" data-i18n="settings.taskBuffer">Pause between tasks (minutes)</label>
                                         <input type="number" id="setting-task-buffer" name="bufferDurationMinutes" min="0" max="60" step="1" value="5">
@@ -985,10 +998,17 @@
                     <div id="routine-view-manage" class="routine-view routine-management-panel">
                         <div class="routine-management-header">
                             <h3 data-i18n="routine-manage-heading-2">Your Routines</h3>
-                            <button type="button" id="setting-create-routine-btn" class="btn btn-primary routine-new-btn">
-                                <i class="fas fa-plus"></i>
-                                <span data-i18n="routine-new-btn">New</span>
-                            </button>
+                            <div class="routine-management-actions">
+                                <button type="button" id="routine-new-ai-btn" class="btn btn-secondary routine-new-ai-btn"
+                                    title="Create a routine with AI or voice" data-i18n-title="routine.newAiTitle">
+                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                    <span data-i18n="routine.newAiBtn">AI Routine</span>
+                                </button>
+                                <button type="button" id="setting-create-routine-btn" class="btn btn-primary routine-new-btn">
+                                    <i class="fas fa-plus"></i>
+                                    <span data-i18n="routine-new-btn">New</span>
+                                </button>
+                            </div>
                         </div>
                         <div id="routine-list-cards" class="routine-cards"></div>
 
@@ -998,6 +1018,75 @@
                                 <label for="setting-routine-auto-run" data-i18n="routine-auto-run-setting">Enable auto-run by default</label>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Thoughts Tool Section -->
+            <section id="thoughts" class="tool-section">
+                <div class="thoughts-container">
+                    <div class="thoughts-header">
+                        <div class="thoughts-header-top">
+                            <h2 class="thoughts-title"><i class="fas fa-lightbulb"></i> <span data-i18n="thoughts.heading">Quick Thoughts</span></h2>
+                            <div class="thoughts-date-nav" role="navigation" aria-label="Date navigation">
+                                <button type="button" id="thoughts-prev-day" class="btn-icon" data-i18n-title="thoughts.prevDay" aria-label="Previous day"><i class="fas fa-chevron-left"></i></button>
+                                <span id="thoughts-date-label" class="thoughts-current-date-label">Today</span>
+                                <input type="date" id="thoughts-date-picker" class="thoughts-date-picker-input" aria-label="Pick date">
+                                <button type="button" id="thoughts-next-day" class="btn-icon" data-i18n-title="thoughts.nextDay" aria-label="Next day"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <p class="thoughts-subheading" data-i18n="thoughts.subheading">Capture raw notes anytime. Notes accumulate daily and sync to Google Drive.</p>
+                    </div>
+
+                    <!-- Quick Input Card -->
+                    <div class="thoughts-input-card">
+                        <form id="thoughts-input-form" class="thoughts-input-form">
+                            <textarea id="thoughts-text-input" class="thoughts-textarea" rows="2"
+                                placeholder="Jot down a quick thought or idea..." data-i18n-placeholder="thoughts.inputPlaceholder"
+                                aria-label="Quick thought input"></textarea>
+                            <div class="thoughts-input-actions">
+                                <div class="thoughts-input-left">
+                                    <button type="button" id="thoughts-mic-btn" class="thoughts-mic-btn" data-i18n-title="thoughts.speakBtn" aria-label="Speak">
+                                        <i class="fas fa-microphone"></i> <span data-i18n="thoughts.speakBtn">Speak</span>
+                                    </button>
+                                    <span id="thoughts-status" class="thoughts-status" aria-live="polite"></span>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="thoughts-add-btn">
+                                    <i class="fas fa-plus"></i> <span data-i18n="thoughts.addBtn">Save Note</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Daily Actions Bar -->
+                    <div class="thoughts-actions-bar">
+                        <div class="thoughts-actions-group">
+                            <button type="button" id="thoughts-summarize-btn" class="btn btn-secondary">
+                                <i class="fas fa-brain"></i> <span data-i18n="thoughts.summarizeBtn">Summarize Day (AI)</span>
+                            </button>
+                            <button type="button" id="thoughts-restructure-btn" class="btn btn-secondary">
+                                <i class="fas fa-magic"></i> <span data-i18n="thoughts.restructureBtn">Restructure Notes (AI)</span>
+                            </button>
+                        </div>
+                        <div class="thoughts-actions-group">
+                            <button type="button" id="thoughts-sync-drive-btn" class="btn btn-outline" data-i18n-title="thoughts.syncDriveBtn">
+                                <i class="fab fa-google-drive"></i> <span data-i18n="thoughts.syncDriveBtn">Sync to Google Drive</span>
+                            </button>
+                            <button type="button" id="thoughts-export-txt-btn" class="btn btn-outline" data-i18n-title="thoughts.exportTxtBtn">
+                                <i class="fas fa-download"></i> <span data-i18n="thoughts.exportTxtBtn">Download .txt</span>
+                            </button>
+                            <button type="button" id="thoughts-copy-all-btn" class="btn btn-outline" data-i18n-title="thoughts.copyAllBtn">
+                                <i class="fas fa-copy"></i> <span data-i18n="thoughts.copyAllBtn">Copy All</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stream / List of Thoughts -->
+                    <div class="thoughts-stream-container">
+                        <div class="thoughts-stream-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                            <span id="thoughts-count-display" style="font-size:0.85rem; color:var(--text-muted, #6b7280);"></span>
+                        </div>
+                        <div id="thoughts-stream" class="thoughts-list"></div>
                     </div>
                 </div>
             </section>
@@ -1050,6 +1139,29 @@
                 </div>
                 <div class="routine-sheet-body">
                     <p class="routine-booking-note" data-i18n="routine.bookingNote">A routine books its time in your day plan (steps + buffer from Settings). Nothing else can be scheduled on top of it.</p>
+
+                    <!-- Routine AI & Voice Box -->
+                    <div class="routine-ai-box">
+                        <label for="routine-ai-input" class="routine-ai-label">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span data-i18n="routine.aiLabel">Edit with AI or voice</span>
+                        </label>
+                        <div class="routine-ai-input-group">
+                            <input type="text" id="routine-ai-input" class="routine-ai-input"
+                                placeholder="e.g. '07:30 Mon-Fri, add 10 min stretching', 'remove shower'..."
+                                data-i18n-placeholder="routine.aiPlaceholder">
+                            <button type="button" id="routine-ai-voice-btn" class="routine-ai-voice-btn"
+                                title="Dictate with microphone" data-i18n-title="routine.aiVoiceTitle" aria-label="Dictate routine with microphone">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button type="button" id="routine-ai-apply-btn" class="btn btn-secondary btn-sm routine-ai-apply-btn"
+                                title="Apply changes with AI" data-i18n-title="routine.aiApplyTitle">
+                                <span data-i18n="routine.aiApply">Apply</span>
+                            </button>
+                        </div>
+                        <div id="routine-ai-status" class="routine-ai-status hidden" role="status" aria-live="polite"></div>
+                    </div>
+
                     <div class="setting-group">
                         <label for="routine-edit-modal-name" data-i18n="routine-name-label-2">Routine Name</label>
                         <input type="text" id="routine-edit-modal-name">
@@ -1069,6 +1181,10 @@
                             <label><input type="checkbox" value="6"> Sat</label>
                             <label><input type="checkbox" value="0"> Sun</label>
                         </div>
+                    </div>
+                    <div class="setting-group checkbox-group">
+                        <input type="checkbox" id="routine-edit-modal-show-tasks" checked>
+                        <label for="routine-edit-modal-show-tasks" data-i18n="routine.showTasksInDayView">Show steps in day view on selected days</label>
                     </div>
                     <div class="setting-group">
                         <label data-i18n="routine-tasks-label">Tasks</label>

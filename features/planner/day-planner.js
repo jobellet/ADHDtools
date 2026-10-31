@@ -926,8 +926,31 @@ function initDayPlanner() {
 
     window.EventBus.addEventListener('ef-receiveTaskFor-DayPlanner', handleReceivedTaskForDayPlanner);
 
+    const toggleRoutineTasksBtn = document.getElementById('planner-toggle-routine-tasks');
+    if (toggleRoutineTasksBtn) {
+        toggleRoutineTasksBtn.addEventListener('click', () => {
+            const cfg = window.ConfigManager?.getConfig?.() || {};
+            const dayOfWeek = currentDate.getDay();
+            const preselected = Array.isArray(cfg.routineTasksDays) ? cfg.routineTasksDays : [1, 2, 3, 4, 5];
+            const currentEffective = window.__plannerShowRoutineTasksOverride !== undefined
+                ? window.__plannerShowRoutineTasksOverride
+                : ((cfg.plannerShowRoutineTasks !== false) && preselected.includes(dayOfWeek));
+            window.__plannerShowRoutineTasksOverride = !currentEffective;
+            rerender();
+        });
+    }
+
     const rerender = () => {
         const prev = timeBlocksContainer.scrollTop;
+        if (toggleRoutineTasksBtn) {
+            const cfg = window.ConfigManager?.getConfig?.() || {};
+            const dayOfWeek = currentDate.getDay();
+            const preselected = Array.isArray(cfg.routineTasksDays) ? cfg.routineTasksDays : [1, 2, 3, 4, 5];
+            const isShowing = window.__plannerShowRoutineTasksOverride !== undefined
+                ? window.__plannerShowRoutineTasksOverride
+                : ((cfg.plannerShowRoutineTasks !== false) && preselected.includes(dayOfWeek));
+            toggleRoutineTasksBtn.classList.toggle('active', isShowing);
+        }
         renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
         timeBlocksContainer.scrollTop = prev;
     };

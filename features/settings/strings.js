@@ -4,6 +4,7 @@
 I18n.register({
   en: {
     "settings.routineBuffer": "Routine buffer (% added to booked time)",
+    "settings.plannerShowRoutineTasks": "Show routine steps in day view on weekdays (Mon–Fri)",
     "settings.taskBuffer": "Pause between tasks (minutes)",
     "settings.breakWindow": "Show the “next task” countdown when it starts within (minutes)",
     "settings.autoStart": "Start the routine player by itself when a routine’s time begins",
@@ -21,6 +22,7 @@ I18n.register({
   },
   fr: {
     "settings.routineBuffer": "Marge des routines (% ajouté au temps réservé)",
+    "settings.plannerShowRoutineTasks": "Afficher les étapes de routine dans la vue du jour en semaine (lun-ven)",
     "settings.taskBuffer": "Pause entre deux tâches (minutes)",
     "settings.breakWindow": "Afficher le compte à rebours de la tâche suivante quand elle commence dans (minutes)",
     "settings.autoStart": "Démarrer la routine toute seule quand son heure arrive",
@@ -38,6 +40,7 @@ I18n.register({
   },
   de: {
     "settings.routineBuffer": "Routine-Puffer (% zur reservierten Zeit)",
+    "settings.plannerShowRoutineTasks": "Routine-Schritte an Wochentagen (Mo-Fr) in der Tagesansicht anzeigen",
     "settings.taskBuffer": "Pause zwischen Aufgaben (Minuten)",
     "settings.breakWindow": "Countdown zur nächsten Aufgabe zeigen, wenn sie beginnt in (Minuten)",
     "settings.autoStart": "Routine automatisch starten, wenn ihre Zeit beginnt",
@@ -55,6 +58,7 @@ I18n.register({
   },
   es: {
     "settings.routineBuffer": "Margen de las rutinas (% añadido al tiempo reservado)",
+    "settings.plannerShowRoutineTasks": "Mostrar los pasos de rutina en la vista del día los días laborales (lun-vie)",
     "settings.taskBuffer": "Pausa entre tareas (minutos)",
     "settings.breakWindow": "Mostrar la cuenta atrás de la siguiente tarea cuando empieza en (minutos)",
     "settings.autoStart": "Empezar la rutina sola cuando llega su hora",

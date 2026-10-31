@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     flexibleTag: document.getElementById('setting-flexible-tag'),
     defaultTaskMinutes: document.getElementById('setting-default-task-minutes'),
     routineBufferPercent: document.getElementById('setting-routine-buffer'),
+    plannerShowRoutineTasks: document.getElementById('setting-planner-show-routine-tasks'),
     bufferDurationMinutes: document.getElementById('setting-task-buffer'),
     breakWindowMinutes: document.getElementById('setting-break-window'),
     showAllOptions: document.getElementById('setting-show-all-options'),
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.flexibleTag) fields.flexibleTag.value = values.flexibleTag;
     if (fields.defaultTaskMinutes) fields.defaultTaskMinutes.value = values.defaultTaskMinutes;
     if (fields.routineBufferPercent) fields.routineBufferPercent.value = values.routineBufferPercent ?? 10;
+    if (fields.plannerShowRoutineTasks) fields.plannerShowRoutineTasks.checked = values.plannerShowRoutineTasks !== false;
     if (fields.bufferDurationMinutes) fields.bufferDurationMinutes.value = values.bufferDurationMinutes ?? 5;
     if (fields.breakWindowMinutes) fields.breakWindowMinutes.value = values.breakWindowMinutes ?? 15;
     if (fields.showAllOptions) fields.showAllOptions.checked = Boolean(values.showAllOptions);
@@ -169,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         flexibleTag: fields.flexibleTag?.value || window.ConfigManager.DEFAULT_CONFIG.flexibleTag,
         defaultTaskMinutes: Number(fields.defaultTaskMinutes?.value) || window.ConfigManager.DEFAULT_CONFIG.defaultTaskMinutes,
         routineBufferPercent: numberOr(fields.routineBufferPercent?.value, 10),
+        plannerShowRoutineTasks: fields.plannerShowRoutineTasks?.checked !== false,
         bufferDurationMinutes: numberOr(fields.bufferDurationMinutes?.value, 5),
         breakWindowMinutes: numberOr(fields.breakWindowMinutes?.value, 15),
         showAllOptions: fields.showAllOptions?.checked || false,

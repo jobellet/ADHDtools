@@ -13,6 +13,10 @@
     // Routines book their time in the schedule plus this margin (percent).
     routineBufferPercent: 10,
 
+    // Show routine steps by default in the Day Planner on pre-selected weekdays (Mon-Fri)
+    plannerShowRoutineTasks: true,
+    routineTasksDays: [1, 2, 3, 4, 5],
+
     // Minutes before the next fixed item during which the Now view shows a
     // "break" countdown instead of switching to the planner.
     breakWindowMinutes: 15,

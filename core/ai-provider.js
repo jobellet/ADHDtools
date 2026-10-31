@@ -270,6 +270,83 @@ Return the result strictly as a JSON array of objects where each object has:
     return text;
   }
 
+  async function transcribeAudio(audioBlob, options = {}) {
+    const cfg = resolve(options.settings);
+    if (!isEnabled(cfg)) {
+      throw new Error('No AI provider configured. Open Settings → API / AI to configure one.');
+    }
+
+    // 1. OpenAI / Groq / OpenAI-compatible Whisper
+    if (cfg.provider === 'openai' || cfg.provider === 'groq') {
+      const endpoint = cfg.provider === 'groq'
+        ? 'https://api.groq.com/openai/v1/audio/transcriptions'
+        : `${cfg.baseUrl || 'https://api.openai.com/v1'}/audio/transcriptions`;
+      const model = cfg.provider === 'groq' ? 'whisper-large-v3-turbo' : 'whisper-1';
+
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'recording.webm');
+      formData.append('model', model);
+      if (options.language) formData.append('language', options.language);
+
+      const headers = {};
+      if (cfg.apiKey) headers.Authorization = `Bearer ${cfg.apiKey}`;
+
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        throw new Error(`AI transcription failed (${resp.status}): ${errText.slice(0, 200)}`);
+      }
+      const data = await resp.json();
+      return (data.text || '').trim();
+    }
+
+    // 2. Google Gemini
+    if (cfg.providerDef.style === 'gemini') {
+      const model = encodeURIComponent(cfg.model || 'gemini-2.5-flash');
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+
+      let base64Audio = '';
+      if (audioBlob?.arrayBuffer) {
+        const buffer = await audioBlob.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        base64Audio = btoa(binary);
+      }
+
+      const body = {
+        contents: [{
+          role: 'user',
+          parts: [
+            { inline_data: { mime_type: audioBlob.type || 'audio/webm', data: base64Audio } },
+            { text: 'Transcribe this spoken audio verbatim in the language spoken. Output only the transcript without quotes or explanation.' }
+          ]
+        }]
+      };
+
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        throw new Error(`Gemini transcription failed (${resp.status}): ${errText.slice(0, 200)}`);
+      }
+      const data = await resp.json();
+      const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+      return text.trim();
+    }
+
+    throw new Error(`AI audio transcription is not supported by ${cfg.providerDef.label}. Use Web Speech recognition or switch AI provider to OpenAI, Groq, or Gemini.`);
+  }
+
   window.AIAssistant = {
     PROVIDERS,
     getSettings,
@@ -281,6 +358,7 @@ Return the result strictly as a JSON array of objects where each object has:
     extractJSON,
     testConnection,
     decomposeTask,
+    transcribeAudio,
     getActiveLabel() {
       const cfg = resolve();
       return isEnabled(cfg) ? `${cfg.providerDef.label} · ${cfg.model}` : null;

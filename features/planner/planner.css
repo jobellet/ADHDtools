@@ -313,6 +313,62 @@
 
 .event.routine-event {
     background: linear-gradient(135deg, #f6b26b 0%, var(--kind-routine) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+
+.routine-steps-list {
+    margin-top: 3px;
+    padding-top: 3px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+    max-height: calc(100% - 24px);
+}
+
+.routine-step-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    padding: 1px 4px;
+    gap: 4px;
+}
+
+.routine-step-time {
+    font-size: 0.68rem;
+    opacity: 0.95;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.routine-step-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.routine-step-dur {
+    font-size: 0.68rem;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0 4px;
+    border-radius: 3px;
+    font-variant-numeric: tabular-nums;
+}
+
+#planner-toggle-routine-tasks.active {
+    background: var(--kind-routine, #e67e22);
+    color: #fff;
+    border-color: var(--kind-routine, #e67e22);
 }
 
 .event.flexible-event {

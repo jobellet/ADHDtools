@@ -63,6 +63,7 @@ export const taskFields = {
 export const storageKeys = {
   'adhd-unified-tasks': 'read',
   'adhd-deleted-tasks': 'read',
+  'adhd-thoughts': 'read',
   'adhd-tool-routines': 'read',
   'adhd-routine-runs': 'read',
   'adhd-calendar-events': 'read',
@@ -124,6 +125,7 @@ export const globals = {
   CalendarTool: 'tool:get_schedule',
   RewardSystem: 'no: rewards are managed in the app',
   AssistantInbox: 'no: the app side of this MCP server',
+  QuickThoughts: 'no: quick thoughts are managed in the app',
 };
 
 export const STORAGE_READ = Object.keys(storageKeys).filter(k => storageKeys[k] === 'read');

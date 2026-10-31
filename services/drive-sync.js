@@ -278,6 +278,53 @@
     }, AUTO_PULL_INTERVAL_MS);
   }
 
+  // Save or update a plain text file in the Google Drive appDataFolder (e.g. daily thoughts)
+  async function saveTextFile(filename, textContent, { interactive = false, mimeType = 'text/plain; charset=UTF-8' } = {}) {
+    const token = await getToken({ interactive });
+    if (!token) throw new Error('Not signed in to Google Drive');
+
+    const url = new URL(`${DRIVE_API}/files`);
+    url.searchParams.set('spaces', 'appDataFolder');
+    url.searchParams.set('q', `name = '${filename}' and trashed = false`);
+    url.searchParams.set('fields', 'files(id, name, modifiedTime)');
+    const listResp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!listResp.ok) throw new Error(`Drive list error: ${listResp.status}`);
+    const listData = await listResp.json();
+    const existing = listData.files?.[0] || null;
+
+    if (existing) {
+      const patchResp = await fetch(`${DRIVE_UPLOAD}/files/${existing.id}?uploadType=media`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': mimeType,
+        },
+        body: textContent,
+      });
+      if (!patchResp.ok) throw new Error(`Drive update error: ${patchResp.status}`);
+      return await patchResp.json();
+    }
+
+    const boundary = 'adhdthoughts' + Date.now();
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
+      JSON.stringify({ name: filename, parents: ['appDataFolder'] }) +
+      `\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n` +
+      textContent +
+      `\r\n--${boundary}--`;
+
+    const createResp = await fetch(`${DRIVE_UPLOAD}/files?uploadType=multipart`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    });
+    if (!createResp.ok) throw new Error(`Drive create error: ${createResp.status}`);
+    return await createResp.json();
+  }
+
   function refreshStatus() {
     const status = document.getElementById('drive-sync-status');
     if (!status) return;
@@ -372,6 +419,7 @@
     maybeAutoBackup,
     notifyLocalChange,
     readAppFile,
+    saveTextFile,
     isAutoSyncOn: autoSyncEnabled,
   };
 })();

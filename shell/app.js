@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
         routine: { slug: 'routine', icon: 'routine.svg', title: 'Routines' },
         focus: { slug: 'focus', icon: 'focus-mode.svg', title: 'Focus Mode' },
         rewards: { slug: 'rewards', icon: 'rewards.svg', title: 'Rewards' },
+        thoughts: { slug: 'thoughts', icon: 'thoughts.svg', title: 'Quick Thoughts' },
         settings: { slug: 'settings', icon: 'settings.svg', title: 'Settings' },
         about: { slug: 'about', icon: 'about.svg', title: 'About' },
     };
