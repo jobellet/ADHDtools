@@ -81,6 +81,19 @@ describe('Web, desktop and Android apps stay aligned', () => {
     assert.deepEqual(outside, [], 'add their folder to scripts/web-assets.json');
   });
 
+  it('both native builds write the build-info.json stamp for the update check', () => {
+    // Same file name and shape { commit, date, app } (read by features/settings/update-check.js).
+    const desktop = read('scripts/prepare-desktop.cjs');
+    const android = read('android/app/build.gradle');
+    assert.match(desktop, /'build-info\.json'/);
+    assert.match(desktop, /\{ commit, date, app: 'desktop' \}/);
+    assert.match(android, /'build-info\.json'/);
+    assert.match(android, /\[commit: lines\[0\], date: lines\[1\], app: 'android'\]/);
+    assert.match(android, /srcDirs \+= \[generatedAssets, buildInfoAssets\]/, 'the stamp must be in the APK assets');
+    assert.match(android, /dependsOn 'copyWebAssets', 'writeBuildInfo'/);
+    assert.match(read('features/settings/update-check.js'), /fetch\('build-info\.json'/);
+  });
+
   it('every app has the version from package.json', () => {
     const { version } = JSON.parse(read('package.json'));
     assert.equal(JSON.parse(read('src-tauri/tauri.conf.json')).version, '../package.json');

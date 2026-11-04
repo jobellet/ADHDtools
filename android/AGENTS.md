@@ -17,7 +17,7 @@ User guide: [../docs/android.md](../docs/android.md). Build: `npm run android:bu
 
 | File | Role |
 | --- | --- |
-| `app/build.gradle` | Copies the web files, reads the version from `package.json`, signs with the key from `~/.config/adhd-tools-android/signing.properties` (else the debug key) |
+| `app/build.gradle` | Copies the web files, writes the build stamp **build-info.json** (task `writeBuildInfo`: commit + date, for Settings → App updates), reads the version from `package.json`, signs with the key from `~/.config/adhd-tools-android/signing.properties` (else the debug key) |
 | `app/src/main/AndroidManifest.xml` | Permissions (notifications, exact alarms, full-screen alarm, microphone, boot), the `adhdtools://open` link used after Google sign-in |
 | `MainActivity.java` | WebView, system bar insets, file picker, "Save as" for exports, Back = background, picture-in-picture, keep screen on |
 | `NativeBridge.java` | One `case "native_…":` per desktop command (`src-tauri/src/lib.rs`), plus `android_save_file` |
@@ -47,6 +47,8 @@ All apps share the web code, so a fix there reaches all three. The native layers
   `NativeBridge.java`. `tests/native-alignment.test.js` fails otherwise, and when a command has no caller left.
 - **New top-level folder of web files:** add it to `scripts/web-assets.json` (used by both native builds).
 - **Version:** change it in `package.json` and `src-tauri/Cargo.toml` (the test checks they match).
+  The version stays `1.0.0`, so the update check compares **commits**: both builds write **build-info.json**
+  (`scripts/prepare-desktop.cjs`, task `writeBuildInfo`); keep its shape `{ commit, date, app }` the same.
 - CI builds the APK (`android` job) and compile-checks the desktop app (`desktop` job) on every PR.
 
 ## Rules

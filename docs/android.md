@@ -63,6 +63,9 @@ On the first start, allow **notifications**. Alarms need them.
 Run `git pull && npm ci && npm run android:build` (or `android:install`), then install the new APK over
 the old one. Your tasks, routines and Google connection stay.
 
+To know if there is something new, open **Settings → App updates → Check for updates** in the app: it
+compares your build with the latest version on GitHub (see [using-the-app.md](using-the-app.md#updates)).
+
 ## Connect Google (Calendar and Drive sync)
 
 The phone app signs in like the desktop app: it needs a **Desktop app** OAuth client (ID and secret).

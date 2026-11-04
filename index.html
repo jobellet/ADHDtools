@@ -47,6 +47,7 @@
     <script src="shell/capabilities.js" defer></script>
     <script src="features/settings/ai-settings.js" defer></script>
     <script src="features/settings/settings.js" defer></script>
+    <script src="features/settings/update-check.js" defer></script>
     <script src="features/pomodoro/pomodoro.js" defer></script>
 
     <!-- 2. Core data layer (ES modules) and the planner, which imports them -->
@@ -882,6 +883,24 @@
                                 <summary><i class="fas fa-shield-alt"></i> Credentials Sync (cross-device)</summary>
                                 <div class="settings-content">
                                     <div id="credentials-sync-container"></div>
+                                </div>
+                            </details>
+                        </div>
+
+                        <!-- App updates: desktop and Android apps only (shown by features/settings/update-check.js) -->
+                        <div class="settings-panel" id="settings-updates-panel" hidden>
+                            <details class="settings-toggle">
+                                <summary data-i18n="settings.updates">App updates</summary>
+                                <div class="settings-content">
+                                    <p id="update-build-line" class="update-build-line"></p>
+                                    <div class="setting-group">
+                                        <button type="button" id="update-check-btn" class="btn btn-secondary btn-sm" data-i18n="settings.updates.check">Check for updates</button>
+                                    </div>
+                                    <div id="update-check-result" class="update-check-result" aria-live="polite"></div>
+                                    <div class="setting-group checkbox-group">
+                                        <input type="checkbox" id="update-check-daily">
+                                        <label for="update-check-daily" data-i18n="settings.updates.daily">Check once a day (asks GitHub)</label>
+                                    </div>
                                 </div>
                             </details>
                         </div>
