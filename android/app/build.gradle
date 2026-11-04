@@ -1,5 +1,6 @@
 // Android app: a WebView that runs the same web files as GitHub Pages and the desktop app,
 // plus native alarms, notifications and Google sign-in (see android/AGENTS.md).
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
 plugins {
@@ -19,6 +20,30 @@ tasks.register('copyWebAssets', Sync) {
         exclude '**/AGENTS.md', '**/.DS_Store'
     }
     into generatedAssets
+}
+
+// Build stamp: build-info.json = { commit, date, app } of the commit this APK is built from, for
+// Settings → App updates (features/settings/update-check.js). The desktop app writes the same file in
+// scripts/prepare-desktop.cjs. Runs on every build; without git there is no stamp and the check stays hidden.
+def buildInfoAssets = layout.buildDirectory.dir('generated/build-info')
+
+tasks.register('writeBuildInfo') {
+    def outDir = buildInfoAssets.get().asFile
+    outputs.dir outDir
+    outputs.upToDateWhen { false }
+    doLast {
+        outDir.deleteDir()
+        outDir.mkdirs()
+        try {
+            def git = ['git', '-C', webRoot.path, 'log', '-1', '--format=%H%n%cI'].execute()
+            def lines = git.text.readLines()
+            if (git.waitFor() == 0 && lines.size() >= 2) {
+                new File(outDir, 'build-info.json').text = JsonOutput.toJson([commit: lines[0], date: lines[1], app: 'android']) + '\n'
+            }
+        } catch (IOException ignored) {
+            logger.warn('git not found: no build-info.json, the update check will stay hidden')
+        }
+    }
 }
 
 // Release signing key, kept outside the repository (created by scripts/build-android.cjs).
@@ -65,11 +90,11 @@ android {
     }
 
     sourceSets {
-        main.assets.srcDirs += generatedAssets
+        main.assets.srcDirs += [generatedAssets, buildInfoAssets]
     }
 }
 
-tasks.named('preBuild') { dependsOn 'copyWebAssets' }
+tasks.named('preBuild') { dependsOn 'copyWebAssets', 'writeBuildInfo' }
 
 dependencies {
     implementation 'androidx.webkit:webkit:1.12.1'

@@ -8,7 +8,8 @@ CI runs both on every PR. Both must pass after merging the latest `main`.
 | --- | --- |
 | `scheduler.test.js` | Fixed/flexible placement, routine booking + buffer, conflicts, snooze, pins, fixed items keep time |
 | `now-state.test.js` | doing / break / free, default screen, alarm plan for the native apps |
-| `native-alignment.test.js` | Web, desktop (`src-tauri/`) and Android (`android/`) stay aligned: same native commands, same bundled files (`scripts/web-assets.json`), same version |
+| `native-alignment.test.js` | Web, desktop (`src-tauri/`) and Android (`android/`) stay aligned: same native commands, same bundled files (`scripts/web-assets.json`), same version, both write the **build-info.json** stamp |
+| `update-check.test.js` | App updates logic: up to date, N new commits, build commit unknown to GitHub (date compare), GitHub errors |
 | `task-model.test.js`, `task-store.test.js` | Task fields, deadlines, delete/undo/tombstones, overdue |
 | `task-parser.test.js` | Offline natural-language parsing |
 | `sync-merge.test.js` | Backup merge levels, deleted tasks stay deleted |
@@ -23,9 +24,10 @@ CI runs both on every PR. Both must pass after merging the latest `main`.
 ### Browser tests (`tests/ui/`)
 | File | Covers |
 | --- | --- |
-| `harness.js` | `startServer()` (serves the repo like GitHub Pages), `launch()`, `openApp(browser, url, { device, time, storage, session, routes })`, `sampleDay(date)`, `VIEWPORTS` (phone 390×844, desktop 1366×900). `openApp` fixes the clock, seeds `localStorage`, blocks every outside request and returns `errors` (page + console) and `external` (requests made while loading). |
+| `harness.js` | `startServer()` (serves the repo like GitHub Pages), `launch()`, `openApp(browser, url, { device, time, storage, session, routes, init })` (`init` runs in the page first, e.g. a fake `window.__TAURI__`), `sampleDay(date)`, `VIEWPORTS` (phone 390×844, desktop 1366×900). `openApp` fixes the clock, seeds `localStorage`, blocks every outside request and returns `errors` (page + console) and `external` (requests made while loading). |
 | `now.test.js` | The app opens on the right screen: routine time → Now with timer; free time with work → next auto-placed task; nothing planned → planner. Never an all-day event as "now". |
 | `assistant.test.js` | MCP server queues changes → the real app applies them (moved if the time got taken) → backs up → the server sees them done. Fake Drive via `routes`. |
+| `update-check.test.js` | Settings → App updates: hidden on the website (no **build-info.json** fetched, nothing sent); in a fake native app no GitHub request while loading, the button shows "up to date" or "new version + commands", the daily check waits a minute. |
 | `planner.test.js` | The whole day is drawn at both sizes (timeline height = day × zoom, every item present, no NaN, no overlap, no sideways scroll, desktop fills the window); Ctrl+scroll zoom keeps blocks on their times; add-event form refuses a taken time and saves at the suggested one. |
 
 `sampleDay()` holds the tricky data that broke the app once: an all-day event and the task copies the

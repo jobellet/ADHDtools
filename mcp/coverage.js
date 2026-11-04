@@ -94,6 +94,7 @@ export const storageKeys = {
   'adhd-ai-settings': 'no: API keys never leave the device',
   'adhd-ai-': 'no: prefix of AI settings keys, API keys never leave the device',
   'adhd-timer': 'no: notification tag, not real data',
+  'adhd-update-check': 'no: update-check setting of the desktop / Android app',
 };
 
 // Every row of the globals table in AGENTS.md.
@@ -126,6 +127,7 @@ export const globals = {
   RewardSystem: 'no: rewards are managed in the app',
   AssistantInbox: 'no: the app side of this MCP server',
   QuickThoughts: 'no: quick thoughts are managed in the app',
+  UpdateCheck: 'no: app updates are checked in the app',
 };
 
 export const STORAGE_READ = Object.keys(storageKeys).filter(k => storageKeys[k] === 'read');

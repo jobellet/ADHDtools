@@ -129,6 +129,21 @@ If you run the app inside the native desktop app (`npm run desktop` or `npm run 
 - **Background Disk Mirroring:** All your settings, tasks, routines, and Google/API keys are automatically saved to disk securely. If you clear the webview cache, restart, or update the app, your data and connections stay safe and reload automatically on startup.
 - **Native Voice Recognition (macOS):** Uses macOS Speech Recognition directly in the selected UI language (make sure **ADHD Tools** is allowed under **System Settings → Privacy & Security → Microphone** and **Speech Recognition**).
 
+### Updates
+
+The desktop and Android apps keep the version they were built with: they do not update themselves.
+To know if there is a newer version, open **Settings → App updates** and tap **Check for updates**. The app
+asks GitHub (`api.github.com`, no account) for the latest version and tells you either **You're up to date**
+or **A new version is available** with the number of changes and what to run on your computer, in the
+ADHDtools folder:
+
+- Desktop app: `git pull`, then `npm run desktop:install`.
+- Android app: connect the phone by USB, then `git pull` and `npm run android:install` (see [android.md](android.md)).
+
+GitHub is only asked when you tap the button. Turn on **Check once a day** to be told by a message when a
+new version is out (the first check happens a minute after you open the app). The website has no such panel:
+it is always up to date.
+
 ## The app adapts to your setup
 
 You only see the options you use:

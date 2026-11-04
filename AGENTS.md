@@ -114,6 +114,7 @@ arrive after a classic script: listen to `schedulerReady`.
 | `RewardSystem` | `features/rewards/reward-system.js` | Points and rewards |
 | `AssistantInbox` | `features/assistant/assistant-inbox.js` | `check()`: apply changes queued by the MCP server |
 | `QuickThoughts` | `features/thoughts/thoughts.js` | `getAllThoughts`, `addThought`, `deleteThought`, `syncToDrive`, `summarizeDay`, `restructureDay` |
+| `UpdateCheck` | `features/settings/update-check.js` | Native apps: `getBuildInfo()` (**build-info.json** stamp), `check()` against GitHub, `summarize()` |
 
 Add a global only when another file needs it, and add a row here.
 
@@ -134,7 +135,7 @@ After changing tasks, dispatch `dataChanged` on `EventBus` **and** `scheduleNeed
 | `adhd-calendar-events` | features/calendar | | `adhd-calendar-ics-url` | features/calendar |
 | `gcalClientId`, `gcal*` | services/google-* | | `adhd-ai-settings` | core/ai-provider (never exported) |
 | `adhd-hub-data` | services/data-manager (legacy mirror) | | `adhd-storage-log` | services/timestamp-storage |
-| `adhd-assistant-applied` | features/assistant (ops applied, read by mcp/) | | | |
+| `adhd-assistant-applied` | features/assistant (ops applied, read by mcp/) | | `adhd-update-check` | features/settings (daily update check on/off, last check) |
 Other keys belong to the feature that names them (`adhd-habits`, `adhd-rewards`, `adhd-breakdown-tasks`…).
 Changing the shape of stored data needs a migration that reads the old shape (users keep their data).
 
@@ -160,7 +161,9 @@ Changing the shape of stored data needs a migration that reads the old shape (us
   and are excluded from export/sync (`isSensitiveKey` in `services/data-manager.js`). Opt-in services are
   called only after a clear user action, never at load (the UI tests fail on any request while loading).
   Allowed today: Google (when connected), the chosen AI provider, OpenStreetMap geocoding/routing when the
-  user types a place in the event form (`features/planner/routing.js`).
+  user types a place in the event form (`features/planner/routing.js`), and `api.github.com` (public, no
+  account) when the user of a desktop/Android app taps **Check for updates** or turns on the daily check
+  (`features/settings/update-check.js`; first check a minute after opening, never while loading).
 - **Setup-aware UI:** controls for optional integrations get `data-cap="ai|speech"` or `data-cap-hide="gcal"`.
 - **No dead code:** remove files/keys you replace. `tests/architecture.test.js` fails on unreferenced files.
 - **Keep the AI assistant in step:** a new TaskStore method, scheduler function, task field, `adhd-…` storage
@@ -169,6 +172,8 @@ Changing the shape of stored data needs a migration that reads the old shape (us
 - **Three apps, one web code:** GitHub Pages, the desktop app (`src-tauri/`) and the Android app (`android/`)
   run the same files. A native command (`invokeNative('native_…')`) must exist in **both** native apps;
   web folders are listed once in `scripts/web-assets.json`; `tests/native-alignment.test.js` checks this.
+  Both native builds also write **build-info.json** (commit + date of the build) for the update check;
+  the website has no such file.
   CI also builds the APK and compile-checks the desktop app. See [android/AGENTS.md](android/AGENTS.md).
 - **Keep docs true:** if you change a contract above, update this file in the same commit.
 

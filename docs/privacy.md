@@ -28,6 +28,12 @@ Access tokens are kept in your browser session and removed when you close the br
 
 If you add an AI provider in the settings, the text you send (for example a task to split) goes directly from your browser to that provider, under its own privacy policy. Your API key stays in your browser and is never in a backup or export.
 
+## Update check (desktop and Android apps only)
+
+When you tap **Check for updates** in Settings (or turn on the daily check), the app asks GitHub's public
+API (`api.github.com`) for the latest version of the app. It sends no data of yours and needs no account;
+GitHub sees an ordinary request from your internet address. The website never does this.
+
 ## Deleting your data
 
 - On your device: clear this site's data in your browser settings.

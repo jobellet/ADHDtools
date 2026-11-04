@@ -39,8 +39,9 @@ export async function launch() {
 // Returns { page, context, errors, external } — errors = page errors + console errors,
 // external = requests to hosts other than the app (all are blocked).
 // `session` seeds sessionStorage; `routes` = [[urlMatcher, handler]] answer outside requests
-// (e.g. a fake Google Drive) instead of blocking them.
-export async function openApp(browser, baseUrl, { device = 'desktop', path = '/', time, storage = {}, session = {}, routes = [] } = {}) {
+// (e.g. a fake Google Drive) instead of blocking them. `init` = function run in the page before its
+// scripts (e.g. a fake window.__TAURI__ to play the desktop app).
+export async function openApp(browser, baseUrl, { device = 'desktop', path = '/', time, storage = {}, session = {}, routes = [], init } = {}) {
   const { isMobile, hasTouch, ...viewport } = VIEWPORTS[device];
   const context = await browser.newContext({ viewport, isMobile: Boolean(isMobile), hasTouch: Boolean(hasTouch) });
   const page = await context.newPage();
@@ -66,6 +67,7 @@ export async function openApp(browser, baseUrl, { device = 'desktop', path = '/'
   await page.addInitScript(seed => {
     Object.entries(seed).forEach(([k, v]) => sessionStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)));
   }, session);
+  if (init) await page.addInitScript(init);
   await page.goto(baseUrl + path, { waitUntil: 'load' });
   if (time) await page.clock.runFor(1500);
   else await page.waitForTimeout(800);
