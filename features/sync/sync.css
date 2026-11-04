@@ -1,0 +1,67 @@
+/* Sync button (features/sync): a small cloud with a red/green dot in the top bar. */
+
+.sync-status-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+
+.sync-status-btn[hidden] {
+    display: none;
+}
+
+.sync-status-btn:focus-visible {
+    outline: 3px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+.sync-status-dot {
+    position: absolute;
+    right: 5px;
+    bottom: 6px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+    background: #c62828;
+}
+
+.sync-status-btn[data-state="on"] .sync-status-dot {
+    background: #2e7d32;
+}
+
+.sync-status-btn[data-state="busy"] .sync-status-dot {
+    background: #f9a825;
+}
+
+.sync-status-btn[data-state="busy"] i {
+    animation: sync-status-pulse 1s ease-in-out infinite;
+}
+
+@keyframes sync-status-pulse {
+    50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sync-status-btn[data-state="busy"] i {
+        animation: none;
+    }
+}
+
+/* Phones: the top bar is the bottom tab bar; the button sits in its second row, next to Thoughts. */
+@media (max-width: 768px) {
+    .sync-status-btn {
+        width: 36px;
+        height: 36px;
+    }
+}

@@ -205,11 +205,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return items;
     }
 
-    async function syncNow({ interactive, isAuto } = { interactive: true, isAuto: false }) {
+    async function syncNow({ interactive, isAuto, skipDrive, rethrow } = { interactive: true, isAuto: false }) {
         try {
             if (!isAuto) setStatus('Syncing…');
             const token = await window.GoogleAuth.getAccessToken(SCOPES, { interactive });
-            if (!token) { refreshUIState(); return; } // silent mode, no session
+            if (!token) { refreshUIState(); return false; } // silent mode, no session
 
             // Offer the list of calendars (best effort — primary works regardless)
             try {
@@ -225,12 +225,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const timeMin = new Date(Date.now() - pastDays * 86400000).toISOString();
             const timeMax = new Date(Date.now() + futureDays * 86400000).toISOString();
 
-            let total = 0;
+            // Fetch every calendar first, then hand the whole list over at once: events of the
+            // range that Google no longer returns were deleted there and leave the app too.
+            const mapped = [];
             for (const calId of getSelectedCalendarIds()) {
                 const items = await fetchEventsForCalendar(token, calId, timeMin, timeMax);
-                const mapped = items
+                items
                     .filter(ev => ev.status !== 'cancelled' && (ev.start?.dateTime || ev.start?.date))
-                    .map(ev => ({
+                    .forEach(ev => mapped.push({
                         uid: ev.iCalUID || ev.id,
                         title: ev.summary || '(no title)',
                         description: ev.description || '',
@@ -241,11 +243,14 @@ document.addEventListener('DOMContentLoaded', function () {
                         isCalendarEvent: true,
                         isActionable: false,
                         points: 0,
-                        type: 'event'
+                        type: 'event',
+                        source: 'gcal',
+                        ...(ev.updated ? { updatedAt: ev.updated } : {}),
                     }));
-                if (window.CalendarTool?.ingestExternalEvents) {
-                    total += window.CalendarTool.ingestExternalEvents(mapped);
-                }
+            }
+            let total = 0;
+            if (window.CalendarTool?.ingestExternalEvents) {
+                total = window.CalendarTool.ingestExternalEvents(mapped, { source: 'gcal', from: timeMin, to: timeMax });
             }
 
             localStorage.setItem(CONNECTED_FLAG_KEY, 'true');
@@ -254,12 +259,15 @@ document.addEventListener('DOMContentLoaded', function () {
             refreshUIState();
             if (!isAuto) setStatus(`Synced ${total} events (${pastDays} days back, ${futureDays} ahead) at ${new Date().toLocaleTimeString()}.`);
 
-            // Ensure auto-sync is started if newly connected
-            if (interactive && !autoSyncIntervalId) startAutoSync();
-            if (interactive) window.DriveSync?.maybeAutoPull?.().then(() => window.DriveSync?.maybeAutoBackup?.());
+            // Ensure auto-sync is started (newly connected, or signed in again from the sync button)
+            if (!autoSyncIntervalId) startAutoSync();
+            if (interactive && !skipDrive) window.DriveSync?.maybeAutoPull?.().then(() => window.DriveSync?.maybeAutoBackup?.());
+            return true;
         } catch (err) {
             console.error('Google Calendar sync failed:', err);
             setStatus('Sync failed: ' + err.message, true);
+            if (rethrow) throw err;
+            return false;
         }
     }
 
@@ -338,6 +346,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     buildUI();
     initObservers();
+
+    // Used by the sync button (features/sync): Google Calendar part of "sync everything".
+    window.GoogleCalendarSync = {
+        SCOPES,
+        isConnected: () => localStorage.getItem(CONNECTED_FLAG_KEY) === 'true',
+        syncNow: ({ interactive = false } = {}) => syncNow({ interactive, isAuto: true, skipDrive: true, rethrow: true }),
+    };
 
     // Silent auto-sync when a session token from this browser session is still valid, or (desktop
     // app) when a saved refresh token exists. The desktop app restores its saved keys a moment

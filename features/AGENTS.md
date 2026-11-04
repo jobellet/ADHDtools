@@ -26,6 +26,7 @@ reaching into another feature's DOM.
 | [rewards](rewards/AGENTS.md) | `rewards` | `reward-system.js` | legacy UI |
 | [thoughts](thoughts/AGENTS.md) | `thoughts` | `thoughts.js`, `thoughts.css`, `strings.js` | core flow |
 | [assistant](assistant/AGENTS.md) | — (no screen: applies AI assistant changes, see `mcp/`) | `assistant-inbox.js` | core |
+| [sync](sync/AGENTS.md) | — (no screen: sync button in the top bar `#sync-status-btn`) | `sync-button.js`, `sync.css`, `strings.js` | core |
 
 "Legacy UI" = works, still partly English, styled by `styles/base.css`. When you touch one, move its
 new strings to `strings.js` and new CSS to its own `.css` file.

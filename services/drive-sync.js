@@ -80,7 +80,7 @@
     return localStorage.getItem(AUTO_SYNC_KEY) !== 'false';
   }
 
-  async function backupToDrive({ silent = false, skipInbox = false } = {}) {
+  async function backupToDrive({ silent = false, skipInbox = false, rethrow = false } = {}) {
     const status = document.getElementById('drive-sync-status');
     try {
       if (status) status.textContent = 'Backing up…';
@@ -129,6 +129,7 @@
       console.error('Drive backup failed:', err);
       if (status) status.textContent = 'Backup failed: ' + err.message;
       if (!silent) notify('Backup failed: ' + err.message, 'error');
+      if (rethrow) throw err;
     }
   }
 
@@ -184,10 +185,11 @@
 
   // Automatic pull: merge a newer remote backup into local data in-place.
   // Identical items are skipped, newer versions win automatically.
-  async function maybeAutoPull() {
+  // force: also when automatic sync is off (sync button); rethrow: report failures to the caller.
+  async function maybeAutoPull({ force = false, rethrow = false } = {}) {
     if (inFlight) return;
     if (!window.GoogleAuth?.getClientId()) return;
-    if (!autoSyncEnabled()) return;
+    if (!force && !autoSyncEnabled()) return;
     inFlight = true;
     try {
       const token = await getToken({ interactive: false });
@@ -201,7 +203,7 @@
       const resp = await fetch(`${DRIVE_API}/files/${remote.id}?alt=media`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!resp.ok) return;
+      if (!resp.ok) throw new Error(`Drive API ${resp.status}`);
       const imported = await resp.json();
 
       // Ignore our own device's snapshot if timestamps drifted slightly
@@ -222,6 +224,7 @@
       refreshStatus();
     } catch (err) {
       console.warn('Auto pull skipped:', err.message);
+      if (rethrow) throw err;
     } finally {
       inFlight = false;
     }
@@ -256,6 +259,16 @@
     } finally {
       inFlight = false;
     }
+  }
+
+  // "Sync now" from the sync button: merge a newer backup, then back up this device.
+  // Returns false when there is no Google session (and interactive is false).
+  async function syncNow({ interactive = false } = {}) {
+    const token = await getToken({ interactive });
+    if (!token) return false;
+    await maybeAutoPull({ force: true, rethrow: true });
+    await backupToDrive({ silent: true, rethrow: true });
+    return true;
   }
 
   function notifyLocalChange() {
@@ -417,6 +430,7 @@
     restoreFromDrive,
     maybeAutoPull,
     maybeAutoBackup,
+    syncNow,
     notifyLocalChange,
     readAppFile,
     saveTextFile,

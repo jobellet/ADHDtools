@@ -6,6 +6,9 @@
   const ICS_URL_KEY = 'adhd-calendar-ics-url';
   const VOICE_ENABLED_KEY = 'adhd-calendar-voice-enabled';
   const VOICE_EARLY_KEY = 'adhd-calendar-voice-early';
+  // Ids of synced events deleted at their source ({ id: calendarInstanceId, deletedAt }).
+  const REMOVED_KEY = 'adhd-calendar-removed';
+  const REMOVED_KEEP_MS = 90 * 24 * 60 * 60 * 1000;
   let currentView = 'day';
   let referenceDate = new Date();
   let events = [];
@@ -752,6 +755,86 @@
     if (urlInput) urlInput.value = '';
   }
 
+  // Hash of the TaskStore copy of an event. btoa only takes Latin-1, so other titles
+  // (emoji, curly quotes) are UTF-8 encoded first; Latin-1 titles keep their old hash.
+  function calendarCopyHash(cleanedTitle, start, end) {
+    const hashSeed = `${cleanedTitle}-${start}-${end || ''}`;
+    if (!window.TaskModel?.DEFAULT_USER) return `task-${hashSeed}`;
+    let encoded;
+    try {
+      encoded = btoa(hashSeed);
+    } catch {
+      encoded = btoa(unescape(encodeURIComponent(hashSeed)));
+    }
+    return `task-${encoded.replace(/=/g, '')}`;
+  }
+
+  function copyHashesOf(ev) {
+    const cfg = window.ConfigManager?.getConfig?.() || {};
+    const rawTitle = ev.title || ev.rawTitle || ev.summary || 'Calendar Task';
+    const cleanedTitle = rawTitle.replace(cfg.fixedTag || '[FIX]', '').replace(cfg.flexibleTag || '[FLEX]', '').trim();
+    return [ev.start, ev.instanceStart]
+      .filter(Boolean)
+      .map(start => calendarCopyHash(cleanedTitle, start, ev.end || ev.instanceEnd));
+  }
+
+  function parseLocal(stamp) {
+    if (!stamp) return null;
+    const d = new Date(stamp.length === 10 ? `${stamp}T00:00:00` : stamp);
+    return isNaN(d) ? null : d;
+  }
+
+  function loadRemoved() {
+    try {
+      const list = JSON.parse(localStorage.getItem(REMOVED_KEY));
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // Events that came from `scope.source` (e.g. Google), start inside the synced range and are
+  // no longer in the fresh list were deleted at the source: drop them, their task copies, and
+  // remember their ids so a Drive backup from another device does not bring them back.
+  // Events saved before `source` existed count as Google ones when their uid is a Google uid.
+  function pruneRemovedEvents(incoming, scope) {
+    const from = scope.from ? new Date(scope.from) : null;
+    const to = scope.to ? new Date(scope.to) : null;
+    if (!from || !to || isNaN(from) || isNaN(to)) return 0;
+    const present = new Set(incoming.map(ev => ev.calendarInstanceId).filter(Boolean));
+    const owned = ev => ev.source === scope.source
+      || (!ev.source && scope.source === 'gcal' && /@google\.com$/.test(ev.calendarUid || ''));
+    const removed = events.filter(ev => {
+      if (!owned(ev) || present.has(ev.calendarInstanceId)) return false;
+      const start = parseLocal(ev.instanceStart || ev.start);
+      return start && start >= from && start < to;
+    });
+    if (!removed.length) return 0;
+    const gone = new Set(removed);
+    events = events.filter(ev => !gone.has(ev));
+
+    const now = Date.now();
+    const deletedAt = new Date(now).toISOString();
+    const tombstones = loadRemoved()
+      .filter(t => t && t.id && now - (Date.parse(t.deletedAt) || 0) < REMOVED_KEEP_MS);
+    const known = new Set(tombstones.map(t => t.id));
+    removed.forEach(ev => {
+      if (ev.calendarInstanceId && !known.has(ev.calendarInstanceId)) {
+        tombstones.push({ id: ev.calendarInstanceId, deletedAt });
+      }
+    });
+    localStorage.setItem(REMOVED_KEY, JSON.stringify(tombstones));
+
+    const copies = removed.flatMap(copyHashesOf)
+      .filter(hash => window.TaskStore?.getTaskByHash?.(hash));
+    if (copies.length) {
+      window.TaskStore.deleteTasks(copies);
+      window.EventBus?.dispatchEvent(new Event('dataChanged'));
+      window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+    }
+    return removed.length;
+  }
+
   function convertEventsToTasks(importedEvents) {
     if (!window.TaskStore?.upsertTaskByHash) return;
     // Copies the user deleted stay deleted, even when sync brings the event again.
@@ -776,8 +859,7 @@
       const rawTitle = ev.title || ev.rawTitle || ev.summary || 'Calendar Task';
       const isFixed = rawTitle.includes(fixedTag) || (!rawTitle.includes(flexibleTag));
       const cleanedTitle = rawTitle.replace(fixedTag, '').replace(flexibleTag, '').trim();
-      const hashSeed = `${cleanedTitle}-${start}-${end || ''}`;
-      const hash = window.TaskModel?.DEFAULT_USER ? `task-${btoa(hashSeed).replace(/=/g, '')}` : `task-${hashSeed}`;
+      const hash = calendarCopyHash(cleanedTitle, start, end);
 
       const isAllDay = ev.isAllDay !== undefined ? !!ev.isAllDay : (start && start.length === 10);
 
@@ -832,11 +914,15 @@
     findEventByHash,
     postponeEvent,
     markEventPassive,
-    ingestExternalEvents(rawEvents) {
-      if (!Array.isArray(rawEvents) || rawEvents.length === 0) return 0;
+    // scope { source, from, to } (optional): rawEvents is the full list from that source for
+    // that time range, so events of that source missing from it are removed (deleted there).
+    ingestExternalEvents(rawEvents, scope) {
+      if (!Array.isArray(rawEvents)) return 0;
+      if (rawEvents.length === 0 && !scope) return 0;
       if (!events.length) events = loadEvents();
       const prevJson = JSON.stringify(events);
       const normalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
+      if (scope?.source) pruneRemovedEvents(normalized, scope);
       const overridden = new Set(
         events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
       );

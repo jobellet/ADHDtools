@@ -249,3 +249,42 @@ describe('mergeBackup — continuous full-state sync (breakdowns, routines, acti
     assert.strictEqual(updates['adhd-calendar-events'][0].localOverride, true);
   });
 });
+
+describe('mergeBackup — calendar events deleted in Google stay deleted', () => {
+  const event = (uid, start, extra = {}) => ({
+    id: `${uid}:${start}`, uid, calendarUid: uid, calendarInstanceId: `${uid}:${start}`,
+    instanceStart: start, title: uid, start, end: start.replace('T09', 'T10'), source: 'gcal', ...extra,
+  });
+  const gone = event('gone@google.com', '2026-11-04T09:00:00', { updatedAt: iso('2026-11-01T08:00:00Z') });
+  const kept = event('kept@google.com', '2026-11-04T09:00:00');
+  const tombstone = { id: gone.calendarInstanceId, deletedAt: iso('2026-11-04T07:00:00Z') };
+
+  test('the other device\'s backup does not bring a removed event back', () => {
+    const imported = { metadata: {}, 'adhd-calendar-events': [gone, kept] };
+    const existingRaw = {
+      'adhd-calendar-events': JSON.stringify([kept]),
+      'adhd-calendar-removed': JSON.stringify([tombstone]),
+    };
+    const { updates } = mergeBackup(imported, existingRaw);
+    assert.deepStrictEqual(updates['adhd-calendar-events'].map(e => e.uid), ['kept@google.com']);
+  });
+
+  test('an event removed on the other device leaves this one too', () => {
+    const imported = { metadata: {}, 'adhd-calendar-events': [kept], 'adhd-calendar-removed': [tombstone] };
+    const existingRaw = { 'adhd-calendar-events': JSON.stringify([gone, kept]) };
+    const { updates } = mergeBackup(imported, existingRaw);
+    assert.deepStrictEqual(updates['adhd-calendar-events'].map(e => e.uid), ['kept@google.com']);
+    assert.deepStrictEqual(updates['adhd-calendar-removed'], [tombstone]);
+  });
+
+  test('an event put back in Google after the removal (newer updatedAt) is kept', () => {
+    const back = { ...gone, updatedAt: iso('2026-11-04T08:00:00Z') };
+    const imported = { metadata: {}, 'adhd-calendar-events': [back, kept] };
+    const existingRaw = {
+      'adhd-calendar-events': JSON.stringify([kept]),
+      'adhd-calendar-removed': JSON.stringify([tombstone]),
+    };
+    const { updates } = mergeBackup(imported, existingRaw);
+    assert.deepStrictEqual(updates['adhd-calendar-events'].map(e => e.uid).sort(), ['gone@google.com', 'kept@google.com']);
+  });
+});
