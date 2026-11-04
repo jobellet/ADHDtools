@@ -9,6 +9,10 @@ export const STORAGE_LOG_KEY = 'adhd-storage-log';
 // Deleted task ids ({ id, deletedAt }), written by TaskStore.deleteTasks.
 export const DELETED_TASKS_KEY = 'adhd-deleted-tasks';
 const TASK_KEYS = new Set(['adhd-unified-tasks']);
+// Synced calendar events deleted at their source ({ id: calendarInstanceId, deletedAt }),
+// written by features/calendar when Google no longer returns them.
+export const REMOVED_EVENTS_KEY = 'adhd-calendar-removed';
+const CALENDAR_EVENTS_KEY = 'adhd-calendar-events';
 // Device-local keys that must never overwrite another device's local watermarks or identity.
 const DEVICE_LOCAL_KEYS = new Set([
   'adhd-device-id',
@@ -50,6 +54,14 @@ function parseObject(value) {
 // A task deleted on either device stays deleted after the merge.
 function isDeleted(item, deletedIds) {
   return Boolean(item && typeof item === 'object' && (deletedIds.has(item.id) || deletedIds.has(item.hash)));
+}
+
+// A calendar event removed at its source stays removed, unless the source changed it again later
+// (an event put back in Google gets a newer updatedAt than the removal).
+function isRemovedEvent(item, removedAt) {
+  if (!item || typeof item !== 'object' || !item.calendarInstanceId) return false;
+  const at = removedAt.get(item.calendarInstanceId);
+  return at !== undefined && itemTimestamp(item) <= at;
 }
 
 function stableStringify(value) {
@@ -394,6 +406,14 @@ export function mergeBackup(imported, existingRaw, context = {}) {
     ...parseList(existingRaw[DELETED_TASKS_KEY]),
     ...parseList(imported[DELETED_TASKS_KEY]),
   ].map(x => x?.id).filter(Boolean));
+  const removedEventsAt = new Map();
+  [
+    ...parseList(existingRaw[REMOVED_EVENTS_KEY]),
+    ...parseList(imported[REMOVED_EVENTS_KEY]),
+  ].forEach(t => {
+    if (!t?.id) return;
+    removedEventsAt.set(t.id, Math.max(removedEventsAt.get(t.id) ?? 0, parseTs(t.deletedAt)));
+  });
 
   Object.keys(imported).forEach(key => {
     if (key === 'metadata' || DEVICE_LOCAL_KEYS.has(key)) return;
@@ -418,6 +438,9 @@ export function mergeBackup(imported, existingRaw, context = {}) {
     if (TASK_KEYS.has(key) && Array.isArray(importedVal)) {
       importedVal = importedVal.filter(item => !isDeleted(item, deletedIds));
     }
+    if (key === CALENDAR_EVENTS_KEY && Array.isArray(importedVal)) {
+      importedVal = importedVal.filter(item => !isRemovedEvent(item, removedEventsAt));
+    }
 
     if (existingStr === undefined || existingStr === null || existingStr === '') {
       result.updates[key] = importedVal;
@@ -438,6 +461,12 @@ export function mergeBackup(imported, existingRaw, context = {}) {
         // Tasks deleted on the other device are removed here too.
         const before = merged.merged.length;
         merged.merged = merged.merged.filter(item => !isDeleted(item, deletedIds));
+        if (merged.merged.length !== before) merged.updated += 1;
+      }
+      if (key === CALENDAR_EVENTS_KEY) {
+        // Events removed at the source on the other device are removed here too.
+        const before = merged.merged.length;
+        merged.merged = merged.merged.filter(item => !isRemovedEvent(item, removedEventsAt));
         if (merged.merged.length !== before) merged.updated += 1;
       }
       result.updates[key] = merged.merged;

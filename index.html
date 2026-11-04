@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="features/routine/routine.css">
     <link rel="stylesheet" href="features/settings/settings.css">
     <link rel="stylesheet" href="features/thoughts/thoughts.css">
+    <link rel="stylesheet" href="features/sync/sync.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- 1. Shell & services (classic scripts, run in this order) -->
@@ -35,6 +36,7 @@
     <script src="features/settings/strings.js" defer></script>
     <script src="features/assistant/strings.js" defer></script>
     <script src="features/thoughts/strings.js" defer></script>
+    <script src="features/sync/strings.js" defer></script>
     <script src="services/data-manager.js" defer></script>
     <script src="services/google-auth.js" defer></script>
     <script src="services/drive-sync.js" defer></script>
@@ -71,6 +73,7 @@
     <script src="services/credentials-sync.js" defer></script>
     <script src="features/assistant/assistant-inbox.js" defer></script>
     <script src="features/thoughts/thoughts.js" defer></script>
+    <script src="features/sync/sync-button.js" defer></script>
 </head>
 
 <body>
@@ -87,6 +90,7 @@
                 <li><button type="button" class="app-tab hamburger-menu" aria-label="More tools" aria-expanded="false" aria-controls="more-menu"><i class="fas fa-th-large"></i><span data-i18n="tab-more">More</span></button></li>
             </ul>
             <button type="button" id="quick-thoughts-header-btn" class="quick-thoughts-trigger" data-go-tool="thoughts" aria-label="Quick Thoughts" title="Quick Thoughts"><i class="fas fa-lightbulb"></i> <span data-i18n="quick-thoughts-btn">Thoughts</span></button>
+            <button type="button" id="sync-status-btn" class="sync-status-btn" data-state="off" hidden><i class="fas fa-cloud" aria-hidden="true"></i><span class="sync-status-dot" aria-hidden="true"></span></button>
             <span id="current-time-display" class="app-clock" aria-hidden="true"></span>
         </div>
     </nav>

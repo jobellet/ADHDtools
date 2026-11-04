@@ -110,7 +110,8 @@ arrive after a classic script: listen to `schedulerReady`.
 | `CrossTool` | `services/cross-tool-interaction.js` | Send a task to another tool |
 | `RoutinePlayer` | `features/routine/routine.js` | `start(id)`, `show()`, `edit(id)`, `getState()`, `isRunning()` |
 | `DayPlanner` | `features/planner/day-planner.js` | `rerender()`, `scrollToCurrent()` |
-| `CalendarTool` | `features/calendar/calendar-tool.js` | `ingestExternalEvents(events)` |
+| `CalendarTool` | `features/calendar/calendar-tool.js` | `ingestExternalEvents(events, scope?)` (scope `{ source, from, to }` also removes events deleted at the source) |
+| `GoogleCalendarSync` | `services/google-calendar-sync.js` | `isConnected()`, `syncNow({ interactive })`, `SCOPES` (used by the sync button) |
 | `RewardSystem` | `features/rewards/reward-system.js` | Points and rewards |
 | `AssistantInbox` | `features/assistant/assistant-inbox.js` | `check()`: apply changes queued by the MCP server |
 | `QuickThoughts` | `features/thoughts/thoughts.js` | `getAllThoughts`, `addThought`, `deleteThought`, `syncToDrive`, `summarizeDay`, `restructureDay` |
@@ -134,7 +135,7 @@ After changing tasks, dispatch `dataChanged` on `EventBus` **and** `scheduleNeed
 | `adhd-calendar-events` | features/calendar | | `adhd-calendar-ics-url` | features/calendar |
 | `gcalClientId`, `gcal*` | services/google-* | | `adhd-ai-settings` | core/ai-provider (never exported) |
 | `adhd-hub-data` | services/data-manager (legacy mirror) | | `adhd-storage-log` | services/timestamp-storage |
-| `adhd-assistant-applied` | features/assistant (ops applied, read by mcp/) | | | |
+| `adhd-assistant-applied` | features/assistant (ops applied, read by mcp/) | | `adhd-calendar-removed` | features/calendar (synced events deleted at the source) |
 Other keys belong to the feature that names them (`adhd-habits`, `adhd-rewards`, `adhd-breakdown-tasks`…).
 Changing the shape of stored data needs a migration that reads the old shape (users keep their data).
 

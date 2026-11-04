@@ -257,9 +257,16 @@ body.cap-gcal:not(.show-all-options) [data-cap-hide~="gcal"] {
         order: 1;
     }
 
+    /* Row 1: the tabs. Row 2: small extras (Thoughts, sync button), side by side.
+       (row + wrap beats the legacy `.container { flex-direction: column }` of mobile.css) */
     .app-nav-inner {
         padding: 0 4px;
         min-height: var(--tabbar-height);
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        row-gap: 0.35rem;
+        column-gap: 0.5rem;
     }
 
     .app-brand,

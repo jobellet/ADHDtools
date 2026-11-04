@@ -106,6 +106,14 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
 - **Lock plan** pins today's automatic plan, so times stop moving.
 - **Plan ahead** lists tasks with deadlines and big tasks (over 30–45 minutes). **Split** sends a task to Task Breakdown so you can cut it into 15–30 minute steps that fit into your day.
 - **Delete tasks you no longer need:** the 🗑 button deletes one task; **Delete all overdue (N)** deletes every task whose deadline has passed, in one click. An **Undo** bar stays for 15 seconds. Deleted tasks stay deleted on your other devices too (Google Drive sync).
+- **Events deleted in Google Calendar** leave the planner at the next sync (every minute while signed in), on all your devices.
+
+## Sync button (Google)
+
+Once Google is set up (Calendar connected or a Drive backup made), a small cloud button appears in the top bar (on a phone: in the bottom bar, next to **Thoughts**). Without Google you never see it.
+
+- **Green dot:** signed in; Calendar and Drive sync on their own. Tap to sync right now.
+- **Red dot:** not signed in. On the website, Google's sign-in lasts about an hour, so the dot turns red after that: tap it once to sign in again and sync. The desktop and Android apps stay signed in.
 
 ## Your AI assistant (optional, MCP)
 
@@ -134,6 +142,7 @@ If you run the app inside the native desktop app (`npm run desktop` or `npm run 
 You only see the options you use:
 
 - **Google Calendar connected** → the `.ics` file / link import and the "How to link calendar" guide are hidden.
+- **No Google set up** → no sync button.
 - **No AI provider** → **AI Plan** and **AI Breakdown** buttons are hidden.
 - **No voice input in your browser** → voice buttons are hidden.
 
