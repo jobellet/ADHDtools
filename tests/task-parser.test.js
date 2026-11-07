@@ -178,6 +178,55 @@ describe('Additional Task Parser Tests', () => {
     assert.strictEqual(durationWord.name, 'faire la vaisselle');
     assert.strictEqual(durationWord.durationMinutes, 20);
 
+    // French spoken extensions: fractions, multi-hour, conditional, past elisions, mn abbreviation, clean title
+    const threeQuarters = parse('faire les courses et ça prend trois quarts d\'heure', { now });
+    assert.strictEqual(threeQuarters.name, 'faire les courses');
+    assert.strictEqual(threeQuarters.durationMinutes, 45);
+
+    const hourQuart = parse('faire les courses et ça prend une heure et quart', { now });
+    assert.strictEqual(hourQuart.name, 'faire les courses');
+    assert.strictEqual(hourQuart.durationMinutes, 75);
+
+    const hourDemiNoE = parse('faire les courses et ça prend 1 heure et demi', { now });
+    assert.strictEqual(hourDemiNoE.name, 'faire les courses');
+    assert.strictEqual(hourDemiNoE.durationMinutes, 90);
+
+    const condFr = parse('faire la vaisselle et ça prendrait 15 minutes', { now });
+    assert.strictEqual(condFr.name, 'faire la vaisselle');
+    assert.strictEqual(condFr.durationMinutes, 15);
+
+    const pastElision = parse('faire la vaisselle et ça m\'a pris 15 minutes', { now });
+    assert.strictEqual(pastElision.name, 'faire la vaisselle');
+    assert.strictEqual(pastElision.durationMinutes, 15);
+
+    const multiHourAndMin = parse('peindre le mur pendant 2 heures et 15 minutes', { now });
+    assert.strictEqual(multiHourAndMin.name, 'peindre le mur');
+    assert.strictEqual(multiHourAndMin.durationMinutes, 135);
+
+    const multiHourHalf = parse('peindre le mur et ça me prend 2 heures et demie', { now });
+    assert.strictEqual(multiHourHalf.name, 'peindre le mur');
+    assert.strictEqual(multiHourHalf.durationMinutes, 150);
+
+    const multiHourQuart = parse('peindre le mur et ça prend 2 heures et quart', { now });
+    assert.strictEqual(multiHourQuart.name, 'peindre le mur');
+    assert.strictEqual(multiHourQuart.durationMinutes, 135);
+
+    const dansLesFr = parse('faire les courses et ça va prendre dans les 45 minutes', { now });
+    assert.strictEqual(dansLesFr.name, 'faire les courses');
+    assert.strictEqual(dansLesFr.durationMinutes, 45);
+
+    const mnUnit = parse('faire la vaisselle pendant 15mn', { now });
+    assert.strictEqual(mnUnit.name, 'faire la vaisselle');
+    assert.strictEqual(mnUnit.durationMinutes, 15);
+
+    const bracketedDur = parse('étendre le linge (15 minutes)', { now });
+    assert.strictEqual(bracketedDur.name, 'étendre le linge');
+    assert.strictEqual(bracketedDur.durationMinutes, 15);
+
+    const colonDur = parse('faire la vaisselle durée: 15 minutes', { now });
+    assert.strictEqual(colonDur.name, 'faire la vaisselle');
+    assert.strictEqual(colonDur.durationMinutes, 15);
+
     // English
     const enTakes = parse('wash the dishes and it takes 15 minutes', { now });
     assert.strictEqual(enTakes.name, 'wash the dishes');
@@ -191,10 +240,42 @@ describe('Additional Task Parser Tests', () => {
     assert.strictEqual(enAbout.name, 'wash the dishes');
     assert.strictEqual(enAbout.durationMinutes, 15);
 
+    const enHourAndHalf = parse('clean the garage and it takes an hour and a half', { now });
+    assert.strictEqual(enHourAndHalf.name, 'clean the garage');
+    assert.strictEqual(enHourAndHalf.durationMinutes, 90);
+
+    const enHalfHour = parse('clean the garage and it takes half an hour', { now });
+    assert.strictEqual(enHalfHour.name, 'clean the garage');
+    assert.strictEqual(enHalfHour.durationMinutes, 30);
+
+    const enQuarterHour = parse('clean the garage and it takes a quarter of an hour', { now });
+    assert.strictEqual(enQuarterHour.name, 'clean the garage');
+    assert.strictEqual(enQuarterHour.durationMinutes, 15);
+
+    const enMultiHourHalf = parse('clean the garage and it takes 2 hours and a half', { now });
+    assert.strictEqual(enMultiHourHalf.name, 'clean the garage');
+    assert.strictEqual(enMultiHourHalf.durationMinutes, 150);
+
+    const enMultiHourMin = parse('paint the wall and it takes 2 hours and 15 minutes', { now });
+    assert.strictEqual(enMultiHourMin.name, 'paint the wall');
+    assert.strictEqual(enMultiHourMin.durationMinutes, 135);
+
     // German
     const deDauert = parse('Geschirr spülen und das dauert 15 Minuten', { now });
     assert.strictEqual(deDauert.name, 'Geschirr spülen');
     assert.strictEqual(deDauert.durationMinutes, 15);
+
+    const deHalbeStunde = parse('Küche aufräumen und das dauert eine halbe Stunde', { now });
+    assert.strictEqual(deHalbeStunde.name, 'Küche aufräumen');
+    assert.strictEqual(deHalbeStunde.durationMinutes, 30);
+
+    const deViertelstunde = parse('Küche aufräumen und das dauert eine Viertelstunde', { now });
+    assert.strictEqual(deViertelstunde.name, 'Küche aufräumen');
+    assert.strictEqual(deViertelstunde.durationMinutes, 15);
+
+    const deEineinhalb = parse('Küche aufräumen und das dauert eineinhalb Stunden', { now });
+    assert.strictEqual(deEineinhalb.name, 'Küche aufräumen');
+    assert.strictEqual(deEineinhalb.durationMinutes, 90);
 
     // Spanish
     const esToma = parse('lavar los platos y me toma 15 minutos', { now });
@@ -204,5 +285,17 @@ describe('Additional Task Parser Tests', () => {
     const esLleva = parse('lavar los platos y me lleva 15 minutos', { now });
     assert.strictEqual(esLleva.name, 'lavar los platos');
     assert.strictEqual(esLleva.durationMinutes, 15);
+
+    const esMediaHora = parse('lavar los platos y me toma media hora', { now });
+    assert.strictEqual(esMediaHora.name, 'lavar los platos');
+    assert.strictEqual(esMediaHora.durationMinutes, 30);
+
+    const esCuartoHora = parse('lavar los platos y me toma un cuarto de hora', { now });
+    assert.strictEqual(esCuartoHora.name, 'lavar los platos');
+    assert.strictEqual(esCuartoHora.durationMinutes, 15);
+
+    const esHoraYMedia = parse('lavar los platos y me toma una hora y media', { now });
+    assert.strictEqual(esHoraYMedia.name, 'lavar los platos');
+    assert.strictEqual(esHoraYMedia.durationMinutes, 90);
   });
 });
