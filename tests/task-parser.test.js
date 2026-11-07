@@ -297,5 +297,26 @@ describe('Additional Task Parser Tests', () => {
     const esHoraYMedia = parse('lavar los platos y me toma una hora y media', { now });
     assert.strictEqual(esHoraYMedia.name, 'lavar los platos');
     assert.strictEqual(esHoraYMedia.durationMinutes, 90);
+
+    // Punctuation and non-ASCII approximation boundaries
+    const frParenCaPrend = parse('faire la vaisselle (ça me prend 15 minutes)', { now });
+    assert.strictEqual(frParenCaPrend.name, 'faire la vaisselle');
+    assert.strictEqual(frParenCaPrend.durationMinutes, 15);
+
+    const frBracketCaPrend = parse('faire la vaisselle [ça me prend 15 minutes]', { now });
+    assert.strictEqual(frBracketCaPrend.name, 'faire la vaisselle');
+    assert.strictEqual(frBracketCaPrend.durationMinutes, 15);
+
+    const frCommaCaPrend = parse('faire la vaisselle,ça me prend 15 minutes', { now });
+    assert.strictEqual(frCommaCaPrend.name, 'faire la vaisselle');
+    assert.strictEqual(frCommaCaPrend.durationMinutes, 15);
+
+    const frAPeuPres = parse('faire la vaisselle à peu près 15 minutes', { now });
+    assert.strictEqual(frAPeuPres.name, 'faire la vaisselle');
+    assert.strictEqual(frAPeuPres.durationMinutes, 15);
+
+    const frParenAPeuPres = parse('faire la vaisselle (à peu près 15 minutes)', { now });
+    assert.strictEqual(frParenAPeuPres.name, 'faire la vaisselle');
+    assert.strictEqual(frParenAPeuPres.durationMinutes, 15);
   });
 });
