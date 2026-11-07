@@ -148,4 +148,61 @@ describe('Additional Task Parser Tests', () => {
     assert.strictEqual(withDeadline.plannerDate, null);
     assert.strictEqual(withDeadline.deadline, '2023-10-19T18:00');
   });
+  test('completely strips multilingual conversational duration phrases without fragments', () => {
+    // Spoken durations in French
+    const halfHour = parse('faire les courses et ça me prend une demi-heure', { now });
+    assert.strictEqual(halfHour.name, 'faire les courses');
+    assert.strictEqual(halfHour.durationMinutes, 30);
+
+    const hourAndHalf = parse('faire les courses et ça me prend une heure et demie', { now });
+    assert.strictEqual(hourAndHalf.name, 'faire les courses');
+    assert.strictEqual(hourAndHalf.durationMinutes, 90);
+
+    const quarterHour = parse('faire les courses et ça me prend un quart d\'heure', { now });
+    assert.strictEqual(quarterHour.name, 'faire les courses');
+    assert.strictEqual(quarterHour.durationMinutes, 15);
+
+    const oneHour = parse('faire les courses et ça me prend une heure', { now });
+    assert.strictEqual(oneHour.name, 'faire les courses');
+    assert.strictEqual(oneHour.durationMinutes, 60);
+
+    const approxMin = parse('faire la vaisselle et ça prend environ 20 minutes', { now });
+    assert.strictEqual(approxMin.name, 'faire la vaisselle');
+    assert.strictEqual(approxMin.durationMinutes, 20);
+
+    const modalFr = parse('faire la vaisselle et ça devrait me prendre 20 minutes', { now });
+    assert.strictEqual(modalFr.name, 'faire la vaisselle');
+    assert.strictEqual(modalFr.durationMinutes, 20);
+
+    const durationWord = parse('faire la vaisselle d\'une durée de 20 minutes', { now });
+    assert.strictEqual(durationWord.name, 'faire la vaisselle');
+    assert.strictEqual(durationWord.durationMinutes, 20);
+
+    // English
+    const enTakes = parse('wash the dishes and it takes 15 minutes', { now });
+    assert.strictEqual(enTakes.name, 'wash the dishes');
+    assert.strictEqual(enTakes.durationMinutes, 15);
+
+    const enHour = parse('wash the dishes and it takes an hour', { now });
+    assert.strictEqual(enHour.name, 'wash the dishes');
+    assert.strictEqual(enHour.durationMinutes, 60);
+
+    const enAbout = parse('wash the dishes for about 15 minutes', { now });
+    assert.strictEqual(enAbout.name, 'wash the dishes');
+    assert.strictEqual(enAbout.durationMinutes, 15);
+
+    // German
+    const deDauert = parse('Geschirr spülen und das dauert 15 Minuten', { now });
+    assert.strictEqual(deDauert.name, 'Geschirr spülen');
+    assert.strictEqual(deDauert.durationMinutes, 15);
+
+    // Spanish
+    const esToma = parse('lavar los platos y me toma 15 minutos', { now });
+    assert.strictEqual(esToma.name, 'lavar los platos');
+    assert.strictEqual(esToma.durationMinutes, 15);
+
+    const esLleva = parse('lavar los platos y me lleva 15 minutos', { now });
+    assert.strictEqual(esLleva.name, 'lavar los platos');
+    assert.strictEqual(esLleva.durationMinutes, 15);
+  });
 });
