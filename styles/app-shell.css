@@ -20,7 +20,7 @@
 
 /* ---------- Setup-based visibility (capabilities.js) ---------- */
 
-body:not(.show-all-options):not(.cap-ai) [data-cap~="ai"],
+body:not(.show-all-options):not(.cap-ai) [data-cap~="ai"]:not(#ai-plan-day-btn),
 body:not(.show-all-options):not(.cap-speech) [data-cap~="speech"],
 body:not(.show-all-options):not(.cap-notifications) [data-cap~="notifications"],
 body:not(.show-all-options):not(.cap-wakelock) [data-cap~="wakelock"],

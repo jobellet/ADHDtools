@@ -226,11 +226,40 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProgressBar();
   }
 
+  function syncSubtaskToStore(subNode, rootNode) {
+    if (!window.TaskStore?.addTask || subNode.taskHash) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const todayEnd = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T18:00`;
+    const parentTask = rootNode?.taskId ? window.TaskStore.getTaskByHash?.(rootNode.taskId) : null;
+    if (parentTask && !parentTask.isArchived) {
+      window.TaskStore.updateTaskByHash?.(rootNode.taskId, { isArchived: true, archivedReason: 'split' });
+    }
+    const created = window.TaskStore.addTask({
+      name: subNode.text,
+      text: subNode.text,
+      durationMinutes: Number(subNode.duration) || 10,
+      deadline: parentTask?.deadline || todayEnd,
+      importance: parentTask?.importance || 5,
+      urgency: parentTask?.urgency || 5,
+      parentId: rootNode?.taskId || null,
+      user: parentTask?.user || window.UserContext?.getActiveUser?.() || 'main',
+      source: 'breakdown',
+      originalTool: 'TaskBreakdown',
+    });
+    if (created?.hash) subNode.taskHash = created.hash;
+    window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+  }
+
   function addNode(path, text) {
     const target = getNodeByPath(path);
+    const rootNode = tree[path[0]];
     if (!target.subtasks) target.subtasks = [];
     // New subtask gets default 5 min duration
-    target.subtasks.push({ text, completed: false, subtasks: [], duration: 5 });
+    const subNode = { text, completed: false, subtasks: [], duration: 5 };
+    target.subtasks.push(subNode);
+    syncSubtaskToStore(subNode, rootNode);
     recalculateDurations();
     saveTree();
     renderTree();
@@ -386,11 +415,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
               const newNode = {
                 text: task.text,
+                taskId: task.hash || task.id,
                 completed: false,
                 subtasks: steps.map(s => ({ text: s.text, completed: false, subtasks: [], duration: s.duration })),
                 duration: 0
               };
 
+              newNode.subtasks.forEach(sub => syncSubtaskToStore(sub, newNode));
               tree.push(newNode);
               recalculateDurations();
               saveTree();
@@ -402,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
               aiBtn.textContent = originalText;
             }
         } else {
-            tree.push({ text: task.text, completed: false, subtasks: [], duration: task.durationMinutes || 5 });
+            tree.push({ text: task.text, taskId: task.hash || task.id, completed: false, subtasks: [], duration: task.durationMinutes || 5 });
             saveTree();
             renderTree();
         }
@@ -423,13 +454,46 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Add as a new main project
-    tree.push({
+    const newNode = {
       text: standardizedTask.text,
+      taskId: standardizedTask.id || standardizedTask.hash || null,
       completed: !!standardizedTask.isCompleted,
       subtasks: [],
       duration: standardizedTask.duration || 5
-    });
+    };
+
+    if (window.AIAssistant?.isEnabled?.()) {
+      try {
+        const prompt = `Break down the task "${standardizedTask.text}" into 3-6 small, concrete sub-tasks that someone with ADHD can start immediately. Return a JSON array of objects with keys "text" (short imperative step) and "duration" (estimated minutes, integer).`;
+        const result = await window.AIAssistant.completeJSON(prompt, { maxTokens: 500 });
+        const steps = (Array.isArray(result) ? result : [])
+          .map(item => ({
+            text: String(item.text || '').trim(),
+            completed: false,
+            subtasks: [],
+            duration: Math.max(1, parseInt(item.duration, 10) || 5),
+          }))
+          .filter(item => item.text);
+        if (steps.length) {
+          newNode.subtasks = steps;
+          newNode.subtasks.forEach(sub => syncSubtaskToStore(sub, newNode));
+        }
+      } catch (err) {
+        console.warn('AI breakdown on drop failed:', err);
+      }
+    }
+
+    if (!newNode.subtasks.length) {
+      const stepDuration = Math.max(5, Math.round((Number(newNode.duration) || 30) / 3));
+      newNode.subtasks = [
+        { text: `${standardizedTask.text} (1/3)`, completed: false, subtasks: [], duration: stepDuration },
+        { text: `${standardizedTask.text} (2/3)`, completed: false, subtasks: [], duration: stepDuration },
+        { text: `${standardizedTask.text} (3/3)`, completed: false, subtasks: [], duration: stepDuration },
+      ];
+      newNode.subtasks.forEach(sub => syncSubtaskToStore(sub, newNode));
+    }
+
+    tree.push(newNode);
 
     recalculateDurations();
     saveTree();

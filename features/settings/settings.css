@@ -12,3 +12,91 @@
     max-width: 820px;
     margin: 1rem auto 0;
 }
+
+/* ---------- Local AI controls & header trigger ---------- */
+
+.local-ai-trigger {
+    background: transparent;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.2));
+    color: inherit;
+    padding: 0.35rem 0.65rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.local-ai-trigger:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.local-ai-trigger.hidden {
+    display: none !important;
+}
+
+.local-ai-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #9ca3af;
+    display: inline-block;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.local-ai-trigger.running .local-ai-dot {
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.local-ai-trigger.starting .local-ai-dot,
+.local-ai-trigger.stopping .local-ai-dot {
+    background: #f59e0b;
+}
+
+/* Local AI Card in Settings */
+.local-ai-card {
+    background: var(--surface-variant, rgba(0, 0, 0, 0.03));
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.local-ai-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.local-ai-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.local-ai-badge.running {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+}
+
+.local-ai-badge.stopped {
+    background: rgba(156, 163, 175, 0.2);
+    color: #4b5563;
+}
+
+.local-ai-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+

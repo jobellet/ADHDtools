@@ -483,6 +483,36 @@
       });
     }
 
+    async function getLocalAiStatus() {
+      if (!isNative()) return { available: false, running: false };
+      try {
+        const res = await invokeNative('native_local_ai_status');
+        return res || { available: false, running: false };
+      } catch (err) {
+        return { available: false, running: false };
+      }
+    }
+
+    async function startLocalAi() {
+      if (!isNative()) return { available: false, running: false };
+      try {
+        const res = await invokeNative('native_local_ai_start');
+        return res || { available: false, running: false };
+      } catch (err) {
+        return { available: false, running: false };
+      }
+    }
+
+    async function stopLocalAi() {
+      if (!isNative()) return { available: false, running: false };
+      try {
+        const res = await invokeNative('native_local_ai_stop');
+        return res || { available: false, running: false };
+      } catch (err) {
+        return { available: false, running: false };
+      }
+    }
+
     window.AttentionService = {
       isNative,
       invokeNative,
@@ -500,6 +530,9 @@
       triggerTaskAlarm,
       scheduleAlarms,
       isAlarmActive: () => alarmActive,
+      getLocalAiStatus,
+      startLocalAi,
+      stopLocalAi,
     };
   }
 })();

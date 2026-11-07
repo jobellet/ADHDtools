@@ -6,7 +6,7 @@
 | `task-model.md` | Devs | Task fields, TaskStore API, scheduler rules change |
 | `vision-roadmap.md` | Everyone | A roadmap item is done or added (Current Status list) |
 | `transition-plan.md` | Devs | Context-aware dashboard steps progress |
-| `google-calendar-sync.md`, `sync-across-devices.md`, `ai-providers.md` | Users | Integration UI/menu paths change |
+| `google-calendar-sync.md`, `sync-across-devices.md`, `ai-providers.md`, `local-ai.md` | Users | Integration UI/menu paths change |
 | `android.md` | Users | Android build/install steps, alarms or Google sign-in on the phone change |
 | `mcp.md` | Users | MCP tools, setup steps or sync timing change (tests check every tool is listed) |
 | `mcp-troubleshooting.md` | Users | A new error message or setup screen: one section per message, titled with the words the user sees, with `<a name="…">`; link it from a **Stuck?** box in `mcp.md` and from the code with `help('…')` (tests check all links) |

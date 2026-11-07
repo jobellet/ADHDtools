@@ -447,6 +447,48 @@
     gap: 0.5rem;
     padding: 0.6rem 0;
     border-bottom: 1px solid #f0f0f0;
+    cursor: grab;
+    user-select: none;
+}
+
+.plan-deadline-item:active,
+.plan-deadline-item.dragging {
+    cursor: grabbing;
+    opacity: 0.55;
+    background: #f6f3fd;
+    border-radius: 8px;
+}
+
+.plan-breakdown-dropzone {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.85rem;
+    border: 2px dashed var(--primary-color);
+    border-radius: 12px;
+    background: #f6f3fd;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.plan-breakdown-dropzone.visible {
+    display: flex;
+}
+
+.plan-breakdown-dropzone.drag-over {
+    background: var(--primary-color);
+    color: #fff;
+    transform: scale(1.02);
+}
+
+#planner .time-blocks-container.drag-over {
+    border-color: var(--primary-color);
+    box-shadow: inset 0 0 0 2px var(--primary-color);
 }
 
 .plan-deadline-item.overdue .plan-deadline-meta {

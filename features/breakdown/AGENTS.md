@@ -8,4 +8,4 @@ Read first: [../AGENTS.md](../AGENTS.md). Legacy UI.
 
 - Entry points: the Split buttons (Now view "Not now → split", Plan ahead) fire
   `ef-receiveTaskFor-TaskBreakdown` with `{ text, id, duration }`; this adds a root node and opens the screen.
-- Known gap: sub-steps are not TaskStore tasks yet (roadmap).
+- Subtasks created manually, via AI, or by dropping a task onto `#plan-breakdown-dropzone` are synced to `TaskStore` (`syncSubtaskToStore`), archiving the split parent task (`archivedReason: 'split'`) so subtasks appear directly in `#plan-deadlines`.

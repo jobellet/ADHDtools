@@ -37,16 +37,21 @@
 
     async function captureTask(text) {
       if (!text.trim() || !window.TaskParser || !window.TaskStore) return;
+      window.dispatchEvent(new CustomEvent('userAction'));
       showCaptureStatus(t('capture.adding'));
       const parsed = await window.TaskParser.parseSmart(text);
       if (!parsed || !parsed.name) {
         showCaptureStatus(t('capture.notUnderstood'), true);
         return;
       }
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const todayEndDeadline = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T18:00`;
+      const defaultDeadline = parsed.deadline || (!parsed.plannerDate ? todayEndDeadline : null);
       const raw = {
         name: parsed.isFixed && !/\[FIX\]/i.test(parsed.name) ? `[FIX] ${parsed.name}` : parsed.name,
         user: window.UserContext?.getActiveUser?.() || 'main',
-        deadline: parsed.deadline || null,
+        deadline: defaultDeadline,
         plannerDate: parsed.plannerDate || null,
         isFixed: parsed.isFixed || false,
         isEvent: parsed.isEvent || false,
@@ -57,6 +62,8 @@
         source: 'quick-capture',
       };
       if (parsed.durationMinutes) raw.durationMinutes = parsed.durationMinutes;
+      else if (parsed.estimatedMinutes) raw.durationMinutes = parsed.estimatedMinutes;
+      else if (window.TaskParser?.estimateTypicalDuration) raw.durationMinutes = window.TaskParser.estimateTypicalDuration(parsed.name);
       if (parsed.importance) raw.importance = parsed.importance;
       if (parsed.urgency) raw.urgency = parsed.urgency;
 
@@ -85,7 +92,7 @@
 
       const task = window.TaskStore.addTask(raw);
       const shownName = task.name.replace(/\[(FIX|FLEX)\]\s*/gi, '').trim() || task.name;
-      showCaptureStatus(`${t('capture.added', { name: shownName, details: describeParsed({ ...parsed, plannerDate: raw.plannerDate }) })}${moved}`);
+      showCaptureStatus(`${t('capture.added', { name: shownName, details: describeParsed({ ...parsed, plannerDate: raw.plannerDate, deadline: raw.deadline, durationMinutes: raw.durationMinutes }) })}${moved}`);
 
       if (parsed.needsBreakdown) {
         const breakBtn = document.createElement('button');

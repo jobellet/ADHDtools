@@ -138,6 +138,15 @@
     return bestScore > 0 ? best : null;
   }
 
+  function estimateTypicalDuration(name) {
+    const n = String(name || '').toLowerCase();
+    if (!n) return 30;
+    if (/\b(linge|étendre|etendre|machine|lessive|vaisselle|poubelle|lit|douche|dents|arroser|mail|email|appel(?:er)?|call|phone|dentist|banque|bank|facture|bill|message|sms|répondre|repondre|pain|lait|milk)\b/i.test(n)) return 15;
+    if (/\b(courses|groceries|ménage|menage|aspirateur|ranger|cuisine(?:r)?|repas|cook|sport|gym|courir|run|lecture|lire|read)\b/i.test(n)) return 45;
+    if (/\b(rapport|report|projet|project|présentation|presentation|étude|etude|rédiger|rediger|code(?:r)?|développer)\b/i.test(n)) return 60;
+    return 30;
+  }
+
   function parse(text, { now = new Date(), existingItems = null } = {}) {
     let working = String(text || '').trim();
     const matched = [];
@@ -159,8 +168,8 @@
       source: 'heuristic',
     };
 
-    // Strip conversational prefixes in FR/EN/DE/ES ("ajoute une tâche", "créer un événement", "add a task to", etc.)
-    working = working.replace(/^(?:(?:ajoute(?:r)?|crée(?:r)?|planifie(?:r)?|mets?|mettre\s+une\s+tâche|add|create|schedule|plan)\s+(?:une?\s+|la\s+|le\s+|a\s+|an\s+)?(?:tâche|tache|événement|evenement|event|task|rendez-vous|rdv)\s*(?:pour|de|d'|que|qu'|to|for|:)?\s*)/i, () => {
+    // Strip conversational prefixes in FR/EN/DE/ES ("ajoute une tâche", "je dois", "il faut", "add a task to", etc.)
+    working = working.replace(/^(?:(?:ajoute(?:r)?|crée(?:r)?|planifie(?:r)?|mets?|mettre\s+une\s+tâche|add|create|schedule|plan)\s+(?:une?\s+|la\s+|le\s+|a\s+|an\s+)?(?:tâche|tache|événement|evenement|event|task|rendez-vous|rdv)\s*(?:pour|de|d'|que|qu'|to|for|:)?\s*|(?:je\s+dois|il\s+faut(?:\s+que\s+je)?|j['’]ai\s+besoin\s+de|i\s+(?:need|have)\s+to|i\s+must|ich\s+muss|tengo\s+que)\s+)/i, () => {
       matched.push('prefix');
       return '';
     });
@@ -273,12 +282,12 @@
     });
 
     // "maintenant" / "start now" / "tout de suite" / "right now"
-    if (/\b(?:(?:ça|ca|et\s+ça)\s+commence\s+maintenant|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/i.test(working)) {
+    if (/(?:\b|(?<=^|[\s]))(?:(?:ça|ca|et\s+ça)\s+commence\s+maintenant|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/i.test(working)) {
       targetDate = new Date(now);
       timeParts = { hours: now.getHours(), minutes: now.getMinutes() };
       hasExactTime = true;
       result.isFixed = true;
-      working = working.replace(/\b(?:(?:,?\s*(?:et\s+)?(?:ça|ca)\s+commence\s+maintenant)|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/gi, ' ');
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:,?\s*(?:et\s+)?(?:ça|ca)\s+commence\s+maintenant)|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/gi, ' ');
       matched.push('time');
     }
 
@@ -347,16 +356,16 @@
       }
     }
 
-    // Explicit duration with preposition ("pendant 30 min", "pour 20 minutes", "for 2 hours", "durée 45 min")
+    // Explicit duration with preposition ("pendant 30 min", "pour 20 minutes", "ça me prend 15 minutes", "for 2 hours", "durée 45 min")
     if (result.durationMinutes === null) {
-      working = working.replace(/\b(?:pendant|pour|durée(?:\s+de)?|for|für|por|durante)\s+(\d+)\s*(?:heures?|hours?|hrs?|h)\s*(\d{1,2})?\s*(?:minutes?|mins?|m)?\b/i, (m, h, min) => {
-        result.durationMinutes = parseInt(h, 10) * 60 + (min ? parseInt(min, 10) : 0);
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:,?\s*(?:et\s+)?)?(?:(?:ça|ca|cela)\s+(?:(?:me\s+|te\s+|nous\s+)?(?:prends?|prendra|va\s+prendre)|va\s+(?:me\s+|te\s+|nous\s+)?prendre)|pendant|pour|durée(?:\s+de)?|for|takes?(?:\s+me)?|für|por|durante)\s+(\d+(?:\.\d+)?)\s*(?:heures?|hours?|hrs?|h)\s*(\d{1,2})?\s*(?:minutes?|mins?|m)?\b/i, (m, h, min) => {
+        result.durationMinutes = Math.round(parseFloat(h) * 60) + (min ? parseInt(min, 10) : 0);
         matched.push('duration');
         return ' ';
       });
     }
     if (result.durationMinutes === null) {
-      working = working.replace(/\b(?:pendant|pour|durée(?:\s+de)?|for|für|por|durante)\s+(\d+)\s*(?:minutes?|mins?|minuten|minutos|m)\b/i, (m, val) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:,?\s*(?:et\s+)?)?(?:(?:ça|ca|cela)\s+(?:(?:me\s+|te\s+|nous\s+)?(?:prends?|prendra|va\s+prendre)|va\s+(?:me\s+|te\s+|nous\s+)?prendre)|pendant|pour|durée(?:\s+de)?|for|takes?(?:\s+me)?|für|por|durante)\s+(\d+)\s*(?:minutes?|mins?|minuten|minutos|m)\b/i, (m, val) => {
         result.durationMinutes = parseInt(val, 10);
         matched.push('duration');
         return ' ';
@@ -366,21 +375,21 @@
     // Time of day:
     // 1. "midi 50", "midi et demi", "midi", "minuit"
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi\s+et\s+demi(?:e)?\b/i, () => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi\s+et\s+demi(?:e)?\b/i, () => {
         timeParts = { hours: 12, minutes: 30 };
         matched.push('time');
         return ' ';
       });
     }
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi(?:\s+([0-5]?\d))?\b/i, (m, min) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi(?:\s+([0-5]?\d))?\b/i, (m, min) => {
         timeParts = { hours: 12, minutes: min ? parseInt(min, 10) : 0 };
         matched.push('time');
         return ' ';
       });
     }
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*minuit(?:\s+([0-5]?\d))?\b/i, (m, min) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*minuit(?:\s+([0-5]?\d))?\b/i, (m, min) => {
         timeParts = { hours: 0, minutes: min ? parseInt(min, 10) : 0 };
         matched.push('time');
         return ' ';
@@ -400,7 +409,7 @@
 
     // 3. French/European "à 12h50", "commence à 12h50", "à 12 heures 50", "à 14h", "12h50"
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:et\s+)?(?:ça|ca|il|elle|la\s+tâche|l['’]événement)\s+)?(?:commence(?:nt|r)?\s+|débute(?:nt|r)?\s+|start(?:s|ing)?\s+)?(?:à|a|vers|at|um|a\s+las)\s*([01]?\d|2[0-3])\s*(?:h|heures?|uhr|:)\s*([0-5]\d)?\b/i, (m, h, min) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:et\s+)?(?:ça|ca|il|elle|la\s+tâche|l['’]événement)\s+)?(?:commence(?:nt|r)?\s+|débute(?:nt|r)?\s+|start(?:s|ing)?\s+)?(?:à|a|vers|at|um|a\s+las)\s*([01]?\d|2[0-3])\s*(?:h|heures?|uhr|:)\s*([0-5]\d)?\b/i, (m, h, min) => {
         timeParts = { hours: parseInt(h, 10), minutes: min ? parseInt(min, 10) : 0 };
         matched.push('time');
         return ' ';
@@ -417,14 +426,14 @@
 
     // Remaining bare duration: "for 30 min", "~45m", "30 minutes", "1.5h", "2 hours", "30 min"
     if (result.durationMinutes === null) {
-      working = working.replace(/(?:\bfor\s+|~\s*)?(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|heures?|stunden?|horas?|h)\b/i, (m, val) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:,?\s*(?:et\s+)?)?(?:(?:ça|ca|cela)\s+(?:(?:me\s+|te\s+|nous\s+)?(?:prends?|prendra|va\s+prendre)|va\s+(?:me\s+|te\s+|nous\s+)?prendre)|pendant|pour|durée(?:\s+de)?|for|takes?(?:\s+me)?|für|por|durante|\bfor\s+|~\s*)?(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|heures?|stunden?|horas?|h)\b/i, (m, val) => {
         result.durationMinutes = Math.round(parseFloat(val) * 60);
         matched.push('duration');
         return ' ';
       });
     }
     if (result.durationMinutes === null) {
-      working = working.replace(/(?:\bfor\s+|~\s*)?(\d+)\s*(?:minutes?|mins?|minuten|minutos|m)\b(?!\w)/i, (m, val) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:,?\s*(?:et\s+)?)?(?:(?:ça|ca|cela)\s+(?:(?:me\s+|te\s+|nous\s+)?(?:prends?|prendra|va\s+prendre)|va\s+(?:me\s+|te\s+|nous\s+)?prendre)|pendant|pour|durée(?:\s+de)?|for|takes?(?:\s+me)?|für|por|durante|\bfor\s+|~\s*)?(\d+)\s*(?:minutes?|mins?|minuten|minutos|m)\b(?!\w)/i, (m, val) => {
         result.durationMinutes = parseInt(val, 10);
         matched.push('duration');
         return ' ';
@@ -587,6 +596,7 @@
         durationMinutes: (heuristic.matched?.includes('duration') && heuristic.durationMinutes)
           ? heuristic.durationMinutes
           : (Number.isFinite(duration) && duration > 0 ? Math.round(duration) : heuristic.durationMinutes),
+        estimatedMinutes: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : estimateTypicalDuration(cleanName(String(parsed.name)) || heuristic.name),
         importance: Number.isFinite(importance) ? Math.max(1, Math.min(10, Math.round(importance))) : heuristic.importance,
         urgency: Number.isFinite(urgency) ? Math.max(1, Math.min(10, Math.round(urgency))) : heuristic.urgency,
         isFixed: typeof parsed.isFixed === 'boolean' ? (parsed.isFixed || Boolean(aiPlannerDate)) : (heuristic.isFixed || Boolean(aiPlannerDate)),
@@ -605,5 +615,5 @@
     }
   }
 
-  if (typeof window !== "undefined") window.TaskParser = { parse, parseSmart, toLocalStamp, normalizeDateTime };
+  if (typeof window !== "undefined") window.TaskParser = { parse, parseSmart, toLocalStamp, normalizeDateTime, estimateTypicalDuration };
 })();

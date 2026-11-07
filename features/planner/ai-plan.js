@@ -255,9 +255,17 @@ export async function planDayWithAI(currentDate, options = {}) {
     const defaultDurationMinutes = options.defaultDurationMinutes || 25;
 
     const pending = (window.TaskStore?.getPendingTasks?.() || [])
-        .filter(t => !t.completed && !t.plannerDate && (t.name || t.text));
+        .filter(t => !t.completed && (!t.plannerDate || t.autoPinned) && (t.name || t.text));
     const seen = new Set();
-    const tasks = pending
+    const sortedPending = [...pending].sort((a, b) => {
+        const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        const ta = Number.isNaN(da) ? Infinity : da;
+        const tb = Number.isNaN(db) ? Infinity : db;
+        if (ta !== tb) return ta - tb;
+        return (Number(b.importance ?? 5) * Number(b.urgency ?? 5)) - (Number(a.importance ?? 5) * Number(a.urgency ?? 5));
+    });
+    const tasks = sortedPending
         .filter(t => {
             const name = (t.name || t.text).trim();
             if (!name || seen.has(name)) return false;
@@ -267,8 +275,9 @@ export async function planDayWithAI(currentDate, options = {}) {
         .map(t => ({
             id: t.hash || t.id,
             name: (t.name || t.text).trim(),
-            minutes: clamp(Math.round(Number(t.durationMinutes || t.duration || t.estimatedMinutes) || defaultDurationMinutes), 5, 480),
+            minutes: clamp(Math.round(Number(t.durationMinutes || t.duration || t.estimatedMinutes || window.TaskParser?.estimateTypicalDuration?.(t.name || t.text)) || defaultDurationMinutes), 5, 480),
             location: t.location || '',
+            deadline: t.deadline || null,
         }));
     if (tasks.length === 0) return { ok: false, reason: 'noTasks', message: tr('plan.aiNoTasks') };
 
@@ -330,9 +339,25 @@ export async function planDayWithAI(currentDate, options = {}) {
         : window.DataManager?.addTask
             ? window.DataManager.addTask.bind(window.DataManager)
             : null;
+    const updateTaskByHash = window.TaskStore?.updateTaskByHash
+        ? window.TaskStore.updateTaskByHash.bind(window.TaskStore)
+        : null;
+    const taskByName = new Map(pending.map(t => [(t.name || t.text).trim(), t]));
     const saved = [];
     report.accepted.forEach(item => {
         const plannerDateTime = `${dateStr}T${minutesToTime(item.start)}`;
+        const existing = !item.text.startsWith('Travel to ') && !item.isTravel ? taskByName.get(item.text) : null;
+        if (existing && (existing.hash || existing.id) && updateTaskByHash) {
+            const updated = updateTaskByHash(existing.hash || existing.id, {
+                plannerDate: plannerDateTime,
+                duration: item.duration,
+                durationMinutes: item.duration,
+                isFixed: true,
+            });
+            saved.push(updated || { ...existing, plannerDate: plannerDateTime, duration: item.duration });
+            taskByName.delete(item.text);
+            return;
+        }
         const created = addTaskToStore
             ? addTaskToStore({
                 text: item.text,

@@ -14,7 +14,7 @@ so classic scripts can use it. Data model details: [docs/task-model.md](../docs/
 | `duration-learning.js` | ES module | `recordTaskDuration`, `getEstimatedDuration` · `window.DurationLearning` | `tests/duration-learning.test.js` |
 | `sync-merge.js` | ES module | `mergeBackup`, `mergeArrayKey` (loaded with `import()` by `services/data-manager.js`) | `tests/sync-merge.test.js` |
 | `now-state.js` | classic IIFE | `window.NowState`: `computeNowState`, `alarmPlan` (when the native apps ring), `defaultToolFor`, `formatDuration`, `getState` | `tests/now-state.test.js` |
-| `task-parser.js` | classic IIFE | `window.TaskParser`: `parse` (offline, English), `parseSmart` (AI when enabled) | `tests/task-parser.test.js` |
+| `task-parser.js` | classic IIFE | `window.TaskParser`: `parse` (offline EN/FR/DE/ES), `parseSmart` (AI when enabled + `estimatedMinutes`), `estimateTypicalDuration` (nature-of-task heuristic: 15m laundry/calls, 45m groceries/cleaning, 60m deep work, default 30m) | `tests/task-parser.test.js` |
 | `ai-provider.js` | classic IIFE | `window.AIAssistant` (any provider, optional); `window.callGemini` legacy shim | — |
 | `user-context.js` | classic IIFE | `window.UserContext` (active user, profiles) | — |
 

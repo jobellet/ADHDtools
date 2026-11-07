@@ -2,7 +2,20 @@
 
 Shared instructions for every coding agent (Claude, Codex, Gemini, Mistral, Copilot…) and for humans.
 
-**How to read (save tokens):** read this file, then only the `AGENTS.md` of the folder you change.
+**How to read (save tokens):**
+1. Read this file first, then **only** the `AGENTS.md` of the folder you change.
+2. **Never read whole folders or full large files (`index.html`, `day-planner.js`, `now-view.js`) to "get context"**: use the Fast Context Map below and each folder's `AGENTS.md` to jump directly to the exact file, function, and DOM selector using targeted line ranges (`StartLine`/`EndLine`).
+3. Before modifying any function signature, markup attribute (`data-cap`, `data-i18n`), or global, check the Test Invariants in [tests/AGENTS.md](tests/AGENTS.md).
+
+## Fast Context Map (Where Everything Lives)
+
+| User Flow / UI Area | DOM IDs (in `index.html`) | Logic & Rendering File | Key Functions |
+| --- | --- | --- | --- |
+| **Quick Capture / Voice Add** | `#capture-sheet`, `#quick-capture-form`, `#quick-capture-input`, `#quick-capture-voice` | `features/now/quick-capture.js`, `core/task-parser.js` | `captureTask()` (defaults to `plannerDate: null`, `deadline: YYYY-MM-DDT18:00`, duration via `TaskParser.estimateTypicalDuration`), `TaskParser.parseSmart()` |
+| **Now View (1 thing at a time)** | `#home`, `#now-view`, `#now-actions`, `#now-next-list` | `features/now/now-view.js`, `core/now-state.js` | `NowState.computeNowState()`, `renderNow()` |
+| **Daily Task Stack ("Pile")** | `#plan-deadlines` (`.plan-deadline-item`), `#plan-breakdown-dropzone`, `#plan-next-strip` | Rendered by `features/now/now-view.js` (HTML lives inside `#planner` in `index.html`) | `renderDeadlines()` (sorts unscheduled/deadline tasks by deadline ascending, sets `draggable=true`, shows `#plan-breakdown-dropzone` on downward drag) |
+| **Day Planner Timeline & Modal** | `#planner`, `#time-blocks`, `#event-modal`, `#event-form`, `#ai-plan-day-btn`, `#record-event-btn` | `features/planner/day-planner.js`, `features/planner/render-day.js`, `features/planner/ai-plan.js` | `renderDayPlanner()`, `openModal(task, presetTime, externalTask)`, `autoPlanDay()` (`planDayWithAI` + `realisticOfflinePlanDay`), `handleVoiceCommand()`, timeline `drop` handler |
+| **Task Breakdown (Subtasks)** | `#breakdown`, `#project-list`, `#task-select-modal` | `features/breakdown/task-breakdown.js` | `handleReceivedTaskForTaskBreakdown()` (receives `ef-receiveTaskFor-TaskBreakdown`), `syncSubtaskToStore()` (archives split parent & adds subtasks to `TaskStore`) |
 Do not read whole folders to "get context": each `AGENTS.md` lists what is inside and what depends on it.
 
 | Folder | What it holds | Read |

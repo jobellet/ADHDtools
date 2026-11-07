@@ -107,10 +107,11 @@ function openModal(task, presetTime, externalTask) {
     pendingExternalTask = null;
     if (task) {
         editingTaskId = task.hash || task.id;
-        eventModalTitle.textContent = tr('event.titleEdit');
+        eventModalTitle.textContent = presetTime ? tr('event.titleSchedule') : tr('event.titleEdit');
         eventTitleInput.value = (task.name || task.text || '').replace(/\[(FIX|FLEX)\]\s*/gi, '').trim();
-        eventTimeSelect.value = task.plannerDate.slice(11, 16);
-        setDuration(task.duration || task.durationMinutes || getDefaultDurationMinutes());
+        eventTimeSelect.value = presetTime || (task.plannerDate && task.plannerDate.length >= 16 ? task.plannerDate.slice(11, 16) : getDefaultTime());
+        const estDuration = task.duration || task.durationMinutes || task.estimatedMinutes || window.TaskParser?.estimateTypicalDuration?.(task.name || task.text) || getDefaultDurationMinutes();
+        setDuration(estDuration);
         if (eventTypeSelect) eventTypeSelect.value = task.isEvent ? 'event' : 'task';
         if (eventRecurrenceSelect) eventRecurrenceSelect.value = task.recurrence || 'none';
         eventImportanceInput.value = task.importance || 5;
@@ -320,13 +321,52 @@ async function handleVoiceCommand(text) {
     }
     const parsed = await window.TaskParser.parseSmart(text);
     const title = parsed?.name || text;
-    const presetTime = (parsed?.plannerDate && parsed.plannerDate.length >= 16)
+    const isModalOpen = eventModal?.classList.contains('active');
+    const hasExplicitStart = Boolean(parsed?.plannerDate && parsed.plannerDate.length >= 16);
+
+    // When spoken from the planner toolbar without a specific start time, add directly to the daily task stack
+    // with a default deadline in the day (unless another deadline like "avant jeudi" was parsed).
+    if (!isModalOpen && !hasExplicitStart) {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const todayEnd = `${localDateString(currentDate)}T18:00`;
+        const deadline = parsed?.deadline || todayEnd;
+        const duration = parsed?.durationMinutes || parsed?.estimatedMinutes || window.TaskParser?.estimateTypicalDuration?.(title) || getDefaultDurationMinutes();
+        const saved = addTaskToStore(createTask({
+            name: title,
+            text: title,
+            user: window.UserContext?.getActiveUser?.() || 'main',
+            plannerDate: null,
+            deadline,
+            durationMinutes: duration,
+            duration,
+            isFixed: false,
+            isEvent: Boolean(parsed?.isEvent),
+            recurrence: parsed?.recurrence || null,
+            dependency: parsed?.dependency || null,
+            location: parsed?.location || null,
+            travelMode: parsed?.travelMode || null,
+            importance: parsed?.importance || 5,
+            urgency: parsed?.urgency || undefined,
+            needsBreakdown: Boolean(parsed?.needsBreakdown),
+            originalTool: 'DayPlanner',
+            source: 'voice-capture',
+        }));
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        if (saved) {
+            window.DataManager?.showNotification?.(tr('capture.added', { name: title, details: `${duration} min` }), 'success');
+        }
+        return;
+    }
+
+    const presetTime = hasExplicitStart
         ? parsed.plannerDate.slice(11, 16)
-        : (eventModal?.classList.contains('active') && eventTimeSelect?.value ? eventTimeSelect.value : getDefaultTime());
-    const duration = parsed?.durationMinutes || (eventModal?.classList.contains('active') && Number(eventDurationInput?.value)) || getDefaultDurationMinutes();
+        : (isModalOpen && eventTimeSelect?.value ? eventTimeSelect.value : getDefaultTime());
+    const duration = parsed?.durationMinutes || parsed?.estimatedMinutes || (isModalOpen && Number(eventDurationInput?.value)) || window.TaskParser?.estimateTypicalDuration?.(title) || getDefaultDurationMinutes();
 
     // Open the event modal (if not already open) prefilled with transcription and parsed fields so the user can review and edit!
-    if (!eventModal?.classList.contains('active')) {
+    if (!isModalOpen) {
         openModal(null, presetTime);
     } else if (eventTimeSelect) {
         eventTimeSelect.value = presetTime;
@@ -493,14 +533,89 @@ function scrollToCurrent() {
     });
 }
 
+function realisticOfflinePlanDay() {
+    const dateStr = localDateString(currentDate);
+    const { startMinutes: dayStart, endMinutes: dayEnd } = getDayBounds();
+    const cfg = window.ConfigManager?.getConfig?.() || {};
+    const pauseMins = Number.isFinite(cfg.bufferDurationMinutes) ? cfg.bufferDurationMinutes : 5;
+    const rawTasks = window.TaskStore?.getPendingTasks?.() || window.DataManager?.getTasks?.() || [];
+    const pending = rawTasks
+        .filter(t => !t.completed && !t.isCompleted && !t.isArchived && (!t.plannerDate || t.autoPinned))
+        .slice()
+        .sort((a, b) => {
+            const da = a.deadline ? Date.parse(a.deadline) : Infinity;
+            const db = b.deadline ? Date.parse(b.deadline) : Infinity;
+            const ta = Number.isFinite(da) ? da : Infinity;
+            const tb = Number.isFinite(db) ? db : Infinity;
+            if (ta !== tb) return ta - tb;
+            return ((b.importance || 5) * (b.urgency || 5)) - ((a.importance || 5) * (a.urgency || 5));
+        });
+    if (!pending.length) {
+        return { ok: false, message: tr('plan.aiNoTasks') };
+    }
+    const now = new Date();
+    const isToday = dateStr === localDateString(now);
+    let cursor = isToday
+        ? Math.max(dayStart, Math.ceil((now.getHours() * 60 + now.getMinutes() + 5) / 5) * 5)
+        : dayStart;
+    let placed = 0;
+    let dropped = 0;
+    for (const task of pending) {
+        const name = task.name || task.text || 'Task';
+        const duration = Math.max(5, Number(task.durationMinutes || task.duration)
+            || window.TaskParser?.estimateTypicalDuration?.(name)
+            || getDefaultDurationMinutes());
+        const id = task.hash || task.id;
+        let startMins = cursor;
+        if (window.UnifiedScheduler?.findNextFreeSlot) {
+            const free = window.UnifiedScheduler.findNextFreeSlot({
+                dateStr,
+                fromMinutes: cursor,
+                durationMinutes: duration,
+                ignore: id ? [id] : [],
+            });
+            startMins = Number.isFinite(free) ? free : null;
+        }
+        if (startMins === null || startMins + duration > dayEnd) {
+            dropped += 1;
+            continue;
+        }
+        const plannerDate = `${dateStr}T${minutesToTime(startMins)}`;
+        updateTaskInStore(id, {
+            plannerDate,
+            durationMinutes: duration,
+            duration,
+            isFixed: true,
+            autoPinned: false,
+        });
+        cursor = Math.ceil((startMins + duration + pauseMins) / 5) * 5;
+        placed += 1;
+    }
+    window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+    if (!placed) {
+        return { ok: false, message: tr('plan.aiNoSlots') };
+    }
+    return {
+        ok: true,
+        placed,
+        moved: 0,
+        dropped,
+        message: tr('plan.aiPlanned', { count: placed }),
+    };
+}
+
 async function autoPlanDay() {
     try {
         aiPlanBtn.disabled = true;
-        const result = await planDayWithAI(currentDate, {
+        let result = await planDayWithAI(currentDate, {
             tr,
             dayBounds: getDayBounds(),
             defaultDurationMinutes: getDefaultDurationMinutes(),
         });
+        if (!result.ok && result.reason === 'noProvider') {
+            result = realisticOfflinePlanDay();
+        }
         if (!result.ok) {
             window.DataManager?.showNotification?.(result.message, 'error');
             return;
@@ -696,6 +811,33 @@ function initDayPlanner() {
         minutes = Math.min(Math.max(startMinutes, minutes), Math.max(startMinutes, endMinutes - 5));
         openModal(null, minutesToTime(minutes));
     });
+
+    // Drag & drop a task from the stack onto a specific time on the timeline
+    timeBlocksContainer.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        timeBlocksContainer.classList.add('drag-over');
+    });
+    timeBlocksContainer.addEventListener('dragleave', e => {
+        if (!timeBlocksContainer.contains(e.relatedTarget)) {
+            timeBlocksContainer.classList.remove('drag-over');
+        }
+    });
+    timeBlocksContainer.addEventListener('drop', e => {
+        e.preventDefault();
+        timeBlocksContainer.classList.remove('drag-over');
+        const taskId = e.dataTransfer?.getData('text/plain') || window.__draggingStackTask?.id;
+        const droppedTask = (taskId && getTaskFromStore(taskId)) || window.__draggingStackTask?.task;
+        if (!droppedTask) return;
+        const { startMinutes, endMinutes } = getDayBounds();
+        let minutes = Math.round(minuteAtClientY(e.clientY) / 5) * 5;
+        minutes = Math.min(Math.max(startMinutes, minutes), Math.max(startMinutes, endMinutes - 5));
+        const presetTime = minutesToTime(minutes);
+        openModal(droppedTask, presetTime);
+        const dur = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
+        const conflict = findConflict(minutes, dur, droppedTask.hash || droppedTask.id);
+        if (conflict) showConflict(conflict.message, conflict.free);
+    });
     setupZoomGestures();
 
     eventTaskSelect.addEventListener('change', () => {
@@ -720,22 +862,25 @@ function initDayPlanner() {
             setTimeout(() => eventTitleInput.classList.remove('invalid'), 1200);
             return;
         }
-        if (!/^\d{2}:\d{2}$/.test(time)) {
+        if (time && !/^\d{2}:\d{2}$/.test(time)) {
             eventTimeSelect.focus();
             return;
         }
+        const hasTime = Boolean(time && /^\d{2}:\d{2}$/.test(time));
         const duration = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
-        const plannerDateTime = `${localDateString(currentDate)}T${time}`;
+        const plannerDateTime = hasTime ? `${localDateString(currentDate)}T${time}` : null;
         const importance = parseInt(eventImportanceInput.value, 10) || 5;
         const urgency = parseInt(eventUrgencyInput.value, 10) || 5;
         const deadlineVal = eventDeadlineInput.value ? new Date(eventDeadlineInput.value) : null;
-        const deadline = deadlineVal ? new Date(deadlineVal.getTime() - (deadlineVal.getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : null;
+        const deadline = deadlineVal
+            ? new Date(deadlineVal.getTime() - (deadlineVal.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
+            : (!hasTime ? `${localDateString(currentDate)}T18:00` : null);
         const dependency = eventDependencySelect?.value || null;
         const locationStr = eventLocationInput ? eventLocationInput.value.trim() : '';
         const isEvent = eventTypeSelect ? eventTypeSelect.value === 'event' : false;
         const recurrence = (eventRecurrenceSelect && eventRecurrenceSelect.value !== 'none') ? eventRecurrenceSelect.value : null;
 
-        const startMins = parseTimeToMinutes(time);
+        const startMins = hasTime ? parseTimeToMinutes(time) : null;
         const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
         const conflict = startMins !== null ? findConflict(startMins, duration, taskIdToIgnore) : null;
         if (conflict) {
@@ -746,7 +891,7 @@ function initDayPlanner() {
         let savedTask = null;
         if (editingTaskId) {
             const title = eventTitleInput.value.trim();
-            savedTask = updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, importance, urgency, dependency, isEvent, recurrence, location: locationStr, locationCoords: selectedLocationCoords });
+            savedTask = updateTaskInStore(editingTaskId, { name: title, text: title, plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: hasTime, autoPinned: false, importance, urgency, dependency, isEvent, recurrence, location: locationStr, locationCoords: selectedLocationCoords });
         } else if (pendingExternalTask) {
             const title = eventTitleInput.value.trim() || pendingExternalTask.text;
             savedTask = addTaskToStore(createTask({
@@ -766,12 +911,12 @@ function initDayPlanner() {
                 recurrence,
                 location: locationStr,
                 locationCoords: selectedLocationCoords,
-                isFixed: true,
+                isFixed: hasTime,
             }));
         } else {
             const selectedTaskId = eventTaskSelect.value;
             if (selectedTaskId) {
-                savedTask = updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: true, importance, urgency, dependency, isEvent, recurrence, location: locationStr, locationCoords: selectedLocationCoords });
+                savedTask = updateTaskInStore(selectedTaskId, { plannerDate: plannerDateTime, deadline, durationMinutes: duration, duration, isFixed: hasTime, importance, urgency, dependency, isEvent, recurrence, location: locationStr, locationCoords: selectedLocationCoords });
             } else {
                 const title = eventTitleInput.value.trim();
                 if (!title) return;
@@ -783,7 +928,7 @@ function initDayPlanner() {
                     deadline,
                     durationMinutes: duration,
                     duration,
-                    isFixed: true,
+                    isFixed: hasTime,
                     dependency,
                     isEvent,
                     recurrence,

@@ -5,7 +5,7 @@ Read first: [../AGENTS.md](../AGENTS.md) and [../../shell/AGENTS.md](../../shell
 | File | Role |
 | --- | --- |
 | `settings.js` | Maps `#settings-form` fields ↔ `ConfigManager` (General, Calendar, Tasks, Focus…); tasks overview table. "Show all options" applies at once. |
-| `ai-settings.js` | Builds the AI provider panel in `#api-settings` (provider, key, model, test) over `AIAssistant`. |
+| `ai-settings.js` | Builds the AI provider panel in `#api-settings` (provider, key, model, test, local AI detection and start/stop controls) over `AIAssistant`. |
 | `settings.css` | One-column layout of the collapsible sections. |
 | `strings.js` | Keys `settings.*`. |
 

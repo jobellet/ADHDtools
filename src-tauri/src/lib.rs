@@ -1,4 +1,5 @@
 pub mod audio;
+pub mod local_ai;
 pub mod oauth;
 pub mod speech;
 pub mod storage;
@@ -13,6 +14,7 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState, Shortcut};
 use keepawake::KeepAwake;
 
 use audio::{native_play_sound, play_sound, native_start_alarm, native_stop_alarm};
+use local_ai::{native_local_ai_status, native_local_ai_start, native_local_ai_stop, LocalAiState};
 use storage::{native_save_storage, native_load_storage, native_save_secrets, native_load_secrets};
 use oauth::{native_open_url, native_oauth_listen, native_oauth_wait, native_read_mcp_client};
 use speech::{native_start_speech, native_poll_speech, native_stop_speech};
@@ -168,6 +170,7 @@ pub fn run() {
             tray_running: Mutex::new(false),
             keep_awake: Mutex::new(None),
         })
+        .manage(LocalAiState::new())
         .invoke_handler(tauri::generate_handler![
             native_notify,
             native_play_sound,
@@ -188,7 +191,10 @@ pub fn run() {
             native_start_speech,
             native_poll_speech,
             native_stop_speech,
-            native_load_storage
+            native_load_storage,
+            native_local_ai_status,
+            native_local_ai_start,
+            native_local_ai_stop
         ])
         .setup(|app| {
             let alt_space: Shortcut = "Alt+Space".parse().unwrap();

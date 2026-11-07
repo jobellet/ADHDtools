@@ -130,4 +130,22 @@ describe('Additional Task Parser Tests', () => {
     assert.strictEqual(result.name, 'Gym session [FLEX]');
     assert.strictEqual(result.isFixed, false);
   });
+
+  test('strips French conversational prefixes and parses natural duration and deadline', () => {
+    const simple = parse('je dois etendre le linge', { now });
+    assert.strictEqual(simple.name, 'etendre le linge');
+    assert.strictEqual(simple.plannerDate, null);
+    assert.strictEqual(global.window.TaskParser.estimateTypicalDuration(simple.name), 15);
+
+    const withDuration = parse('je dois etendre le linge et ça me prends 15 minutes', { now });
+    assert.strictEqual(withDuration.name, 'etendre le linge');
+    assert.strictEqual(withDuration.durationMinutes, 15);
+    assert.strictEqual(withDuration.plannerDate, null);
+
+    // 2023-10-15 is a Sunday -> Thursday is 2023-10-19
+    const withDeadline = parse('je dois etendre le linge avant jeudi', { now });
+    assert.strictEqual(withDeadline.name, 'etendre le linge');
+    assert.strictEqual(withDeadline.plannerDate, null);
+    assert.strictEqual(withDeadline.deadline, '2023-10-19T18:00');
+  });
 });
