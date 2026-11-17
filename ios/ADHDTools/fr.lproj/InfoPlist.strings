@@ -1,0 +1,3 @@
+NSUserNotificationsUsageDescription = "ADHD Tools sonne une alarme quand une tâche, une étape de routine ou un événement commence ou se termine.";
+NSMicrophoneUsageDescription = "ADHD Tools utilise le micro pour la saisie vocale (capture rapide, routines).";
+NSSpeechRecognitionUsageDescription = "ADHD Tools transcrit ce que vous dites en une tâche.";

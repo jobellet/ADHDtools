@@ -11,11 +11,11 @@ Un planning de journée pour les personnes avec un TDAH, qui montre **une seule 
 
 ### 🚀 Démarrer (Choisissez votre plateforme)
 
-| 🌐 Application Web (Instantané) | 🪟 Windows Bureau | 🍎 macOS Bureau | 📱 Téléphone Android |
-| :---: | :---: | :---: | :---: |
-| [**▶ Ouvrir l’application**](https://jobellet.github.io/ADHDtools/) | [**⬇ Télécharger (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Télécharger (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Télécharger (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) |
-| *Sans installation* | *Zone de notification & alertes* | *Barre de menus & minuteur* | *Sonneries même écran éteint* |
-| Cliquez et planifiez | Lancez l’installateur | Glissez dans Applications | Appuyez et installez |
+| 🌐 Application Web (Instantané) | 🪟 Windows Bureau | 🍎 macOS Bureau | 📱 Téléphone Android  📱 iPhone / iPad |
+| :---: | :---: | :---: | :---:  :---: |
+| [**▶ Ouvrir l’application**](https://jobellet.github.io/ADHDtools/) | [**⬇ Télécharger (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Télécharger (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Télécharger (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk)  [**⬇ Télécharger (.ipa)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) |
+| *Sans installation* | *Zone de notification & alertes* | *Barre de menus & minuteur* | *Sonneries même écran éteint*  *Alarmes même écran éteint — sideload gratuit* |
+| Cliquez et planifiez | Lancez l’installateur | Glissez dans Applications | Appuyez et installez  Télécharger + installer avec SideStore (Apple ID gratuit) |
 
 > **Toutes les versions sont 100 % gratuites et open-source.** Vos données restent entièrement hors ligne sur votre appareil, avec synchronisation privée Google Drive / Agenda optionnelle.
 
@@ -102,6 +102,8 @@ npm run android:build
 ```
 
 L’application est alors dans `dist-android/ADHD-Tools.apk`. Préparation, installation sur le téléphone et mises à jour : [guide Android](docs/android.md) (en anglais).
+
+L’application iPhone/iPad sonne comme un réveil quand une tâche, une routine ou un événement commence ou se termine, **même écran éteint ou application fermée**, et garde votre connexion Google : téléchargez [**ADHD-Tools.ipa**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) puis installez-la avec SideStore, AltStore ou Sideloadly (Apple ID gratuit, sans Mac) — re-signature automatique tous les 7 jours, au pire un appui sur **Tout rafraîchir**. Guide : [docs/ios.md](docs/ios.md) (en anglais). Sur un Mac : `npm ci && npm run ios:build` produit `dist-ios/ADHD-Tools.ipa`.
 
 ## 🤖 Parlez à votre planning avec votre assistant IA (MCP)
 
