@@ -11,11 +11,11 @@ A day planner for people with ADHD that shows **one thing at a time**. It runs i
 
 ### 🚀 Get Started (Choose your platform)
 
-| 🌐 Web App (Instant) | 🪟 Windows Desktop | 🍎 macOS Desktop | 📱 Android Phone |
-| :---: | :---: | :---: | :---: |
-| [**▶ Open Live App**](https://jobellet.github.io/ADHDtools/) | [**⬇ Download (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Download (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Download (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) |
-| *No install required* | *System tray & notifications* | *Menu bar & native alarms* | *Alarms with screen off* |
-| Click and plan | Run installer setup | Drag to Applications | Tap and install |
+| 🌐 Web App (Instant) | 🪟 Windows Desktop | 🍎 macOS Desktop | 📱 Android Phone  📱 iPhone / iPad |
+| :---: | :---: | :---: | :---:  :---: |
+| [**▶ Open Live App**](https://jobellet.github.io/ADHDtools/) | [**⬇ Download (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Download (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Download (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk)  [**⬇ Download (.ipa)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) |
+| *No install required* | *System tray & notifications* | *Menu bar & native alarms* | *Alarms with screen off*  *Alarms with screen off — free sideload* |
+| Click and plan | Run installer setup | Drag to Applications | Tap and install  Download + install with SideStore (free Apple ID) |
 
 > **All versions are 100% free and open-source.** Your data stays completely offline on your device, with optional private Google Drive / Calendar sync across devices.
 
@@ -73,6 +73,7 @@ A native app adds system notifications when a timer ends, a menu-bar/tray timer,
 *   **🪟 Windows:** Download [**ADHD-Tools-Setup.exe**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe), run the installer, and open ADHD Tools from your Start Menu.
 *   **🍎 macOS:** Download [**ADHD-Tools.dmg**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg), drag **ADHD Tools** to your *Applications* folder, and open it.
 *   **📱 Android:** Download [**ADHD-Tools.apk**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) on your phone and tap Install.
+*   **📱 iPhone / iPad:** Download [**ADHD-Tools.ipa**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) and install it with SideStore, AltStore or Sideloadly (free Apple ID, no Mac needed) — [iOS guide](docs/ios.md).
 
 ### Option B — Build on your machine (Developers)
 
@@ -104,6 +105,13 @@ The Android app rings like an alarm clock when a task, routine or event starts o
 
 *   **Download:** Get [**ADHD-Tools.apk**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) from the latest release and tap to install.
 *   **Build yourself:** Run `npm ci && npm run android:build` (creates `dist-android/ADHD-Tools.apk`). See the [Android guide](docs/android.md) for full details.
+
+## 📱 iPhone / iPad app (optional, free, no App Store)
+
+The iPhone/iPad app rings like an alarm clock when a task, routine or event starts or ends, **even with the screen off or the app closed**, and keeps you signed in to Google.
+
+*   **Download:** Get [**ADHD-Tools.ipa**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) from the latest release, then install it with SideStore, AltStore or Sideloadly (free Apple ID, no Mac needed). It re-signs itself every 7 days — at worst one tap on **Refresh All**.
+*   **Build yourself:** On a Mac, run `npm ci && npm run ios:build` (creates `dist-ios/ADHD-Tools.ipa`). See the [iOS guide](docs/ios.md) for full details.
 
 ## 🤖 Talk to your planner with your AI assistant (MCP)
 

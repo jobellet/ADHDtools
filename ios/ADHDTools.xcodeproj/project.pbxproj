@@ -1,0 +1,139 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+		BB60E52F145694DB3F283F98 /* FR ADHDToolsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ADHDToolsApp.swift; sourceTree = "<group>"; };
+		B0CEFC048376AA55C332F748 /* FR WebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebView.swift; sourceTree = "<group>"; };
+		61C998BD779984FC9ABD896D /* FR NativeBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeBridge.swift; sourceTree = "<group>"; };
+		FE89A98274C99D92F1F0E8D9 /* FR Alarms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Alarms.swift; sourceTree = "<group>"; };
+		CC46577F3B5B46183BB6721F /* FR SpeechSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechSession.swift; sourceTree = "<group>"; };
+		A6843053CE9C4CFEFBFE3244 /* FR OAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuth.swift; sourceTree = "<group>"; };
+		91D61F5D23883A73E14C2413 /* FR Storage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storage.swift; sourceTree = "<group>"; };
+		49CFFE4793B60841C9C7C572 /* FR bridge.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = bridge.js; sourceTree = "<group>"; };
+		101B109CDC2B122502C84441 /* FR Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7C40F10A3069DD5441957059 /* FR alarm.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = alarm.aiff; sourceTree = "<group>"; };
+		98F5F47AD76D6F450EA470A0 /* FR bell.aiff */ = {isa = PBXFileReference; lastKnownFileType = audio.aiff; path = bell.aiff; sourceTree = "<group>"; };
+		FFE3EE7EB85EB26F6C79FAE4 /* FR web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = web; sourceTree = "<group>"; };
+		40693A8E1B7A7E799CC93781 /* FR ADHDTools.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ADHDTools.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8581C90886DA03AF3D57589B /* FR en.lproj/InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en.lproj; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		A0369FDAEA0946A164F30143 /* FR fr.lproj/InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr.lproj; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		58EB637DF0631BD2044545C2 /* FR de.lproj/InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de.lproj; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		8085EC993C87FC2AC5B07671 /* FR es.lproj/InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es.lproj; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		3EB48B40956B8019C0D6620E /* VG InfoPlist.strings */ = {isa = PBXVariantGroup; children = (
+				8581C90886DA03AF3D57589B /* en.lproj/InfoPlist.strings */,
+				A0369FDAEA0946A164F30143 /* fr.lproj/InfoPlist.strings */,
+				58EB637DF0631BD2044545C2 /* de.lproj/InfoPlist.strings */,
+				8085EC993C87FC2AC5B07671 /* es.lproj/InfoPlist.strings */
+			); name = InfoPlist.strings; sourceTree = "<group>"; };
+		746695E62E924B9AEFE6936E /* GR Resources */ = {isa = PBXGroup; children = (
+				7C40F10A3069DD5441957059 /* alarm.aiff */,
+				98F5F47AD76D6F450EA470A0 /* bell.aiff */
+			); path = Resources; sourceTree = "<group>"; };
+		970C5195D6157DB430B5DB60 /* GR ADHDTools */ = {isa = PBXGroup; children = (
+				BB60E52F145694DB3F283F98 /* ADHDToolsApp.swift */,
+				B0CEFC048376AA55C332F748 /* WebView.swift */,
+				61C998BD779984FC9ABD896D /* NativeBridge.swift */,
+				FE89A98274C99D92F1F0E8D9 /* Alarms.swift */,
+				CC46577F3B5B46183BB6721F /* SpeechSession.swift */,
+				A6843053CE9C4CFEFBFE3244 /* OAuth.swift */,
+				91D61F5D23883A73E14C2413 /* Storage.swift */,
+				49CFFE4793B60841C9C7C572 /* bridge.js */,
+				101B109CDC2B122502C84441 /* Info.plist */,
+				746695E62E924B9AEFE6936E /* Resources */,
+				3EB48B40956B8019C0D6620E /* InfoPlist.strings */
+			); path = ADHDTools; sourceTree = "<group>"; };
+		B5AAD1C6A8764C63F4FAC47A /* GR Products */ = {isa = PBXGroup; children = (
+				40693A8E1B7A7E799CC93781 /* ADHDTools.app */
+			); name = Products; sourceTree = "<group>"; };
+		B8CA18665936940580F3C944 /* GR main */ = {isa = PBXGroup; children = (
+				970C5195D6157DB430B5DB60 /* ADHDTools */,
+				FFE3EE7EB85EB26F6C79FAE4 /* web */,
+				B5AAD1C6A8764C63F4FAC47A /* Products */
+			); sourceTree = "<group>"; };
+		BD0713FB178473F4B37B9CF6 /* BF ADHDToolsApp.swift */ = {isa = PBXBuildFile; fileRef = BB60E52F145694DB3F283F98 /* ADHDToolsApp.swift */; };
+		44BE459B7749C77F7D0A6EB0 /* BF WebView.swift */ = {isa = PBXBuildFile; fileRef = B0CEFC048376AA55C332F748 /* WebView.swift */; };
+		A7D439B58942940EC5D01A42 /* BF NativeBridge.swift */ = {isa = PBXBuildFile; fileRef = 61C998BD779984FC9ABD896D /* NativeBridge.swift */; };
+		C78129F8451A5AFF0D4E4C6C /* BF Alarms.swift */ = {isa = PBXBuildFile; fileRef = FE89A98274C99D92F1F0E8D9 /* Alarms.swift */; };
+		902581260BC66FE84B7DC899 /* BF SpeechSession.swift */ = {isa = PBXBuildFile; fileRef = CC46577F3B5B46183BB6721F /* SpeechSession.swift */; };
+		6F33301027FBE55DC022F41C /* BF OAuth.swift */ = {isa = PBXBuildFile; fileRef = A6843053CE9C4CFEFBFE3244 /* OAuth.swift */; };
+		4E54239199353C2E874A7ACC /* BF Storage.swift */ = {isa = PBXBuildFile; fileRef = 91D61F5D23883A73E14C2413 /* Storage.swift */; };
+		518B0019DE449F3B57F910F4 /* BF bridge.js */ = {isa = PBXBuildFile; fileRef = 49CFFE4793B60841C9C7C572 /* bridge.js */; };
+		C9A067B55E214EDC505F946B /* BF alarm.aiff */ = {isa = PBXBuildFile; fileRef = 7C40F10A3069DD5441957059 /* alarm.aiff */; };
+		284A8B4B8C588AA34FB54F8D /* BF bell.aiff */ = {isa = PBXBuildFile; fileRef = 98F5F47AD76D6F450EA470A0 /* bell.aiff */; };
+		4DFF974131FE085163F0FD41 /* BF InfoPlist.strings */ = {isa = PBXBuildFile; fileRef = 3EB48B40956B8019C0D6620E /* InfoPlist.strings */; };
+		31F7BF0CC06145AEC0E5B512 /* BF web */ = {isa = PBXBuildFile; fileRef = FFE3EE7EB85EB26F6C79FAE4 /* web */; };
+		08B448624C4A0657CBF63452 /* FR UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		F8101E6F73936DCF55806606 /* BF UIKit.framework */ = {isa = PBXBuildFile; fileRef = 08B448624C4A0657CBF63452 /* UIKit.framework */; };
+		A26229B569D73135269CA1C3 /* FR SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		460CCDB892D048DC05E578F5 /* BF SwiftUI.framework */ = {isa = PBXBuildFile; fileRef = A26229B569D73135269CA1C3 /* SwiftUI.framework */; };
+		3087932F14134EB5399ECA60 /* FR WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		681AEEE9EE0F893401FA14B5 /* BF WebKit.framework */ = {isa = PBXBuildFile; fileRef = 3087932F14134EB5399ECA60 /* WebKit.framework */; };
+		66D1BDC05326343E146D13B3 /* FR UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		72B5CC4F16170F3DE0259B8E /* BF UserNotifications.framework */ = {isa = PBXBuildFile; fileRef = 66D1BDC05326343E146D13B3 /* UserNotifications.framework */; };
+		BA763A027E217B83F6080BD6 /* FR AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		7368937C95B3019504856EAF /* BF AVFoundation.framework */ = {isa = PBXBuildFile; fileRef = BA763A027E217B83F6080BD6 /* AVFoundation.framework */; };
+		CB44A28895D6B2DAC22DEA72 /* FR Speech.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Speech.framework; path = System/Library/Frameworks/Speech.framework; sourceTree = SDKROOT; };
+		8F5A8782B117AA31D7ECCE26 /* BF Speech.framework */ = {isa = PBXBuildFile; fileRef = CB44A28895D6B2DAC22DEA72 /* Speech.framework */; };
+		D094FAED15B594AF1FCDCCB8 /* FR Network.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Network.framework; path = System/Library/Frameworks/Network.framework; sourceTree = SDKROOT; };
+		37702E8FBE90BEB3ED671197 /* BF Network.framework */ = {isa = PBXBuildFile; fileRef = D094FAED15B594AF1FCDCCB8 /* Network.framework */; };
+		E0877A6CDF58960DFEABD76A /* FR Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		C2358E5BA2EFA86F3CEABE81 /* BF Security.framework */ = {isa = PBXBuildFile; fileRef = E0877A6CDF58960DFEABD76A /* Security.framework */; };
+		632662C64D4517811ADB202A /* FR AuthenticationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AuthenticationServices.framework; path = System/Library/Frameworks/AuthenticationServices.framework; sourceTree = SDKROOT; };
+		48981EB72F7471762990732E /* BF AuthenticationServices.framework */ = {isa = PBXBuildFile; fileRef = 632662C64D4517811ADB202A /* AuthenticationServices.framework */; };
+		F869571514AA4451FE73CDEE /* PB Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+				BD0713FB178473F4B37B9CF6 /* ADHDToolsApp.swift */,
+				44BE459B7749C77F7D0A6EB0 /* WebView.swift */,
+				A7D439B58942940EC5D01A42 /* NativeBridge.swift */,
+				C78129F8451A5AFF0D4E4C6C /* Alarms.swift */,
+				902581260BC66FE84B7DC899 /* SpeechSession.swift */,
+				6F33301027FBE55DC022F41C /* OAuth.swift */,
+				4E54239199353C2E874A7ACC /* Storage.swift */
+			); runOnlyForDeploymentPostprocessing = 0; };
+		698F3749E4FEE1BFC6050E92 /* PB Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (
+				F8101E6F73936DCF55806606 /* UIKit.framework */,
+				460CCDB892D048DC05E578F5 /* SwiftUI.framework */,
+				681AEEE9EE0F893401FA14B5 /* WebKit.framework */,
+				72B5CC4F16170F3DE0259B8E /* UserNotifications.framework */,
+				7368937C95B3019504856EAF /* AVFoundation.framework */,
+				8F5A8782B117AA31D7ECCE26 /* Speech.framework */,
+				37702E8FBE90BEB3ED671197 /* Network.framework */,
+				C2358E5BA2EFA86F3CEABE81 /* Security.framework */,
+				48981EB72F7471762990732E /* AuthenticationServices.framework */
+			); runOnlyForDeploymentPostprocessing = 0; };
+		7316D0AF035C84A63FC69047 /* PB Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (
+				518B0019DE449F3B57F910F4 /* bridge.js */,
+				C9A067B55E214EDC505F946B /* alarm.aiff */,
+				284A8B4B8C588AA34FB54F8D /* bell.aiff */,
+				4DFF974131FE085163F0FD41 /* InfoPlist.strings in Resources */,
+				31F7BF0CC06145AEC0E5B512 /* web in Resources */
+			); runOnlyForDeploymentPostprocessing = 0; };
+		AA1F892D2C717ADCFD2CBE03 /* XC Debug proj */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; DEBUG_INFORMATION_FORMAT = dwarf; ENABLE_TESTABILITY = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE; ONLY_ACTIVE_ARCH = YES; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		B1222CF6F31874C7A959EC6B /* XC Release proj */ = {isa = XCBuildConfiguration; buildSettings = { ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; COPY_PHASE_STRIP = NO; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; ENABLE_NS_ASSERTIONS = NO; IPHONEOS_DEPLOYMENT_TARGET = 16.0; MTL_ENABLE_DEBUG_INFO = NO; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; VALIDATE_PRODUCT = YES; }; name = Release; };
+		826DE7BC3F1E34B9CDB9C02E /* XL proj */ = {isa = XCConfigurationList; buildConfigurations = (
+				AA1F892D2C717ADCFD2CBE03 /* Debug */,
+				B1222CF6F31874C7A959EC6B /* Release */
+			); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		504869DD053AC310FA505DD8 /* XC Debug target */ = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = ""; CODE_SIGN_STYLE = Manual; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ADHDTools/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks"); MARKETING_VERSION = 1.0.0; PRODUCT_BUNDLE_IDENTIFIER = com.adhdtools.ios; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; ENABLE_TESTABILITY = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; name = Debug; };
+		F82EDCB044D375EC77D00306 /* XC Release target */ = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = ""; CODE_SIGN_STYLE = Manual; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = ADHDTools/Info.plist; IPHONEOS_DEPLOYMENT_TARGET = 16.0; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks"); MARKETING_VERSION = 1.0.0; PRODUCT_BUNDLE_IDENTIFIER = com.adhdtools.ios; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = NO; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; VALIDATE_PRODUCT = YES; }; name = Release; };
+		C8417AC316932DCC12C1E06E /* XL target */ = {isa = XCConfigurationList; buildConfigurations = (
+				504869DD053AC310FA505DD8 /* Debug */,
+				F82EDCB044D375EC77D00306 /* Release */
+			); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		7404203FC4343A808EF3F138 /* NT ADHDTools */ = {isa = PBXNativeTarget; buildConfigurationList = C8417AC316932DCC12C1E06E /* Build configuration list for PBXNativeTarget "ADHDTools" */; buildPhases = (
+				F869571514AA4451FE73CDEE /* Sources */,
+				698F3749E4FEE1BFC6050E92 /* Frameworks */,
+				7316D0AF035C84A63FC69047 /* Resources */
+			); buildRules = (
+			); dependencies = (
+			); name = ADHDTools; productName = ADHDTools; productReference = 40693A8E1B7A7E799CC93781 /* ADHDTools.app */; productType = "com.apple.product-type.application"; };
+		9FF5C670FDD3620542B0B07E /* PJ root */ = {isa = PBXProject; attributes = { LastUpgradeCheck = 1540; TargetAttributes = { 7404203FC4343A808EF3F138 = { CreatedOnToolsVersion = 15.4; }; }; }; buildConfigurationList = 826DE7BC3F1E34B9CDB9C02E /* Build configuration list for PBXProject "ADHDTools" */; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, fr, de, es, Base); mainGroup = B8CA18665936940580F3C944 /* main */; productRefGroup = B5AAD1C6A8764C63F4FAC47A /* Products */; projectDirPath = ""; projectRoot = ""; targets = (
+				7404203FC4343A808EF3F138 /* ADHDTools */
+			); };
+
+	};
+	rootObject = 9FF5C670FDD3620542B0B07E /* Project object */;
+}

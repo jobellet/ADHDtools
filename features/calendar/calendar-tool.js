@@ -17,6 +17,20 @@
   const createTask = window.TaskModel?.createTask;
   const wrapTask = (task) => createTask ? createTask(task, task) : task;
 
+  // Base64 id for a calendar copy. btoa() throws on characters outside Latin-1 (emoji, Œ, “…”), which
+  // made the whole sync fail. Latin-1 titles keep their old id (no duplicates); others use UTF-8 bytes.
+  function calendarHashBase64(seed) {
+    let b64;
+    try {
+      b64 = btoa(seed);
+    } catch {
+      let bin = '';
+      new TextEncoder().encode(seed).forEach(b => { bin += String.fromCharCode(b); });
+      b64 = btoa(bin);
+    }
+    return b64.replace(/=/g, '');
+  }
+
   function getConfig() {
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
   }
@@ -777,7 +791,7 @@
       const isFixed = rawTitle.includes(fixedTag) || (!rawTitle.includes(flexibleTag));
       const cleanedTitle = rawTitle.replace(fixedTag, '').replace(flexibleTag, '').trim();
       const hashSeed = `${cleanedTitle}-${start}-${end || ''}`;
-      const hash = window.TaskModel?.DEFAULT_USER ? `task-${btoa(hashSeed).replace(/=/g, '')}` : `task-${hashSeed}`;
+      const hash = window.TaskModel?.DEFAULT_USER ? `task-${calendarHashBase64(hashSeed)}` : `task-${hashSeed}`;
 
       const isAllDay = ev.isAllDay !== undefined ? !!ev.isAllDay : (start && start.length === 10);
 

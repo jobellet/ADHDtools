@@ -11,11 +11,11 @@ Un planificador del día para personas con TDAH que muestra **una sola cosa a la
 
 ### 🚀 Empezar (Elige tu plataforma)
 
-| 🌐 App Web (Instantáneo) | 🪟 Windows Escritorio | 🍎 macOS Escritorio | 📱 Móvil Android |
-| :---: | :---: | :---: | :---: |
-| [**▶ Abrir la aplicación**](https://jobellet.github.io/ADHDtools/) | [**⬇ Descargar (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Descargar (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Descargar (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk) |
-| *Sin instalación* | *Bandeja de sistema y avisos* | *Barra de menús y temporizador* | *Alarmas incluso con pantalla apagada* |
-| Clic y planifica | Ejecuta el instalador | Arrastra a Aplicaciones | Toca e instala |
+| 🌐 App Web (Instantáneo) | 🪟 Windows Escritorio | 🍎 macOS Escritorio | 📱 Móvil Android  📱 iPhone / iPad |
+| :---: | :---: | :---: | :---:  :---: |
+| [**▶ Abrir la aplicación**](https://jobellet.github.io/ADHDtools/) | [**⬇ Descargar (.exe)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools-Setup.exe) | [**⬇ Descargar (.dmg)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.dmg) | [**⬇ Descargar (.apk)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.apk)  [**⬇ Descargar (.ipa)**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) |
+| *Sin instalación* | *Bandeja de sistema y avisos* | *Barra de menús y temporizador* | *Alarmas incluso con pantalla apagada*  *Alarmas con pantalla apagada — sideload gratis* |
+| Clic y planifica | Ejecuta el instalador | Arrastra a Aplicaciones | Toca e instala  Descarga e instala con SideStore (Apple ID gratis) |
 
 > **Todas las versiones son 100 % gratuitas y de código abierto.** Tus datos permanecen completamente sin conexión en tu dispositivo, con sincronización privada opcional con Google Drive / Calendario.
 
@@ -102,6 +102,8 @@ npm run android:build
 ```
 
 La aplicación queda en `dist-android/ADHD-Tools.apk`. Preparación, instalación en el teléfono y actualizaciones: [guía de Android](docs/android.md) (en inglés).
+
+La app de iPhone/iPad suena como una alarma cuando una tarea, un paso de rutina o un evento empieza o termina, **incluso con la pantalla apagada o la app cerrada**, y mantiene tu sesión de Google: descarga [**ADHD-Tools.ipa**](https://github.com/jobellet/ADHDtools/releases/latest/download/ADHD-Tools.ipa) e instálala con SideStore, AltStore o Sideloadly (Apple ID gratis, sin Mac) — se re-firma sola cada 7 días, como mucho un toque en **Actualizar todo**. Guía: [docs/ios.md](docs/ios.md) (en inglés). En un Mac: `npm ci && npm run ios:build` genera `dist-ios/ADHD-Tools.ipa`.
 
 ## 🤖 Habla con tu asistente de IA sobre tu día (MCP)
 

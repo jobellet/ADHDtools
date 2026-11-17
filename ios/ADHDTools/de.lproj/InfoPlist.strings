@@ -1,0 +1,3 @@
+NSUserNotificationsUsageDescription = "ADHD Tools lässt einen Alarm ertönen, wenn eine Aufgabe, ein Routineschritt oder ein Termin beginnt oder endet.";
+NSMicrophoneUsageDescription = "ADHD Tools nutzt das Mikrofon für die Spracheingabe (Schnellerfassung, Routinen).";
+NSSpeechRecognitionUsageDescription = "ADHD Tools transkribiert, was Sie sagen, in eine Aufgabe.";

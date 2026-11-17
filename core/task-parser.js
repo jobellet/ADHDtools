@@ -38,11 +38,16 @@
     return date;
   }
 
+  const DURATION_PREFIX_SOURCE = '(?:(?:\\b|(?<=^|[\\s([{<"\'“«`,;:–—\\-~]))(?:,?\\s*(?:et|and|und|y)\\s+)?(?:(?:(?:ça|ca|cela|ce|it|that|this|das|es)\\s+(?:(?:(?:(?:me|te|lui|nous|vous|leur|him|her|us|them|mir|dir|ihm|ihr|uns|euch|ihnen|se)\\s+|[mtl][\\\'\\’]\\s*))?(?:prends?|prendra|prendrait|prenait|a\\s+pris|devrait\\s+prendre|pourrait\\s+prendre|va\\s+prendre|allait\\s+prendre|takes?|took|taking|will\\s+take|would\\s+take|should\\s+take|could\\s+take|is\\s+going\\s+to\\s+take|dauert?|dauerte|toma|tomar[aá]|tomar[ií]a|tom[oó]|va\\s+a\\s+tomar|lleva|llevar[aá]|llevar[ií]a|llev[oó]|va\\s+a\\s+llevar)|(?:va|devrait|pourrait|allait|doit|risque\\s+de)\\s+(?:(?:me|te|lui|nous|vous|leur)\\s+|[mtl][\\\'\\’]\\s*)?prendre|(?:will|would|should|could)\\s+take(?:\\s+me)?))|(?:(?:me|te|nous)\\s+|[mtl][\\\'\\’]\\s*)?(?:prends?|prendra|prendrait|prenait|va\\s+prendre)|(?:takes?|taking|(?:will|would|should|could)\\s+take)(?:\\s+me)?|dauert|(?:(?:me|te|le|nos)\\s+)?(?:toma|tomar[aá]|lleva|llevar[aá]|va\\s+a\\s+tomar|va\\s+a\\s+llevar)|pendant|pour|für|for|por|durante|(?:d[\\\'\\’]\\s*)?(?:une\\s+)?durée(?:\\s*:\\s*|\\s+de\\s+|\\s+)|duraci[oó]n(?:\\s*:\\s*|\\s+de\\s+|\\s+)|dauer(?:\\s*:\\s*|\\s+von\\s+|\\s+)|duration(?:\\s*:\\s*|\\s+of\\s+|\\s+))(?:\\s+(?:environ|à\\s+peu\\s+près|a\\s+peu\\s+pres|dans\\s+les|au\\s+moins|au\\s+plus|pres\\s+de|près\\s+de|autour\\s+de|about|around|approx(?:\\.|\\s+)?|approximately|at\\s+least|at\\s+most|roughly|etwa|ungefähr|ungefaehr|rund|ca\\.?|mindestens|unos?|unas?|alrededor\\s+de|cerca\\s+de|m[aá]s\\s+o\\s+menos)\\b)?\\s*|(?:(?:\\b|(?<=^|[\\s([{<"\'“«`,;:–—\\-~]))(?:environ|à\\s+peu\\s+près|a\\s+peu\\s+pres|dans\\s+les|au\\s+moins|au\\s+plus|pres\\s+de|près\\s+de|autour\\s+de|about|around|approx(?:\\.|\\s+)?|approximately|at\\s+least|at\\s+most|roughly|etwa|ungefähr|ungefaehr|rund|ca\\.?|mindestens|unos?|unas?|alrededor\\s+de|cerca\\s+de|m[aá]s\\s+o\\s+menos)\\s+|~\\s*))';
+
   function cleanName(name) {
     return String(name || '')
       .replace(/\s{2,}/g, ' ')
-      .replace(/[\s,;.-]+$/g, '')
-      .replace(/^[\s,;.-]+/g, '')
+      .replace(/\(\s*\)|\[\s*\]|\{\s*\}|["'«»]\s*["'«»]/g, ' ')
+      .replace(/(?:,?\s*(?:et|and|und|y)\s+)?(?:(?:ça|ca|cela|ce|it|that|das)\s+(?:(?:(?:me|te|lui|nous|vous)\s+|[mtl]['’]\s*)?(?:prends?|prendra|prendrait|prenait|a\s+pris|devrait\s+prendre|pourrait\s+prendre|va\s+prendre|takes?|dauert|toma|lleva)|(?:va|devrait|pourrait)\s+(?:(?:me|te|nous)\s+|[mtl]['’]\s*)?prendre)|(?:(?:me|te|nous)\s+|[mtl]['’]\s*)?prends?|takes?|pendant|pour|durée|duration|dauer|duración|for|für|por|durante|environ|à\s+peu\s+près|a\s+peu\s+pres|dans\s+les)$/i, '')
+      .replace(/[\s,;:.-]+$/g, '')
+      .replace(/^[\s,;:.-]+/g, '')
+      .replace(/\(\s*\)|\[\s*\]|\{\s*\}|["'«»]\s*["'«»]/g, ' ')
       .replace(/^(?:de|d'|que|qu'|pour|à|a)\s+/i, '')
       .trim();
   }
@@ -138,6 +143,15 @@
     return bestScore > 0 ? best : null;
   }
 
+  function estimateTypicalDuration(name) {
+    const n = String(name || '').toLowerCase();
+    if (!n) return 30;
+    if (/\b(linge|étendre|etendre|machine|lessive|vaisselle|poubelle|lit|douche|dents|arroser|mail|email|appel(?:er)?|call|phone|dentist|banque|bank|facture|bill|message|sms|répondre|repondre|pain|lait|milk)\b/i.test(n)) return 15;
+    if (/\b(courses|groceries|ménage|menage|aspirateur|ranger|cuisine(?:r)?|repas|cook|sport|gym|courir|run|lecture|lire|read)\b/i.test(n)) return 45;
+    if (/\b(rapport|report|projet|project|présentation|presentation|étude|etude|rédiger|rediger|code(?:r)?|développer)\b/i.test(n)) return 60;
+    return 30;
+  }
+
   function parse(text, { now = new Date(), existingItems = null } = {}) {
     let working = String(text || '').trim();
     const matched = [];
@@ -159,8 +173,8 @@
       source: 'heuristic',
     };
 
-    // Strip conversational prefixes in FR/EN/DE/ES ("ajoute une tâche", "créer un événement", "add a task to", etc.)
-    working = working.replace(/^(?:(?:ajoute(?:r)?|crée(?:r)?|planifie(?:r)?|mets?|mettre\s+une\s+tâche|add|create|schedule|plan)\s+(?:une?\s+|la\s+|le\s+|a\s+|an\s+)?(?:tâche|tache|événement|evenement|event|task|rendez-vous|rdv)\s*(?:pour|de|d'|que|qu'|to|for|:)?\s*)/i, () => {
+    // Strip conversational prefixes in FR/EN/DE/ES ("ajoute une tâche", "je dois", "il faut", "add a task to", etc.)
+    working = working.replace(/^(?:(?:ajoute(?:r)?|crée(?:r)?|planifie(?:r)?|mets?|mettre\s+une\s+tâche|add|create|schedule|plan)\s+(?:une?\s+|la\s+|le\s+|a\s+|an\s+)?(?:tâche|tache|événement|evenement|event|task|rendez-vous|rdv)\s*(?:pour|de|d'|que|qu'|to|for|:)?\s*|(?:je\s+dois|il\s+faut(?:\s+que\s+je)?|j['’]ai\s+besoin\s+de|i\s+(?:need|have)\s+to|i\s+must|ich\s+muss|tengo\s+que)\s+)/i, () => {
       matched.push('prefix');
       return '';
     });
@@ -273,12 +287,12 @@
     });
 
     // "maintenant" / "start now" / "tout de suite" / "right now"
-    if (/\b(?:(?:ça|ca|et\s+ça)\s+commence\s+maintenant|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/i.test(working)) {
+    if (/(?:\b|(?<=^|[\s]))(?:(?:ça|ca|et\s+ça)\s+commence\s+maintenant|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/i.test(working)) {
       targetDate = new Date(now);
       timeParts = { hours: now.getHours(), minutes: now.getMinutes() };
       hasExactTime = true;
       result.isFixed = true;
-      working = working.replace(/\b(?:(?:,?\s*(?:et\s+)?(?:ça|ca)\s+commence\s+maintenant)|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/gi, ' ');
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:,?\s*(?:et\s+)?(?:ça|ca)\s+commence\s+maintenant)|commence(?:r)?\s+maintenant|dès\s+maintenant|tout\s+de\s+suite|maintenant|start(?:s|ing)?\s+now|right\s+now|ab\s+sofort|jetzt\s+starten|empezar\s+ahora|ahora\s+mismo)\b/gi, ' ');
       matched.push('time');
     }
 
@@ -326,37 +340,41 @@
       return ' ';
     });
 
-    // Spoken special durations: "une demi-heure" (30), "une heure et demie" (90), "un quart d'heure" (15)
+    // Spoken special durations (90m, 75m, 60m, 45m, 30m, 15m) in FR, EN, DE, ES
     if (result.durationMinutes === null) {
-      if (/\b(?:pendant\s+|pour\s+|durée\s+|d['’])?(?:une\s+heure\s+et\s+demie|1\s*h\s*30\s*min)\b/i.test(working)) {
-        result.durationMinutes = 90;
-        working = working.replace(/\b(?:pendant\s+|pour\s+|durée\s+|d['’])?(?:une\s+heure\s+et\s+demie|1\s*h\s*30\s*min)\b/i, ' ');
+      const specialRe = new RegExp(`(?:${DURATION_PREFIX_SOURCE})?(?:` +
+        `((?:une|1)\\s+heure\\s+et\\s+demie?|1\\s*h\\s*30(?:\\s*(?:min(?:utes?)?|mn))?|(?:an?|1)\\s+hour\\s+and\\s+a\\s+half|(?:one|1)\\s+and\\s+a\\s+half\\s+hours?|(?:eineinhalb|anderthalb)\\s+stunden?|(?:una|1)\\s+hora\\s+y\\s+media)|` +
+        `((?:une|1)\\s+heure\\s+et\\s+quart|(?:an?|1)\\s+hour\\s+and\\s+a\\s+quarter|(?:una|1)\\s+hora\\s+y\\s+cuarto)|` +
+        `((?:trois|3)\\s+quarts?\\s+d[\\\'\\’]heure|three\\s+quarters?\\s+of\\s+an?\\s+hour|(?:eine\\s+)?dreiviertelstunde|drei\\s+viertelstunden?|tres\\s+cuartos\\s+de\\s+hora)|` +
+        `((?:une\\s+)?demi[- ]heure|(?:a\\s+)?half(?:\\s+an?)?\\s+hour|(?:eine\\s+)?halbe\\s+stunde|media\\s+hora)|` +
+        `((?:un\\s+)?quart\\s+d[\\\'\\’]heure|(?:a\\s+)?quarter\\s+(?:of\\s+an?\\s+)?hour|(?:eine\\s+)?viertelstunde|(?:un\\s+)?cuarto\\s+de\\s+hora)|` +
+        `((?:(?:une|1)\\s+heure|(?:an?|one|1)\\s+hour|(?:eine|1)\\s+stunde|(?:una|1)\\s+hora)\\b)` +
+        `)`, 'i');
+      working = working.replace(specialRe, (m, hHalf, hQuart, threeQuart, half, quart) => {
+        if (hHalf) result.durationMinutes = 90;
+        else if (hQuart) result.durationMinutes = 75;
+        else if (threeQuart) result.durationMinutes = 45;
+        else if (half) result.durationMinutes = 30;
+        else if (quart) result.durationMinutes = 15;
+        else result.durationMinutes = 60;
         matched.push('duration');
-      } else if (/\b(?:pendant\s+|pour\s+|durée\s+|d['’])?(?:une\s+)?demi[- ]heure\b/i.test(working)) {
-        result.durationMinutes = 30;
-        working = working.replace(/\b(?:pendant\s+|pour\s+|durée\s+|d['’])?(?:une\s+)?demi[- ]heure\b/i, ' ');
-        matched.push('duration');
-      } else if (/\b(?:pendant\s+|pour\s+|durée\s+|d['’])?(?:un\s+)?quart\s+d['’]heure\b/i.test(working)) {
-        result.durationMinutes = 15;
-        working = working.replace(/\b(?:pendant\s+|pour\s+|durée\s+|d['’])?(?:un\s+)?quart\s+d['’]heure\b/i, ' ');
-        matched.push('duration');
-      } else if (/\b(?:pendant\s+|pour\s+|durée\s+|for\s+|für\s+|por\s+|durante\s+)(?:une\s+heure|an?\s+hour|eine\s+stunde|una\s+hora)\b/i.test(working)) {
-        result.durationMinutes = 60;
-        working = working.replace(/\b(?:pendant\s+|pour\s+|durée\s+|for\s+|für\s+|por\s+|durante\s+)(?:une\s+heure|an?\s+hour|eine\s+stunde|una\s+hora)\b/i, ' ');
-        matched.push('duration');
-      }
+        return ' ';
+      });
     }
 
-    // Explicit duration with preposition ("pendant 30 min", "pour 20 minutes", "for 2 hours", "durée 45 min")
+    // Explicit duration with preposition ("pendant 30 min", "pour 20 minutes", "ça me prend 15 minutes", "for 2 hours", "durée 45 min")
     if (result.durationMinutes === null) {
-      working = working.replace(/\b(?:pendant|pour|durée(?:\s+de)?|for|für|por|durante)\s+(\d+)\s*(?:heures?|hours?|hrs?|h)\s*(\d{1,2})?\s*(?:minutes?|mins?|m)?\b/i, (m, h, min) => {
-        result.durationMinutes = parseInt(h, 10) * 60 + (min ? parseInt(min, 10) : 0);
+      const hoursMinRe = new RegExp(`${DURATION_PREFIX_SOURCE}\\s*(\\d+(?:\\.\\d+)?)\\s*(?:heures?|hours?|hrs?|stunden?|horas?|h)(?:\\s*(?:(?:,?\\s*(?:et|and|und|y)\\s+(?:(?:une?|an?|eine?|un[ao]?)\\s+)?)?(?:(demie?|half|halbe?|media)|(quarters?|quarts?|viertel|cuartos?)|(\\d{1,2})\\s*(?:minutes?|mins?|minuten|minutos|mn|m)?)))?\\b`, 'i');
+      working = working.replace(hoursMinRe, (m, h, half, quart, min) => {
+        const extraMin = half ? 30 : (quart ? 15 : (min ? parseInt(min, 10) : 0));
+        result.durationMinutes = Math.round(parseFloat(h) * 60) + extraMin;
         matched.push('duration');
         return ' ';
       });
     }
     if (result.durationMinutes === null) {
-      working = working.replace(/\b(?:pendant|pour|durée(?:\s+de)?|for|für|por|durante)\s+(\d+)\s*(?:minutes?|mins?|minuten|minutos|m)\b/i, (m, val) => {
+      const minRe = new RegExp(`${DURATION_PREFIX_SOURCE}\\s*(\\d+)\\s*(?:minutes?|mins?|minuten|minutos|mn|m)\\b`, 'i');
+      working = working.replace(minRe, (m, val) => {
         result.durationMinutes = parseInt(val, 10);
         matched.push('duration');
         return ' ';
@@ -366,21 +384,21 @@
     // Time of day:
     // 1. "midi 50", "midi et demi", "midi", "minuit"
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi\s+et\s+demi(?:e)?\b/i, () => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi\s+et\s+demi(?:e)?\b/i, () => {
         timeParts = { hours: 12, minutes: 30 };
         matched.push('time');
         return ' ';
       });
     }
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi(?:\s+([0-5]?\d))?\b/i, (m, min) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*midi(?:\s+([0-5]?\d))?\b/i, (m, min) => {
         timeParts = { hours: 12, minutes: min ? parseInt(min, 10) : 0 };
         matched.push('time');
         return ' ';
       });
     }
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*minuit(?:\s+([0-5]?\d))?\b/i, (m, min) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:ça|ca)\s+commence\s+)?(?:à|a|vers|at)?\s*minuit(?:\s+([0-5]?\d))?\b/i, (m, min) => {
         timeParts = { hours: 0, minutes: min ? parseInt(min, 10) : 0 };
         matched.push('time');
         return ' ';
@@ -400,7 +418,7 @@
 
     // 3. French/European "à 12h50", "commence à 12h50", "à 12 heures 50", "à 14h", "12h50"
     if (!timeParts) {
-      working = working.replace(/\b(?:(?:et\s+)?(?:ça|ca|il|elle|la\s+tâche|l['’]événement)\s+)?(?:commence(?:nt|r)?\s+|débute(?:nt|r)?\s+|start(?:s|ing)?\s+)?(?:à|a|vers|at|um|a\s+las)\s*([01]?\d|2[0-3])\s*(?:h|heures?|uhr|:)\s*([0-5]\d)?\b/i, (m, h, min) => {
+      working = working.replace(/(?:\b|(?<=^|[\s]))(?:(?:et\s+)?(?:ça|ca|il|elle|la\s+tâche|l['’]événement)\s+)?(?:commence(?:nt|r)?\s+|débute(?:nt|r)?\s+|start(?:s|ing)?\s+)?(?:à|a|vers|at|um|a\s+las)\s*([01]?\d|2[0-3])\s*(?:h|heures?|uhr|:)\s*([0-5]\d)?\b/i, (m, h, min) => {
         timeParts = { hours: parseInt(h, 10), minutes: min ? parseInt(min, 10) : 0 };
         matched.push('time');
         return ' ';
@@ -417,14 +435,17 @@
 
     // Remaining bare duration: "for 30 min", "~45m", "30 minutes", "1.5h", "2 hours", "30 min"
     if (result.durationMinutes === null) {
-      working = working.replace(/(?:\bfor\s+|~\s*)?(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|heures?|stunden?|horas?|h)\b/i, (m, val) => {
-        result.durationMinutes = Math.round(parseFloat(val) * 60);
+      const bareHoursRe = new RegExp(`(?:${DURATION_PREFIX_SOURCE})?\\s*(\\d+(?:\\.\\d+)?)\\s*(?:hours?|hrs?|heures?|stunden?|horas?|h)(?:\\s*(?:(?:,?\\s*(?:et|and|und|y)\\s+(?:(?:une?|an?|eine?|un[ao]?)\\s+)?)?(?:(demie?|half|halbe?|media)|(quarters?|quarts?|viertel|cuartos?)|(\\d{1,2})\\s*(?:minutes?|mins?|minuten|minutos|mn|m)?)))?\\b`, 'i');
+      working = working.replace(bareHoursRe, (m, val, half, quart, min) => {
+        const extraMin = half ? 30 : (quart ? 15 : (min ? parseInt(min, 10) : 0));
+        result.durationMinutes = Math.round(parseFloat(val) * 60) + extraMin;
         matched.push('duration');
         return ' ';
       });
     }
     if (result.durationMinutes === null) {
-      working = working.replace(/(?:\bfor\s+|~\s*)?(\d+)\s*(?:minutes?|mins?|minuten|minutos|m)\b(?!\w)/i, (m, val) => {
+      const bareMinRe = new RegExp(`(?:${DURATION_PREFIX_SOURCE})?\\s*(\\d+)\\s*(?:minutes?|mins?|minuten|minutos|mn|m)\\b(?!\\w)`, 'i');
+      working = working.replace(bareMinRe, (m, val) => {
         result.durationMinutes = parseInt(val, 10);
         matched.push('duration');
         return ' ';
@@ -587,6 +608,7 @@
         durationMinutes: (heuristic.matched?.includes('duration') && heuristic.durationMinutes)
           ? heuristic.durationMinutes
           : (Number.isFinite(duration) && duration > 0 ? Math.round(duration) : heuristic.durationMinutes),
+        estimatedMinutes: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : estimateTypicalDuration(cleanName(String(parsed.name)) || heuristic.name),
         importance: Number.isFinite(importance) ? Math.max(1, Math.min(10, Math.round(importance))) : heuristic.importance,
         urgency: Number.isFinite(urgency) ? Math.max(1, Math.min(10, Math.round(urgency))) : heuristic.urgency,
         isFixed: typeof parsed.isFixed === 'boolean' ? (parsed.isFixed || Boolean(aiPlannerDate)) : (heuristic.isFixed || Boolean(aiPlannerDate)),
@@ -605,5 +627,5 @@
     }
   }
 
-  if (typeof window !== "undefined") window.TaskParser = { parse, parseSmart, toLocalStamp, normalizeDateTime };
+  if (typeof window !== "undefined") window.TaskParser = { parse, parseSmart, toLocalStamp, normalizeDateTime, estimateTypicalDuration };
 })();

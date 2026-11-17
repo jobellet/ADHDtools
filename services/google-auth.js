@@ -147,8 +147,13 @@
 
   async function nativeClient() {
     await loadMcpClient();
-    const id = (getSavedClientId() || mcpClient?.clientId || '').trim();
-    const secret = (getClientSecret() || '').trim();
+    // An ID and a secret must come from the same OAuth client: Google refuses a mixed pair with
+    // "The provided client secret is invalid". Use the saved pair, else the AI assistant's pair.
+    const savedId = getSavedClientId().trim();
+    const savedSecret = getSavedClientSecret().trim();
+    if (savedId && savedSecret) return { clientId: savedId, clientSecret: savedSecret };
+    const id = String(mcpClient?.clientId || '').trim();
+    const secret = String(mcpClient?.clientSecret || '').trim();
     if (id && secret) return { clientId: id, clientSecret: secret };
     throw new Error('Desktop and Android apps need a "Desktop app" OAuth Client ID and Client Secret from Google Cloud Console. Enter them in Settings → Calendar Notifications & Google Sync.');
   }

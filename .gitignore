@@ -7,6 +7,7 @@ api-key.js
 server_log.txt
 
 # OS/editor noise
+.agents/
 .DS_Store
 Thumbs.db
 
@@ -38,3 +39,6 @@ client_secret*.json
 adhd-secrets.json
 adhd-local-store.json
 gcal-*.json
+
+/dist-ios
+/ios/web

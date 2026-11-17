@@ -4,8 +4,8 @@ Read first: [../AGENTS.md](../AGENTS.md). Logic lives in `core/now-state.js` (mo
 
 | File | Role |
 | --- | --- |
-| `now-view.js` | Renders `#now-view` (kicker, title, countdown ring, steps, 2–3 action buttons, Next up). Also renders two planner parts: the now/next strip `#plan-next-strip` and the **Plan ahead** panel `#plan-deadlines` (deadlines, big tasks, Split, delete one / delete all overdue with Undo). |
-| `quick-capture.js` | The **Add** sheet (`#quick-capture-form`, voice button): parses text with `TaskParser`, moves a busy time to the next free slot, adds to `TaskStore`. Also renders **Today's progress** (`#daily-progress`). |
+| `now-view.js` | Renders `#now-view` (kicker, title, countdown ring, steps, 2–3 action buttons, Next up). Also renders two planner parts: the now/next strip `#plan-next-strip` and the **Task Stack / Plan ahead** panel `#plan-deadlines` (`renderDeadlines()`: unscheduled + deadline + big tasks sorted by deadline ascending, `draggable=true` onto `#time-blocks` or downward onto `#plan-breakdown-dropzone`, Split, Done, delete with Undo). |
+| `quick-capture.js` | The **Add** sheet (`#quick-capture-form`, voice button): parses text with `TaskParser`, defaults to `plannerDate: null` + today `18:00` deadline (`YYYY-MM-DDT18:00`) when no start time is given, estimates duration via `TaskParser.estimateTypicalDuration`, moves a busy time to the next free slot, adds to `TaskStore`. Also renders **Today's progress** (`#daily-progress`). |
 | `now.css` | Now view, Add sheet, progress card. |
 | `strings.js` | Keys `now.*`, `strip.*`, `due.*`, `unit.*`, `progress.*`, `capture.*`. |
 

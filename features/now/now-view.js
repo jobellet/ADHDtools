@@ -649,6 +649,13 @@
       return t('due.on', { when: fmtDate(due) });
     }
 
+    function markDone(task) {
+      if (!task?.hash && !task?.id) return;
+      window.TaskStore?.markComplete?.(task.hash || task.id);
+      window.DataManager?.showNotification?.(t('now.toast.done', { name: taskName(task) }));
+      refreshAll();
+    }
+
     function deleteTasks(tasks) {
       if (!tasks.length || !window.TaskStore?.deleteTasks) return;
       const removed = window.TaskStore.deleteTasks(tasks.map(task => task.hash));
@@ -679,15 +686,27 @@
       const pending = (window.TaskStore?.getPendingTasks?.() || [])
         .filter(task => (!user || task.user === user) && !isAppointment(task));
       const overdue = window.TaskStore?.getOverdueTasks?.(now, user) || [];
+      const unscheduled = pending.filter(task => !task.plannerDate || task.autoPinned);
       const withDeadline = pending
         // A fixed appointment's time is not a deadline to plan for, unless it is overdue.
         .filter(task => task.deadline && (overdue.includes(task)
           || !(task.plannerDate && (task.isFixed || task.deadline.slice(0, 16) === task.plannerDate.slice(0, 16)))))
         .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-      const big = pending
-        .filter(task => !withDeadline.includes(task) && (task.needsBreakdown || Number(task.durationMinutes) > BIG_TASK_MINUTES));
-      const all = [...withDeadline, ...big];
-      const items = all.slice(0, 10);
+      const stack = [
+        ...withDeadline,
+        ...unscheduled.filter(task => !withDeadline.includes(task)),
+        ...pending.filter(task => !withDeadline.includes(task) && !unscheduled.includes(task) && (task.needsBreakdown || Number(task.durationMinutes) > BIG_TASK_MINUTES)),
+      ];
+      stack.sort((a, b) => {
+        const da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+        const db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+        const ta = Number.isNaN(da) ? Infinity : da;
+        const tb = Number.isNaN(db) ? Infinity : db;
+        if (ta !== tb) return ta - tb;
+        return (Number(b.importance ?? 5) * Number(b.urgency ?? 5)) - (Number(a.importance ?? 5) * Number(a.urgency ?? 5));
+      });
+      const all = stack;
+      const items = all.slice(0, 15);
 
       // Open on large screens; on phones it starts closed. The user's choice sticks.
       const wasOpen = box.querySelector('details')?.open;
@@ -732,6 +751,28 @@
       items.forEach(task => {
         const li = document.createElement('li');
         li.className = `plan-deadline-item${overdue.includes(task) ? ' overdue' : ''}`;
+        li.draggable = true;
+        li.dataset.taskId = task.hash || task.id || '';
+        li.addEventListener('dragstart', e => {
+          li.classList.add('dragging');
+          const startRect = li.getBoundingClientRect();
+          if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', task.hash || task.id || '');
+          }
+          window.__draggingStackTask = {
+            id: task.hash || task.id,
+            task,
+            startY: e.clientY || startRect.top,
+            startX: e.clientX || startRect.left,
+          };
+          window.dispatchEvent(new CustomEvent('stackDragStart', { detail: window.__draggingStackTask }));
+        });
+        li.addEventListener('dragend', () => {
+          li.classList.remove('dragging');
+          window.dispatchEvent(new CustomEvent('stackDragEnd', { detail: window.__draggingStackTask }));
+          window.__draggingStackTask = null;
+        });
         const info = document.createElement('div');
         info.className = 'plan-deadline-info';
         const name = document.createElement('span');
@@ -764,6 +805,25 @@
         list.appendChild(li);
       });
       details.appendChild(list);
+      const dropZone = document.createElement('div');
+      dropZone.id = 'plan-breakdown-dropzone';
+      dropZone.className = 'plan-breakdown-dropzone';
+      dropZone.innerHTML = `<i class="fas fa-project-diagram"></i> <span>${t('plan.dropBreakdown')}</span>`;
+      dropZone.addEventListener('dragover', e => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+      });
+      dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over', 'visible');
+        const taskId = e.dataTransfer?.getData('text/plain') || window.__draggingStackTask?.id;
+        const droppedTask = window.__draggingStackTask?.task || (taskId && window.TaskStore?.getTaskByHash?.(taskId));
+        if (droppedTask) sendToBreakdown(droppedTask);
+      });
+      details.appendChild(dropZone);
       if (all.length > items.length) {
         const more = document.createElement('p');
         more.className = 'plan-deadlines-more';
@@ -959,6 +1019,28 @@
       if (!document.hidden) recompute();
     });
     window.addEventListener('toolChanged', tick);
+    window.addEventListener('userAction', registerUserAction);
+    window.addEventListener('taskCaptured', registerUserAction);
+
+    document.addEventListener('dragover', e => {
+      if (!window.__draggingStackTask) return;
+      const dz = document.getElementById('plan-breakdown-dropzone');
+      if (!dz) return;
+      const dy = e.clientY - (window.__draggingStackTask.startY || 0);
+      const dx = Math.abs(e.clientX - (window.__draggingStackTask.startX || 0));
+      if (dy > 20 || (dy > 0 && dy >= dx)) {
+        dz.classList.add('visible');
+      }
+    });
+    window.addEventListener('stackDragStart', () => {
+      registerUserAction();
+      const dz = document.getElementById('plan-breakdown-dropzone');
+      if (dz) dz.classList.add('visible');
+    });
+    window.addEventListener('stackDragEnd', () => {
+      const dz = document.getElementById('plan-breakdown-dropzone');
+      if (dz) dz.classList.remove('visible', 'drag-over');
+    });
 
     if (window.UnifiedScheduler) recompute();
     else window.addEventListener('schedulerReady', recompute, { once: true });

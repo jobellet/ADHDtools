@@ -63,8 +63,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
 
-  # The three apps run the same web files. `test` checks they stay aligned
-  # (tests/native-alignment.test.js); these two jobs check each native shell still builds.
+  # The native apps run the same web files. `test` checks they stay aligned
+  # (tests/native-alignment.test.js); the android/desktop/ios jobs check each native shell still builds.
   android:
     runs-on: ubuntu-latest
     permissions:
@@ -111,3 +111,35 @@ jobs:
       - run: node scripts/prepare-desktop.cjs
       - run: cargo check --locked
         working-directory: src-tauri
+
+  # The iOS app (ios/, Swift WKWebView running the same web files). Builds an unsigned
+  # ADHD-Tools.ipa: the sideload tool on the device (SideStore/AltStore/Sideloadly) signs it
+  # with the user's own free Apple ID, so no paid Apple Developer account is needed.
+  # macos runners are free for this public repository. See docs/ios.md.
+  ios:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/build-ios.cjs
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ADHD-Tools-iOS-IPA
+          path: dist-ios/ADHD-Tools.ipa
+          if-no-files-found: ignore
+      - name: Publish Latest Release IPA
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest iOS Release
+          body: "Latest automated iOS build. Install ADHD-Tools.ipa on your iPhone/iPad with SideStore, AltStore or Sideloadly (free Apple ID, no Mac needed) — guide: docs/ios.md."
+          files: dist-ios/ADHD-Tools.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -145,6 +145,22 @@ final class NativeBridge implements WebViewCompat.WebMessageListener {
                 return speech.snapshot();
             case "native_stop_speech":
                 return onUiAndWait(speech::stop);
+            case "native_local_ai_status":
+                JSONObject aiStatus = new JSONObject();
+                aiStatus.put("available", false);
+                aiStatus.put("running", false);
+                aiStatus.put("port", 11434);
+                return aiStatus;
+            case "native_local_ai_start":
+                JSONObject aiStart = new JSONObject();
+                aiStart.put("available", false);
+                aiStart.put("running", false);
+                return aiStart;
+            case "native_local_ai_stop":
+                JSONObject aiStop = new JSONObject();
+                aiStop.put("available", false);
+                aiStop.put("running", false);
+                return aiStop;
             case "android_save_file":
                 activity.saveFile(args.optString("name"), args.optString("mime"),
                         android.util.Base64.decode(args.optString("base64"), android.util.Base64.DEFAULT));

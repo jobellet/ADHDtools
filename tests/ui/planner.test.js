@@ -213,3 +213,73 @@ test('an event saved after the day end is still drawn', async () => {
     await context.close();
   }
 });
+
+test('task stack orders tasks by deadline, supports drag-drop to timeline and downward breakdown', async () => {
+  const { page, context, errors } = await openPlanner('desktop', `${DAY}T09:00:00`);
+  try {
+    // 1. Capture two tasks: one with "avant jeudi" (later deadline) and one default (today 18:00 deadline)
+    await page.evaluate(() => {
+      window.AppSheets.open('capture');
+    });
+    await page.fill('#quick-capture-input', 'je dois préparer le dossier avant jeudi');
+    await page.click('#quick-capture-form button[type="submit"]');
+    await page.clock.runFor(200);
+
+    await page.evaluate(() => {
+      window.AppSheets.open('capture');
+    });
+    await page.fill('#quick-capture-input', 'je dois etendre le linge et ça me prends 15 minutes');
+    await page.click('#quick-capture-form button[type="submit"]');
+    await page.clock.runFor(200);
+
+    const stackOrder = await page.evaluate(() => {
+      return [...document.querySelectorAll('#plan-deadlines .plan-deadline-item .plan-deadline-name')].map(el => el.textContent.trim());
+    });
+    const idxLaundry = stackOrder.indexOf('etendre le linge');
+    const idxFolder = stackOrder.indexOf('préparer le dossier');
+    assert.ok(idxLaundry !== -1 && idxFolder !== -1, `Stack missing captured tasks: ${stackOrder.join(', ')}`);
+    assert.ok(idxLaundry < idxFolder, `Today's task should appear before Thursday's task in stack; got: ${stackOrder.join(', ')}`);
+
+    // 2. Drag "etendre le linge" from stack onto #time-blocks -> opens #event-modal prefilled with title and 15 min duration
+    await page.evaluate(() => {
+      const item = [...document.querySelectorAll('#plan-deadlines .plan-deadline-item')]
+        .find(el => el.querySelector('.plan-deadline-name')?.textContent.trim() === 'etendre le linge');
+      const taskId = item.dataset.taskId;
+      const task = window.TaskStore.getTaskByHash(taskId);
+      window.__draggingStackTask = task;
+      const tb = document.getElementById('time-blocks');
+      const rect = tb.getBoundingClientRect();
+      const dropEv = new DragEvent('drop', { bubbles: true, cancelable: true, clientX: rect.left + 100, clientY: rect.top + 200 });
+      tb.dispatchEvent(dropEv);
+    });
+    await page.clock.runFor(200);
+    assert.ok(await page.evaluate(() => document.getElementById('event-modal').classList.contains('active')), 'dropping on timeline should open #event-modal');
+    assert.equal(await page.inputValue('#event-title'), 'etendre le linge');
+    assert.equal(await page.inputValue('#event-duration'), '15');
+    await page.fill('#event-time', '14:00');
+    await page.click('.event-save');
+    await page.clock.runFor(300);
+    const scheduledLaundry = await page.evaluate(() => window.TaskStore.getAllTasks().find(t => t.name === 'etendre le linge'));
+    assert.equal(scheduledLaundry.plannerDate, `${DAY}T14:00`);
+
+    // 3. Drag "préparer le dossier" downward onto #plan-breakdown-dropzone -> decomposes into subtasks that appear in #plan-deadlines
+    await page.evaluate(() => {
+      const item = [...document.querySelectorAll('#plan-deadlines .plan-deadline-item')]
+        .find(el => el.querySelector('.plan-deadline-name')?.textContent.trim() === 'préparer le dossier');
+      const taskId = item.dataset.taskId;
+      const task = window.TaskStore.getTaskByHash(taskId);
+      window.__draggingStackTask = task;
+      const dz = document.getElementById('plan-breakdown-dropzone');
+      dz.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true }));
+    });
+    await page.clock.runFor(300);
+    const stackAfterSplit = await page.evaluate(() => {
+      window.switchTool('planner');
+      return [...document.querySelectorAll('#plan-deadlines .plan-deadline-item .plan-deadline-name')].map(el => el.textContent.trim());
+    });
+    assert.ok(stackAfterSplit.some(name => name.includes('préparer le dossier (1/3)')), `Subtasks should appear in stack after breakdown drop; got: ${stackAfterSplit.join(', ')}`);
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});

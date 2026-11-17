@@ -2,7 +2,20 @@
 
 Shared instructions for every coding agent (Claude, Codex, Gemini, Mistral, Copilot…) and for humans.
 
-**How to read (save tokens):** read this file, then only the `AGENTS.md` of the folder you change.
+**How to read (save tokens):**
+1. Read this file first, then **only** the `AGENTS.md` of the folder you change.
+2. **Never read whole folders or full large files (`index.html`, `day-planner.js`, `now-view.js`) to "get context"**: use the Fast Context Map below and each folder's `AGENTS.md` to jump directly to the exact file, function, and DOM selector using targeted line ranges (`StartLine`/`EndLine`).
+3. Before modifying any function signature, markup attribute (`data-cap`, `data-i18n`), or global, check the Test Invariants in [tests/AGENTS.md](tests/AGENTS.md).
+
+## Fast Context Map (Where Everything Lives)
+
+| User Flow / UI Area | DOM IDs (in `index.html`) | Logic & Rendering File | Key Functions |
+| --- | --- | --- | --- |
+| **Quick Capture / Voice Add** | `#capture-sheet`, `#quick-capture-form`, `#quick-capture-input`, `#quick-capture-voice` | `features/now/quick-capture.js`, `core/task-parser.js` | `captureTask()` (defaults to `plannerDate: null`, `deadline: YYYY-MM-DDT18:00`, duration via `TaskParser.estimateTypicalDuration`), `TaskParser.parseSmart()` |
+| **Now View (1 thing at a time)** | `#home`, `#now-view`, `#now-actions`, `#now-next-list` | `features/now/now-view.js`, `core/now-state.js` | `NowState.computeNowState()`, `renderNow()` |
+| **Daily Task Stack ("Pile")** | `#plan-deadlines` (`.plan-deadline-item`), `#plan-breakdown-dropzone`, `#plan-next-strip` | Rendered by `features/now/now-view.js` (HTML lives inside `#planner` in `index.html`) | `renderDeadlines()` (sorts unscheduled/deadline tasks by deadline ascending, sets `draggable=true`, shows `#plan-breakdown-dropzone` on downward drag) |
+| **Day Planner Timeline & Modal** | `#planner`, `#time-blocks`, `#event-modal`, `#event-form`, `#ai-plan-day-btn`, `#record-event-btn` | `features/planner/day-planner.js`, `features/planner/render-day.js`, `features/planner/ai-plan.js` | `renderDayPlanner()`, `openModal(task, presetTime, externalTask)`, `autoPlanDay()` (`planDayWithAI` + `realisticOfflinePlanDay`), `handleVoiceCommand()`, timeline `drop` handler |
+| **Task Breakdown (Subtasks)** | `#breakdown`, `#project-list`, `#task-select-modal` | `features/breakdown/task-breakdown.js` | `handleReceivedTaskForTaskBreakdown()` (receives `ef-receiveTaskFor-TaskBreakdown`), `syncSubtaskToStore()` (archives split parent & adds subtasks to `TaskStore`) |
 Do not read whole folders to "get context": each `AGENTS.md` lists what is inside and what depends on it.
 
 | Folder | What it holds | Read |
@@ -13,6 +26,7 @@ Do not read whole folders to "get context": each `AGENTS.md` lists what is insid
 | `features/<name>/` | One screen each: JS + CSS + `strings.js` + `AGENTS.md` | [features/AGENTS.md](features/AGENTS.md) |
 | `mcp/` | MCP server: AI assistants read the day and queue changes via Google Drive (Node only) | [mcp/AGENTS.md](mcp/AGENTS.md) |
 | `android/` | Android app (Java WebView, same web files): alarms with the screen off, Google sign-in kept | [android/AGENTS.md](android/AGENTS.md) |
+| `ios/` | iOS app (Swift WKWebView, same web files): alarms via local notifications, Google sign-in kept | [ios/AGENTS.md](ios/AGENTS.md) |
 | `styles/` | Legacy shared CSS and the app shell CSS | [styles/AGENTS.md](styles/AGENTS.md) |
 | `tests/` | `node:test` unit tests (no browser) | [tests/AGENTS.md](tests/AGENTS.md) |
 | `docs/` | User guides and design docs; READMEs in 4 languages | [docs/AGENTS.md](docs/AGENTS.md) |
@@ -41,9 +55,10 @@ npm run mcp:check                   # test a user's MCP setup end to end (prints
 npm run desktop:install             # build + install into /Applications (macOS) or Start Menu (Windows)
 npm run desktop:build               # native app (Tauri/Rust in src-tauri/); `npm run desktop` = dev window. Web assets are copied by scripts/prepare-desktop.cjs
 npm run android:build               # Android APK in dist-android/ (needs the Android SDK; guide: docs/android.md); android:install = + adb install
+npm run ios:build                   # iOS IPA in dist-ios/ (needs macOS + Xcode; guide: docs/ios.md); ios:prepare = copy the web files into ios/web/
 ```
 `npm run test:ui` needs Chromium once: `npx playwright install chromium` (skip it where Playwright
-browsers are preinstalled). CI runs `npm test` and `npm run test:ui` on every PR, plus the `android` (APK build) and `desktop` (`cargo check`) jobs.
+browsers are preinstalled). CI runs `npm test` and `npm run test:ui` on every PR, plus the `android` (APK build), `ios` (IPA build) and `desktop` (`cargo check`) jobs.
 No build step, no bundler, no runtime npm packages: files are served as they are (GitHub Pages).
 `jsdom` and `playwright` are for tests only. CI: `.github/workflows/ci.yml` (jobs `test` and `ui`).
 
@@ -166,10 +181,11 @@ Changing the shape of stored data needs a migration that reads the old shape (us
 - **Keep the AI assistant in step:** a new TaskStore method, scheduler function, task field, `adhd-…` storage
   key or global makes `tests/mcp-coverage.test.js` fail until `mcp/coverage.js` says which MCP tool uses it
   (or `no: <reason>`). See [mcp/AGENTS.md](mcp/AGENTS.md) → "When you add something to the app".
-- **Three apps, one web code:** GitHub Pages, the desktop app (`src-tauri/`) and the Android app (`android/`)
-  run the same files. A native command (`invokeNative('native_…')`) must exist in **both** native apps;
-  web folders are listed once in `scripts/web-assets.json`; `tests/native-alignment.test.js` checks this.
-  CI also builds the APK and compile-checks the desktop app. See [android/AGENTS.md](android/AGENTS.md).
+- **Four apps, one web code:** GitHub Pages, the desktop app (`src-tauri/`), the Android app (`android/`)
+  and the iOS app (`ios/`) run the same files. A native command (`invokeNative('native_…')`) must exist
+  in **all** native apps; web folders are listed once in `scripts/web-assets.json`;
+  `tests/native-alignment.test.js` checks this. CI also builds the APK and the IPA and compile-checks the
+  desktop app. See [android/AGENTS.md](android/AGENTS.md) and [ios/AGENTS.md](ios/AGENTS.md).
 - **Keep docs true:** if you change a contract above, update this file in the same commit.
 
 ## Working in parallel

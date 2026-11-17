@@ -19,7 +19,15 @@ Open **More → Settings → AI Assistance (optional — any provider)** and pic
 | Mistral | `mistral-small-latest` | [console.mistral.ai/api-keys](https://console.mistral.ai/api-keys) |
 | Groq | `llama-3.3-70b-versatile` | [console.groq.com/keys](https://console.groq.com/keys) |
 | OpenRouter | `openai/gpt-4o-mini` | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| Local AI (LFM3) | `lfm3` | **100% Free & Offline** (No key needed). Guide: [docs/local-ai.md](local-ai.md) |
 | Custom / Local | any | Any OpenAI-compatible endpoint: Ollama, LM Studio, vLLM… (no key needed for most local servers) |
+
+### 🔒 Recommended: 100% Local AI with LFM3
+
+You can run Liquid AI's **LFM3-1.7B** model directly on your machine. It takes only ~1 GB of RAM, runs fast on CPU, and guarantees complete privacy (nothing is sent over the internet).
+In the desktop app, an **"IA locale" / "Local AI"** button automatically appears in the header to start/stop the server whenever the model is installed.
+
+👉 See the complete 1-click setup guide: **[docs/local-ai.md](local-ai.md)**.
 
 Paste your key, optionally override the model, click **Test connection**, then **Save**. A step-by-step tutorial for obtaining keys is built into the Settings panel itself.
 

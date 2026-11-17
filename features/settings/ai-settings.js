@@ -56,8 +56,28 @@ document.addEventListener('DOMContentLoaded', () => {
             <li>Click "Create API Key".</li>
             <li>Copy the key and paste it below.</li>
           </ol>
+
+          <p><strong>Local AI (LFM3 / llama.cpp / Ollama — 100% Offline & Private):</strong></p>
+          <p style="margin-top: 0.25rem; margin-bottom: 0.5rem;">
+            Run a lightweight ~1 GB open model directly on your PC with zero cloud dependency.
+            See the step-by-step setup guide: <a href="docs/local-ai.md" target="_blank" rel="noopener noreferrer">docs/local-ai.md</a>.
+          </p>
         </div>
       </details>
+
+      <div id="local-ai-desktop-card" class="local-ai-card hidden">
+        <div class="local-ai-card-header">
+          <strong><i class="fas fa-microchip"></i> <span data-i18n="settings.localAi.title">Local AI</span></strong>
+          <span id="local-ai-settings-badge" class="local-ai-badge stopped">Stopped</span>
+        </div>
+        <p class="small-note" data-i18n="settings.localAi.desc">
+          Run an AI model directly on your computer (100% offline, private, and free).
+        </p>
+        <div class="local-ai-actions">
+          <button id="local-ai-settings-toggle-btn" class="btn btn-secondary btn-sm" type="button">Start Local AI</button>
+          <button id="local-ai-settings-use-btn" class="btn btn-outline btn-sm" type="button" data-i18n="settings.localAi.useAsProvider">Use as active provider</button>
+        </div>
+      </div>
 
       <div class="setting-group">
         <label for="ai-provider-select">AI provider</label>
@@ -176,5 +196,118 @@ document.addEventListener('DOMContentLoaded', () => {
     showStatus('AI settings cleared.');
   });
 
+  async function setupLocalAi() {
+    const headerBtn = document.getElementById('local-ai-header-btn');
+    const card = document.getElementById('local-ai-desktop-card');
+    const badge = document.getElementById('local-ai-settings-badge');
+    const toggleBtn = document.getElementById('local-ai-settings-toggle-btn');
+    const useBtn = document.getElementById('local-ai-settings-use-btn');
+
+    if (!window.AttentionService?.isNative?.()) {
+      if (headerBtn) headerBtn.classList.add('hidden');
+      if (card) card.classList.add('hidden');
+      return;
+    }
+
+    function updateUi(status) {
+      if (!status || !status.available) {
+        if (headerBtn) headerBtn.classList.add('hidden');
+        if (card) card.classList.add('hidden');
+        return;
+      }
+
+      // Local AI is present! Show the controls
+      if (headerBtn) headerBtn.classList.remove('hidden');
+      if (card) card.classList.remove('hidden');
+
+      const isRunning = Boolean(status.running);
+      const port = status.port || 11434;
+
+      if (headerBtn) {
+        headerBtn.classList.toggle('running', isRunning);
+        const titleStr = isRunning
+          ? `${window.I18n?.t ? window.I18n.t('local-ai-btn') : 'Local AI'} : ${window.I18n?.t ? window.I18n.t('settings.localAi.running', { port }) : 'Running'}`
+          : `${window.I18n?.t ? window.I18n.t('local-ai-btn') : 'Local AI'} : ${window.I18n?.t ? window.I18n.t('settings.localAi.stopped') : 'Stopped'}`;
+        headerBtn.title = titleStr;
+        headerBtn.setAttribute('aria-label', titleStr);
+      }
+
+      if (badge) {
+        badge.className = `local-ai-badge ${isRunning ? 'running' : 'stopped'}`;
+        badge.textContent = isRunning
+          ? (window.I18n?.t ? window.I18n.t('settings.localAi.running', { port }) : `Active on port ${port}`)
+          : (window.I18n?.t ? window.I18n.t('settings.localAi.stopped') : 'Stopped');
+      }
+
+      if (toggleBtn) {
+        toggleBtn.textContent = isRunning
+          ? (window.I18n?.t ? window.I18n.t('settings.localAi.stop') : 'Stop Local AI Server')
+          : (window.I18n?.t ? window.I18n.t('settings.localAi.start') : 'Start Local AI Server');
+        toggleBtn.className = `btn ${isRunning ? 'btn-danger' : 'btn-secondary'} btn-sm`;
+      }
+    }
+
+    async function refreshStatus() {
+      try {
+        const status = await window.AttentionService.getLocalAiStatus();
+        updateUi(status);
+        return status;
+      } catch (err) {
+        updateUi({ available: false, running: false });
+        return { available: false, running: false };
+      }
+    }
+
+    async function handleToggle() {
+      const current = await refreshStatus();
+      if (!current.available) return;
+
+      if (headerBtn) headerBtn.classList.add(current.running ? 'stopping' : 'starting');
+      if (toggleBtn) toggleBtn.disabled = true;
+
+      try {
+        const next = current.running
+          ? await window.AttentionService.stopLocalAi()
+          : await window.AttentionService.startLocalAi();
+        updateUi(next);
+      } catch (err) {
+        console.warn('Failed to toggle local AI:', err);
+      } finally {
+        if (headerBtn) headerBtn.classList.remove('starting', 'stopping');
+        if (toggleBtn) toggleBtn.disabled = false;
+        refreshStatus();
+      }
+    }
+
+    if (headerBtn) {
+      headerBtn.addEventListener('click', handleToggle);
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', handleToggle);
+    }
+
+    if (useBtn) {
+      useBtn.addEventListener('click', () => {
+        providerSelect.value = 'custom';
+        baseUrlInput.value = 'http://localhost:11434/v1';
+        modelInput.value = 'lfm3';
+        keyInput.value = '';
+        refreshVisibility();
+        window.AIAssistant.saveSettings({
+          provider: 'custom',
+          apiKey: '',
+          model: 'lfm3',
+          baseUrl: 'http://localhost:11434/v1',
+        });
+        showStatus(`Saved. Active: ${window.AIAssistant.getActiveLabel()}`);
+        window.CredentialsSync?.refresh();
+      });
+    }
+
+    refreshStatus();
+  }
+
   loadIntoForm();
+  setupLocalAi();
 });

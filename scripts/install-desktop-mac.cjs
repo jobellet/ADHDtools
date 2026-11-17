@@ -14,8 +14,7 @@ if (process.platform !== 'darwin') {
 const root = path.resolve(__dirname, '..');
 const run = (cmd, args) => spawnSync(cmd, args, { cwd: root, stdio: 'inherit' }).status === 0;
 
-// Only the .app is installed: skip the .dmg (release downloads only), whose disk image step can fail
-// with "hdiutil: couldn't unmount … Resource busy" when Finder or Spotlight still reads it.
+// Build only the .app: it is all we install. The .dmg step (hdiutil) often fails with "Resource busy".
 if (!run('npm', ['run', 'desktop:build', '--', '--bundles', 'app'])) process.exit(1);
 
 const built = path.join(root, 'src-tauri', 'target', 'release', 'bundle', 'macos', 'ADHD Tools.app');

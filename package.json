@@ -12,6 +12,8 @@
     "desktop:install": "node scripts/install-desktop.cjs",
     "android:build": "node scripts/build-android.cjs",
     "android:install": "node scripts/build-android.cjs --install",
+    "ios:prepare": "node scripts/prepare-ios.cjs",
+    "ios:build": "node scripts/build-ios.cjs",
     "mcp": "node mcp/server.js",
     "mcp:auth": "node mcp/server.js auth",
     "mcp:http": "node mcp/server.js http",
