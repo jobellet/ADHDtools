@@ -42,7 +42,7 @@ final class SpeechSession {
         guard let request else { return }
         request.shouldReportPartialResults = true
         if #available(iOS 17, *) {
-            AVAudioApplication.shared.requestRecordPermission { granted in
+            AVAudioApplication.requestRecordPermission { granted in
                 guard granted else {
                     self.status = "error"
                     self.errorMessage = "microphone not authorized"

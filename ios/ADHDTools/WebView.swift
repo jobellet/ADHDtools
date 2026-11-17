@@ -17,7 +17,7 @@ struct WebView: UIViewRepresentable {
         let bridge = NativeBridge()
         config.userContentController.add(bridge, name: "adhdBridge")
         let webView = WKWebView(frame: .zero, configuration: config)
-        webView.isInspectable = true
+        if #available(iOS 16.4, *) { webView.isInspectable = true }
         if let url = URL(string: "\(WebSchemeHandler.scheme)://localhost/index.html") {
             webView.load(URLRequest(url: url))
         }
@@ -31,6 +31,10 @@ struct WebView: UIViewRepresentable {
 /// so ES modules and localStorage work exactly as on GitHub Pages.
 final class WebSchemeHandler: NSObject, WKURLSchemeHandler {
     static let scheme = "app"
+
+    func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
+        urlSchemeTask.didFailWithError(NSError(domain: WebSchemeHandler.scheme, code: -1))
+    }
 
     func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
         guard let url = urlSchemeTask.request.url else {

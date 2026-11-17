@@ -26,7 +26,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandler {
             script = script
                 .replacingOccurrences(of: "\u{2028}", with: "\\u2028")
                 .replacingOccurrences(of: "\u{2029}", with: "\\u2029")
-            await webView.evaluateJavaScript("window.__ADHD_IOS_BRIDGE_CALLBACK__(\(script));")
+            _ = try? await webView.evaluateJavaScript("window.__ADHD_IOS_BRIDGE_CALLBACK__(\(script));")
         }
     }
 
@@ -49,7 +49,7 @@ final class NativeBridge: NSObject, WKScriptMessageHandler {
         default:
             break
         }
-        return await MainActor.run {
+        return try await MainActor.run {
             switch cmd {
             case "native_notify":
                 Alarms.notifyNow(title: args["title"] as? String ?? "",

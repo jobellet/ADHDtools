@@ -90,8 +90,9 @@ final class OAuth: NSObject {
             : ""
         let body = Data("<html><body style=\"font-family:sans-serif;text-align:center;padding-top:4em\">"
             + "Sign-in complete — you can close this tab and return to ADHD Tools.</body></html>".utf8)
-        let response = Data("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
-            + "Content-Length: \(body.count)\r\nConnection: close\r\n\r\n".utf8) + body
+        let header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
+            + "Content-Length: \(body.count)\r\nConnection: close\r\n\r\n"
+        let response = Data(header.utf8) + body
         connection.send(content: response, completion: .idempotent)
         if !query.isEmpty { complete(query) }
     }
