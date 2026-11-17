@@ -169,3 +169,29 @@ describe('Calendar Settings UI & Smart Extraction', () => {
     assert.ok(status.textContent.includes('Invalid Client ID'));
   });
 });
+
+describe('GoogleAuth native token refresh', () => {
+  it('never mixes the saved web Client ID with the AI assistant client secret', async () => {
+    const sandbox = setupSandbox(true, {
+      clientId: '534266942252-mcp.apps.googleusercontent.com',
+      clientSecret: 'GOCSPX-mcpSecret',
+    });
+    // Web Client ID saved without a secret (the "Client Secret is missing" case), plus a refresh token.
+    sandbox.localStorage.setItem('gcalClientId', '534266942252-web.apps.googleusercontent.com');
+    sandbox.localStorage.setItem('gcalRefreshToken', 'refresh-1');
+    const requests = [];
+    sandbox.URLSearchParams = URLSearchParams;
+    sandbox.fetch = async (url, opts) => {
+      requests.push(Object.fromEntries(new URLSearchParams(opts.body)));
+      return { ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }) };
+    };
+    runInNewContext(googleAuthCode, sandbox);
+    await new Promise((r) => setImmediate(r));
+
+    const token = await sandbox.window.GoogleAuth.getAccessToken('https://www.googleapis.com/auth/calendar.events');
+    assert.equal(token, 'tok');
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].client_id, '534266942252-mcp.apps.googleusercontent.com');
+    assert.equal(requests[0].client_secret, 'GOCSPX-mcpSecret');
+  });
+});
