@@ -88,8 +88,8 @@ final class OAuth: NSObject {
         let query = target.split(separator: "?", maxSplits: 1).count > 1
             ? String(target.split(separator: "?", maxSplits: 1)[1].split(separator: " ").first ?? "")
             : ""
-        let body = Data("<html><body style=\"font-family:sans-serif;text-align:center;padding-top:4em\">"
-            + "Sign-in complete — you can close this tab and return to ADHD Tools.</body></html>".utf8)
+        let body = Data(("<html><body style=\"font-family:sans-serif;text-align:center;padding-top:4em\">"
+            + "Sign-in complete — you can close this tab and return to ADHD Tools.</body></html>").utf8)
         let header = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
             + "Content-Length: \(body.count)\r\nConnection: close\r\n\r\n"
         let response = Data(header.utf8) + body
