@@ -68,10 +68,10 @@ final class Alarms {
             ids.append(baseId)
             let isIntrusive = style != "standard" && style != "subtle"
             if isIntrusive {
-                for repeat in 1...intrusiveRepeats {
-                    let repeatId = "\(baseId)-r\(repeat)"
+                for rep in 1...intrusiveRepeats {
+                    let repeatId = "\(baseId)-r\(rep)"
                     center.add(UNNotificationRequest(identifier: repeatId, content: content,
-                        trigger: UNTimeIntervalNotificationTrigger(timeInterval: delay + Double(30 * repeat), repeats: false)))
+                        trigger: UNTimeIntervalNotificationTrigger(timeInterval: delay + Double(30 * rep), repeats: false)))
                     ids.append(repeatId)
                 }
             }
