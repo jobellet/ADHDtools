@@ -260,6 +260,7 @@
     top: 3px;
     right: 4px;
     width: 20px;
+    min-width: 0;
     height: 20px;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.55);
@@ -381,7 +382,9 @@
     background: linear-gradient(135deg, #90caf9 0%, var(--kind-event) 100%);
     color: #fff;
     border-bottom: none;
-    /* base.css lays .calendar-event out in a row: keep title above time */
+    /* base.css sets pointer-events: none and lays .calendar-event out in a row */
+    pointer-events: auto;
+    z-index: 2;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
@@ -1077,4 +1080,155 @@ body:not(.cap-gcal) .export-to-calendar-btn {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.timeline .event {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.timeline .event.is-selected {
+    outline: 2px solid var(--primary-dark, #4527a0);
+    outline-offset: 1px;
+    z-index: 5;
+}
+
+.timeline .event.is-dragging {
+    cursor: grabbing;
+    opacity: 0.92;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+    z-index: 10;
+}
+
+.timeline .event.is-conflict {
+    outline: 2px solid #c62828;
+    outline-offset: 1px;
+    filter: saturate(0.75);
+}
+
+/* ---------- Right-click Context Menu ---------- */
+
+.planner-context-menu {
+    position: fixed;
+    z-index: 2000;
+    min-width: 240px;
+    max-width: 300px;
+    background: var(--surface, #fff);
+    color: var(--on-surface, #1f1f1f);
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+    padding: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+}
+
+.planner-context-header {
+    padding: 0.25rem 0.4rem 0.45rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.planner-context-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.planner-context-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted, #666);
+    font-variant-numeric: tabular-nums;
+    margin-top: 2px;
+}
+
+.planner-context-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    padding: 0.15rem 0.35rem;
+}
+
+.planner-context-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted, #666);
+}
+
+.planner-context-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.planner-context-chip {
+    flex: 1 1 auto;
+    padding: 0.28rem 0.45rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #ddd);
+    background: #f7f5fc;
+    color: var(--on-surface, #1f1f1f);
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    text-align: center;
+}
+
+.planner-context-chip:hover {
+    background: #ebe4fa;
+    border-color: var(--primary-color, #673ab7);
+}
+
+.planner-context-chip.active {
+    background: var(--primary-color, #673ab7);
+    color: var(--on-primary, #fff);
+    border-color: var(--primary-color, #673ab7);
+}
+
+.planner-context-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 0.35rem;
+}
+
+.planner-context-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.45rem 0.55rem;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--on-surface, #1f1f1f);
+    font-size: 0.88rem;
+    text-align: left;
+    cursor: pointer;
+}
+
+.planner-context-item i {
+    width: 16px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.planner-context-item:hover {
+    background: #f3eefe;
+}
+
+.planner-context-item.is-danger {
+    color: #c62828;
+}
+
+.planner-context-item.is-danger:hover {
+    background: #fdecea;
 }

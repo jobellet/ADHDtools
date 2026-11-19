@@ -41,4 +41,56 @@ describe('Calendar copies of events with non-Latin-1 titles', () => {
     const oldId = `task-${win.btoa('Réunion équipe-2026-11-17T10:00-2026-11-17T11:00').replace(/=/g, '')}`;
     assert.deepEqual([...upserts.keys()], [oldId]);
   });
+
+  it('deleted imported Google Calendar events stay deleted across future syncs', () => {
+    const { win, upserts } = loadCalendarTool();
+    win.TaskStore.getAllTasks = () => [...upserts.values()];
+    win.TaskStore.deleteTasks = (hashes) => hashes.forEach(h => upserts.delete(h));
+
+    const gcalEvent = {
+      uid: 'gcal-immutable-test-1',
+      title: 'Point client Google Agenda',
+      start: '2026-11-17T14:00',
+      end: '2026-11-17T15:00',
+      isCalendarEvent: true,
+    };
+    win.CalendarTool.ingestExternalEvents([gcalEvent]);
+    let stored = JSON.parse(win.localStorage.getItem('adhd-calendar-events') || '[]');
+    assert.equal(stored.length, 1);
+    assert.equal(upserts.size, 1);
+
+    // Delete the imported event
+    win.CalendarTool.deleteEvent('gcal-immutable-test-1:2026-11-17T14:00');
+    stored = JSON.parse(win.localStorage.getItem('adhd-calendar-events') || '[]');
+    assert.equal(stored.length, 0, 'event removed from adhd-calendar-events');
+    assert.equal(upserts.size, 0, 'task copy removed from TaskStore');
+
+    // Next Google Calendar auto-sync brings the same event payload again
+    win.CalendarTool.ingestExternalEvents([gcalEvent]);
+    stored = JSON.parse(win.localStorage.getItem('adhd-calendar-events') || '[]');
+    assert.equal(stored.length, 0, 'deleted Google Calendar event must not come back on re-sync');
+    assert.equal(upserts.size, 0, 'deleted task copy must not come back on re-sync');
+  });
+
+  it('moved imported Google Calendar events keep their new time across future syncs', () => {
+    const { win } = loadCalendarTool();
+    const gcalEvent = {
+      uid: 'gcal-move-test-1',
+      title: 'Atelier design',
+      start: '2026-11-17T15:00',
+      end: '2026-11-17T16:00',
+      isCalendarEvent: true,
+    };
+    win.CalendarTool.ingestExternalEvents([gcalEvent]);
+    win.CalendarTool.updateEvent('gcal-move-test-1:2026-11-17T15:00', {
+      start: '2026-11-17T13:30',
+      end: '2026-11-17T14:30',
+    });
+    // Re-sync with original Google Calendar payload
+    win.CalendarTool.ingestExternalEvents([gcalEvent]);
+    const stored = JSON.parse(win.localStorage.getItem('adhd-calendar-events') || '[]');
+    assert.equal(stored.length, 1, 'moved event must not be duplicated at its old time');
+    assert.equal(stored[0].start, '2026-11-17T13:30');
+    assert.equal(stored[0].end, '2026-11-17T14:30');
+  });
 });

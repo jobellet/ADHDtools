@@ -147,11 +147,13 @@ function loadCalendarBlocks(todayStr, config) {
     let events;
     if (Array.isArray(config?.calendarEvents)) events = config.calendarEvents;
     else events = JSON.parse((typeof localStorage !== "undefined" ? localStorage.getItem.bind(localStorage) : () => null)('adhd-calendar-events')) || [];
+    const deleted = new Set((readJSON('adhd-deleted-tasks', []) || []).map(x => x?.id).filter(Boolean));
     const fixedTag = config?.fixedTag || '[FIX]';
     return events
       // "Not a task" events keep their calendar entry but free their time:
       // tasks can run during them and Now shows the task, not the event.
-      .filter(ev => ev.start && ev.start.startsWith(todayStr) && !ev.notATask)
+      .filter(ev => ev && ev.start && ev.start.startsWith(todayStr) && !ev.notATask)
+      .filter(ev => ![ev.id, ev.uid, ev.calendarUid, ev.calendarInstanceId, ev.calendarInstanceId ? `cal:${ev.calendarInstanceId}` : null, ev.calendarUid ? `cal:${ev.calendarUid}` : null, ev.uid ? `cal:${ev.uid}` : null, ev.id ? `cal:${ev.id}` : null].some(id => id && deleted.has(id)))
       .map(ev => {
         const startMinutes = deriveStartMinutes({ startTime: ev.start.slice(11, 16) });
         const endMinutes = ev.end ? deriveStartMinutes({ startTime: ev.end.slice(11, 16) }) : null;
@@ -163,6 +165,7 @@ function loadCalendarBlocks(todayStr, config) {
             name,
             text: name,
             isFixed,
+            isCalendarEvent: true,
             source: 'calendar',
             hash: ev.calendarInstanceId || ev.id || `cal-${ev.start}`,
             location: ev.location || '',

@@ -17,7 +17,7 @@ let lastRender = null; // { dayStart, dayEnd, items, timeline }
 
 const locale = () => document.documentElement.lang || undefined;
 
-function clockLabel(minutes) {
+export function clockLabel(minutes) {
     const d = new Date(2000, 0, 1, Math.floor(minutes / 60) % 24, minutes % 60);
     return d.toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' });
 }
@@ -66,7 +66,14 @@ function collectItems(currentDate, dayStart, dayEnd) {
         const start = toMinutes(ev.start);
         if (start === null) return;
         const end = toMinutes(ev.end) ?? start + 60;
-        items.push({ kind: 'calendar', title: ev.title, start, end: Math.max(end, start + 5) });
+        items.push({
+            kind: 'calendar',
+            title: ev.title,
+            start,
+            end: Math.max(end, start + 5),
+            calendarEvent: ev.rawEvent || ev,
+            calendarId: ev.id,
+        });
     });
     // Tasks marked "notATask" are skipped by the scheduler so other tasks can run during them,
     // but still show on the timeline as calendar blocks.
@@ -99,7 +106,7 @@ function collectItems(currentDate, dayStart, dayEnd) {
         .filter(item => item.end > item.start);
 }
 
-export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize }) {
+export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize, startMove, openContextMenu, deleteCalendarEvent }) {
     if (!window.DataManager) return;
 
     dateDisplay.textContent = currentDate.toLocaleDateString(locale(), {
@@ -161,6 +168,7 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         el.dataset.start = String(item.start);
         el.dataset.end = String(item.end);
         el.dataset.title = item.title;
+        el.dataset.kind = item.kind;
 
         const title = document.createElement('span');
         title.className = 'event-title';
@@ -170,6 +178,19 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
         time.textContent = `${clockLabel(item.start)} – ${clockLabel(item.end)}`;
         el.append(title, time);
         el.title = `${item.title} · ${time.textContent}`;
+
+        if (startMove && !item.task?._continuation) {
+            el.addEventListener('pointerdown', e => {
+                if (e.button !== undefined && e.button !== 0) return;
+                if (e.target.closest('button, .event-resizer')) return;
+                startMove(e, item, el);
+            });
+        }
+        if (openContextMenu) {
+            el.addEventListener('contextmenu', e => {
+                openContextMenu(e, item, el);
+            });
+        }
 
         if (item.kind === 'routine') {
             if (showRoutineTasks && item.task?.showTasksInDayView !== false) {
@@ -206,12 +227,17 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
             }
 
             el.addEventListener('click', () => {
+                if (el.dataset.justDragged === '1') return;
                 window.switchTool?.('routine');
                 if (item.task?.routineId) window.RoutinePlayer?.edit?.(item.task.routineId);
             });
         } else if (item.task) {
             el.classList.add('task-event');
-            el.addEventListener('click', () => openModal(item.task));
+            el.dataset.taskId = item.task.hash || item.task.id || '';
+            el.addEventListener('click', () => {
+                if (el.dataset.justDragged === '1') return;
+                openModal(item.task);
+            });
             const doneBtn = document.createElement('button');
             doneBtn.type = 'button';
             doneBtn.className = 'event-done-btn';
@@ -257,10 +283,40 @@ export function renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer
                 resizer.className = 'event-resizer';
                 resizer.addEventListener('pointerdown', e => {
                     e.stopPropagation();
-                    startResize(e, item.task, el);
+                    startResize(e, item, el);
                 });
                 el.appendChild(resizer);
             }
+        } else if (item.calendarEvent) {
+            el.dataset.eventId = item.calendarId || item.calendarEvent.id || '';
+            el.addEventListener('click', () => {
+                if (el.dataset.justDragged === '1') return;
+                openModal(null, null, null, item.calendarEvent);
+            });
+            const delBtn = document.createElement('button');
+            delBtn.type = 'button';
+            delBtn.className = 'event-delete-btn';
+            const delLabel = window.I18n ? window.I18n.t('plan.delete') : 'Delete';
+            delBtn.title = delLabel;
+            delBtn.setAttribute('aria-label', `${delLabel}: ${item.title}`);
+            delBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            delBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                if (deleteCalendarEvent) {
+                    deleteCalendarEvent(item.calendarEvent);
+                } else {
+                    window.CalendarTool?.deleteEvent?.(item.calendarId || item.calendarEvent.id || item.calendarEvent);
+                }
+            });
+            el.appendChild(delBtn);
+
+            const resizer = document.createElement('div');
+            resizer.className = 'event-resizer';
+            resizer.addEventListener('pointerdown', e => {
+                e.stopPropagation();
+                startResize(e, item, el);
+            });
+            el.appendChild(resizer);
         }
         lane.appendChild(el);
     });

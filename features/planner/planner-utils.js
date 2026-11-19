@@ -182,15 +182,24 @@ export function getDefaultTime() {
 
 export function getCalendarEvents(currentDate) {
     const events = JSON.parse(localStorage.getItem('adhd-calendar-events')) || [];
+    let deleted = new Set();
+    try {
+        deleted = new Set((JSON.parse(localStorage.getItem('adhd-deleted-tasks')) || []).map(x => x?.id).filter(Boolean));
+    } catch { /* ignore */ }
     const dayStr = localDateString(currentDate);
     return events
-        .filter(ev => ev.start && ev.start.startsWith(dayStr))
+        .filter(ev => ev && ev.start && ev.start.startsWith(dayStr))
         .map(ev => normalizeCalendarEvent(ev))
+        .filter(ev => ![ev.id, ev.uid, ev.calendarUid, ev.calendarInstanceId, ev.calendarInstanceId ? `cal:${ev.calendarInstanceId}` : null, ev.calendarUid ? `cal:${ev.calendarUid}` : null, ev.uid ? `cal:${ev.uid}` : null, ev.id ? `cal:${ev.id}` : null].some(id => id && deleted.has(id)))
         .map(ev => ({
+            id: ev.calendarInstanceId || ev.id || ev.uid || `${ev.title}|${ev.start}`,
+            rawEvent: ev,
             title: ev.title || '',
             start: ev.start ? ev.start.slice(11, 16) : null,
             end: ev.end ? ev.end.slice(11, 16) : null,
             isFixed: ev.isFixed !== false,
+            notATask: Boolean(ev.notATask),
+            location: ev.location || '',
         }));
 }
 

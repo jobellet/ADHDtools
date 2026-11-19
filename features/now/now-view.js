@@ -306,7 +306,7 @@
         return;
       }
 
-      if (task?.isCalendarEvent) {
+      if (task?.isCalendarEvent || task?.source === 'calendar') {
         window.CalendarTool?.deleteEvent?.(id);
         if (id) window.TaskStore?.deleteTasks?.([id]);
         window.DataManager?.showNotification?.(t('now.event.deleted', { name }));

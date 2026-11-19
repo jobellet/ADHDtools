@@ -103,6 +103,9 @@ A routine is a list of steps with durations (for example *Morning: water 2 min, 
 - **One-click Done (✓):** Mark any task as done directly from its block on the timeline (**✓** button), inside the Edit modal (**Done** button), or in the **Plan ahead** list (**✓** button next to 🗑).
 - If the time is already taken (routine, event or another task), the form says by what and offers a **Use HH:MM** button with the next free time. Nothing is ever booked on top of something else.
 - Tap an event in the timeline to change it, or **Delete** it.
+- **Drag to reschedule (desktop & web):** click and hold any event or task on the timeline and drag it **up or down** to shift its start time earlier or later while keeping the exact same duration (snapped to 5-minute steps; refuses overlaps). Drag the bottom handle of a block to resize its duration.
+- **Right-click context menu:** right-click any block on the timeline to quickly change its duration (`15m`–`90m`), nudge its time (`-30m`, `-15m`, `+15m`, `+30m`), toggle whether a calendar event blocks time or leaves free time for tasks, put a task back in the stack, open full settings, or delete the event.
+- **Imported Google Calendar & ICS events are not immutable:** you can drag, resize, edit, or delete imported calendar events right from the Day Planner timeline. Deleted calendar events stay deleted across future Google Calendar and Drive syncs.
 - **Lock plan** pins today's automatic plan, so times stop moving.
 - **Plan ahead** lists tasks with deadlines and big tasks (over 30–45 minutes). **Split** sends a task to Task Breakdown so you can cut it into 15–30 minute steps that fit into your day.
 - **Delete tasks you no longer need:** the 🗑 button deletes one task; **Delete all overdue (N)** deletes every task whose deadline has passed, in one click. An **Undo** bar stays for 15 seconds. Deleted tasks stay deleted on your other devices too (Google Drive sync).

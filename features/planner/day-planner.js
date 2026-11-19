@@ -1,12 +1,14 @@
-import { renderDayPlanner, relabelTimeline, getMinuteHeight } from './render-day.js';
+import { renderDayPlanner, relabelTimeline, getMinuteHeight, clockLabel } from './render-day.js';
 import { populateTaskOptions, getDefaultTime, getDayBounds, getDefaultDurationMinutes, localDateString } from './planner-utils.js';
 import { planDayWithAI } from './ai-plan.js';
 import { createTask } from '../../core/task-model.js';
 import { geocode, getRoute } from './routing.js';
 
 let editingTaskId = null;
+let editingCalendarEvent = null;
 let pendingExternalTask = null;
 let currentDate = new Date();
+let activeContextMenu = null;
 
 const wrapTask = (task) => createTask(task, task);
 const getTaskFromStore = (id) => {
@@ -91,7 +93,8 @@ function showConflict(message, freeMinutes) {
     box.hidden = false;
 }
 
-function openModal(task, presetTime, externalTask) {
+function openModal(task, presetTime, externalTask, calendarEvent) {
+    closeContextMenu();
     eventModal.classList.add('active');
     eventModal.style.display = 'flex';
     document.body.classList.add('modal-open');
@@ -101,11 +104,36 @@ function openModal(task, presetTime, externalTask) {
     showConflict(null);
     eventModal.querySelector('.event-more').open = false;
     const removeBtn = eventModal.querySelector('#event-remove-btn');
-    removeBtn.hidden = !task;
+    removeBtn.hidden = !(task || calendarEvent);
     const doneBtn = eventModal.querySelector('#event-done-btn');
     if (doneBtn) doneBtn.hidden = !task;
     pendingExternalTask = null;
-    if (task) {
+    editingCalendarEvent = null;
+    if (calendarEvent && !task) {
+        editingTaskId = null;
+        editingCalendarEvent = calendarEvent;
+        eventModalTitle.textContent = tr('event.titleEdit');
+        eventTitleInput.value = (calendarEvent.title || calendarEvent.rawTitle || '').replace(/\[(FIX|FLEX)\]\s*/gi, '').trim();
+        const startStr = calendarEvent.start && calendarEvent.start.length >= 16 ? calendarEvent.start.slice(11, 16) : getDefaultTime();
+        const endStr = calendarEvent.end && calendarEvent.end.length >= 16 ? calendarEvent.end.slice(11, 16) : null;
+        const startM = parseTimeToMinutes(startStr);
+        const endM = endStr ? parseTimeToMinutes(endStr) : null;
+        const dur = (startM !== null && endM !== null && endM > startM) ? (endM - startM) : getDefaultDurationMinutes();
+        eventTimeSelect.value = presetTime || startStr;
+        setDuration(dur);
+        if (eventTypeSelect) eventTypeSelect.value = 'event';
+        if (eventRecurrenceSelect) eventRecurrenceSelect.value = 'none';
+        eventImportanceInput.value = 5;
+        eventUrgencyInput.value = 5;
+        eventDeadlineInput.value = '';
+        eventDependencySelect.value = '';
+        eventLocationInput.value = calendarEvent.location || '';
+        selectedLocationCoords = null;
+        eventTravelModeContainer.style.display = 'none';
+        eventTitleInput.disabled = false;
+        eventTaskSelect.value = '';
+        eventTaskSelect.disabled = true;
+    } else if (task) {
         editingTaskId = task.hash || task.id;
         eventModalTitle.textContent = presetTime ? tr('event.titleSchedule') : tr('event.titleEdit');
         eventTitleInput.value = (task.name || task.text || '').replace(/\[(FIX|FLEX)\]\s*/gi, '').trim();
@@ -188,6 +216,7 @@ function closeModal() {
     if (eventForm) eventForm.reset();
     showConflict(null);
     editingTaskId = null;
+    editingCalendarEvent = null;
     pendingExternalTask = null;
     eventTitleInput.disabled = false;
     if (eventTaskSelect) eventTaskSelect.disabled = false;
@@ -400,13 +429,65 @@ async function handleVoiceCommand(text) {
     }
 }
 
+function getCalendarEventIgnoreIds(calEv) {
+    if (!calEv) return [];
+    return [
+        calEv.calendarInstanceId,
+        calEv.id,
+        calEv.uid,
+        calEv.calendarUid,
+        calEv.start ? `cal-${calEv.start}` : null,
+        calEv.instanceStart ? `cal-${calEv.instanceStart}` : null,
+    ].filter(Boolean);
+}
+
+function getAutoPinnedTaskIds(excludeId) {
+    const all = window.TaskStore?.getAllTasks?.() || [];
+    return all
+        .filter(t => t && t.autoPinned && !t.isFixed && (t.hash || t.id) !== excludeId)
+        .map(t => t.hash || t.id)
+        .filter(Boolean);
+}
+
+function unpinOverlappingAutoPinnedTasks(startMinutes, durationMinutes, excludeId) {
+    const dateStr = localDateString(currentDate);
+    const endMinutes = startMinutes + durationMinutes;
+    const all = window.TaskStore?.getAllTasks?.() || [];
+    all.forEach(t => {
+        const id = t?.hash || t?.id;
+        if (!t || !t.autoPinned || t.isFixed || id === excludeId) return;
+        if (!t.plannerDate || !t.plannerDate.startsWith(dateStr)) return;
+        const tStart = parseTimeToMinutes(t.plannerDate.slice(11, 16));
+        if (tStart === null) return;
+        const tEnd = tStart + (Number(t.durationMinutes || t.duration) || getDefaultDurationMinutes());
+        if (startMinutes < tEnd && endMinutes > tStart) {
+            updateTaskInStore(id, { plannerDate: null, autoPinned: false });
+        }
+    });
+}
+
+function getItemIgnoreIds(item) {
+    if (!item) return [];
+    const task = item.task || (!item.kind && item);
+    const calEv = item.calendarEvent;
+    const ownId = task?.hash || task?.id || null;
+    return [
+        task?.hash,
+        task?.id,
+        task?.routineId,
+        item.calendarId,
+        ...getCalendarEventIgnoreIds(calEv),
+        ...getAutoPinnedTaskIds(ownId),
+    ].filter(Boolean);
+}
+
 // When [start, start+duration) collides with a routine, a calendar event or
 // another pinned task on the planner's day: { message, free }; else null.
 function findConflict(newStartMinutes, newDurationMinutes, ignoreId) {
     const scheduler = window.UnifiedScheduler;
     if (!scheduler?.findConflicts) return null;
     const dateStr = localDateString(currentDate);
-    const ignore = ignoreId ? [ignoreId] : [];
+    const ignore = Array.isArray(ignoreId) ? ignoreId.filter(Boolean) : (ignoreId ? [ignoreId] : []);
     const clashes = scheduler.findConflicts({ dateStr, startMinutes: newStartMinutes, durationMinutes: newDurationMinutes, ignore });
     if (!clashes.length) return null;
     const names = clashes.map(c => `“${c.name}” (${minutesToTime(c.start)}–${minutesToTime(c.end)})`).join(', ');
@@ -419,31 +500,478 @@ function describeConflict(newStartMinutes, newDurationMinutes, ignoreId) {
     return findConflict(newStartMinutes, newDurationMinutes, ignoreId)?.message || null;
 }
 
-function startResize(e, task, eventDiv) {
-    e.preventDefault();
+function moveOrUpdateCalendarEvent(calEv, updates = {}) {
+    if (!calEv) return null;
+    const key = calEv.calendarInstanceId || calEv.id || calEv.uid || calEv.calendarUid;
+    if (window.CalendarTool?.updateEvent) {
+        const res = window.CalendarTool.updateEvent(key || calEv, updates);
+        if (res) return res;
+    }
+    try {
+        const list = JSON.parse(localStorage.getItem('adhd-calendar-events') || '[]');
+        const idx = list.findIndex(ev =>
+            (key && [ev.calendarInstanceId, ev.id, ev.uid, ev.calendarUid].includes(key))
+            || (ev.title === calEv.title && (ev.start || '').slice(0, 16) === (calEv.start || '').slice(0, 16))
+        );
+        if (idx === -1) return null;
+        const target = list[idx];
+        if (!target.instanceStart && target.start) target.instanceStart = target.start;
+        Object.assign(target, updates, { localOverride: true, updatedAt: new Date().toISOString() });
+        localStorage.setItem('adhd-calendar-events', JSON.stringify(list));
+        window.EventBus?.dispatchEvent(new Event('calendarEventsUpdated'));
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        return target;
+    } catch {
+        return null;
+    }
+}
+
+function deleteCalendarEvent(calEv) {
+    if (!calEv) return;
+    const key = calEv.calendarInstanceId || calEv.id || calEv.uid || calEv.calendarUid;
+    if (window.CalendarTool?.deleteEvent) {
+        window.CalendarTool.deleteEvent(key || calEv);
+    } else {
+        try {
+            const list = JSON.parse(localStorage.getItem('adhd-calendar-events') || '[]');
+            const next = list.filter(ev =>
+                !(key && [ev.calendarInstanceId, ev.id, ev.uid, ev.calendarUid].includes(key))
+                && !(ev.title === calEv.title && (ev.start || '').slice(0, 16) === (calEv.start || '').slice(0, 16))
+            );
+            localStorage.setItem('adhd-calendar-events', JSON.stringify(next));
+            const delRaw = JSON.parse(localStorage.getItem('adhd-deleted-tasks') || '[]');
+            const deletedAt = new Date().toISOString();
+            getCalendarEventIgnoreIds(calEv).forEach(id => {
+                delRaw.push({ id, deletedAt });
+                delRaw.push({ id: `cal:${id}`, deletedAt });
+            });
+            localStorage.setItem('adhd-deleted-tasks', JSON.stringify(delRaw.slice(-1000)));
+        } catch { /* ignore */ }
+    }
+    if (window.TaskStore?.getAllTasks && window.TaskStore?.deleteTasks) {
+        const title = (calEv.title || calEv.rawTitle || '').trim();
+        const startPrefix = (calEv.start || '').slice(0, 16);
+        const matching = window.TaskStore.getAllTasks()
+            .filter(t => (t.isCalendarEvent || t.source === 'calendar-import' || t.source === 'calendar')
+                && (t.name === title || t.text === title)
+                && (!startPrefix || (t.plannerDate || '').slice(0, 16) === startPrefix || (t.plannerDate || '').slice(0, 16) === (calEv.instanceStart || '').slice(0, 16)))
+            .map(t => t.hash || t.id)
+            .filter(Boolean);
+        if (matching.length) window.TaskStore.deleteTasks(matching);
+    }
+    window.DataManager?.showNotification?.(tr('plan.deleted', { n: 1 }), 'info');
+    window.EventBus?.dispatchEvent(new Event('calendarEventsUpdated'));
+    window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+}
+
+function moveRoutineStartTime(routineId, newTimeStr) {
+    if (!routineId || !newTimeStr) return false;
+    try {
+        const list = JSON.parse(localStorage.getItem('adhd-tool-routines') || '[]');
+        const found = list.find(r => r && String(r.id) === String(routineId));
+        if (!found) return false;
+        found.startTime = newTimeStr;
+        localStorage.setItem('adhd-tool-routines', JSON.stringify(list));
+        window.dispatchEvent(new Event('routinesChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function selectEventDiv(eventDiv) {
+    timeBlocksContainer?.querySelectorAll('.timeline-lane .event.is-selected').forEach(el => {
+        if (el !== eventDiv) el.classList.remove('is-selected');
+    });
+    if (eventDiv) eventDiv.classList.add('is-selected');
+}
+
+function commitItemMove(item, newStartMinutes, durationMinutes) {
+    const dateStr = localDateString(currentDate);
+    const newStartTime = minutesToTime(newStartMinutes);
+    const newEndTime = minutesToTime(newStartMinutes + durationMinutes);
+    const ownId = item.task?.hash || item.task?.id || null;
+    unpinOverlappingAutoPinnedTasks(newStartMinutes, durationMinutes, ownId);
+    if (item.kind === 'routine' && item.task?.routineId) {
+        moveRoutineStartTime(item.task.routineId, newStartTime);
+        return;
+    }
+    if (item.task) {
+        updateTaskInStore(ownId, {
+            plannerDate: `${dateStr}T${newStartTime}`,
+            durationMinutes,
+            duration: durationMinutes,
+            isFixed: true,
+            autoPinned: false,
+        });
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        return;
+    }
+    if (item.calendarEvent) {
+        moveOrUpdateCalendarEvent(item.calendarEvent, {
+            start: `${dateStr}T${newStartTime}`,
+            end: `${dateStr}T${newEndTime}`,
+        });
+    }
+}
+
+function commitItemDuration(item, newDurationMinutes) {
+    const startMins = item.start;
+    const conflict = findConflict(startMins, newDurationMinutes, getItemIgnoreIds(item));
+    if (conflict) {
+        window.DataManager?.showNotification?.(conflict.message, 'error');
+        return false;
+    }
+    const ownId = item.task?.hash || item.task?.id || null;
+    unpinOverlappingAutoPinnedTasks(startMins, newDurationMinutes, ownId);
+    const dateStr = localDateString(currentDate);
+    if (item.task) {
+        const startStr = minutesToTime(startMins);
+        updateTaskInStore(item.task.hash || item.task.id, {
+            plannerDate: item.task.plannerDate || `${dateStr}T${startStr}`,
+            duration: newDurationMinutes,
+            durationMinutes: newDurationMinutes,
+        });
+        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        return true;
+    }
+    if (item.calendarEvent) {
+        moveOrUpdateCalendarEvent(item.calendarEvent, {
+            start: `${dateStr}T${minutesToTime(startMins)}`,
+            end: `${dateStr}T${minutesToTime(startMins + newDurationMinutes)}`,
+        });
+        return true;
+    }
+    return false;
+}
+
+function startMove(e, item, eventDiv) {
+    closeContextMenu();
+    selectEventDiv(eventDiv);
     const startY = e.clientY;
-    const startDuration = task.duration || getDefaultDurationMinutes();
-    const minuteHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')) || 2;
+    const origStart = item.start;
+    const origEnd = item.end;
+    const duration = Math.max(5, origEnd - origStart);
+    const { startMinutes: dayStart } = getDayBounds();
+    const minuteHeight = getMinuteHeight();
+    const ignoreIds = getItemIgnoreIds(item);
+    const timeSpan = eventDiv.querySelector('.event-time');
+    let moved = false;
+    let currentStart = origStart;
+
+    const applyPosition = (mins) => {
+        eventDiv.style.top = `calc(${mins - dayStart} * var(--minute-height))`;
+        eventDiv.dataset.start = String(mins);
+        eventDiv.dataset.end = String(mins + duration);
+        item.start = mins;
+        item.end = mins + duration;
+        if (timeSpan) {
+            timeSpan.textContent = `${clockLabel(mins)} – ${clockLabel(mins + duration)}`;
+        }
+        relabelTimeline();
+    };
+
+    function onMove(ev) {
+        const dy = ev.clientY - startY;
+        if (!moved && Math.abs(dy) < 4) return;
+        if (!moved) {
+            moved = true;
+            eventDiv.classList.add('is-dragging');
+        }
+        ev.preventDefault();
+        const deltaMins = Math.round(dy / minuteHeight / 5) * 5;
+        currentStart = Math.max(dayStart, Math.min(1440 - duration, origStart + deltaMins));
+        applyPosition(currentStart);
+        const conflict = findConflict(currentStart, duration, ignoreIds);
+        eventDiv.classList.toggle('is-conflict', Boolean(conflict));
+    }
+
+    function onUp() {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        eventDiv.classList.remove('is-dragging', 'is-conflict');
+        if (!moved) return;
+        eventDiv.dataset.justDragged = '1';
+        setTimeout(() => { delete eventDiv.dataset.justDragged; }, 80);
+        if (currentStart === origStart) {
+            applyPosition(origStart);
+            return;
+        }
+        const conflict = findConflict(currentStart, duration, ignoreIds);
+        if (conflict) {
+            applyPosition(origStart);
+            window.DataManager?.showNotification?.(conflict.message, 'error');
+            return;
+        }
+        commitItemMove(item, currentStart, duration);
+    }
+
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    document.addEventListener('pointercancel', onUp);
+}
+
+function startResize(e, itemOrTask, eventDiv) {
+    e.preventDefault();
+    closeContextMenu();
+    selectEventDiv(eventDiv);
+    const item = (itemOrTask && (itemOrTask.task || itemOrTask.calendarEvent || itemOrTask.kind))
+        ? itemOrTask
+        : { kind: 'fixed', task: itemOrTask, start: parseTimeToMinutes(itemOrTask?.plannerDate?.slice(11, 16)) ?? 0, end: (parseTimeToMinutes(itemOrTask?.plannerDate?.slice(11, 16)) ?? 0) + (itemOrTask?.duration || getDefaultDurationMinutes()) };
+    const startY = e.clientY;
+    const startMins = item.start;
+    const startDuration = Math.max(5, (item.end - item.start) || item.task?.duration || getDefaultDurationMinutes());
+    const minuteHeight = getMinuteHeight();
+    const ignoreIds = getItemIgnoreIds(item);
+    const timeSpan = eventDiv.querySelector('.event-time');
     const minutesFor = ev => Math.max(5, startDuration + Math.round((ev.clientY - startY) / minuteHeight / 5) * 5);
     function onMove(ev) {
-        eventDiv.style.height = `calc(${minutesFor(ev)} * var(--minute-height))`;
+        const mins = minutesFor(ev);
+        eventDiv.style.height = `calc(${mins} * var(--minute-height))`;
+        eventDiv.dataset.end = String(startMins + mins);
+        item.end = startMins + mins;
+        if (timeSpan) {
+            timeSpan.textContent = `${clockLabel(startMins)} – ${clockLabel(startMins + mins)}`;
+        }
+        relabelTimeline();
     }
     function onUp(ev) {
         document.removeEventListener('pointermove', onMove);
         document.removeEventListener('pointerup', onUp);
         const minutes = minutesFor(ev);
-        const startMins = parseTimeToMinutes(task.plannerDate.slice(11, 16));
-        const conflict = startMins !== null ? describeConflict(startMins, minutes, task.hash || task.id) : null;
+        const conflict = startMins !== null ? describeConflict(startMins, minutes, ignoreIds) : null;
         if (conflict) {
-            alert(conflict);
+            window.DataManager?.showNotification?.(conflict, 'error');
             eventDiv.style.height = `calc(${startDuration} * var(--minute-height))`;
+            eventDiv.dataset.end = String(startMins + startDuration);
+            item.end = startMins + startDuration;
+            if (timeSpan) {
+                timeSpan.textContent = `${clockLabel(startMins)} – ${clockLabel(startMins + startDuration)}`;
+            }
+            relabelTimeline();
             return;
         }
-        updateTaskInStore(task.hash || task.id, { duration: minutes, durationMinutes: minutes });
-        window.EventBus?.dispatchEvent(new Event('dataChanged'));
+        commitItemDuration(item, minutes);
     }
     document.addEventListener('pointermove', onMove);
     document.addEventListener('pointerup', onUp);
+}
+
+function closeContextMenu() {
+    if (activeContextMenu) {
+        activeContextMenu.remove();
+        activeContextMenu = null;
+    }
+}
+
+function openContextMenu(e, item, eventDiv) {
+    e.preventDefault();
+    e.stopPropagation();
+    closeContextMenu();
+    selectEventDiv(eventDiv);
+
+    const menu = document.createElement('div');
+    menu.id = 'planner-context-menu';
+    menu.className = 'planner-context-menu';
+    menu.setAttribute('role', 'menu');
+
+    const duration = Math.max(5, item.end - item.start);
+    const header = document.createElement('div');
+    header.className = 'planner-context-header';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'planner-context-title';
+    titleEl.textContent = item.title;
+    const timeEl = document.createElement('div');
+    timeEl.className = 'planner-context-subtitle';
+    timeEl.textContent = `${clockLabel(item.start)} – ${clockLabel(item.end)} (${duration} min)`;
+    header.append(titleEl, timeEl);
+    menu.appendChild(header);
+
+    // Quick time shift section (-30m, -15m, +15m, +30m) keeping the same duration
+    if (!item.task?._continuation) {
+        const shiftSection = document.createElement('div');
+        shiftSection.className = 'planner-context-section';
+        const shiftLabel = document.createElement('span');
+        shiftLabel.className = 'planner-context-label';
+        shiftLabel.textContent = tr('plan.context.shift');
+        const shiftRow = document.createElement('div');
+        shiftRow.className = 'planner-context-chips';
+        const { startMinutes: dayStart } = getDayBounds();
+        [-30, -15, 15, 30].forEach(delta => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'planner-context-chip';
+            btn.dataset.shift = String(delta);
+            btn.textContent = delta > 0 ? `+${delta}m` : `${delta}m`;
+            btn.addEventListener('click', () => {
+                const nextStart = Math.max(dayStart, Math.min(1440 - duration, item.start + delta));
+                const conflict = findConflict(nextStart, duration, getItemIgnoreIds(item));
+                if (conflict) {
+                    window.DataManager?.showNotification?.(conflict.message, 'error');
+                    return;
+                }
+                closeContextMenu();
+                commitItemMove(item, nextStart, duration);
+            });
+            shiftRow.appendChild(btn);
+        });
+        shiftSection.append(shiftLabel, shiftRow);
+        menu.appendChild(shiftSection);
+    }
+
+    // Quick duration selector chips (15, 30, 45, 60, 90 min) for tasks and calendar events
+    if (item.kind !== 'routine' && !item.task?._continuation) {
+        const durSection = document.createElement('div');
+        durSection.className = 'planner-context-section';
+        const durLabel = document.createElement('span');
+        durLabel.className = 'planner-context-label';
+        durLabel.textContent = tr('plan.context.duration');
+        const durRow = document.createElement('div');
+        durRow.className = 'planner-context-chips';
+        [15, 30, 45, 60, 90].forEach(mins => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `planner-context-chip${mins === duration ? ' active' : ''}`;
+            btn.dataset.duration = String(mins);
+            btn.textContent = `${mins}m`;
+            btn.addEventListener('click', () => {
+                if (commitItemDuration(item, mins)) {
+                    closeContextMenu();
+                }
+            });
+            durRow.appendChild(btn);
+        });
+        durSection.append(durLabel, durRow);
+        menu.appendChild(durSection);
+    }
+
+    // Schedule mode / parameters
+    const actionsList = document.createElement('div');
+    actionsList.className = 'planner-context-actions';
+
+    const addAction = (icon, label, className, onClick, actionName) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `planner-context-item ${className || ''}`.trim();
+        if (actionName) btn.dataset.action = actionName;
+        btn.setAttribute('role', 'menuitem');
+        btn.innerHTML = `<i class="fas ${icon}"></i> <span></span>`;
+        btn.querySelector('span').textContent = label;
+        btn.addEventListener('click', () => {
+            closeContextMenu();
+            onClick();
+        });
+        actionsList.appendChild(btn);
+    };
+
+    if (item.kind === 'routine') {
+        addAction('fa-sliders-h', tr('plan.context.edit'), '', () => {
+            window.switchTool?.('routine');
+            if (item.task?.routineId) window.RoutinePlayer?.edit?.(item.task.routineId);
+        }, 'edit');
+    } else if (item.task) {
+        const taskId = item.task.hash || item.task.id;
+        addAction('fa-sliders-h', tr('plan.context.edit'), '', () => {
+            openModal(item.task);
+        }, 'edit');
+        addAction('fa-check', tr('plan.done'), '', () => {
+            if (!taskId) return;
+            if (window.TaskStore?.markComplete) window.TaskStore.markComplete(taskId);
+            window.DataManager?.showNotification?.(tr('now.toast.done', { name: item.title }), 'success');
+            window.EventBus?.dispatchEvent(new Event('dataChanged'));
+            window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        }, 'done');
+        if (item.kind === 'flexible') {
+            addAction('fa-thumbtack', tr('plan.context.fixed'), '', () => {
+                const dateStr = localDateString(currentDate);
+                updateTaskInStore(taskId, {
+                    plannerDate: `${dateStr}T${minutesToTime(item.start)}`,
+                    isFixed: true,
+                    autoPinned: false,
+                });
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+            }, 'toggle-fixed');
+        } else {
+            addAction('fa-layer-group', tr('plan.context.unschedule'), '', () => {
+                const dateStr = localDateString(currentDate);
+                updateTaskInStore(taskId, {
+                    plannerDate: null,
+                    deadline: item.task.deadline || `${dateStr}T18:00`,
+                    isFixed: false,
+                    autoPinned: false,
+                });
+                window.EventBus?.dispatchEvent(new Event('dataChanged'));
+                window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+            }, 'unschedule');
+        }
+        addAction('fa-sitemap', tr('plan.split'), '', () => {
+            window.EventBus?.dispatchEvent(new CustomEvent('ef-receiveTaskFor-TaskBreakdown', {
+                detail: { text: item.title, id: taskId, duration },
+            }));
+            window.switchTool?.('breakdown');
+        }, 'split');
+        addAction('fa-trash-alt', tr('plan.context.delete'), 'is-danger', () => {
+            if (!taskId) return;
+            if (window.TaskStore?.deleteTasks) window.TaskStore.deleteTasks([taskId]);
+            else window.DataManager?.deleteTask?.(taskId);
+            window.DataManager?.showNotification?.(tr('plan.deleted', { n: 1 }), 'info');
+            window.EventBus?.dispatchEvent(new Event('dataChanged'));
+            window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+        }, 'delete');
+    } else if (item.calendarEvent) {
+        const calEv = item.calendarEvent;
+        addAction('fa-sliders-h', tr('plan.context.edit'), '', () => {
+            openModal(null, null, null, calEv);
+        }, 'edit');
+        const isPassive = Boolean(calEv.notATask || calEv.isFixed === false);
+        addAction(
+            isPassive ? 'fa-lock' : 'fa-unlock',
+            isPassive ? tr('plan.context.blocking') : tr('plan.context.passive'),
+            '',
+            () => {
+                moveOrUpdateCalendarEvent(calEv, {
+                    notATask: !isPassive,
+                    isFixed: isPassive,
+                });
+            },
+            'toggle-passive'
+        );
+        addAction('fa-trash-alt', tr('plan.context.delete'), 'is-danger', () => {
+            deleteCalendarEvent(calEv);
+        }, 'delete');
+    }
+
+    menu.appendChild(actionsList);
+    document.body.appendChild(menu);
+    activeContextMenu = menu;
+
+    const rect = menu.getBoundingClientRect();
+    const x = Math.max(8, Math.min(window.innerWidth - rect.width - 8, e.clientX));
+    const y = Math.max(8, Math.min(window.innerHeight - rect.height - 8, e.clientY));
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+}
+
+function renderPlanner() {
+    closeContextMenu();
+    renderDayPlanner({
+        currentDate,
+        dateDisplay,
+        timeBlocksContainer,
+        openModal,
+        startResize,
+        startMove,
+        openContextMenu,
+        deleteCalendarEvent,
+    });
 }
 
 // Zoom = pixels per minute (--minute-height). Pinch on phones, trackpad pinch
@@ -624,7 +1152,7 @@ async function autoPlanDay() {
         if (result.moved) parts.push(tr('plan.aiMoved', { n: result.moved }));
         if (result.dropped) parts.push(tr('plan.aiDroppedCount', { n: result.dropped }));
         window.DataManager?.showNotification?.(parts.join(' '), result.dropped ? 'warning' : 'success');
-        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+        renderPlanner();
     } finally {
         aiPlanBtn.disabled = false;
     }
@@ -758,10 +1286,19 @@ function initDayPlanner() {
     }
     closeButton.addEventListener('click', closeModal);
     eventModal.querySelector('.event-cancel')?.addEventListener('click', closeModal);
-    window.addEventListener('click', e => { if (e.target === eventModal) closeModal(); });
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && eventModal.classList.contains('active')) closeModal();
+    window.addEventListener('click', e => {
+        if (e.target === eventModal) closeModal();
+        if (activeContextMenu && !activeContextMenu.contains(e.target)) closeContextMenu();
     });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            if (activeContextMenu) closeContextMenu();
+            if (eventModal.classList.contains('active')) closeModal();
+        }
+    });
+    timeBlocksContainer.addEventListener('scroll', () => {
+        if (activeContextMenu) closeContextMenu();
+    }, { passive: true });
     eventModal.querySelectorAll('.event-chip[data-minutes]').forEach(chip => {
         chip.addEventListener('click', () => { setDuration(Number(chip.dataset.minutes)); showConflict(null); });
     });
@@ -776,7 +1313,8 @@ function initDayPlanner() {
             eventTimeSelect.value = `${hh}:${mm}`;
             const dur = parseInt(eventDurationInput.value, 10) || getDefaultDurationMinutes();
             const startMins = now.getHours() * 60 + now.getMinutes();
-            const conflict = findConflict(startMins, dur, editingTaskId);
+            const ignoreIds = editingCalendarEvent ? getCalendarEventIgnoreIds(editingCalendarEvent) : editingTaskId;
+            const conflict = findConflict(startMins, dur, ignoreIds);
             if (conflict) {
                 showConflict(conflict.message, conflict.free);
             } else {
@@ -785,6 +1323,11 @@ function initDayPlanner() {
         });
     }
     eventModal.querySelector('#event-remove-btn')?.addEventListener('click', () => {
+        if (editingCalendarEvent) {
+            deleteCalendarEvent(editingCalendarEvent);
+            closeModal();
+            return;
+        }
         if (!editingTaskId) return;
         if (window.TaskStore?.deleteTasks) window.TaskStore.deleteTasks([editingTaskId]);
         else window.DataManager?.deleteTask?.(editingTaskId);
@@ -881,10 +1424,30 @@ function initDayPlanner() {
         const recurrence = (eventRecurrenceSelect && eventRecurrenceSelect.value !== 'none') ? eventRecurrenceSelect.value : null;
 
         const startMins = hasTime ? parseTimeToMinutes(time) : null;
-        const taskIdToIgnore = editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null));
+        const taskIdToIgnore = editingCalendarEvent
+            ? getCalendarEventIgnoreIds(editingCalendarEvent)
+            : (editingTaskId || (pendingExternalTask ? pendingExternalTask.id : (eventTaskSelect.value || null)));
         const conflict = startMins !== null ? findConflict(startMins, duration, taskIdToIgnore) : null;
         if (conflict) {
             showConflict(conflict.message, conflict.free);
+            return;
+        }
+
+        if (editingCalendarEvent) {
+            const title = eventTitleInput.value.trim();
+            const dateStr = localDateString(currentDate);
+            const startTimeStr = hasTime ? time : (editingCalendarEvent.start?.slice(11, 16) || '09:00');
+            const sMins = parseTimeToMinutes(startTimeStr) ?? 540;
+            const endTimeStr = minutesToTime(Math.min(1439, sMins + duration));
+            moveOrUpdateCalendarEvent(editingCalendarEvent, {
+                title,
+                rawTitle: title,
+                start: `${dateStr}T${startTimeStr}`,
+                end: `${dateStr}T${endTimeStr}`,
+                location: locationStr,
+                isFixed: hasTime,
+            });
+            closeModal();
             return;
         }
 
@@ -1047,7 +1610,7 @@ function initDayPlanner() {
                 }
             });
             window.EventBus?.dispatchEvent(new Event('dataChanged'));
-            renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+            renderPlanner();
         });
     }
 
@@ -1059,13 +1622,13 @@ function initDayPlanner() {
 
     window.EventBus.addEventListener('dataChanged', () => {
         const prev = timeBlocksContainer.scrollTop;
-        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+        renderPlanner();
         timeBlocksContainer.scrollTop = prev;
     });
 
     window.EventBus.addEventListener('calendarEventsUpdated', () => {
         const prev = timeBlocksContainer.scrollTop;
-        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+        renderPlanner();
         timeBlocksContainer.scrollTop = prev;
     });
 
@@ -1096,7 +1659,7 @@ function initDayPlanner() {
                 : ((cfg.plannerShowRoutineTasks !== false) && preselected.includes(dayOfWeek));
             toggleRoutineTasksBtn.classList.toggle('active', isShowing);
         }
-        renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+        renderPlanner();
         timeBlocksContainer.scrollTop = prev;
     };
     window.addEventListener('scheduleNeedsRefresh', rerender);
@@ -1105,10 +1668,11 @@ function initDayPlanner() {
     window.addEventListener('languageChanged', rerender);
     setInterval(rerender, 60000);
 
-    renderDayPlanner({ currentDate, dateDisplay, timeBlocksContainer, openModal, startResize });
+    renderPlanner();
     scrollToCurrent();
     window.DayPlanner = { scrollToCurrent, rerender };
     window.addEventListener('toolChanged', (e) => {
+        closeContextMenu();
         if (e.detail?.tool === 'planner') requestAnimationFrame(scrollToCurrent);
     });
 }

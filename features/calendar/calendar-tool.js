@@ -31,6 +31,72 @@
     return b64.replace(/=/g, '');
   }
 
+  const DELETED_TASKS_KEY = 'adhd-deleted-tasks';
+
+  function readDeletedIds() {
+    try {
+      const list = JSON.parse(localStorage.getItem(DELETED_TASKS_KEY)) || [];
+      return new Set(list.map(x => x && x.id).filter(Boolean));
+    } catch {
+      return new Set();
+    }
+  }
+
+  function recordDeletedIds(ids) {
+    const clean = (ids || []).filter(Boolean);
+    if (!clean.length) return;
+    try {
+      const list = JSON.parse(localStorage.getItem(DELETED_TASKS_KEY)) || [];
+      const drop = new Set(clean);
+      const deletedAt = new Date().toISOString();
+      const next = [
+        ...list.filter(x => x && x.id && !drop.has(x.id)),
+        ...clean.map(id => ({ id, deletedAt })),
+      ].slice(-1000);
+      localStorage.setItem(DELETED_TASKS_KEY, JSON.stringify(next));
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  function computeCalendarTaskHash(ev, startOverride, endOverride) {
+    if (!ev) return null;
+    const cfg = getConfig();
+    const fixedTag = cfg.fixedTag || '[FIX]';
+    const flexibleTag = cfg.flexibleTag || '[FLEX]';
+    const rawTitle = ev.title || ev.rawTitle || ev.summary || 'Calendar Task';
+    const cleanedTitle = rawTitle.replace(fixedTag, '').replace(flexibleTag, '').trim();
+    const start = startOverride ?? (ev.start || ev.instanceStart);
+    if (!start) return null;
+    const end = endOverride ?? (ev.end || ev.instanceEnd || '');
+    const hashSeed = `${cleanedTitle}-${start}-${end || ''}`;
+    return window.TaskModel?.DEFAULT_USER ? `task-${calendarHashBase64(hashSeed)}` : `task-${hashSeed}`;
+  }
+
+  function eventIdentityTokens(ev) {
+    if (!ev) return [];
+    const tokens = [
+      ev.id,
+      ev.uid,
+      ev.calendarUid,
+      ev.calendarInstanceId,
+      ev.hash,
+      ev.calendarEventHash,
+      ev.calendarInstanceId ? `cal:${ev.calendarInstanceId}` : null,
+      ev.calendarUid ? `cal:${ev.calendarUid}` : null,
+      ev.uid ? `cal:${ev.uid}` : null,
+      ev.id ? `cal:${ev.id}` : null,
+      computeCalendarTaskHash(ev),
+      ev.instanceStart && ev.instanceStart !== ev.start ? computeCalendarTaskHash(ev, ev.instanceStart, ev.instanceEnd || ev.end) : null,
+    ];
+    return [...new Set(tokens.filter(Boolean))];
+  }
+
+  function isEventDeleted(ev, deletedSet = readDeletedIds()) {
+    if (!ev || !deletedSet.size) return false;
+    return eventIdentityTokens(ev).some(tok => deletedSet.has(tok));
+  }
+
   function getConfig() {
     return (window.ConfigManager?.getConfig?.() || window.ConfigManager?.DEFAULT_CONFIG || {});
   }
@@ -179,7 +245,122 @@
   function findEventByHash(hash) {
     if (!hash) return null;
     if (!events.length) events = loadEvents();
-    return events.find(ev => [ev.calendarInstanceId, ev.uid, ev.id].includes(hash)) || null;
+    const direct = events.find(ev => eventIdentityTokens(ev).includes(hash) || (ev.start && `cal-${ev.start}` === hash));
+    if (direct) return direct;
+    const task = window.TaskStore?.getTaskByHash?.(hash);
+    if (task && (task.isCalendarEvent || task.source === 'calendar-import' || task.source === 'calendar')) {
+      const title = (task.name || task.text || '').trim();
+      const startPrefix = (task.plannerDate || '').slice(0, 16);
+      return events.find(ev => (ev.title === title || ev.rawTitle === title) && (!startPrefix || (ev.start || '').slice(0, 16) === startPrefix || (ev.instanceStart || '').slice(0, 16) === startPrefix)) || null;
+    }
+    return null;
+  }
+
+  function removeEventAndRecordTombstone(idOrHash) {
+    if (!idOrHash) return [];
+    if (!events.length) events = loadEvents();
+    const target = typeof idOrHash === 'object' ? findEventByHash(idOrHash.calendarInstanceId || idOrHash.id || idOrHash.uid) || idOrHash : findEventByHash(idOrHash);
+    const matchSet = new Set([
+      typeof idOrHash === 'string' ? idOrHash : null,
+      ...(target ? eventIdentityTokens(target) : []),
+    ].filter(Boolean));
+    const removed = events.filter(ev => {
+      if (ev === target) return true;
+      const tokens = eventIdentityTokens(ev);
+      if (tokens.some(t => matchSet.has(t))) return true;
+      if (target && target.title && ev.title === target.title && (ev.start || '').slice(0, 16) === (target.start || '').slice(0, 16)) return true;
+      return false;
+    });
+    const tombstoneIds = new Set(matchSet);
+    removed.forEach(ev => {
+      eventIdentityTokens(ev).forEach(tok => tombstoneIds.add(tok));
+    });
+    if (window.TaskStore?.getAllTasks && window.TaskStore?.deleteTasks) {
+      const matchingTasks = window.TaskStore.getAllTasks().filter(t => {
+        if (tombstoneIds.has(t.hash) || tombstoneIds.has(t.id)) return true;
+        if (!t.isCalendarEvent && t.source !== 'calendar-import' && t.source !== 'calendar') return false;
+        return removed.some(ev => {
+          const sameTitle = (t.name === ev.title || t.text === ev.title || t.name === ev.rawTitle);
+          const tStart = (t.plannerDate || '').slice(0, 16);
+          const evStart = (ev.start || '').slice(0, 16);
+          const instStart = (ev.instanceStart || '').slice(0, 16);
+          return sameTitle && (!tStart || tStart === evStart || (instStart && tStart === instStart));
+        });
+      });
+      if (matchingTasks.length) {
+        const taskHashes = matchingTasks.map(t => t.hash || t.id).filter(Boolean);
+        taskHashes.forEach(h => tombstoneIds.add(h));
+        window.TaskStore.deleteTasks(taskHashes);
+      }
+    }
+    recordDeletedIds([...tombstoneIds]);
+    if (removed.length) {
+      events = events.filter(ev => !removed.includes(ev));
+      saveEvents(events);
+      render();
+    }
+    window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+    return removed;
+  }
+
+  function updateCalendarEvent(idOrHash, updates = {}) {
+    if (!idOrHash) return null;
+    if (!events.length) events = loadEvents();
+    const ev = typeof idOrHash === 'object'
+      ? (findEventByHash(idOrHash.calendarInstanceId || idOrHash.id || idOrHash.uid) || events.find(e => e.title === idOrHash.title && (e.start || '').slice(0, 16) === (idOrHash.start || '').slice(0, 16)))
+      : findEventByHash(idOrHash);
+    if (!ev) return null;
+    const prevTitle = ev.title || ev.rawTitle || '';
+    const prevStart = ev.start || '';
+    const prevHash = computeCalendarTaskHash(ev);
+    if (!ev.instanceStart && ev.start) ev.instanceStart = ev.start;
+    if (!ev.instanceEnd && ev.end) ev.instanceEnd = ev.end;
+    if (updates.title !== undefined) {
+      ev.title = updates.title;
+      ev.rawTitle = updates.rawTitle !== undefined ? updates.rawTitle : updates.title;
+    }
+    if (updates.start !== undefined) ev.start = updates.start;
+    if (updates.end !== undefined) ev.end = updates.end;
+    if (updates.location !== undefined) ev.location = updates.location;
+    if (updates.isFixed !== undefined) ev.isFixed = updates.isFixed;
+    if (updates.notATask !== undefined) ev.notATask = updates.notATask;
+    ev.localOverride = true;
+    ev.updatedAt = new Date().toISOString();
+    normalizeEvent(ev);
+    saveEvents(events);
+    if (window.TaskStore?.getAllTasks && window.TaskStore?.updateTaskByHash) {
+      const startDate = ev.start ? new Date(ev.start) : null;
+      const endDate = ev.end ? new Date(ev.end) : null;
+      const durationMinutes = startDate && endDate && !isNaN(startDate) && !isNaN(endDate)
+        ? Math.max(5, Math.round((endDate - startDate) / 60000))
+        : undefined;
+      window.TaskStore.getAllTasks().forEach(t => {
+        const isMatch = (prevHash && (t.hash === prevHash || t.id === prevHash))
+          || ((t.isCalendarEvent || t.source === 'calendar-import' || t.source === 'calendar')
+            && (t.name === prevTitle || t.text === prevTitle)
+            && (!prevStart || (t.plannerDate || '').slice(0, 16) === prevStart.slice(0, 16)));
+        if (isMatch) {
+          const patch = {
+            name: ev.title,
+            text: ev.title,
+            plannerDate: ev.start ? ev.start.slice(0, 16) : t.plannerDate,
+            deadline: ev.end ? ev.end.slice(0, 16) : t.deadline,
+            isFixed: ev.isFixed !== false,
+            notATask: Boolean(ev.notATask),
+          };
+          if (durationMinutes) {
+            patch.durationMinutes = durationMinutes;
+            patch.duration = durationMinutes;
+          }
+          window.TaskStore.updateTaskByHash(t.hash || t.id, patch);
+        }
+      });
+    }
+    render();
+    window.EventBus?.dispatchEvent(new Event('dataChanged'));
+    window.dispatchEvent(new Event('scheduleNeedsRefresh'));
+    return ev;
   }
 
   // Move an event to a new start (same length). Returns the event, or null
@@ -266,9 +447,7 @@
 
   function deleteEvent(id) {
     if (!confirm('Delete this event?')) return;
-    events = events.filter(ev => ev.id !== id);
-    saveEvents(events);
-    render();
+    removeEventAndRecordTombstone(id);
   }
 
   function createEventElement(ev, tag = 'div', includeTime = false) {
@@ -362,16 +541,19 @@
   function loadEvents() {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const deleted = readDeletedIds();
       let stampedOverride = false;
-      const normalized = stored.map(raw => {
-        const ev = normalizeEvent(raw);
-        if (ev && (ev.localOverride || ev.notATask) && !ev.updatedAt) {
-          ev.localOverride = true;
-          ev.updatedAt = new Date().toISOString();
-          stampedOverride = true;
-        }
-        return ev;
-      });
+      const normalized = stored
+        .map(raw => {
+          const ev = normalizeEvent(raw);
+          if (ev && (ev.localOverride || ev.notATask) && !ev.updatedAt) {
+            ev.localOverride = true;
+            ev.updatedAt = new Date().toISOString();
+            stampedOverride = true;
+          }
+          return ev;
+        })
+        .filter(ev => !isEventDeleted(ev, deleted));
       const deduped = removeDuplicateEvents(normalized);
       if (stampedOverride || deduped.length !== stored.length) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
@@ -444,23 +626,27 @@
   function mergeEventsPreserveOverrides(existing, incoming) {
     const merged = new Map();
     const getKey = (ev) => `${ev.title}|${ev.start}|${ev.end}`;
-    const identityOf = (ev) => ev.calendarUid || ev.uid || ev.id || null;
     const byIdentity = new Map();
     existing.forEach(ev => {
       merged.set(getKey(ev), ev);
-      const identity = identityOf(ev);
-      if (identity && !byIdentity.has(identity)) byIdentity.set(identity, ev);
+      [ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id].filter(Boolean).forEach(identity => {
+        if (!byIdentity.has(identity) || ev.localOverride) byIdentity.set(identity, ev);
+      });
     });
 
+    const deleted = readDeletedIds();
     incoming.forEach(ev => {
+      if (isEventDeleted(ev, deleted)) return;
       const key = getKey(ev);
       const current = merged.get(key);
       if (current && current.localOverride) return;
       // A locally moved/edited event (localOverride) is the same event as the
       // incoming one (same calendar identity): the sync must not bring the
       // original time back as a duplicate.
-      const identity = identityOf(ev);
-      const mine = identity && byIdentity.get(identity);
+      const mine = [ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id]
+        .filter(Boolean)
+        .map(id => byIdentity.get(id))
+        .find(Boolean);
       if (mine && mine.localOverride) return;
       merged.set(key, ev);
     });
@@ -700,17 +886,18 @@
     reader.onload = e => {
       try {
         const parsed = parseICS(e.target.result);
+        const deleted = readDeletedIds();
         const normalized = parsed.map(ev => normalizeEvent({
           ...ev,
           id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
           instanceStart: ev.start || ev.instanceStart,
-        }));
+        })).filter(ev => !isEventDeleted(ev, deleted));
         const overriddenIdentities = new Set(
-          events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
+          events.filter(ev => ev.localOverride).flatMap(ev => [ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id]).filter(Boolean)
         );
         events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
         saveEvents(events);
-        convertEventsToTasks(normalized.filter(ev => !overriddenIdentities.has(ev.calendarUid || ev.uid || ev.id)));
+        convertEventsToTasks(normalized.filter(ev => ![ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id].some(id => id && overriddenIdentities.has(id))));
         render();
         alert(`Imported ${parsed.length} events.`);
       } catch (err) {
@@ -741,17 +928,18 @@
         const text = await resp.text();
 
         const parsed = parseICS(text);
+        const deleted = readDeletedIds();
         const normalized = parsed.map(ev => normalizeEvent({
           ...ev,
           id: window.CrossTool ? window.CrossTool.generateId() : 'ev-' + Date.now(),
           instanceStart: ev.start || ev.instanceStart,
-        }));
+        })).filter(ev => !isEventDeleted(ev, deleted));
         const overriddenIdentities = new Set(
-          events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
+          events.filter(ev => ev.localOverride).flatMap(ev => [ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id]).filter(Boolean)
         );
         events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
         saveEvents(events);
-        convertEventsToTasks(normalized.filter(ev => !overriddenIdentities.has(ev.calendarUid || ev.uid || ev.id)));
+        convertEventsToTasks(normalized.filter(ev => ![ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id].some(id => id && overriddenIdentities.has(id))));
         render();
         return;
       } catch (err) {
@@ -834,12 +1022,9 @@
   // events through the same normalize/merge/task pipeline as ICS imports.
   window.CalendarTool = {
     deleteEvent(idOrHash) {
-      if (!idOrHash) return;
-      if (!events.length) events = loadEvents();
-      events = events.filter(ev => ev.id !== idOrHash && ev.calendarEventHash !== idOrHash && ev.hash !== idOrHash);
-      saveEvents(events);
-      render();
+      return removeEventAndRecordTombstone(idOrHash);
     },
+    updateEvent: updateCalendarEvent,
     isPassiveEvent(task) {
       return !!(task && task.isCalendarEvent && task.isActionable === false);
     },
@@ -850,19 +1035,21 @@
       if (!Array.isArray(rawEvents) || rawEvents.length === 0) return 0;
       if (!events.length) events = loadEvents();
       const prevJson = JSON.stringify(events);
-      const normalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
+      const deleted = readDeletedIds();
+      const allNormalized = rawEvents.map(ev => normalizeEvent({ ...ev }));
+      const normalized = allNormalized.filter(ev => !isEventDeleted(ev, deleted));
       const overridden = new Set(
-        events.filter(ev => ev.localOverride).map(ev => ev.calendarUid || ev.uid || ev.id)
+        events.filter(ev => ev.localOverride).flatMap(ev => [ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id]).filter(Boolean)
       );
       events = removeDuplicateEvents(mergeEventsPreserveOverrides(events, normalized));
       if (JSON.stringify(events) !== prevJson) {
         saveEvents(events);
       }
       // Only events that survived the merge get a TaskStore copy, so a locally
-      // moved event does not come back as a copy at its original time.
-      convertEventsToTasks(normalized.filter(ev => !overridden.has(ev.calendarUid || ev.uid || ev.id)));
+      // moved or deleted event does not come back as a copy at its original time.
+      convertEventsToTasks(normalized.filter(ev => ![ev.calendarInstanceId, ev.calendarUid, ev.uid, ev.id].some(id => id && overridden.has(id))));
       render();
-      return normalized.length;
+      return allNormalized.length;
     },
   };
 

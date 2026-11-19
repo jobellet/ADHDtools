@@ -283,3 +283,112 @@ test('task stack orders tasks by deadline, supports drag-drop to timeline and do
     await context.close();
   }
 });
+
+test('desktop planner: drag event upward shifts start time earlier keeping duration, right-click menu edits parameters and deletes Google Calendar events permanently', async () => {
+  const { page, context, errors } = await openPlanner('desktop', `${DAY}T08:00:00`);
+  try {
+    // 1. Drag "Dress the kids" (09:30–09:55, 25 min) upward by 60 minutes -> 08:30–08:55 (still 25 min)
+    const mh = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--minute-height')));
+    const dressEl = page.locator('#time-blocks .timeline-lane .event[data-title="Dress the kids"]');
+    await dressEl.scrollIntoViewIfNeeded();
+    const box = await dressEl.boundingBox();
+    assert.ok(box, 'Dress the kids block should be visible');
+
+    const startX = box.x + box.width / 2;
+    const startY = box.y + box.height / 2;
+    const moveUpPx = 60 * mh; // 60 minutes earlier
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX, startY - moveUpPx, { steps: 6 });
+    await page.mouse.up();
+    await page.clock.runFor(200);
+
+    const movedTask = await page.evaluate(() => {
+      const t = window.TaskStore.getAllTasks().find(x => x.name === 'Dress the kids');
+      const el = document.querySelector('#time-blocks .timeline-lane .event[data-title="Dress the kids"]');
+      return {
+        plannerDate: t?.plannerDate,
+        duration: t?.durationMinutes,
+        elStart: Number(el?.dataset.start),
+        elEnd: Number(el?.dataset.end),
+        modalOpen: document.getElementById('event-modal').classList.contains('active'),
+      };
+    });
+    assert.equal(movedTask.modalOpen, false, 'releasing after dragging should not pop open the edit modal');
+    assert.equal(movedTask.plannerDate, `${DAY}T08:30`, 'task start time shifted 60 min earlier');
+    assert.equal(movedTask.duration, 25, 'task duration kept at 25 min');
+    assert.equal(movedTask.elStart, 8 * 60 + 30);
+    assert.equal(movedTask.elEnd, 8 * 60 + 55);
+
+    // 2. Right-click "Dress the kids" -> context menu opens, select 45m duration chip -> updates duration to 45 min
+    await dressEl.click({ button: 'right' });
+    await page.clock.runFor(100);
+    const menuVisible = await page.locator('#planner-context-menu').isVisible();
+    assert.ok(menuVisible, 'right-click should open #planner-context-menu');
+    await page.click('#planner-context-menu .planner-context-chip[data-duration="45"]');
+    await page.clock.runFor(200);
+    const afterChip = await page.evaluate(() => {
+      const t = window.TaskStore.getAllTasks().find(x => x.name === 'Dress the kids');
+      const el = document.querySelector('#time-blocks .timeline-lane .event[data-title="Dress the kids"]');
+      return {
+        duration: t?.durationMinutes,
+        elStart: Number(el?.dataset.start),
+        elEnd: Number(el?.dataset.end),
+      };
+    });
+    assert.equal(afterChip.duration, 45);
+    assert.equal(afterChip.elEnd - afterChip.elStart, 45);
+
+    // 3. Drag Google Calendar event "Lab meeting" (15:00–16:00, 60 min) upward by 60 minutes -> 14:00–15:00 (keeping 60 min)
+    const labEl = page.locator('#time-blocks .timeline-lane .event[data-title="Lab meeting"]');
+    await labEl.scrollIntoViewIfNeeded();
+    const labBox = await labEl.boundingBox();
+    assert.ok(labBox, 'Lab meeting calendar block should be visible');
+    const labX = labBox.x + labBox.width / 2;
+    const labY = labBox.y + labBox.height / 2;
+    await page.mouse.move(labX, labY);
+    await page.mouse.down();
+    await page.mouse.move(labX, labY - 60 * mh, { steps: 6 });
+    await page.mouse.up();
+    await page.clock.runFor(200);
+
+    const movedCal = await page.evaluate(() => {
+      const cal = JSON.parse(localStorage.getItem('adhd-calendar-events') || '[]').find(e => e.title === 'Lab meeting');
+      const el = document.querySelector('#time-blocks .timeline-lane .event[data-title="Lab meeting"]');
+      return {
+        start: cal?.start,
+        end: cal?.end,
+        elStart: Number(el?.dataset.start),
+        elEnd: Number(el?.dataset.end),
+      };
+    });
+    assert.equal(movedCal.start, `${DAY}T14:00`, 'Google Calendar event moved earlier to 14:00');
+    assert.equal(movedCal.end, `${DAY}T15:00`, 'Google Calendar event kept its 60-min duration');
+    assert.equal(movedCal.elStart, 14 * 60);
+    assert.equal(movedCal.elEnd, 15 * 60);
+
+    // 4. Right-click Google Calendar event "Lab meeting" and delete it via context menu -> removed and does not come back on re-sync
+    await labEl.click({ button: 'right' });
+    await page.clock.runFor(100);
+    await page.click('#planner-context-menu [data-action="delete"]');
+    await page.clock.runFor(200);
+
+    const afterDelete = await page.evaluate((day) => {
+      // Simulate Google Calendar auto-sync re-ingesting the original event
+      window.CalendarTool?.ingestExternalEvents?.([
+        { id: 'e1', uid: 'e1', title: 'Lab meeting', start: `${day}T15:00`, end: `${day}T16:00`, isFixed: true, isCalendarEvent: true },
+      ]);
+      const cal = JSON.parse(localStorage.getItem('adhd-calendar-events') || '[]').filter(e => e.title === 'Lab meeting');
+      const tasks = window.TaskStore.getAllTasks().filter(t => t.name === 'Lab meeting');
+      const domEl = document.querySelector('#time-blocks .timeline-lane .event[data-title="Lab meeting"]');
+      return { calCount: cal.length, taskCount: tasks.length, inDom: Boolean(domEl) };
+    }, DAY);
+
+    assert.equal(afterDelete.calCount, 0, 'Lab meeting removed from adhd-calendar-events and stayed deleted after re-sync');
+    assert.equal(afterDelete.taskCount, 0, 'Lab meeting task copy removed from TaskStore');
+    assert.equal(afterDelete.inDom, false, 'Lab meeting no longer rendered on timeline');
+    assert.deepEqual(errors, []);
+  } finally {
+    await context.close();
+  }
+});

@@ -8,7 +8,7 @@
 export const STORAGE_LOG_KEY = 'adhd-storage-log';
 // Deleted task ids ({ id, deletedAt }), written by TaskStore.deleteTasks.
 export const DELETED_TASKS_KEY = 'adhd-deleted-tasks';
-const TASK_KEYS = new Set(['adhd-unified-tasks']);
+const TASK_KEYS = new Set(['adhd-unified-tasks', 'adhd-calendar-events']);
 // Device-local keys that must never overwrite another device's local watermarks or identity.
 const DEVICE_LOCAL_KEYS = new Set([
   'adhd-device-id',
@@ -47,9 +47,20 @@ function parseObject(value) {
   }
 }
 
-// A task deleted on either device stays deleted after the merge.
+// A task or calendar event deleted on either device stays deleted after the merge.
 function isDeleted(item, deletedIds) {
-  return Boolean(item && typeof item === 'object' && (deletedIds.has(item.id) || deletedIds.has(item.hash)));
+  if (!item || typeof item !== 'object') return false;
+  return [
+    item.id,
+    item.hash,
+    item.uid,
+    item.calendarUid,
+    item.calendarInstanceId,
+    item.calendarInstanceId ? `cal:${item.calendarInstanceId}` : null,
+    item.calendarUid ? `cal:${item.calendarUid}` : null,
+    item.uid ? `cal:${item.uid}` : null,
+    item.id ? `cal:${item.id}` : null,
+  ].some(tok => tok && deletedIds.has(tok));
 }
 
 function stableStringify(value) {
