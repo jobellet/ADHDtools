@@ -6,12 +6,13 @@
   const ICS_URL_KEY = 'adhd-calendar-ics-url';
   const VOICE_ENABLED_KEY = 'adhd-calendar-voice-enabled';
   const VOICE_EARLY_KEY = 'adhd-calendar-voice-early';
+  const VOICE_FIRST_RUN_KEY = 'adhd-calendar-voice-first-run';
   let currentView = 'day';
   let referenceDate = new Date();
   let events = [];
   let icsUrl = '';
-  let voiceEnabled = false;
-  let voiceEarly = 0; // minutes before event
+  let voiceEnabled = true;
+  let voiceEarly = 5; // minutes before event
   const announcedEarly = new Set();
   const announcedStart = new Set();
   const createTask = window.TaskModel?.createTask;
@@ -575,17 +576,70 @@
   function loadVoiceSettings() {
     try {
       voiceEnabled = localStorage.getItem(VOICE_ENABLED_KEY) === 'true';
-      voiceEarly = parseInt(localStorage.getItem(VOICE_EARLY_KEY) || '0', 10);
-      if (isNaN(voiceEarly)) voiceEarly = 0;
+      voiceEarly = parseInt(localStorage.getItem(VOICE_EARLY_KEY) || '5', 10);
+      if (isNaN(voiceEarly)) voiceEarly = 5;
     } catch {
-      voiceEnabled = false;
-      voiceEarly = 0;
+      voiceEnabled = true;
+      voiceEarly = 5;
     }
   }
 
   function saveVoiceSettings() {
     localStorage.setItem(VOICE_ENABLED_KEY, voiceEnabled);
     localStorage.setItem(VOICE_EARLY_KEY, voiceEarly);
+    localStorage.setItem(VOICE_FIRST_RUN_KEY, 'false');
+  }
+
+  function showVoiceWelcomeModal() {
+    const modal = document.getElementById('voice-welcome-modal');
+    if (!modal) return;
+    
+    const lang = document.documentElement.lang || 'en';
+    const dict = (window.translations && window.translations[lang]) || {};
+    
+    const titleEl = modal.querySelector('.modal-title');
+    const msgEl = modal.querySelector('.modal-message');
+    const disableBtn = modal.querySelector('#voice-disable-btn');
+    const keepBtn = modal.querySelector('#voice-keep-btn');
+    
+    if (titleEl) titleEl.textContent = dict['voice-welcome-title'] || 'Voice Announcements Active';
+    if (msgEl) msgEl.textContent = dict['voice-welcome-message'] || 'Voice announcements for calendar events are now enabled. You can disable them anytime in Settings > Calendar Notifications.';
+    if (disableBtn) disableBtn.textContent = dict['voice-disable-btn'] || 'Disable';
+    if (keepBtn) keepBtn.textContent = dict['voice-keep-btn'] || 'Keep Enabled';
+    
+    modal.style.display = 'block';
+    
+    const closeModal = () => {
+      modal.style.display = 'none';
+      localStorage.setItem(VOICE_FIRST_RUN_KEY, 'true');
+    };
+    
+    if (disableBtn) {
+      disableBtn.onclick = () => {
+        voiceEnabled = false;
+        saveVoiceSettings();
+        closeModal();
+      };
+    }
+    
+    if (keepBtn) {
+      keepBtn.onclick = closeModal;
+    }
+    
+    modal.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
+  }
+
+  function checkFirstRun() {
+    try {
+      const firstRunDone = localStorage.getItem(VOICE_FIRST_RUN_KEY);
+      if (!firstRunDone && voiceEnabled) {
+        setTimeout(showVoiceWelcomeModal, 2000);
+      }
+    } catch {
+      // ignore
+    }
   }
 
   function saveIcsUrl(url) {
@@ -1090,6 +1144,7 @@
     events = loadEvents();
     icsUrl = loadIcsUrl();
     loadVoiceSettings();
+    checkFirstRun();
     render();
     if (window.DataManager && window.DataManager.EventBus) {
       window.DataManager.EventBus.addEventListener('dataChanged', render);
