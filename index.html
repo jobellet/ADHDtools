@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="features/routine/routine.css">
     <link rel="stylesheet" href="features/settings/settings.css">
     <link rel="stylesheet" href="features/thoughts/thoughts.css">
+    <link rel="stylesheet" href="features/calendar/calendar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- 1. Shell & services (classic scripts, run in this order) -->
@@ -35,6 +36,7 @@
     <script src="features/settings/strings.js" defer></script>
     <script src="features/assistant/strings.js" defer></script>
     <script src="features/thoughts/strings.js" defer></script>
+    <script src="features/calendar/strings.js" defer></script>
     <script src="services/data-manager.js" defer></script>
     <script src="services/google-auth.js" defer></script>
     <script src="services/drive-sync.js" defer></script>
@@ -144,6 +146,16 @@
             <p class="quick-capture-hint" data-i18n="capture.hint">Say when (“at 5pm”, “tomorrow”), how long (“for 20 min”) and how important (“!7”). No time = the app fits it into a free slot.</p>
             <p id="quick-capture-status" class="quick-capture-status" aria-live="polite"></p>
             <div class="capture-thoughts-promo"><button type="button" class="btn btn-secondary btn-compact" data-go-tool="thoughts"><i class="fas fa-lightbulb"></i> <span data-i18n="thoughts-quick-link">Quick Thoughts</span></button></div>
+        </div>
+    </div>
+
+    <!-- One-time notice: voice alerts are on by default (features/calendar) -->
+    <div id="voice-welcome-notice" class="voice-welcome-notice hidden" role="status" aria-live="polite">
+        <p class="voice-welcome-title" data-i18n="calendar.voiceNoticeTitle">Voice alerts are on</p>
+        <p class="voice-welcome-text" data-i18n="calendar.voiceNoticeText">Calendar events are read aloud 5 minutes before and when they start. You can change this in Settings.</p>
+        <div class="voice-welcome-actions">
+            <button type="button" id="voice-disable-btn" class="btn btn-secondary btn-compact" data-i18n="calendar.voiceNoticeOff">Turn off</button>
+            <button type="button" id="voice-keep-btn" class="btn btn-primary btn-compact" data-i18n="calendar.voiceNoticeOk">OK</button>
         </div>
     </div>
 
@@ -460,18 +472,6 @@
                                 <li>Paste this URL into <strong>Settings → Calendar file / link import (.ics) → ICS URL</strong>
                                     and click <strong>Load</strong>.</li>
                             </ol>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Voice Welcome Modal -->
-                <div id="voice-welcome-modal" class="modal voice-welcome-modal">
-                    <div class="modal-content voice-modal-content">
-                        <h2 class="modal-title">Voice Announcements Active</h2>
-                        <p class="modal-message">Voice announcements for calendar events are now enabled by default. Events will be announced aloud when they start and a few minutes before.</p>
-                        <div class="modal-buttons">
-                            <button id="voice-disable-btn" class="btn btn-danger">Disable</button>
-                            <button id="voice-keep-btn" class="btn btn-success">Keep Enabled</button>
                         </div>
                     </div>
                 </div>
@@ -824,7 +824,7 @@
                                         </label>
                                         <div class="voice-early-input">
                                             <span data-i18n="calendar-voice-early-label">Minutes early:</span>
-                                            <input type="number" id="calendar-voice-early" value="0" min="0">
+                                            <input type="number" id="calendar-voice-early" value="5" min="0">
                                         </div>
                                     </div>
                                     <div id="gcal-settings-container"></div>

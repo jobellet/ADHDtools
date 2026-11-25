@@ -152,6 +152,7 @@ To see everything again, turn on **Settings → General → Show all options**.
 | “Next task” countdown window | 15 min | How early the break countdown appears |
 | Start the routine player by itself | off | Auto-start routines at their time |
 | Show all options | off | Show options your setup doesn't need |
+| Voice alerts (Settings → Calendar Notifications) | on, 5 min early | Reads calendar events aloud before and when they start. The first time, a small notice says so, with a **Turn off** button |
 
 ---
 

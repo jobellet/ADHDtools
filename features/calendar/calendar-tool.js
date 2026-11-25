@@ -6,7 +6,6 @@
   const ICS_URL_KEY = 'adhd-calendar-ics-url';
   const VOICE_ENABLED_KEY = 'adhd-calendar-voice-enabled';
   const VOICE_EARLY_KEY = 'adhd-calendar-voice-early';
-  const VOICE_FIRST_RUN_KEY = 'adhd-calendar-voice-first-run';
   let currentView = 'day';
   let referenceDate = new Date();
   let events = [];
@@ -573,9 +572,10 @@
     }
   }
 
+  // Voice alerts are on by default. A stored 'false' (the user turned them off) is kept.
   function loadVoiceSettings() {
     try {
-      voiceEnabled = localStorage.getItem(VOICE_ENABLED_KEY) === 'true';
+      voiceEnabled = localStorage.getItem(VOICE_ENABLED_KEY) !== 'false';
       voiceEarly = parseInt(localStorage.getItem(VOICE_EARLY_KEY) || '5', 10);
       if (isNaN(voiceEarly)) voiceEarly = 5;
     } catch {
@@ -587,59 +587,31 @@
   function saveVoiceSettings() {
     localStorage.setItem(VOICE_ENABLED_KEY, voiceEnabled);
     localStorage.setItem(VOICE_EARLY_KEY, voiceEarly);
-    localStorage.setItem(VOICE_FIRST_RUN_KEY, 'false');
+    document.getElementById('voice-welcome-notice')?.classList.add('hidden');
   }
 
-  function showVoiceWelcomeModal() {
-    const modal = document.getElementById('voice-welcome-modal');
-    if (!modal) return;
-    
-    const lang = document.documentElement.lang || 'en';
-    const dict = (window.translations && window.translations[lang]) || {};
-    
-    const titleEl = modal.querySelector('.modal-title');
-    const msgEl = modal.querySelector('.modal-message');
-    const disableBtn = modal.querySelector('#voice-disable-btn');
-    const keepBtn = modal.querySelector('#voice-keep-btn');
-    
-    if (titleEl) titleEl.textContent = dict['voice-welcome-title'] || 'Voice Announcements Active';
-    if (msgEl) msgEl.textContent = dict['voice-welcome-message'] || 'Voice announcements for calendar events are now enabled. You can disable them anytime in Settings > Calendar Notifications.';
-    if (disableBtn) disableBtn.textContent = dict['voice-disable-btn'] || 'Disable';
-    if (keepBtn) keepBtn.textContent = dict['voice-keep-btn'] || 'Keep Enabled';
-    
-    modal.style.display = 'block';
-    
-    const closeModal = () => {
-      modal.style.display = 'none';
-      localStorage.setItem(VOICE_FIRST_RUN_KEY, 'true');
-    };
-    
-    if (disableBtn) {
-      disableBtn.onclick = () => {
-        voiceEnabled = false;
-        saveVoiceSettings();
-        closeModal();
-      };
-    }
-    
-    if (keepBtn) {
-      keepBtn.onclick = closeModal;
-    }
-    
-    modal.onclick = (e) => {
-      if (e.target === modal) closeModal();
-    };
-  }
-
-  function checkFirstRun() {
+  // One-time notice that voice alerts are on. Shown while the user has never chosen a voice
+  // setting; either button saves the settings, so the notice does not come back.
+  function initVoiceNotice() {
+    const notice = document.getElementById('voice-welcome-notice');
+    if (!notice || !voiceEnabled || !('speechSynthesis' in window)) return;
     try {
-      const firstRunDone = localStorage.getItem(VOICE_FIRST_RUN_KEY);
-      if (!firstRunDone && voiceEnabled) {
-        setTimeout(showVoiceWelcomeModal, 2000);
-      }
+      if (localStorage.getItem(VOICE_ENABLED_KEY) !== null || localStorage.getItem(VOICE_EARLY_KEY) !== null) return;
     } catch {
-      // ignore
+      return;
     }
+    const close = () => {
+      saveVoiceSettings();
+      notice.classList.add('hidden');
+    };
+    document.getElementById('voice-disable-btn')?.addEventListener('click', () => {
+      voiceEnabled = false;
+      const checkbox = document.getElementById('calendar-voice-enable');
+      if (checkbox) checkbox.checked = false;
+      close();
+    });
+    document.getElementById('voice-keep-btn')?.addEventListener('click', close);
+    notice.classList.remove('hidden');
   }
 
   function saveIcsUrl(url) {
@@ -1144,7 +1116,6 @@
     events = loadEvents();
     icsUrl = loadIcsUrl();
     loadVoiceSettings();
-    checkFirstRun();
     render();
     if (window.DataManager && window.DataManager.EventBus) {
       window.DataManager.EventBus.addEventListener('dataChanged', render);
@@ -1247,6 +1218,7 @@
         saveVoiceSettings();
       });
     }
+    initVoiceNotice();
 
     if (importBtn && fileInput) {
       importBtn.addEventListener('click', () => fileInput.click());

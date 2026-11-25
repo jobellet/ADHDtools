@@ -1,0 +1,35 @@
+/* features/calendar/calendar.css - one-time voice alerts notice */
+.voice-welcome-notice {
+    position: fixed;
+    top: calc(0.75rem + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(28rem, calc(100% - 2rem));
+    padding: 0.9rem 1rem;
+    background: var(--surface);
+    color: var(--text-color, inherit);
+    border-radius: var(--border-radius);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    z-index: 2000;
+}
+
+.voice-welcome-notice.hidden {
+    display: none;
+}
+
+.voice-welcome-title {
+    margin: 0 0 0.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.voice-welcome-text {
+    margin: 0 0 0.75rem;
+    line-height: 1.4;
+}
+
+.voice-welcome-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
