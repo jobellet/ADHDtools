@@ -1,19 +1,73 @@
-/* features/calendar/calendar.css - one-time voice alerts notice */
+/* features/calendar/calendar.css - one-time voice alerts notice.
+   A small bubble in a corner: never covers the screen, never blocks clicks around it.
+   Tapping it opens a small card. `bottom` is set from JS above the phone tab bar. */
 .voice-welcome-notice {
     position: fixed;
-    top: calc(0.75rem + env(safe-area-inset-top));
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(28rem, calc(100% - 2rem));
-    padding: 0.9rem 1rem;
-    background: var(--surface);
-    color: var(--text-color, inherit);
-    border-radius: var(--border-radius);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-    z-index: 2000;
+    right: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    max-width: calc(100% - 1.5rem);
+    pointer-events: none; /* only the bubble and the card take clicks */
 }
 
 .voice-welcome-notice.hidden {
+    display: none;
+}
+
+.voice-notice-bubble,
+.voice-notice-panel {
+    pointer-events: auto;
+}
+
+.voice-notice-bubble {
+    order: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--primary-color);
+    font-size: 1.15rem;
+    line-height: 1;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    opacity: 0.9;
+}
+
+.voice-notice-bubble:hover,
+.voice-notice-bubble:focus-visible,
+.voice-notice-bubble[aria-expanded="true"] {
+    opacity: 1;
+}
+
+/* Text for screen readers only; the bubble shows just the icon. */
+.voice-notice-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.voice-notice-panel {
+    order: 1;
+    width: min(20rem, calc(100vw - 1.5rem));
+    padding: 0.75rem 0.85rem;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    font-size: 0.9rem;
+}
+
+.voice-notice-panel[hidden] {
     display: none;
 }
 
@@ -24,7 +78,7 @@
 }
 
 .voice-welcome-text {
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.6rem;
     line-height: 1.4;
 }
 

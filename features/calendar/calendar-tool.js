@@ -590,8 +590,9 @@
     document.getElementById('voice-welcome-notice')?.classList.add('hidden');
   }
 
-  // One-time notice that voice alerts are on. Shown while the user has never chosen a voice
-  // setting; either button saves the settings, so the notice does not come back.
+  // One-time notice that voice alerts are on: a small bubble in a corner that opens a card when
+  // tapped. It never blocks the app. Shown while the user has never chosen a voice setting;
+  // either button saves the settings, so the notice does not come back.
   function initVoiceNotice() {
     const notice = document.getElementById('voice-welcome-notice');
     if (!notice || !voiceEnabled || !('speechSynthesis' in window)) return;
@@ -611,7 +612,29 @@
       close();
     });
     document.getElementById('voice-keep-btn')?.addEventListener('click', close);
+
+    const toggle = document.getElementById('voice-notice-toggle');
+    const panel = document.getElementById('voice-notice-panel');
+    const setOpen = open => {
+      if (!toggle || !panel) return;
+      panel.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    toggle?.addEventListener('click', () => setOpen(panel.hidden));
+    notice.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { setOpen(false); toggle?.focus(); }
+    });
+
+    // Keep the bubble above the bottom tab bar on phones.
+    const place = () => {
+      const nav = document.querySelector('.app-nav');
+      const rect = nav?.getBoundingClientRect();
+      const navAtBottom = rect && rect.height && rect.top > window.innerHeight / 2;
+      notice.style.bottom = navAtBottom ? `${Math.round(window.innerHeight - rect.top + 12)}px` : '';
+    };
+    window.addEventListener('resize', place);
     notice.classList.remove('hidden');
+    place();
   }
 
   function saveIcsUrl(url) {

@@ -25,7 +25,7 @@ CI runs both on every PR. Both must pass after merging the latest `main`.
 | --- | --- |
 | `harness.js` | `startServer()` (serves the repo like GitHub Pages), `launch()`, `openApp(browser, url, { device, time, storage, session, routes })`, `sampleDay(date)`, `VIEWPORTS` (phone 390×844, desktop 1366×900). `openApp` fixes the clock, seeds `localStorage`, blocks every outside request and returns `errors` (page + console) and `external` (requests made while loading). |
 | `now.test.js` | The app opens on the right screen: routine time → Now with timer; free time with work → next auto-placed task; nothing planned → planner. Never an all-day event as "now". |
-| `calendar.test.js` | Voice alerts are on by default; the one-time notice shows (translated), *Turn off* saves `false` and it never comes back; a stored `false` is kept. |
+| `calendar.test.js` | Voice alerts are on by default; the one-time notice is a small bubble that never covers the tab bar, opens a translated card on tap, *Turn off* saves `false` and it never comes back; a stored `false` is kept. |
 | `assistant.test.js` | MCP server queues changes → the real app applies them (moved if the time got taken) → backs up → the server sees them done. Fake Drive via `routes`. |
 | `planner.test.js` | The whole day is drawn at both sizes (timeline height = day × zoom, every item present, no NaN, no overlap, no sideways scroll, desktop fills the window); Ctrl+scroll zoom keeps blocks on their times; add-event form refuses a taken time and saves at the suggested one. |
 

@@ -149,13 +149,17 @@
         </div>
     </div>
 
-    <!-- One-time notice: voice alerts are on by default (features/calendar) -->
-    <div id="voice-welcome-notice" class="voice-welcome-notice hidden" role="status" aria-live="polite">
-        <p class="voice-welcome-title" data-i18n="calendar.voiceNoticeTitle">Voice alerts are on</p>
-        <p class="voice-welcome-text" data-i18n="calendar.voiceNoticeText">Calendar events are read aloud 5 minutes before and when they start. You can change this in Settings.</p>
-        <div class="voice-welcome-actions">
-            <button type="button" id="voice-disable-btn" class="btn btn-secondary btn-compact" data-i18n="calendar.voiceNoticeOff">Turn off</button>
-            <button type="button" id="voice-keep-btn" class="btn btn-primary btn-compact" data-i18n="calendar.voiceNoticeOk">OK</button>
+    <!-- One-time notice: voice alerts are on by default (features/calendar). Small bubble; tap to open. -->
+    <div id="voice-welcome-notice" class="voice-welcome-notice hidden">
+        <button type="button" id="voice-notice-toggle" class="voice-notice-bubble" aria-expanded="false" aria-controls="voice-notice-panel"
+            title="Voice alerts are on" data-i18n-title="calendar.voiceNoticeTitle"><span aria-hidden="true">🔊</span><span class="voice-notice-label" data-i18n="calendar.voiceNoticeTitle">Voice alerts are on</span></button>
+        <div id="voice-notice-panel" class="voice-notice-panel" role="status" hidden>
+            <p class="voice-welcome-title" data-i18n="calendar.voiceNoticeTitle">Voice alerts are on</p>
+            <p class="voice-welcome-text" data-i18n="calendar.voiceNoticeText">Calendar events are read aloud 5 minutes before and when they start. You can change this in Settings.</p>
+            <div class="voice-welcome-actions">
+                <button type="button" id="voice-disable-btn" class="btn btn-secondary btn-compact" data-i18n="calendar.voiceNoticeOff">Turn off</button>
+                <button type="button" id="voice-keep-btn" class="btn btn-primary btn-compact" data-i18n="calendar.voiceNoticeOk">OK</button>
+            </div>
         </div>
     </div>
 
